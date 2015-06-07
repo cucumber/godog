@@ -19,13 +19,20 @@ func New(r io.Reader) *Lexer {
 	}
 }
 
-func (l *Lexer) Next() (t *Token) {
+func (l *Lexer) Next(skip ...TokenType) (t *Token) {
 	if l.peek != nil {
 		t = l.peek
 		l.peek = nil
-		return
+	} else {
+		t = l.read()
 	}
-	return l.read()
+
+	for _, typ := range skip {
+		if t.Type == typ {
+			return l.Next(skip...)
+		}
+	}
+	return
 }
 
 func (l *Lexer) Peek() *Token {
