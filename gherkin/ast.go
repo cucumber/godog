@@ -3,7 +3,7 @@ package gherkin
 import (
 	"sync"
 
-	"github.com/l3pp4rd/behat/gherkin/lexer"
+	"github.com/l3pp4rd/go-behat/gherkin/lexer"
 )
 
 type item struct {
