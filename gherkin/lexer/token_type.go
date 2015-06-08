@@ -20,6 +20,8 @@ const (
 	FEATURE
 	BACKGROUND
 	SCENARIO
+
+	steps
 	GIVEN
 	WHEN
 	THEN
