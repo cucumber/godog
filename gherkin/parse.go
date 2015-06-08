@@ -86,7 +86,7 @@ func Parse(path string) (*Feature, error) {
 
 // reads tokens into AST and skips comments or new lines
 func (p *parser) next() *lexer.Token {
-	if p.ast.tail.value.Type == lexer.EOF {
+	if p.ast.tail != nil && p.ast.tail.value.Type == lexer.EOF {
 		return p.ast.tail.value // has reached EOF, do not record it more than once
 	}
 	tok := p.lx.Next()
@@ -99,9 +99,10 @@ func (p *parser) next() *lexer.Token {
 
 // peaks into next token, skips comments or new lines
 func (p *parser) peek() *lexer.Token {
-	if tok := p.lx.Peek(); tok.OfType(lexer.COMMENT, lexer.NEW_LINE) {
-		p.next()
+	if tok := p.lx.Peek(); !tok.OfType(lexer.COMMENT, lexer.NEW_LINE) {
+		return tok
 	}
+	p.next()
 	return p.peek()
 }
 
