@@ -38,7 +38,7 @@ var testStepSamples = map[string]string{
   When I do something
   Then something should happen`,
 
-	"step_group_multiline": `Given: an admin user "John Doe"
+	"step_group_multiline": `Given an admin user "John Doe"
   And user "John Doe" belongs
 	to user group "editors"
   When I do something
@@ -268,6 +268,40 @@ func Test_parse_step_group(t *testing.T) {
 	p.ast.assertMatchesTypes([]lexer.TokenType{
 		lexer.GIVEN,
 		lexer.AND,
+		lexer.WHEN,
+		lexer.THEN,
+		lexer.EOF,
+	}, t)
+}
+
+func Test_parse_step_group_multiline(t *testing.T) {
+	p := &parser{
+		lx:   lexer.New(strings.NewReader(testStepSamples["step_group_multiline"])),
+		path: "some.feature",
+		ast:  newAST(),
+	}
+	steps, err := p.parseSteps()
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	if len(steps) != 4 {
+		t.Fatalf("expected four steps to be parsed, but got: %d", len(steps))
+	}
+
+	steps[0].assertType(Given, t)
+	steps[0].assertText(`an admin user "John Doe"`, t)
+	steps[1].assertType(Given, t)
+	steps[1].assertText(`user "John Doe" belongs user "John Doe" belongs`, t)
+	steps[2].assertType(When, t)
+	steps[2].assertText("I do something", t)
+	steps[3].assertType(Then, t)
+	steps[3].assertText("I expect the result", t)
+
+	p.next() // step over to eof
+	p.ast.assertMatchesTypes([]lexer.TokenType{
+		lexer.GIVEN,
+		lexer.AND,
+		lexer.TEXT,
 		lexer.WHEN,
 		lexer.THEN,
 		lexer.EOF,
