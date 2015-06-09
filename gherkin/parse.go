@@ -189,11 +189,6 @@ func (p *parser) parseSteps() (steps []*Step, err error) {
 				step.Type = Given
 			}
 		}
-		// step text maybe multilined
-		// @TODO: think about use case when there is a different token matched instead of TEXT
-		for ; p.peek().OfType(lexer.TEXT); tok = p.next() {
-			step.Text += " " + tok.Value
-		}
 
 		if step.Text[len(step.Text)-1] == ':' {
 			next := p.peek()

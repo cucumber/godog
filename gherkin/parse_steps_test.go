@@ -38,9 +38,8 @@ var testStepSamples = map[string]string{
   When I do something
   Then something should happen`,
 
-	"step_group_multiline": `Given an admin user "John Doe"
-  And user "John Doe" belongs
-	to user group "editors"
+	"step_group_another": `Given an admin user "John Doe"
+  And user "John Doe" belongs to user group "editors"
   When I do something
   Then I expect the result`,
 }
@@ -274,9 +273,9 @@ func Test_parse_step_group(t *testing.T) {
 	}, t)
 }
 
-func Test_parse_step_group_multiline(t *testing.T) {
+func Test_parse_another_step_group(t *testing.T) {
 	p := &parser{
-		lx:   lexer.New(strings.NewReader(testStepSamples["step_group_multiline"])),
+		lx:   lexer.New(strings.NewReader(testStepSamples["step_group_another"])),
 		path: "some.feature",
 		ast:  newAST(),
 	}
@@ -291,7 +290,7 @@ func Test_parse_step_group_multiline(t *testing.T) {
 	steps[0].assertType(Given, t)
 	steps[0].assertText(`an admin user "John Doe"`, t)
 	steps[1].assertType(Given, t)
-	steps[1].assertText(`user "John Doe" belongs user "John Doe" belongs`, t)
+	steps[1].assertText(`user "John Doe" belongs to user group "editors"`, t)
 	steps[2].assertType(When, t)
 	steps[2].assertText("I do something", t)
 	steps[3].assertType(Then, t)
@@ -301,7 +300,6 @@ func Test_parse_step_group_multiline(t *testing.T) {
 	p.ast.assertMatchesTypes([]lexer.TokenType{
 		lexer.GIVEN,
 		lexer.AND,
-		lexer.TEXT,
 		lexer.WHEN,
 		lexer.THEN,
 		lexer.EOF,
