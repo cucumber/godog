@@ -8,7 +8,7 @@ import (
 )
 
 var testFeatureSamples = map[string]string{
-	"full": `Feature: gherkin parser
+	"feature": `Feature: gherkin parser
   in order to run features
   as gherkin lexer
   I need to be able to parse a feature`,
@@ -20,9 +20,15 @@ var testFeatureSamples = map[string]string{
   Feature: gherkin`,
 }
 
+func (f *Feature) assertTitle(title string, t *testing.T) {
+	if f.Title != title {
+		t.Fatalf("expected feature title to be '%s', but got '%s'", title, f.Title)
+	}
+}
+
 func Test_parse_normal_feature(t *testing.T) {
 	p := &parser{
-		lx:   lexer.New(strings.NewReader(testFeatureSamples["full"])),
+		lx:   lexer.New(strings.NewReader(testFeatureSamples["feature"])),
 		path: "some.feature",
 		ast:  newAST(),
 	}
@@ -42,7 +48,6 @@ func Test_parse_normal_feature(t *testing.T) {
 		lexer.TEXT,
 		lexer.TEXT,
 		lexer.TEXT,
-		lexer.EOF,
 	}, t)
 }
 
@@ -65,7 +70,6 @@ func Test_parse_feature_without_description(t *testing.T) {
 
 	ft.AST.assertMatchesTypes([]lexer.TokenType{
 		lexer.FEATURE,
-		lexer.EOF,
 	}, t)
 }
 
@@ -79,9 +83,6 @@ func Test_parse_empty_feature_file(t *testing.T) {
 	if err != ErrEmpty {
 		t.Fatalf("expected an empty file error, but got none")
 	}
-	p.ast.assertMatchesTypes([]lexer.TokenType{
-		lexer.EOF,
-	}, t)
 }
 
 func Test_parse_invalid_feature_with_random_text(t *testing.T) {
@@ -120,6 +121,5 @@ func Test_parse_feature_with_newlines(t *testing.T) {
 		lexer.NEW_LINE,
 		lexer.NEW_LINE,
 		lexer.FEATURE,
-		lexer.EOF,
 	}, t)
 }

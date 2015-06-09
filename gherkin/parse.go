@@ -12,10 +12,21 @@ import (
 
 type Tag string
 
+type Tags []Tag
+
+func (t Tags) Has(tag Tag) bool {
+	for _, tg := range t {
+		if tg == tag {
+			return true
+		}
+	}
+	return false
+}
+
 type Scenario struct {
 	Title string
 	Steps []*Step
-	Tags  []Tag
+	Tags  Tags
 }
 
 type Background struct {
@@ -38,7 +49,8 @@ type Step struct {
 }
 
 type Feature struct {
-	Tags        []Tag
+	Path        string
+	Tags        Tags
 	Description string
 	Title       string
 	Background  *Background
@@ -65,9 +77,10 @@ var allSteps = []lexer.TokenType{
 var ErrEmpty = errors.New("the feature file is empty")
 
 type parser struct {
-	lx   *lexer.Lexer
-	path string
-	ast  *AST
+	lx     *lexer.Lexer
+	path   string
+	ast    *AST
+	peeked *lexer.Token
 }
 
 func Parse(path string) (*Feature, error) {
@@ -89,21 +102,23 @@ func (p *parser) next() *lexer.Token {
 	if p.ast.tail != nil && p.ast.tail.value.Type == lexer.EOF {
 		return p.ast.tail.value // has reached EOF, do not record it more than once
 	}
-	tok := p.lx.Next()
+	tok := p.peek()
 	p.ast.addTail(tok)
-	if tok.OfType(lexer.COMMENT, lexer.NEW_LINE) {
-		return p.next()
-	}
+	p.peeked = nil
 	return tok
 }
 
 // peaks into next token, skips comments or new lines
 func (p *parser) peek() *lexer.Token {
-	if tok := p.lx.Peek(); !tok.OfType(lexer.COMMENT, lexer.NEW_LINE) {
-		return tok
+	if p.peeked != nil {
+		return p.peeked
 	}
-	p.next()
-	return p.peek()
+
+	for p.peeked = p.lx.Next(); p.peeked.OfType(lexer.COMMENT, lexer.NEW_LINE); p.peeked = p.lx.Next() {
+		p.ast.addTail(p.peeked) // record comments and newlines
+	}
+
+	return p.peeked
 }
 
 func (p *parser) err(s string, l int) error {
@@ -111,48 +126,51 @@ func (p *parser) err(s string, l int) error {
 }
 
 func (p *parser) parseFeature() (ft *Feature, err error) {
-	var tok *lexer.Token = p.next()
-	if tok.Type == lexer.EOF {
-		return nil, ErrEmpty
+
+	ft = &Feature{Path: p.path, AST: p.ast}
+	switch p.peek().Type {
+	case lexer.EOF:
+		// if p.ast.tail != nil {
+		// 	log.Println("peeked at:", p.peek().Type, p.ast.tail.prev.value.Type)
+		// }
+		return ft, ErrEmpty
+	case lexer.TAGS:
+		ft.Tags = p.parseTags()
 	}
 
-	ft = &Feature{}
-	if tok.Type == lexer.TAGS {
-		if p.peek().Type != lexer.FEATURE {
-			return ft, p.err("tags must be a single line next to a feature definition", tok.Line)
-		}
-		ft.Tags = p.parseTags(tok.Value)
-		tok = p.next()
-	}
-
+	tok := p.next()
 	if tok.Type != lexer.FEATURE {
 		return ft, p.err("expected a file to begin with a feature definition, but got '"+tok.Type.String()+"' instead", tok.Line)
 	}
-
 	ft.Title = tok.Value
+
 	var desc []string
 	for ; p.peek().Type == lexer.TEXT; tok = p.next() {
 		desc = append(desc, tok.Value)
 	}
 	ft.Description = strings.Join(desc, "\n")
 
-	tok = p.next()
-	for tok = p.next(); tok.Type != lexer.EOF; p.next() {
+	for tok = p.peek(); tok.Type != lexer.EOF; tok = p.peek() {
+		// log.Println("loop peeked:", tok.Type)
 		// there may be a background
 		if tok.Type == lexer.BACKGROUND {
 			if ft.Background != nil {
 				return ft, p.err("there can only be a single background section, but found another", tok.Line)
 			}
+
 			ft.Background = &Background{}
+			p.next() // jump to background steps
 			if ft.Background.Steps, err = p.parseSteps(); err != nil {
 				return ft, err
 			}
-			continue
+			tok = p.peek() // peek to scenario or tags
 		}
+
 		// there may be tags before scenario
 		sc := &Scenario{}
 		if tok.Type == lexer.TAGS {
-			sc.Tags, tok = p.parseTags(tok.Value), p.next()
+			sc.Tags = p.parseTags()
+			tok = p.peek()
 		}
 
 		// there must be a scenario otherwise
@@ -161,19 +179,18 @@ func (p *parser) parseFeature() (ft *Feature, err error) {
 		}
 
 		sc.Title = tok.Value
+		p.next() // jump to scenario steps
 		if sc.Steps, err = p.parseSteps(); err != nil {
 			return ft, err
 		}
 		ft.Scenarios = append(ft.Scenarios, sc)
 	}
 
-	ft.AST = p.ast
 	return ft, nil
 }
 
 func (p *parser) parseSteps() (steps []*Step, err error) {
 	for tok := p.peek(); tok.OfType(allSteps...); tok = p.peek() {
-		p.next() // move over the step
 		step := &Step{Text: tok.Value}
 		switch tok.Type {
 		case lexer.GIVEN:
@@ -190,9 +207,10 @@ func (p *parser) parseSteps() (steps []*Step, err error) {
 			}
 		}
 
+		p.next() // have read a peeked step
 		if step.Text[len(step.Text)-1] == ':' {
-			next := p.peek()
-			switch next.Type {
+			tok = p.peek()
+			switch tok.Type {
 			case lexer.PYSTRING:
 				if err := p.parsePystring(step); err != nil {
 					return steps, err
@@ -202,12 +220,13 @@ func (p *parser) parseSteps() (steps []*Step, err error) {
 					return steps, err
 				}
 			default:
-				return steps, p.err("pystring or table row was expected, but got: '"+next.Type.String()+"' instead", next.Line)
+				return steps, p.err("pystring or table row was expected, but got: '"+tok.Type.String()+"' instead", tok.Line)
 			}
 		}
 
 		steps = append(steps, step)
 	}
+
 	return steps, nil
 }
 
@@ -242,11 +261,11 @@ func (p *parser) parseTable(s *Step) error {
 	return nil
 }
 
-func (p *parser) parseTags(s string) (tags []Tag) {
-	for _, tag := range strings.Split(s, " ") {
-		t := strings.Trim(tag, "@ ")
-		if len(t) > 0 {
-			tags = append(tags, Tag(t))
+func (p *parser) parseTags() (tags Tags) {
+	for _, tag := range strings.Split(p.next().Value, " ") {
+		t := Tag(strings.Trim(tag, "@ "))
+		if len(t) > 0 && !tags.Has(t) {
+			tags = append(tags, t)
 		}
 	}
 	return

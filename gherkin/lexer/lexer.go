@@ -9,7 +9,6 @@ import (
 
 type Lexer struct {
 	reader *bufio.Reader
-	peek   *Token
 	lines  int
 }
 
@@ -19,30 +18,7 @@ func New(r io.Reader) *Lexer {
 	}
 }
 
-func (l *Lexer) Next(skip ...TokenType) (t *Token) {
-	if l.peek != nil {
-		t = l.peek
-		l.peek = nil
-	} else {
-		t = l.read()
-	}
-
-	for _, typ := range skip {
-		if t.Type == typ {
-			return l.Next(skip...)
-		}
-	}
-	return
-}
-
-func (l *Lexer) Peek() *Token {
-	if l.peek == nil {
-		l.peek = l.read()
-	}
-	return l.peek
-}
-
-func (l *Lexer) read() *Token {
+func (l *Lexer) Next() *Token {
 	line, err := l.reader.ReadString(byte('\n'))
 	if err != nil && len(line) == 0 {
 		return &Token{
