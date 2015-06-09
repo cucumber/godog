@@ -130,9 +130,6 @@ func (p *parser) parseFeature() (ft *Feature, err error) {
 	ft = &Feature{Path: p.path, AST: p.ast}
 	switch p.peek().Type {
 	case lexer.EOF:
-		// if p.ast.tail != nil {
-		// 	log.Println("peeked at:", p.peek().Type, p.ast.tail.prev.value.Type)
-		// }
 		return ft, ErrEmpty
 	case lexer.TAGS:
 		ft.Tags = p.parseTags()
@@ -151,7 +148,6 @@ func (p *parser) parseFeature() (ft *Feature, err error) {
 	ft.Description = strings.Join(desc, "\n")
 
 	for tok = p.peek(); tok.Type != lexer.EOF; tok = p.peek() {
-		// log.Println("loop peeked:", tok.Type)
 		// there may be a background
 		if tok.Type == lexer.BACKGROUND {
 			if ft.Background != nil {
@@ -167,9 +163,13 @@ func (p *parser) parseFeature() (ft *Feature, err error) {
 		}
 
 		// there may be tags before scenario
-		sc := &Scenario{}
+		sc := &Scenario{Tags: ft.Tags}
 		if tok.Type == lexer.TAGS {
-			sc.Tags = p.parseTags()
+			for _, t := range p.parseTags() {
+				if !sc.Tags.Has(t) {
+					sc.Tags = append(sc.Tags, t)
+				}
+			}
 			tok = p.peek()
 		}
 

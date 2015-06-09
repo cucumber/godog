@@ -26,6 +26,12 @@ func (f *Feature) assertTitle(title string, t *testing.T) {
 	}
 }
 
+func (f *Feature) assertHasNumScenarios(n int, t *testing.T) {
+	if len(f.Scenarios) != n {
+		t.Fatalf("expected feature to have '%d' scenarios, but got '%d'", n, len(f.Scenarios))
+	}
+}
+
 func Test_parse_normal_feature(t *testing.T) {
 	p := &parser{
 		lx:   lexer.New(strings.NewReader(testFeatureSamples["feature"])),

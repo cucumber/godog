@@ -7,6 +7,18 @@ import (
 	"github.com/l3pp4rd/go-behat/gherkin/lexer"
 )
 
+func (s *Scenario) assertHasTag(tag string, t *testing.T) {
+	if !s.Tags.Has(Tag(tag)) {
+		t.Fatalf("expected scenario '%s' to have '%s' tag, but it did not", s.Title, tag)
+	}
+}
+
+func (s *Scenario) assertHasNumTags(n int, t *testing.T) {
+	if len(s.Tags) != n {
+		t.Fatalf("expected scenario '%s' to have '%d' tags, but it has '%d'", s.Title, n, len(s.Tags))
+	}
+}
+
 func Test_parse_feature_file(t *testing.T) {
 
 	content := strings.Join([]string{
@@ -70,4 +82,20 @@ func Test_parse_feature_file(t *testing.T) {
 		lexer.TAGS,
 		lexer.SCENARIO,
 	}, t)
+
+	ft.assertHasNumScenarios(3, t)
+
+	ft.Scenarios[0].assertHasNumTags(2, t)
+	ft.Scenarios[0].assertHasTag("global-one", t)
+	ft.Scenarios[0].assertHasTag("cust", t)
+
+	ft.Scenarios[1].assertHasNumTags(3, t)
+	ft.Scenarios[1].assertHasTag("global-one", t)
+	ft.Scenarios[1].assertHasTag("cust", t)
+	ft.Scenarios[1].assertHasTag("user", t)
+
+	ft.Scenarios[2].assertHasNumTags(3, t)
+	ft.Scenarios[2].assertHasTag("global-one", t)
+	ft.Scenarios[2].assertHasTag("cust", t)
+	ft.Scenarios[2].assertHasTag("todo", t)
 }
