@@ -20,19 +20,6 @@ var testFeatureSamples = map[string]string{
   Feature: gherkin`,
 }
 
-func (a *AST) assertMatchesTypes(expected []lexer.TokenType, t *testing.T) {
-	key := -1
-	for item := a.head; item != nil; item = item.next {
-		key += 1
-		if expected[key] != item.value.Type {
-			t.Fatalf("expected ast token '%s', but got '%s' at position: %d", expected[key], item.value.Type, key)
-		}
-	}
-	if len(expected)-1 != key {
-		t.Fatalf("expected ast length %d, does not match actual: %d", len(expected), key+1)
-	}
-}
-
 func Test_parse_normal_feature(t *testing.T) {
 	p := &parser{
 		lx:   lexer.New(strings.NewReader(testFeatureSamples["full"])),

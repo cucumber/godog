@@ -1,9 +1,10 @@
 package lexer
 
 type Token struct {
-	Type         TokenType
-	Line, Indent int
-	Value        string
+	Type         TokenType // type of token
+	Line, Indent int       // line and indentation number
+	Value        string    // interpreted value
+	Text         string    // same text as read
 }
 
 func (t *Token) OfType(all ...TokenType) bool {

@@ -66,6 +66,7 @@ func (l *Lexer) read() *Token {
 			Indent: len(m[1]),
 			Line:   l.lines - 1,
 			Value:  m[2],
+			Text:   line,
 		}
 	}
 	// pystring
@@ -74,6 +75,7 @@ func (l *Lexer) read() *Token {
 			Type:   PYSTRING,
 			Indent: len(m[1]),
 			Line:   l.lines - 1,
+			Text:   line,
 		}
 	}
 	// step
@@ -82,6 +84,7 @@ func (l *Lexer) read() *Token {
 			Indent: len(m[1]),
 			Line:   l.lines - 1,
 			Value:  m[3],
+			Text:   line,
 		}
 		switch m[2] {
 		case "Given":
@@ -104,6 +107,7 @@ func (l *Lexer) read() *Token {
 			Indent: len(m[1]),
 			Line:   l.lines - 1,
 			Value:  m[2],
+			Text:   line,
 		}
 	}
 	// background
@@ -112,6 +116,7 @@ func (l *Lexer) read() *Token {
 			Type:   BACKGROUND,
 			Indent: len(m[1]),
 			Line:   l.lines - 1,
+			Text:   line,
 		}
 	}
 	// feature
@@ -121,6 +126,7 @@ func (l *Lexer) read() *Token {
 			Indent: len(m[1]),
 			Line:   l.lines - 1,
 			Value:  m[2],
+			Text:   line,
 		}
 	}
 	// tags
@@ -130,6 +136,7 @@ func (l *Lexer) read() *Token {
 			Indent: len(m[1]),
 			Line:   l.lines - 1,
 			Value:  m[2],
+			Text:   line,
 		}
 	}
 	// table row
@@ -139,6 +146,7 @@ func (l *Lexer) read() *Token {
 			Indent: len(m[1]),
 			Line:   l.lines - 1,
 			Value:  m[2],
+			Text:   line,
 		}
 	}
 	// text
@@ -148,5 +156,6 @@ func (l *Lexer) read() *Token {
 		Line:   l.lines - 1,
 		Value:  text,
 		Indent: len(line) - len(text),
+		Text:   line,
 	}
 }

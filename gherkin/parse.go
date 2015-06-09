@@ -171,10 +171,9 @@ func (p *parser) parseFeature() (ft *Feature, err error) {
 	return ft, nil
 }
 
-func (p *parser) parseSteps() ([]*Step, error) {
-	var steps []*Step
-	var tok *lexer.Token
-	for ; p.peek().OfType(allSteps...); tok = p.next() {
+func (p *parser) parseSteps() (steps []*Step, err error) {
+	for tok := p.peek(); tok.OfType(allSteps...); tok = p.peek() {
+		p.next() // move over the step
 		step := &Step{Text: tok.Value}
 		switch tok.Type {
 		case lexer.GIVEN:
@@ -183,14 +182,14 @@ func (p *parser) parseSteps() ([]*Step, error) {
 			step.Type = When
 		case lexer.THEN:
 			step.Type = Then
-		case lexer.AND:
-		case lexer.BUT:
+		case lexer.AND, lexer.BUT:
 			if len(steps) > 0 {
 				step.Type = steps[len(steps)-1].Type
 			} else {
 				step.Type = Given
 			}
 		}
+		// step text maybe multilined
 		for ; p.peek().OfType(lexer.TEXT); tok = p.next() {
 			step.Text += " " + tok.Value
 		}
@@ -219,14 +218,14 @@ func (p *parser) parseSteps() ([]*Step, error) {
 func (p *parser) parsePystring(s *Step) error {
 	var tok *lexer.Token
 	started := p.next() // skip the start of pystring
-	text := ""
+	var lines []string
 	for tok = p.next(); !tok.OfType(lexer.EOF, lexer.PYSTRING); tok = p.next() {
-		text += strings.Repeat(" ", tok.Indent) + tok.Value
+		lines = append(lines, tok.Text)
 	}
 	if tok.Type == lexer.EOF {
 		return fmt.Errorf("pystring which was opened on %s:%d was not closed", p.path, started.Line)
 	}
-	s.PyString = &PyString{Body: text}
+	s.PyString = &PyString{Body: strings.Join(lines, "\n")}
 	return nil
 }
 
@@ -234,7 +233,7 @@ func (p *parser) parseTable(s *Step) error {
 	s.Table = &Table{}
 	for row := p.peek(); row.Type == lexer.TABLE_ROW; row = p.peek() {
 		var cols []string
-		for _, r := range strings.Split(row.Value, "|") {
+		for _, r := range strings.Split(strings.Trim(row.Value, "|"), "|") {
 			cols = append(cols, strings.TrimFunc(r, unicode.IsSpace))
 		}
 		// ensure the same colum number for each row
