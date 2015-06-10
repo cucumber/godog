@@ -37,12 +37,14 @@ func (l *Lexer) Next() *Token {
 	}
 	// comment
 	if m := matchers["comment"].FindStringSubmatch(line); len(m) > 0 {
+		comment := strings.TrimSpace(m[2])
 		return &Token{
-			Type:   COMMENT,
-			Indent: len(m[1]),
-			Line:   l.lines - 1,
-			Value:  m[2],
-			Text:   line,
+			Type:    COMMENT,
+			Indent:  len(m[1]),
+			Line:    l.lines - 1,
+			Value:   comment,
+			Text:    line,
+			Comment: comment,
 		}
 	}
 	// pystring
@@ -57,10 +59,11 @@ func (l *Lexer) Next() *Token {
 	// step
 	if m := matchers["step"].FindStringSubmatch(line); len(m) > 0 {
 		tok := &Token{
-			Indent: len(m[1]),
-			Line:   l.lines - 1,
-			Value:  m[3],
-			Text:   line,
+			Indent:  len(m[1]),
+			Line:    l.lines - 1,
+			Value:   strings.TrimSpace(m[3]),
+			Text:    line,
+			Comment: strings.Trim(m[4], " #"),
 		}
 		switch m[2] {
 		case "Given":
@@ -79,50 +82,55 @@ func (l *Lexer) Next() *Token {
 	// scenario
 	if m := matchers["scenario"].FindStringSubmatch(line); len(m) > 0 {
 		return &Token{
-			Type:   SCENARIO,
-			Indent: len(m[1]),
-			Line:   l.lines - 1,
-			Value:  m[2],
-			Text:   line,
+			Type:    SCENARIO,
+			Indent:  len(m[1]),
+			Line:    l.lines - 1,
+			Value:   strings.TrimSpace(m[2]),
+			Text:    line,
+			Comment: strings.Trim(m[3], " #"),
 		}
 	}
 	// background
 	if m := matchers["background"].FindStringSubmatch(line); len(m) > 0 {
 		return &Token{
-			Type:   BACKGROUND,
-			Indent: len(m[1]),
-			Line:   l.lines - 1,
-			Text:   line,
+			Type:    BACKGROUND,
+			Indent:  len(m[1]),
+			Line:    l.lines - 1,
+			Text:    line,
+			Comment: strings.Trim(m[2], " #"),
 		}
 	}
 	// feature
 	if m := matchers["feature"].FindStringSubmatch(line); len(m) > 0 {
 		return &Token{
-			Type:   FEATURE,
-			Indent: len(m[1]),
-			Line:   l.lines - 1,
-			Value:  m[2],
-			Text:   line,
+			Type:    FEATURE,
+			Indent:  len(m[1]),
+			Line:    l.lines - 1,
+			Value:   strings.TrimSpace(m[2]),
+			Text:    line,
+			Comment: strings.Trim(m[3], " #"),
 		}
 	}
 	// tags
 	if m := matchers["tags"].FindStringSubmatch(line); len(m) > 0 {
 		return &Token{
-			Type:   TAGS,
-			Indent: len(m[1]),
-			Line:   l.lines - 1,
-			Value:  m[2],
-			Text:   line,
+			Type:    TAGS,
+			Indent:  len(m[1]),
+			Line:    l.lines - 1,
+			Value:   strings.TrimSpace(m[2]),
+			Text:    line,
+			Comment: strings.Trim(m[3], " #"),
 		}
 	}
 	// table row
 	if m := matchers["table_row"].FindStringSubmatch(line); len(m) > 0 {
 		return &Token{
-			Type:   TABLE_ROW,
-			Indent: len(m[1]),
-			Line:   l.lines - 1,
-			Value:  m[2],
-			Text:   line,
+			Type:    TABLE_ROW,
+			Indent:  len(m[1]),
+			Line:    l.lines - 1,
+			Value:   strings.TrimSpace(m[2]),
+			Text:    line,
+			Comment: strings.Trim(m[3], " #"),
 		}
 	}
 	// text

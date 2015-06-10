@@ -24,13 +24,15 @@ func (t Tags) Has(tag Tag) bool {
 }
 
 type Scenario struct {
-	Title string
-	Steps []*Step
-	Tags  Tags
+	Title   string
+	Steps   []*Step
+	Tags    Tags
+	Comment string
 }
 
 type Background struct {
-	Steps []*Step
+	Steps   []*Step
+	Comment string
 }
 
 type StepType string
@@ -43,6 +45,7 @@ const (
 
 type Step struct {
 	Text     string
+	Comment  string
 	Type     StepType
 	PyString *PyString
 	Table    *Table
@@ -56,6 +59,7 @@ type Feature struct {
 	Background  *Background
 	Scenarios   []*Scenario
 	AST         *AST
+	Comment     string
 }
 
 type PyString struct {
@@ -140,6 +144,7 @@ func (p *parser) parseFeature() (ft *Feature, err error) {
 		return ft, p.err("expected a file to begin with a feature definition, but got '"+tok.Type.String()+"' instead", tok.Line)
 	}
 	ft.Title = tok.Value
+	ft.Comment = tok.Comment
 
 	var desc []string
 	for ; p.peek().Type == lexer.TEXT; tok = p.next() {
@@ -154,7 +159,7 @@ func (p *parser) parseFeature() (ft *Feature, err error) {
 				return ft, p.err("there can only be a single background section, but found another", tok.Line)
 			}
 
-			ft.Background = &Background{}
+			ft.Background = &Background{Comment: tok.Comment}
 			p.next() // jump to background steps
 			if ft.Background.Steps, err = p.parseSteps(); err != nil {
 				return ft, err
@@ -179,6 +184,7 @@ func (p *parser) parseFeature() (ft *Feature, err error) {
 		}
 
 		sc.Title = tok.Value
+		sc.Comment = tok.Comment
 		p.next() // jump to scenario steps
 		if sc.Steps, err = p.parseSteps(); err != nil {
 			return ft, err
@@ -191,7 +197,7 @@ func (p *parser) parseFeature() (ft *Feature, err error) {
 
 func (p *parser) parseSteps() (steps []*Step, err error) {
 	for tok := p.peek(); tok.OfType(allSteps...); tok = p.peek() {
-		step := &Step{Text: tok.Value}
+		step := &Step{Text: tok.Value, Comment: tok.Comment}
 		switch tok.Type {
 		case lexer.GIVEN:
 			step.Type = Given

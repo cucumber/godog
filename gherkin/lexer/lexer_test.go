@@ -179,7 +179,7 @@ func Test_table_row_reading(t *testing.T) {
 			t.Fatalf("expected token indentation '%d' at position: %d, is not the same as actual: '%d'", expectedIndents[i], i, indents[i])
 		}
 	}
-	if values[2] != "| name | lastname | num |" {
+	if values[2] != "name | lastname | num |" {
 		t.Fatalf("table row value '%s' was not expected", values[2])
 	}
 }

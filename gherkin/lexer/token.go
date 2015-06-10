@@ -5,6 +5,7 @@ type Token struct {
 	Line, Indent int       // line and indentation number
 	Value        string    // interpreted value
 	Text         string    // same text as read
+	Comment      string    // a comment
 }
 
 func (t *Token) OfType(all ...TokenType) bool {

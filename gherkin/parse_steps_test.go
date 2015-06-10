@@ -13,6 +13,8 @@ var testStepSamples = map[string]string{
 	"given_table_hash": `Given there are users:
   | name | John Doe |`,
 
+	"step_comment": `Given I'm an admin # sets admin permissions`,
+
 	"given_table": `Given there are users:
   | name | lastname |
   | John | Doe      |
@@ -65,6 +67,12 @@ func (s *Step) assertPyString(text string, t *testing.T) {
 	}
 }
 
+func (s *Step) assertComment(comment string, t *testing.T) {
+	if s.Comment != comment {
+		t.Fatalf("expected step '%s' comment to be '%s', but got '%s'", s.Text, comment, s.Comment)
+	}
+}
+
 func (s *Step) assertTableRow(t *testing.T, num int, cols ...string) {
 	if s.Table == nil {
 		t.Fatalf("step '%s %s' has no table", s.Type, s.Text)
@@ -98,6 +106,31 @@ func Test_parse_basic_given_step(t *testing.T) {
 
 	steps[0].assertType(Given, t)
 	steps[0].assertText("I'm a step", t)
+
+	p.next() // step over to eof
+	p.ast.assertMatchesTypes([]lexer.TokenType{
+		lexer.GIVEN,
+		lexer.EOF,
+	}, t)
+}
+
+func Test_parse_step_with_comment(t *testing.T) {
+	p := &parser{
+		lx:   lexer.New(strings.NewReader(testStepSamples["step_comment"])),
+		path: "some.feature",
+		ast:  newAST(),
+	}
+	steps, err := p.parseSteps()
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	if len(steps) != 1 {
+		t.Fatalf("expected one step to be parsed")
+	}
+
+	steps[0].assertType(Given, t)
+	steps[0].assertText("I'm an admin", t)
+	steps[0].assertComment("sets admin permissions", t)
 
 	p.next() // step over to eof
 	p.ast.assertMatchesTypes([]lexer.TokenType{
