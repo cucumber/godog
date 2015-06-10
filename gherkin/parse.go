@@ -168,7 +168,8 @@ func (p *parser) parseFeature() (ft *Feature, err error) {
 		}
 
 		// there may be tags before scenario
-		sc := &Scenario{Tags: ft.Tags}
+		sc := &Scenario{}
+		sc.Tags = append(sc.Tags, ft.Tags...)
 		if tok.Type == lexer.TAGS {
 			for _, t := range p.parseTags() {
 				if !sc.Tags.Has(t) {
