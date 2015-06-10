@@ -1,6 +1,6 @@
 package gherkin
 
-import "github.com/l3pp4rd/go-behat/gherkin/lexer"
+import "github.com/DATA-DOG/godog/gherkin/lexer"
 
 type item struct {
 	next, prev *item

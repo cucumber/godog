@@ -3,7 +3,7 @@ package gherkin
 import (
 	"testing"
 
-	"github.com/l3pp4rd/go-behat/gherkin/lexer"
+	"github.com/DATA-DOG/godog/gherkin/lexer"
 )
 
 func (a *AST) assertMatchesTypes(expected []lexer.TokenType, t *testing.T) {

@@ -1,4 +1,4 @@
-package behat
+package godog
 
 import "regexp"
 

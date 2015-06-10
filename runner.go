@@ -1,1 +1,1 @@
-package behat
+package godog

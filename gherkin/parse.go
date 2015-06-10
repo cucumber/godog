@@ -7,7 +7,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/l3pp4rd/go-behat/gherkin/lexer"
+	"github.com/DATA-DOG/godog/gherkin/lexer"
 )
 
 type Tag string
