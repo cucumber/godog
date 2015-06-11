@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.org/DATA-DOG/godog.png)](https://travis-ci.org/DATA-DOG/godog)
+[![GoDoc](https://godoc.org/github.com/DATA-DOG/godog?status.svg)](https://godoc.org/github.com/DATA-DOG/godog)
+gherkin [![GoDoc](https://godoc.org/github.com/DATA-DOG/godog/gherkin?status.svg)](https://godoc.org/github.com/DATA-DOG/godog/gherkin)
 
 # Godog
 
