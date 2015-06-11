@@ -1,6 +1,5 @@
 [![Build Status](https://travis-ci.org/DATA-DOG/godog.png)](https://travis-ci.org/DATA-DOG/godog)
 [![GoDoc](https://godoc.org/github.com/DATA-DOG/godog?status.svg)](https://godoc.org/github.com/DATA-DOG/godog)
-gherkin [![GoDoc](https://godoc.org/github.com/DATA-DOG/godog/gherkin?status.svg)](https://godoc.org/github.com/DATA-DOG/godog/gherkin)
 
 # Godog
 
@@ -15,10 +14,17 @@ The project is inspired by [behat][behat] and [cucumber][cucumber] and is based 
 The work is still in progress and is not functional yet, neither it is intended for production usage.
 The general public API may brake.
 
+### Documentation
+
+See [godoc][godoc] and [gherkin godoc][godoc_gherkin].
+See **.travis.yml** for supported **go** versions.
+
 ### License
 
 Licensed under the [three clause BSD license][license]
 
+[godoc]: http://godoc.org/github.com/DATA-DOG/godog "Documentation on godoc"
+[godoc_gherkin]: http://godoc.org/github.com/DATA-DOG/godog/gherkin "Documentation on godoc for gherkin"
 [golang]: https://golang.org/  "GO programming language"
 [behat]: http://docs.behat.org/ "Behavior driven development framework for PHP"
 [cucumber]: https://cucumber.io/ "Behavior driven development framework for Ruby"
