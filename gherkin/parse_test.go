@@ -35,7 +35,9 @@ func Test_parse_feature_file(t *testing.T) {
 		testStepSamples["step_group_another"] + "\n",
 		// scenario - no steps yet
 		indent(2, "@todo"), // cust - tag is repeated
-		indent(2, "Scenario: user is able to reset his password"),
+		indent(2, "Scenario: user is able to reset his password") + "\n",
+		// scenario outline
+		testLexerSamples["scenario_outline_with_examples"],
 	}, "\n")
 
 	p := &parser{
@@ -79,9 +81,22 @@ func Test_parse_feature_file(t *testing.T) {
 
 		TAGS,
 		SCENARIO,
+		NEW_LINE,
+
+		SCENARIO_OUTLINE,
+		GIVEN,
+		AND,
+		AND,
+		WHEN,
+		THEN,
+		NEW_LINE,
+		EXAMPLES,
+		TABLE_ROW,
+		TABLE_ROW,
+		TABLE_ROW,
 	}, t)
 
-	ft.assertHasNumScenarios(3, t)
+	ft.assertHasNumScenarios(4, t)
 
 	ft.Scenarios[0].assertHasNumTags(2, t)
 	ft.Scenarios[0].assertHasTag("global-one", t)
@@ -96,4 +111,6 @@ func Test_parse_feature_file(t *testing.T) {
 	ft.Scenarios[2].assertHasTag("global-one", t)
 	ft.Scenarios[2].assertHasTag("cust", t)
 	ft.Scenarios[2].assertHasTag("todo", t)
+
+	ft.Scenarios[3].assertHasNumTags(2, t)
 }

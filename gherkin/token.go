@@ -20,6 +20,8 @@ const (
 	FEATURE
 	BACKGROUND
 	SCENARIO
+	SCENARIO_OUTLINE
+	EXAMPLES
 
 	steps
 	GIVEN
@@ -51,6 +53,10 @@ func (t TokenType) String() string {
 		return "background"
 	case SCENARIO:
 		return "scenario"
+	case SCENARIO_OUTLINE:
+		return "scenario outline"
+	case EXAMPLES:
+		return "examples"
 	case GIVEN:
 		return "given step"
 	case WHEN:

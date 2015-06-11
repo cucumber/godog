@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-var lexerSamples = map[string]string{
+var testLexerSamples = map[string]string{
 	"feature": `Feature: gherkin lexer
   in order to run features
   as gherkin lexer
@@ -27,10 +27,22 @@ var lexerSamples = map[string]string{
       | name | lastname | num |
       | Jack | Sparrow  | 4   |
       | John | Doe      | 79  |`,
+
+	"scenario_outline_with_examples": `Scenario Outline: ls supports kinds of options
+	  Given I am in a directory "test"
+      And I have a file named "foo"
+      And I have a file named "bar"
+      When I run "ls" with options "<options>"
+	  Then I should see "<result>"
+
+	Examples:
+	  | options | result  |
+	  | -t      | bar foo |
+	  | -tr     | foo bar |`,
 }
 
 func Test_feature_read(t *testing.T) {
-	l := newLexer(strings.NewReader(lexerSamples["feature"]))
+	l := newLexer(strings.NewReader(testLexerSamples["feature"]))
 	tok := l.read()
 	if tok.Type != FEATURE {
 		t.Fatalf("Expected a 'feature' type, but got: '%s'", tok.Type)
@@ -99,16 +111,16 @@ func Test_feature_read(t *testing.T) {
 
 func Test_minimal_feature(t *testing.T) {
 	file := strings.Join([]string{
-		lexerSamples["feature"] + "\n",
+		testLexerSamples["feature"] + "\n",
 
-		indent(2, lexerSamples["background"]),
-		indent(4, lexerSamples["step_given"]) + "\n",
+		indent(2, testLexerSamples["background"]),
+		indent(4, testLexerSamples["step_given"]) + "\n",
 
-		indent(2, lexerSamples["comment"]),
-		indent(2, lexerSamples["scenario"]),
-		indent(4, lexerSamples["step_given"]),
-		indent(4, lexerSamples["step_when"]),
-		indent(4, lexerSamples["step_then"]),
+		indent(2, testLexerSamples["comment"]),
+		indent(2, testLexerSamples["scenario"]),
+		indent(4, testLexerSamples["step_given"]),
+		indent(4, testLexerSamples["step_when"]),
+		indent(4, testLexerSamples["step_then"]),
 	}, "\n")
 	l := newLexer(strings.NewReader(file))
 
@@ -142,9 +154,9 @@ func Test_minimal_feature(t *testing.T) {
 
 func Test_table_row_reading(t *testing.T) {
 	file := strings.Join([]string{
-		indent(2, lexerSamples["background"]),
-		indent(4, lexerSamples["step_given_table"]),
-		indent(4, lexerSamples["step_given"]),
+		indent(2, testLexerSamples["background"]),
+		indent(4, testLexerSamples["step_given_table"]),
+		indent(4, testLexerSamples["step_given"]),
 	}, "\n")
 	l := newLexer(strings.NewReader(file))
 
@@ -177,5 +189,33 @@ func Test_table_row_reading(t *testing.T) {
 	}
 	if values[2] != "name | lastname | num |" {
 		t.Fatalf("table row value '%s' was not expected", values[2])
+	}
+}
+
+func Test_lexing_of_scenario_outline(t *testing.T) {
+	l := newLexer(strings.NewReader(testLexerSamples["scenario_outline_with_examples"]))
+
+	var tokens []TokenType
+	for tok := l.read(); tok.Type != EOF; tok = l.read() {
+		tokens = append(tokens, tok.Type)
+	}
+	expected := []TokenType{
+		SCENARIO_OUTLINE,
+		GIVEN,
+		AND,
+		AND,
+		WHEN,
+		THEN,
+		NEW_LINE,
+
+		EXAMPLES,
+		TABLE_ROW,
+		TABLE_ROW,
+		TABLE_ROW,
+	}
+	for i := 0; i < len(expected); i++ {
+		if expected[i] != tokens[i] {
+			t.Fatalf("expected token '%s' at position: %d, is not the same as actual token: '%s'", expected[i], i, tokens[i])
+		}
 	}
 }

@@ -87,11 +87,21 @@ func (t Tags) Has(tag Tag) bool {
 }
 
 // Scenario describes the scenario details
+//
+// if Examples table is not nil, then it
+// means that this is an outline scenario
+// with a table of examples to be run for
+// each and every row
+//
+// Scenario may have tags which later may
+// be used to filter out or run specific
+// initialization tasks
 type Scenario struct {
-	Title   string
-	Steps   []*Step
-	Tags    Tags
-	Comment string
+	Title    string
+	Steps    []*Step
+	Tags     Tags
+	Examples *Table
+	Comment  string
 }
 
 // Background steps are run before every scenario
@@ -243,32 +253,54 @@ func (p *parser) parseFeature() (ft *Feature, err error) {
 		}
 
 		// there may be tags before scenario
-		sc := &Scenario{}
-		sc.Tags = append(sc.Tags, ft.Tags...)
+		var tags Tags
+		tags = append(tags, ft.Tags...)
 		if tok.Type == TAGS {
 			for _, t := range p.parseTags() {
-				if !sc.Tags.Has(t) {
-					sc.Tags = append(sc.Tags, t)
+				if !tags.Has(t) {
+					tags = append(tags, t)
 				}
 			}
 			tok = p.peek()
 		}
 
-		// there must be a scenario otherwise
-		if tok.Type != SCENARIO {
-			return ft, p.err("expected a scenario, but got '"+tok.Type.String()+"' instead", tok.Line)
+		// there must be a scenario or scenario outline otherwise
+		if !tok.OfType(SCENARIO, SCENARIO_OUTLINE) {
+			return ft, p.err("expected a scenario or scenario outline, but got '"+tok.Type.String()+"' instead", tok.Line)
 		}
 
-		sc.Title = tok.Value
-		sc.Comment = tok.Comment
-		p.next() // jump to scenario steps
-		if sc.Steps, err = p.parseSteps(); err != nil {
+		scenario, err := p.parseScenario()
+		if err != nil {
 			return ft, err
 		}
-		ft.Scenarios = append(ft.Scenarios, sc)
+
+		scenario.Tags = tags
+		ft.Scenarios = append(ft.Scenarios, scenario)
 	}
 
 	return ft, nil
+}
+
+func (p *parser) parseScenario() (s *Scenario, err error) {
+	tok := p.next()
+	s = &Scenario{Title: tok.Value, Comment: tok.Comment}
+	if s.Steps, err = p.parseSteps(); err != nil {
+		return s, err
+	}
+	if examples := p.peek(); examples.Type == EXAMPLES {
+		p.next() // jump over the peeked token
+		peek := p.peek()
+		if peek.Type != TABLE_ROW {
+			return s, p.err(strings.Join([]string{
+				"expected a table row,",
+				"but got '" + peek.Type.String() + "' instead, for scenario outline examples",
+			}, " "), examples.Line)
+		}
+		if s.Examples, err = p.parseTable(); err != nil {
+			return s, err
+		}
+	}
+	return s, nil
 }
 
 func (p *parser) parseSteps() (steps []*Step, err error) {
@@ -294,11 +326,11 @@ func (p *parser) parseSteps() (steps []*Step, err error) {
 			tok = p.peek()
 			switch tok.Type {
 			case PYSTRING:
-				if err := p.parsePystring(step); err != nil {
+				if step.PyString, err = p.parsePystring(); err != nil {
 					return steps, err
 				}
 			case TABLE_ROW:
-				if err := p.parseTable(step); err != nil {
+				if step.Table, err = p.parseTable(); err != nil {
 					return steps, err
 				}
 			default:
@@ -312,7 +344,7 @@ func (p *parser) parseSteps() (steps []*Step, err error) {
 	return steps, nil
 }
 
-func (p *parser) parsePystring(s *Step) error {
+func (p *parser) parsePystring() (*PyString, error) {
 	var tok *Token
 	started := p.next() // skip the start of pystring
 	var lines []string
@@ -320,27 +352,28 @@ func (p *parser) parsePystring(s *Step) error {
 		lines = append(lines, tok.Text)
 	}
 	if tok.Type == EOF {
-		return fmt.Errorf("pystring which was opened on %s:%d was not closed", p.path, started.Line)
+		return nil, fmt.Errorf("pystring which was opened on %s:%d was not closed", p.path, started.Line)
 	}
-	s.PyString = &PyString{Body: strings.Join(lines, "\n")}
-	return nil
+	return &PyString{
+		Body: strings.Join(lines, "\n"),
+	}, nil
 }
 
-func (p *parser) parseTable(s *Step) error {
-	s.Table = &Table{}
+func (p *parser) parseTable() (*Table, error) {
+	tbl := &Table{}
 	for row := p.peek(); row.Type == TABLE_ROW; row = p.peek() {
 		var cols []string
 		for _, r := range strings.Split(strings.Trim(row.Value, "|"), "|") {
 			cols = append(cols, strings.TrimFunc(r, unicode.IsSpace))
 		}
 		// ensure the same colum number for each row
-		if len(s.Table.rows) > 0 && len(s.Table.rows[0]) != len(cols) {
-			return p.err("table row has not the same number of columns compared to previous row", row.Line)
+		if len(tbl.rows) > 0 && len(tbl.rows[0]) != len(cols) {
+			return tbl, p.err("table row has not the same number of columns compared to previous row", row.Line)
 		}
-		s.Table.rows = append(s.Table.rows, cols)
+		tbl.rows = append(tbl.rows, cols)
 		p.next() // jump over the peeked token
 	}
-	return nil
+	return tbl, nil
 }
 
 func (p *parser) parseTags() (tags Tags) {

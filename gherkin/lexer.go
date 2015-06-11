@@ -9,14 +9,16 @@ import (
 )
 
 var matchers = map[string]*regexp.Regexp{
-	"feature":    regexp.MustCompile("^(\\s*)Feature:\\s*([^#]*)(#.*)?"),
-	"scenario":   regexp.MustCompile("^(\\s*)Scenario:\\s*([^#]*)(#.*)?"),
-	"background": regexp.MustCompile("^(\\s*)Background:(\\s*#.*)?"),
-	"step":       regexp.MustCompile("^(\\s*)(Given|When|Then|And|But)\\s+([^#]*)(#.*)?"),
-	"comment":    regexp.MustCompile("^(\\s*)#(.+)"),
-	"pystring":   regexp.MustCompile("^(\\s*)\\\"\\\"\\\""),
-	"tags":       regexp.MustCompile("^(\\s*)@([^#]*)(#.*)?"),
-	"table_row":  regexp.MustCompile("^(\\s*)\\|([^#]*)(#.*)?"),
+	"feature":          regexp.MustCompile("^(\\s*)Feature:\\s*([^#]*)(#.*)?"),
+	"scenario":         regexp.MustCompile("^(\\s*)Scenario:\\s*([^#]*)(#.*)?"),
+	"scenario_outline": regexp.MustCompile("^(\\s*)Scenario Outline:\\s*([^#]*)(#.*)?"),
+	"examples":         regexp.MustCompile("^(\\s*)Examples:(\\s*#.*)?"),
+	"background":       regexp.MustCompile("^(\\s*)Background:(\\s*#.*)?"),
+	"step":             regexp.MustCompile("^(\\s*)(Given|When|Then|And|But)\\s+([^#]*)(#.*)?"),
+	"comment":          regexp.MustCompile("^(\\s*)#(.+)"),
+	"pystring":         regexp.MustCompile("^(\\s*)\\\"\\\"\\\""),
+	"tags":             regexp.MustCompile("^(\\s*)@([^#]*)(#.*)?"),
+	"table_row":        regexp.MustCompile("^(\\s*)\\|([^#]*)(#.*)?"),
 }
 
 type lexer struct {
@@ -143,6 +145,27 @@ func (l *lexer) read() *Token {
 			Value:   strings.TrimSpace(m[2]),
 			Text:    line,
 			Comment: strings.Trim(m[3], " #"),
+		}
+	}
+	// scenario outline
+	if m := matchers["scenario_outline"].FindStringSubmatch(line); len(m) > 0 {
+		return &Token{
+			Type:    SCENARIO_OUTLINE,
+			Indent:  len(m[1]),
+			Line:    l.lines - 1,
+			Value:   strings.TrimSpace(m[2]),
+			Text:    line,
+			Comment: strings.Trim(m[3], " #"),
+		}
+	}
+	// examples
+	if m := matchers["examples"].FindStringSubmatch(line); len(m) > 0 {
+		return &Token{
+			Type:    EXAMPLES,
+			Indent:  len(m[1]),
+			Line:    l.lines - 1,
+			Text:    line,
+			Comment: strings.Trim(m[2], " #"),
 		}
 	}
 	// text
