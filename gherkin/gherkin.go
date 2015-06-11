@@ -1,3 +1,61 @@
+/*
+Package gherkin is a gherkin language parser based on https://cucumber.io/docs/reference
+specification. It parses a feature file into the it's structural representation. It also
+creates an AST tree of gherkin Tokens read from the file.
+
+With gherkin language you can describe your application behavior as features in
+human-readable and machine friendly language.
+
+For example, imagine you’re about to create the famous UNIX ls command.
+Before you begin, you describe how the feature should work, see the example below..
+
+Example:
+	Feature: ls
+	  In order to see the directory structure
+	  As a UNIX user
+	  I need to be able to list the current directory's contents
+
+	  Scenario:
+		Given I am in a directory "test"
+		And I have a file named "foo"
+		And I have a file named "bar"
+		When I run "ls"
+		Then I should get:
+		  """
+		  bar
+		  foo
+		  """
+
+As a developer, your work is done as soon as you’ve made the ls command behave as
+described in the Scenario.
+
+To read the feature in the example above..
+
+Example:
+	package main
+
+	import (
+		"log"
+		"os"
+
+		"github.com/DATA-DOG/godog/gherkin"
+	)
+
+	func main() {
+		feature, err := gherkin.Parse("ls.feature")
+		switch {
+		case err == gherkin.ErrEmpty:
+			log.Println("the feature file is empty and does not describe any feature")
+			return
+		case err != nil:
+			log.Println("the feature file is incorrect or could not be read:", err)
+			os.Exit(1)
+		}
+		log.Println("have parsed a feature:", feature.Title, "with", len(feature.Scenarios), "scenarios")
+	}
+
+Now the feature is available in the structure.
+*/
 package gherkin
 
 import (
@@ -10,8 +68,15 @@ import (
 	"github.com/DATA-DOG/godog/gherkin/lexer"
 )
 
+// Tag is gherkin feature or scenario tag.
+// it may be used to filter scenarios.
+//
+// tags may be set for a feature, in that case it will
+// be merged with all scenario tags. or specifically
+// to a single scenario
 type Tag string
 
+// Tags is an array of tags
 type Tags []Tag
 
 func (t Tags) Has(tag Tag) bool {
@@ -23,6 +88,7 @@ func (t Tags) Has(tag Tag) bool {
 	return false
 }
 
+// Scenario describes the scenario details
 type Scenario struct {
 	Title   string
 	Steps   []*Step
@@ -30,11 +96,13 @@ type Scenario struct {
 	Comment string
 }
 
+// Background steps are run before every scenario
 type Background struct {
 	Steps   []*Step
 	Comment string
 }
 
+// StepType is a general type of step
 type StepType string
 
 const (
@@ -43,6 +111,7 @@ const (
 	Then  StepType = "Then"
 )
 
+// Step describes a Scenario or Background step
 type Step struct {
 	Text     string
 	Comment  string
@@ -51,6 +120,7 @@ type Step struct {
 	Table    *Table
 }
 
+// Feature describes the whole feature
 type Feature struct {
 	Path        string
 	Tags        Tags
@@ -62,10 +132,12 @@ type Feature struct {
 	Comment     string
 }
 
+// PyString is a multiline text object used with step definition
 type PyString struct {
 	Body string
 }
 
+// Table is a row group object used with step definition
 type Table struct {
 	rows [][]string
 }
@@ -78,6 +150,8 @@ var allSteps = []lexer.TokenType{
 	lexer.BUT,
 }
 
+// ErrEmpty is returned in case if feature file
+// is completely empty. May be ignored in some use cases
 var ErrEmpty = errors.New("the feature file is empty")
 
 type parser struct {
@@ -87,6 +161,9 @@ type parser struct {
 	peeked *lexer.Token
 }
 
+// Parse the feature file on the given path into
+// the Feature struct
+// Returns a Feature struct and error if there is any
 func Parse(path string) (*Feature, error) {
 	file, err := os.Open(path)
 	if err != nil {

@@ -7,6 +7,9 @@ type item struct {
 	value      *lexer.Token
 }
 
+// AST is a linked list to store gherkin Tokens
+// used to insert errors and other details into
+// the token tree
 type AST struct {
 	head, tail *item
 }

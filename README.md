@@ -1,6 +1,8 @@
+[![Build Status](https://travis-ci.org/DATA-DOG/godog.png)](https://travis-ci.org/DATA-DOG/godog)
+
 # Godog
 
-**Godog** is an open source behavior-driven development framework for [golang][golang] programming language.
+**Godog** is an open source behavior-driven development framework for [go][golang] programming language.
 What is behavior-driven development, you ask? It’s the idea that you start by writing human-readable sentences that
 describe a feature of your application and how it should work, and only then implement this behavior in software.
 
