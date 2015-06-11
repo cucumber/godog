@@ -3,8 +3,6 @@ package gherkin
 import (
 	"strings"
 	"testing"
-
-	"github.com/DATA-DOG/godog/gherkin/lexer"
 )
 
 var testStepSamples = map[string]string{
@@ -92,7 +90,7 @@ func (s *Step) assertTableRow(t *testing.T, num int, cols ...string) {
 
 func Test_parse_basic_given_step(t *testing.T) {
 	p := &parser{
-		lx:   lexer.New(strings.NewReader(testStepSamples["given"])),
+		lx:   newLexer(strings.NewReader(testStepSamples["given"])),
 		path: "some.feature",
 		ast:  newAST(),
 	}
@@ -108,15 +106,15 @@ func Test_parse_basic_given_step(t *testing.T) {
 	steps[0].assertText("I'm a step", t)
 
 	p.next() // step over to eof
-	p.ast.assertMatchesTypes([]lexer.TokenType{
-		lexer.GIVEN,
-		lexer.EOF,
+	p.ast.assertMatchesTypes([]TokenType{
+		GIVEN,
+		EOF,
 	}, t)
 }
 
 func Test_parse_step_with_comment(t *testing.T) {
 	p := &parser{
-		lx:   lexer.New(strings.NewReader(testStepSamples["step_comment"])),
+		lx:   newLexer(strings.NewReader(testStepSamples["step_comment"])),
 		path: "some.feature",
 		ast:  newAST(),
 	}
@@ -133,15 +131,15 @@ func Test_parse_step_with_comment(t *testing.T) {
 	steps[0].assertComment("sets admin permissions", t)
 
 	p.next() // step over to eof
-	p.ast.assertMatchesTypes([]lexer.TokenType{
-		lexer.GIVEN,
-		lexer.EOF,
+	p.ast.assertMatchesTypes([]TokenType{
+		GIVEN,
+		EOF,
 	}, t)
 }
 
 func Test_parse_hash_table_given_step(t *testing.T) {
 	p := &parser{
-		lx:   lexer.New(strings.NewReader(testStepSamples["given_table_hash"])),
+		lx:   newLexer(strings.NewReader(testStepSamples["given_table_hash"])),
 		path: "some.feature",
 		ast:  newAST(),
 	}
@@ -158,16 +156,16 @@ func Test_parse_hash_table_given_step(t *testing.T) {
 	steps[0].assertTableRow(t, 0, "name", "John Doe")
 
 	p.next() // step over to eof
-	p.ast.assertMatchesTypes([]lexer.TokenType{
-		lexer.GIVEN,
-		lexer.TABLE_ROW,
-		lexer.EOF,
+	p.ast.assertMatchesTypes([]TokenType{
+		GIVEN,
+		TABLE_ROW,
+		EOF,
 	}, t)
 }
 
 func Test_parse_table_given_step(t *testing.T) {
 	p := &parser{
-		lx:   lexer.New(strings.NewReader(testStepSamples["given_table"])),
+		lx:   newLexer(strings.NewReader(testStepSamples["given_table"])),
 		path: "some.feature",
 		ast:  newAST(),
 	}
@@ -186,18 +184,18 @@ func Test_parse_table_given_step(t *testing.T) {
 	steps[0].assertTableRow(t, 2, "Jane", "Doe")
 
 	p.next() // step over to eof
-	p.ast.assertMatchesTypes([]lexer.TokenType{
-		lexer.GIVEN,
-		lexer.TABLE_ROW,
-		lexer.TABLE_ROW,
-		lexer.TABLE_ROW,
-		lexer.EOF,
+	p.ast.assertMatchesTypes([]TokenType{
+		GIVEN,
+		TABLE_ROW,
+		TABLE_ROW,
+		TABLE_ROW,
+		EOF,
 	}, t)
 }
 
 func Test_parse_pystring_step(t *testing.T) {
 	p := &parser{
-		lx:   lexer.New(strings.NewReader(testStepSamples["then_pystring"])),
+		lx:   newLexer(strings.NewReader(testStepSamples["then_pystring"])),
 		path: "some.feature",
 		ast:  newAST(),
 	}
@@ -217,19 +215,19 @@ func Test_parse_pystring_step(t *testing.T) {
 	}, "\n"), t)
 
 	p.next() // step over to eof
-	p.ast.assertMatchesTypes([]lexer.TokenType{
-		lexer.THEN,
-		lexer.PYSTRING,
-		lexer.TEXT,
-		lexer.AND, // we do not care what we parse inside PYSTRING even if its whole behat feature text
-		lexer.PYSTRING,
-		lexer.EOF,
+	p.ast.assertMatchesTypes([]TokenType{
+		THEN,
+		PYSTRING,
+		TEXT,
+		AND, // we do not care what we parse inside PYSTRING even if its whole behat feature text
+		PYSTRING,
+		EOF,
 	}, t)
 }
 
 func Test_parse_empty_pystring_step(t *testing.T) {
 	p := &parser{
-		lx:   lexer.New(strings.NewReader(testStepSamples["when_pystring_empty"])),
+		lx:   newLexer(strings.NewReader(testStepSamples["when_pystring_empty"])),
 		path: "some.feature",
 		ast:  newAST(),
 	}
@@ -246,17 +244,17 @@ func Test_parse_empty_pystring_step(t *testing.T) {
 	steps[0].assertPyString("", t)
 
 	p.next() // step over to eof
-	p.ast.assertMatchesTypes([]lexer.TokenType{
-		lexer.WHEN,
-		lexer.PYSTRING,
-		lexer.PYSTRING,
-		lexer.EOF,
+	p.ast.assertMatchesTypes([]TokenType{
+		WHEN,
+		PYSTRING,
+		PYSTRING,
+		EOF,
 	}, t)
 }
 
 func Test_parse_unclosed_pystring_step(t *testing.T) {
 	p := &parser{
-		lx:   lexer.New(strings.NewReader(testStepSamples["when_pystring_unclosed"])),
+		lx:   newLexer(strings.NewReader(testStepSamples["when_pystring_unclosed"])),
 		path: "some.feature",
 		ast:  newAST(),
 	}
@@ -264,18 +262,18 @@ func Test_parse_unclosed_pystring_step(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected an error, but got none")
 	}
-	p.ast.assertMatchesTypes([]lexer.TokenType{
-		lexer.WHEN,
-		lexer.PYSTRING,
-		lexer.TEXT,
-		lexer.TEXT,
-		lexer.EOF,
+	p.ast.assertMatchesTypes([]TokenType{
+		WHEN,
+		PYSTRING,
+		TEXT,
+		TEXT,
+		EOF,
 	}, t)
 }
 
 func Test_parse_step_group(t *testing.T) {
 	p := &parser{
-		lx:   lexer.New(strings.NewReader(testStepSamples["step_group"])),
+		lx:   newLexer(strings.NewReader(testStepSamples["step_group"])),
 		path: "some.feature",
 		ast:  newAST(),
 	}
@@ -297,18 +295,18 @@ func Test_parse_step_group(t *testing.T) {
 	steps[3].assertText("something should happen", t)
 
 	p.next() // step over to eof
-	p.ast.assertMatchesTypes([]lexer.TokenType{
-		lexer.GIVEN,
-		lexer.AND,
-		lexer.WHEN,
-		lexer.THEN,
-		lexer.EOF,
+	p.ast.assertMatchesTypes([]TokenType{
+		GIVEN,
+		AND,
+		WHEN,
+		THEN,
+		EOF,
 	}, t)
 }
 
 func Test_parse_another_step_group(t *testing.T) {
 	p := &parser{
-		lx:   lexer.New(strings.NewReader(testStepSamples["step_group_another"])),
+		lx:   newLexer(strings.NewReader(testStepSamples["step_group_another"])),
 		path: "some.feature",
 		ast:  newAST(),
 	}
@@ -330,11 +328,11 @@ func Test_parse_another_step_group(t *testing.T) {
 	steps[3].assertText("I expect the result", t)
 
 	p.next() // step over to eof
-	p.ast.assertMatchesTypes([]lexer.TokenType{
-		lexer.GIVEN,
-		lexer.AND,
-		lexer.WHEN,
-		lexer.THEN,
-		lexer.EOF,
+	p.ast.assertMatchesTypes([]TokenType{
+		GIVEN,
+		AND,
+		WHEN,
+		THEN,
+		EOF,
 	}, t)
 }

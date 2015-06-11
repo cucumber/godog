@@ -2,11 +2,9 @@ package gherkin
 
 import (
 	"testing"
-
-	"github.com/DATA-DOG/godog/gherkin/lexer"
 )
 
-func (a *AST) assertMatchesTypes(expected []lexer.TokenType, t *testing.T) {
+func (a *AST) assertMatchesTypes(expected []TokenType, t *testing.T) {
 	key := -1
 	for item := a.head; item != nil; item = item.next {
 		key += 1

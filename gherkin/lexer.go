@@ -1,24 +1,36 @@
-package lexer
+package gherkin
 
 import (
 	"bufio"
 	"io"
+	"regexp"
 	"strings"
 	"unicode"
 )
 
-type Lexer struct {
+var matchers = map[string]*regexp.Regexp{
+	"feature":    regexp.MustCompile("^(\\s*)Feature:\\s*([^#]*)(#.*)?"),
+	"scenario":   regexp.MustCompile("^(\\s*)Scenario:\\s*([^#]*)(#.*)?"),
+	"background": regexp.MustCompile("^(\\s*)Background:(\\s*#.*)?"),
+	"step":       regexp.MustCompile("^(\\s*)(Given|When|Then|And|But)\\s+([^#]*)(#.*)?"),
+	"comment":    regexp.MustCompile("^(\\s*)#(.+)"),
+	"pystring":   regexp.MustCompile("^(\\s*)\\\"\\\"\\\""),
+	"tags":       regexp.MustCompile("^(\\s*)@([^#]*)(#.*)?"),
+	"table_row":  regexp.MustCompile("^(\\s*)\\|([^#]*)(#.*)?"),
+}
+
+type lexer struct {
 	reader *bufio.Reader
 	lines  int
 }
 
-func New(r io.Reader) *Lexer {
-	return &Lexer{
+func newLexer(r io.Reader) *lexer {
+	return &lexer{
 		reader: bufio.NewReader(r),
 	}
 }
 
-func (l *Lexer) Next() *Token {
+func (l *lexer) read() *Token {
 	line, err := l.reader.ReadString(byte('\n'))
 	if err != nil && len(line) == 0 {
 		return &Token{

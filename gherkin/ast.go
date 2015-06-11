@@ -1,10 +1,8 @@
 package gherkin
 
-import "github.com/DATA-DOG/godog/gherkin/lexer"
-
 type item struct {
 	next, prev *item
-	value      *lexer.Token
+	value      *Token
 }
 
 // AST is a linked list to store gherkin Tokens
@@ -18,7 +16,7 @@ func newAST() *AST {
 	return &AST{}
 }
 
-func (l *AST) addTail(t *lexer.Token) *item {
+func (l *AST) addTail(t *Token) *item {
 	it := &item{next: nil, prev: l.tail, value: t}
 	if l.head == nil {
 		l.head = it
@@ -29,7 +27,7 @@ func (l *AST) addTail(t *lexer.Token) *item {
 	return l.tail
 }
 
-func (l *AST) addBefore(t *lexer.Token, i *item) *item {
+func (l *AST) addBefore(t *Token, i *item) *item {
 	it := &item{next: i, prev: i.prev, value: t}
 	i.prev = it
 	if it.prev == nil {
@@ -38,7 +36,7 @@ func (l *AST) addBefore(t *lexer.Token, i *item) *item {
 	return it
 }
 
-func (l *AST) addAfter(t *lexer.Token, i *item) *item {
+func (l *AST) addAfter(t *Token, i *item) *item {
 	it := &item{next: i.next, prev: i, value: t}
 	i.next = it
 	if it.next == nil {

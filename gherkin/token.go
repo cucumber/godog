@@ -1,4 +1,4 @@
-package lexer
+package gherkin
 
 type TokenType int
 
@@ -63,4 +63,21 @@ func (t TokenType) String() string {
 		return "but step"
 	}
 	return "illegal"
+}
+
+type Token struct {
+	Type         TokenType // type of token
+	Line, Indent int       // line and indentation number
+	Value        string    // interpreted value
+	Text         string    // same text as read
+	Comment      string    // a comment
+}
+
+func (t *Token) OfType(all ...TokenType) bool {
+	for _, typ := range all {
+		if typ == t.Type {
+			return true
+		}
+	}
+	return false
 }

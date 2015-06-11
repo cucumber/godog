@@ -1,11 +1,11 @@
-package lexer
+package gherkin
 
 import (
 	"strings"
 	"testing"
 )
 
-var samples = map[string]string{
+var lexerSamples = map[string]string{
 	"feature": `Feature: gherkin lexer
   in order to run features
   as gherkin lexer
@@ -29,13 +29,9 @@ var samples = map[string]string{
       | John | Doe      | 79  |`,
 }
 
-func indent(n int, s string) string {
-	return strings.Repeat(" ", n) + s
-}
-
 func Test_feature_read(t *testing.T) {
-	l := New(strings.NewReader(samples["feature"]))
-	tok := l.Next()
+	l := newLexer(strings.NewReader(lexerSamples["feature"]))
+	tok := l.read()
 	if tok.Type != FEATURE {
 		t.Fatalf("Expected a 'feature' type, but got: '%s'", tok.Type)
 	}
@@ -50,7 +46,7 @@ func Test_feature_read(t *testing.T) {
 		t.Fatalf("Expected a token identation to be '0', but got: '%d'", tok.Indent)
 	}
 
-	tok = l.Next()
+	tok = l.read()
 	if tok.Type != TEXT {
 		t.Fatalf("Expected a 'text' type, but got: '%s'", tok.Type)
 	}
@@ -65,7 +61,7 @@ func Test_feature_read(t *testing.T) {
 		t.Fatalf("Expected a token identation to be '2', but got: '%d'", tok.Indent)
 	}
 
-	tok = l.Next()
+	tok = l.read()
 	if tok.Type != TEXT {
 		t.Fatalf("Expected a 'text' type, but got: '%s'", tok.Type)
 	}
@@ -80,7 +76,7 @@ func Test_feature_read(t *testing.T) {
 		t.Fatalf("Expected a token identation to be '2', but got: '%d'", tok.Indent)
 	}
 
-	tok = l.Next()
+	tok = l.read()
 	if tok.Type != TEXT {
 		t.Fatalf("Expected a 'text' type, but got: '%s'", tok.Type)
 	}
@@ -95,7 +91,7 @@ func Test_feature_read(t *testing.T) {
 		t.Fatalf("Expected a token identation to be '2', but got: '%d'", tok.Indent)
 	}
 
-	tok = l.Next()
+	tok = l.read()
 	if tok.Type != EOF {
 		t.Fatalf("Expected an 'eof' type, but got: '%s'", tok.Type)
 	}
@@ -103,21 +99,21 @@ func Test_feature_read(t *testing.T) {
 
 func Test_minimal_feature(t *testing.T) {
 	file := strings.Join([]string{
-		samples["feature"] + "\n",
+		lexerSamples["feature"] + "\n",
 
-		indent(2, samples["background"]),
-		indent(4, samples["step_given"]) + "\n",
+		indent(2, lexerSamples["background"]),
+		indent(4, lexerSamples["step_given"]) + "\n",
 
-		indent(2, samples["comment"]),
-		indent(2, samples["scenario"]),
-		indent(4, samples["step_given"]),
-		indent(4, samples["step_when"]),
-		indent(4, samples["step_then"]),
+		indent(2, lexerSamples["comment"]),
+		indent(2, lexerSamples["scenario"]),
+		indent(4, lexerSamples["step_given"]),
+		indent(4, lexerSamples["step_when"]),
+		indent(4, lexerSamples["step_then"]),
 	}, "\n")
-	l := New(strings.NewReader(file))
+	l := newLexer(strings.NewReader(file))
 
 	var tokens []TokenType
-	for tok := l.Next(); tok.Type != EOF; tok = l.Next() {
+	for tok := l.read(); tok.Type != EOF; tok = l.read() {
 		tokens = append(tokens, tok.Type)
 	}
 	expected := []TokenType{
@@ -146,16 +142,16 @@ func Test_minimal_feature(t *testing.T) {
 
 func Test_table_row_reading(t *testing.T) {
 	file := strings.Join([]string{
-		indent(2, samples["background"]),
-		indent(4, samples["step_given_table"]),
-		indent(4, samples["step_given"]),
+		indent(2, lexerSamples["background"]),
+		indent(4, lexerSamples["step_given_table"]),
+		indent(4, lexerSamples["step_given"]),
 	}, "\n")
-	l := New(strings.NewReader(file))
+	l := newLexer(strings.NewReader(file))
 
 	var types []TokenType
 	var values []string
 	var indents []int
-	for tok := l.Next(); tok.Type != EOF; tok = l.Next() {
+	for tok := l.read(); tok.Type != EOF; tok = l.read() {
 		types = append(types, tok.Type)
 		values = append(values, tok.Value)
 		indents = append(indents, tok.Indent)

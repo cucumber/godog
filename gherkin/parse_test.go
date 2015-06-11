@@ -3,8 +3,6 @@ package gherkin
 import (
 	"strings"
 	"testing"
-
-	"github.com/DATA-DOG/godog/gherkin/lexer"
 )
 
 func (s *Scenario) assertHasTag(tag string, t *testing.T) {
@@ -41,7 +39,7 @@ func Test_parse_feature_file(t *testing.T) {
 	}, "\n")
 
 	p := &parser{
-		lx:   lexer.New(strings.NewReader(content)),
+		lx:   newLexer(strings.NewReader(content)),
 		path: "usual.feature",
 		ast:  newAST(),
 	}
@@ -51,36 +49,36 @@ func Test_parse_feature_file(t *testing.T) {
 	}
 	ft.assertTitle("gherkin parser", t)
 
-	ft.AST.assertMatchesTypes([]lexer.TokenType{
-		lexer.TAGS,
-		lexer.FEATURE,
-		lexer.TEXT,
-		lexer.TEXT,
-		lexer.TEXT,
-		lexer.NEW_LINE,
+	ft.AST.assertMatchesTypes([]TokenType{
+		TAGS,
+		FEATURE,
+		TEXT,
+		TEXT,
+		TEXT,
+		NEW_LINE,
 
-		lexer.BACKGROUND,
-		lexer.GIVEN,
-		lexer.TABLE_ROW,
-		lexer.NEW_LINE,
+		BACKGROUND,
+		GIVEN,
+		TABLE_ROW,
+		NEW_LINE,
 
-		lexer.SCENARIO,
-		lexer.GIVEN,
-		lexer.AND,
-		lexer.WHEN,
-		lexer.THEN,
-		lexer.NEW_LINE,
+		SCENARIO,
+		GIVEN,
+		AND,
+		WHEN,
+		THEN,
+		NEW_LINE,
 
-		lexer.TAGS,
-		lexer.SCENARIO,
-		lexer.GIVEN,
-		lexer.AND,
-		lexer.WHEN,
-		lexer.THEN,
-		lexer.NEW_LINE,
+		TAGS,
+		SCENARIO,
+		GIVEN,
+		AND,
+		WHEN,
+		THEN,
+		NEW_LINE,
 
-		lexer.TAGS,
-		lexer.SCENARIO,
+		TAGS,
+		SCENARIO,
 	}, t)
 
 	ft.assertHasNumScenarios(3, t)

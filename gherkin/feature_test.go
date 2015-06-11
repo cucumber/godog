@@ -3,8 +3,6 @@ package gherkin
 import (
 	"strings"
 	"testing"
-
-	"github.com/DATA-DOG/godog/gherkin/lexer"
 )
 
 var testFeatureSamples = map[string]string{
@@ -34,7 +32,7 @@ func (f *Feature) assertHasNumScenarios(n int, t *testing.T) {
 
 func Test_parse_normal_feature(t *testing.T) {
 	p := &parser{
-		lx:   lexer.New(strings.NewReader(testFeatureSamples["feature"])),
+		lx:   newLexer(strings.NewReader(testFeatureSamples["feature"])),
 		path: "some.feature",
 		ast:  newAST(),
 	}
@@ -49,17 +47,17 @@ func Test_parse_normal_feature(t *testing.T) {
 		t.Fatalf("expected a feature description to be available")
 	}
 
-	ft.AST.assertMatchesTypes([]lexer.TokenType{
-		lexer.FEATURE,
-		lexer.TEXT,
-		lexer.TEXT,
-		lexer.TEXT,
+	ft.AST.assertMatchesTypes([]TokenType{
+		FEATURE,
+		TEXT,
+		TEXT,
+		TEXT,
 	}, t)
 }
 
 func Test_parse_feature_without_description(t *testing.T) {
 	p := &parser{
-		lx:   lexer.New(strings.NewReader(testFeatureSamples["only_title"])),
+		lx:   newLexer(strings.NewReader(testFeatureSamples["only_title"])),
 		path: "some.feature",
 		ast:  newAST(),
 	}
@@ -74,14 +72,14 @@ func Test_parse_feature_without_description(t *testing.T) {
 		t.Fatalf("feature description was not expected")
 	}
 
-	ft.AST.assertMatchesTypes([]lexer.TokenType{
-		lexer.FEATURE,
+	ft.AST.assertMatchesTypes([]TokenType{
+		FEATURE,
 	}, t)
 }
 
 func Test_parse_empty_feature_file(t *testing.T) {
 	p := &parser{
-		lx:   lexer.New(strings.NewReader(testFeatureSamples["empty"])),
+		lx:   newLexer(strings.NewReader(testFeatureSamples["empty"])),
 		path: "some.feature",
 		ast:  newAST(),
 	}
@@ -93,7 +91,7 @@ func Test_parse_empty_feature_file(t *testing.T) {
 
 func Test_parse_invalid_feature_with_random_text(t *testing.T) {
 	p := &parser{
-		lx:   lexer.New(strings.NewReader(testFeatureSamples["invalid"])),
+		lx:   newLexer(strings.NewReader(testFeatureSamples["invalid"])),
 		path: "some.feature",
 		ast:  newAST(),
 	}
@@ -101,14 +99,14 @@ func Test_parse_invalid_feature_with_random_text(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected an error but got none")
 	}
-	p.ast.assertMatchesTypes([]lexer.TokenType{
-		lexer.TEXT,
+	p.ast.assertMatchesTypes([]TokenType{
+		TEXT,
 	}, t)
 }
 
 func Test_parse_feature_with_newlines(t *testing.T) {
 	p := &parser{
-		lx:   lexer.New(strings.NewReader(testFeatureSamples["starts_with_newlines"])),
+		lx:   newLexer(strings.NewReader(testFeatureSamples["starts_with_newlines"])),
 		path: "some.feature",
 		ast:  newAST(),
 	}
@@ -123,9 +121,9 @@ func Test_parse_feature_with_newlines(t *testing.T) {
 		t.Fatalf("feature description was not expected")
 	}
 
-	ft.AST.assertMatchesTypes([]lexer.TokenType{
-		lexer.NEW_LINE,
-		lexer.NEW_LINE,
-		lexer.FEATURE,
+	ft.AST.assertMatchesTypes([]TokenType{
+		NEW_LINE,
+		NEW_LINE,
+		FEATURE,
 	}, t)
 }
