@@ -15,6 +15,6 @@ const (
 	white
 )
 
-func cl(s string, c color) string {
-	return fmt.Sprintf("\033[%dm%s\033[0m", c, s)
+func cl(s interface{}, c color) string {
+	return fmt.Sprintf("\033[%dm%v\033[0m", c, s)
 }
