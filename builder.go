@@ -6,10 +6,10 @@ import (
 	"go/format"
 	"go/parser"
 	"go/token"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"golang.org/x/tools/imports"
 )
@@ -21,13 +21,20 @@ import (
 )
 
 func main() {
-	godog.Run()
+	suite := &GodogSuite{
+		steps: make(map[*regexp.Regexp]StepHandler),
+	}
+	{{range $c := .Contexts}}
+		{{$c}}(suite)
+	{{end}}
+	suite.Run()
 }
 `
 
 type builder struct {
-	files map[string]*ast.File
-	fset  *token.FileSet
+	files    map[string]*ast.File
+	fset     *token.FileSet
+	Contexts []string
 }
 
 func newBuilder() *builder {
@@ -43,8 +50,9 @@ func (b *builder) parseFile(path string) error {
 		return err
 	}
 	b.deleteMainFunc(f)
+	b.registerSteps(f)
 	b.deleteImports(f)
-	b.files[f.Name.Name] = f
+	b.files[path] = f
 	return nil
 }
 
@@ -78,10 +86,33 @@ func (b *builder) deleteMainFunc(f *ast.File) {
 	f.Decls = decls
 }
 
+func (b *builder) registerSteps(f *ast.File) {
+	for _, d := range f.Decls {
+		fun, ok := d.(*ast.FuncDecl)
+		if !ok {
+			continue
+		}
+		for _, param := range fun.Type.Params.List {
+			ident, ok := param.Type.(*ast.Ident)
+			if !ok {
+				continue
+			}
+			if ident.Name == "godog.Suite" || f.Name.Name == "godog" && ident.Name == "Suite" {
+				b.Contexts = append(b.Contexts, fun.Name.Name)
+			}
+		}
+	}
+}
+
 func (b *builder) merge() (*ast.File, error) {
-	f, err := parser.ParseFile(b.fset, "", mainTpl, 0)
+	var buf bytes.Buffer
+	t := template.Must(template.New("main").Parse(mainTpl))
+	if err := t.Execute(&buf, b); err != nil {
+		return nil, err
+	}
+
+	f, err := parser.ParseFile(b.fset, "", &buf, 0)
 	if err != nil {
-		log.Println("fail here")
 		return nil, err
 	}
 	b.deleteImports(f)

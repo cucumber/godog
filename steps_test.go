@@ -5,10 +5,18 @@ import (
 	"regexp"
 )
 
-func init() {
+//func init() {
+//f := StepHandlerFunc(func(args ...interface{}) error {
+//log.Println("step triggered")
+//return nil
+//})
+//Step(regexp.MustCompile("hello"), f)
+//}
+
+func SomeContext(g Suite) {
 	f := StepHandlerFunc(func(args ...interface{}) error {
 		log.Println("step triggered")
 		return nil
 	})
-	Step(regexp.MustCompile("hello"), f)
+	g.Step(regexp.MustCompile("hello"), f)
 }
