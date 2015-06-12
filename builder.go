@@ -14,7 +14,18 @@ import (
 	"golang.org/x/tools/imports"
 )
 
-var mainTpl = `package main
+type builder struct {
+	files    map[string]*ast.File
+	fset     *token.FileSet
+	Contexts []string
+	tpl      *template.Template
+}
+
+func newBuilder() *builder {
+	return &builder{
+		files: make(map[string]*ast.File),
+		fset:  token.NewFileSet(),
+		tpl: template.Must(template.New("main").Parse(`package main
 
 import (
 	"github.com/DATA-DOG/godog"
@@ -26,19 +37,7 @@ func main() {
 		{{$c}}(suite)
 	{{end}}
 	suite.Run()
-}
-`
-
-type builder struct {
-	files    map[string]*ast.File
-	fset     *token.FileSet
-	Contexts []string
-}
-
-func newBuilder() *builder {
-	return &builder{
-		files: make(map[string]*ast.File),
-		fset:  token.NewFileSet(),
+}`)),
 	}
 }
 
@@ -104,8 +103,7 @@ func (b *builder) registerSteps(f *ast.File) {
 
 func (b *builder) merge() (*ast.File, error) {
 	var buf bytes.Buffer
-	t := template.Must(template.New("main").Parse(mainTpl))
-	if err := t.Execute(&buf, b); err != nil {
+	if err := b.tpl.Execute(&buf, b); err != nil {
 		return nil, err
 	}
 
@@ -122,8 +120,11 @@ func (b *builder) merge() (*ast.File, error) {
 	return ast.MergePackageFiles(pkg, ast.FilterImportDuplicates), nil
 }
 
-// Build creates a runnable godog executable
-// from current package go files
+// Build creates a runnable godog executable file
+// from current package source and test files
+// it merges the files with the help of go/ast into
+// a single main package file which has a custom
+// main function to run features
 func Build() ([]byte, error) {
 	b := newBuilder()
 	err := filepath.Walk(".", func(path string, file os.FileInfo, err error) error {
