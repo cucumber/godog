@@ -1,15 +1,19 @@
 package main
 
 import (
-	"log"
 	"os"
 	"os/exec"
 	"strings"
 
 	"github.com/DATA-DOG/godog"
+	"github.com/shiena/ansicolor"
 )
 
 func main() {
+	// will support Ansi colors for windows
+	stdout := ansicolor.NewAnsiColorWriter(os.Stdout)
+	stderr := ansicolor.NewAnsiColorWriter(os.Stdout)
+
 	builtFile := os.TempDir() + "/godog_build.go"
 	if err := os.Remove(builtFile); err != nil && !os.IsNotExist(err) {
 		panic(err)
@@ -30,10 +34,12 @@ func main() {
 	}
 	w.Close()
 
-	cmd := strings.TrimSpace("go run " + builtFile + " " + strings.Join(os.Args[1:], " "))
-	out, err := exec.Command("sh", "-c", cmd).CombinedOutput()
+	c := strings.TrimSpace("go run " + builtFile + " " + strings.Join(os.Args[1:], " "))
+	cmd := exec.Command("sh", "-c", c)
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+	err = cmd.Run()
 	if err != nil {
 		panic(err)
 	}
-	log.Println("output:", string(out))
 }
