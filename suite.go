@@ -4,9 +4,24 @@ import (
 	"flag"
 	"fmt"
 	"regexp"
+	"strconv"
 
 	"github.com/DATA-DOG/godog/gherkin"
 )
+
+// Arg is an argument for StepHandler parsed from
+// the regexp submatch to handle the step
+type Arg string
+
+// Float converts an argument to float64 value
+// or panics if it does not know how to convert it
+func (a Arg) Float() float64 {
+	v, err := strconv.ParseFloat(string(a), 64)
+	if err == nil {
+		return v
+	}
+	panic(fmt.Sprintf(`cannot convert string "%s" to float64: %s`, a, err))
+}
 
 // Objects implementing the StepHandler interface can be
 // registered as step definitions in godog
@@ -20,17 +35,17 @@ import (
 // and that the feature runner can move on to the next
 // step.
 type StepHandler interface {
-	HandleStep(args ...interface{}) error
+	HandleStep(args ...Arg) error
 }
 
 // StepHandlerFunc type is an adapter to allow the use of
 // ordinary functions as Step handlers.  If f is a function
 // with the appropriate signature, StepHandlerFunc(f) is a
 // StepHandler object that calls f.
-type StepHandlerFunc func(...interface{}) error
+type StepHandlerFunc func(...Arg) error
 
 // HandleStep calls f(step_arguments...).
-func (f StepHandlerFunc) HandleStep(args ...interface{}) error {
+func (f StepHandlerFunc) HandleStep(args ...Arg) error {
 	return f(args...)
 }
 

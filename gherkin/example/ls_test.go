@@ -1,16 +1,28 @@
 package main
 
 import (
-	"log"
 	"regexp"
 
 	"github.com/DATA-DOG/godog"
 )
 
-func SomeContext(g godog.Suite) {
-	f := godog.StepHandlerFunc(func(args ...interface{}) error {
-		log.Println("step triggered")
-		return nil
-	})
-	g.Step(regexp.MustCompile("hello"), f)
+type lsFeature struct{}
+
+func (s *lsFeature) inDirectory(args ...godog.Arg) error {
+	return nil
+}
+
+func (s *lsFeature) haveFile(args ...godog.Arg) error {
+	return nil
+}
+
+func SuiteContext(g godog.Suite) {
+	f := &lsFeature{}
+
+	g.Step(
+		regexp.MustCompile(`^I am in a directory "([^"]*)"$`),
+		godog.StepHandlerFunc(f.inDirectory))
+	g.Step(
+		regexp.MustCompile(`^I have a file named "([^"]*)"$`),
+		godog.StepHandlerFunc(f.haveFile))
 }
