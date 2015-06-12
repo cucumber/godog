@@ -21,9 +21,7 @@ import (
 )
 
 func main() {
-	suite := &GodogSuite{
-		steps: make(map[*regexp.Regexp]StepHandler),
-	}
+	suite := godog.New()
 	{{range $c := .Contexts}}
 		{{$c}}(suite)
 	{{end}}

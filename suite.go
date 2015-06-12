@@ -9,14 +9,20 @@ type Suite interface {
 	Step(exp *regexp.Regexp, h StepHandler)
 }
 
-type GodogSuite struct {
+type suite struct {
 	steps map[*regexp.Regexp]StepHandler
 }
 
-func (s *GodogSuite) Step(exp *regexp.Regexp, h StepHandler) {
+func New() *suite {
+	return &suite{
+		steps: make(map[*regexp.Regexp]StepHandler),
+	}
+}
+
+func (s *suite) Step(exp *regexp.Regexp, h StepHandler) {
 	s.steps[exp] = h
 }
 
-func (s *GodogSuite) Run() {
+func (s *suite) Run() {
 	log.Println("running godoc, num registered steps:", len(s.steps))
 }
