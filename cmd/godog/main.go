@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/DATA-DOG/godog"
 	"github.com/shiena/ansicolor"
@@ -14,10 +16,8 @@ func main() {
 	stdout := ansicolor.NewAnsiColorWriter(os.Stdout)
 	stderr := ansicolor.NewAnsiColorWriter(os.Stdout)
 
-	builtFile := os.TempDir() + "/godog_build.go"
-	if err := os.Remove(builtFile); err != nil && !os.IsNotExist(err) {
-		panic(err)
-	}
+	builtFile := fmt.Sprintf("%s/%dgodog.go", os.TempDir(), time.Now().UnixNano())
+	defer os.Remove(builtFile) // comment out for debug
 
 	buf, err := godog.Build()
 	if err != nil {
@@ -35,11 +35,16 @@ func main() {
 	w.Close()
 
 	c := strings.TrimSpace("go run " + builtFile + " " + strings.Join(os.Args[1:], " "))
+	// @TODO: support for windows
 	cmd := exec.Command("sh", "-c", c)
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
+
 	err = cmd.Run()
-	if err != nil {
+	switch err.(type) {
+	case *exec.ExitError:
+		os.Exit(1)
+	case *exec.Error:
 		panic(err)
 	}
 }

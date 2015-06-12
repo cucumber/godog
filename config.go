@@ -18,6 +18,7 @@ type config struct {
 }
 
 func init() {
+	// @TODO: colorize flag help output
 	flag.StringVar(&cfg.featuresPath, "features", "features", "Path to feature files")
 	flag.StringVar(&cfg.formatterName, "formatter", "pretty", "Formatter name")
 }

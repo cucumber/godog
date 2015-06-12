@@ -1,6 +1,7 @@
 package godog
 
 import (
+	"flag"
 	"log"
 	"regexp"
 )
@@ -24,5 +25,9 @@ func (s *suite) Step(exp *regexp.Regexp, h StepHandler) {
 }
 
 func (s *suite) Run() {
-	log.Println("running godoc, num registered steps:", len(s.steps))
+	if !flag.Parsed() {
+		flag.Parse()
+	}
+	log.Println("running godoc, num registered steps:", len(s.steps), "color test:", cl("red", red))
+	log.Println("will read features in path:", cl(cfg.featuresPath, yellow))
 }
