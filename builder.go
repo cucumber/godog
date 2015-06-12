@@ -18,6 +18,7 @@ type builder struct {
 	files    map[string]*ast.File
 	fset     *token.FileSet
 	Contexts []string
+	Internal bool
 	tpl      *template.Template
 }
 
@@ -26,15 +27,14 @@ func newBuilder() *builder {
 		files: make(map[string]*ast.File),
 		fset:  token.NewFileSet(),
 		tpl: template.Must(template.New("main").Parse(`package main
-
-import (
+{{ if not .Internal }}import (
 	"github.com/DATA-DOG/godog"
-)
+){{ end }}
 
 func main() {
-	suite := godog.New()
-	{{range $c := .Contexts}}
-		{{$c}}(suite)
+	suite := {{ if not .Internal }}godog.{{ end }}New()
+	{{range .Contexts}}
+		{{ . }}(suite)
 	{{end}}
 	suite.Run()
 }`)),
@@ -45,6 +45,10 @@ func (b *builder) parseFile(path string) error {
 	f, err := parser.ParseFile(b.fset, path, nil, 0)
 	if err != nil {
 		return err
+	}
+	// mark godog package as internal
+	if f.Name.Name == "godog" && !b.Internal {
+		b.Internal = true
 	}
 	b.deleteMainFunc(f)
 	b.registerSteps(f)
