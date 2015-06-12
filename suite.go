@@ -49,6 +49,9 @@ type suite struct {
 // interface. The instance is passed around to all
 // context initialization functions from *_test.go files
 func New() *suite {
+	// @TODO: colorize flag help output
+	flag.StringVar(&cfg.featuresPath, "features", "features", "Path to feature files")
+	flag.StringVar(&cfg.formatterName, "formatter", "pretty", "Formatter name")
 	if !flag.Parsed() {
 		flag.Parse()
 	}

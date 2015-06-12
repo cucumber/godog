@@ -1,7 +1,6 @@
 package godog
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -15,12 +14,6 @@ var cfg config
 type config struct {
 	featuresPath  string
 	formatterName string
-}
-
-func init() {
-	// @TODO: colorize flag help output
-	flag.StringVar(&cfg.featuresPath, "features", "features", "Path to feature files")
-	flag.StringVar(&cfg.formatterName, "formatter", "pretty", "Formatter name")
 }
 
 func (c config) validate() error {

@@ -85,17 +85,22 @@ func (b *builder) deleteMainFunc(f *ast.File) {
 
 func (b *builder) registerSteps(f *ast.File) {
 	for _, d := range f.Decls {
-		fun, ok := d.(*ast.FuncDecl)
-		if !ok {
-			continue
-		}
-		for _, param := range fun.Type.Params.List {
-			ident, ok := param.Type.(*ast.Ident)
-			if !ok {
-				continue
-			}
-			if ident.Name == "godog.Suite" || f.Name.Name == "godog" && ident.Name == "Suite" {
-				b.Contexts = append(b.Contexts, fun.Name.Name)
+		switch fun := d.(type) {
+		case *ast.FuncDecl:
+			for _, param := range fun.Type.Params.List {
+				switch expr := param.Type.(type) {
+				case *ast.SelectorExpr:
+					switch x := expr.X.(type) {
+					case *ast.Ident:
+						if x.Name == "godog" && expr.Sel.Name == "Suite" {
+							b.Contexts = append(b.Contexts, fun.Name.Name)
+						}
+					}
+				case *ast.Ident:
+					if expr.Name == "Suite" {
+						b.Contexts = append(b.Contexts, fun.Name.Name)
+					}
+				}
 			}
 		}
 	}
