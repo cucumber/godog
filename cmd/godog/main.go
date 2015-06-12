@@ -1,7 +1,10 @@
 package main
 
 import (
+	"log"
 	"os"
+	"os/exec"
+	"strings"
 
 	"github.com/DATA-DOG/godog"
 )
@@ -26,4 +29,11 @@ func main() {
 		panic(err)
 	}
 	w.Close()
+
+	cmd := strings.TrimSpace("go run " + builtFile + " " + strings.Join(os.Args[1:], " "))
+	out, err := exec.Command("sh", "-c", cmd).CombinedOutput()
+	if err != nil {
+		panic(err)
+	}
+	log.Println("output:", string(out))
 }

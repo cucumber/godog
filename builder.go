@@ -18,12 +18,10 @@ var mainTpl = `package main
 
 import (
 	"github.com/DATA-DOG/godog"
-	"os"
 )
 
 func main() {
 	godog.Run()
-	os.Exit(0)
 }
 `
 
