@@ -46,6 +46,10 @@ func (c config) features() (lst []*gherkin.Feature, err error) {
 	})
 }
 
+func (c config) formatter() formatter {
+	return &pretty{}
+}
+
 func fatal(err error) {
 	if err != nil {
 		fmt.Println(err)

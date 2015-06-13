@@ -66,8 +66,8 @@ func (s *Step) assertPyString(text string, t *testing.T) {
 }
 
 func (s *Step) assertComment(comment string, t *testing.T) {
-	if s.Comment != comment {
-		t.Fatalf("expected step '%s' comment to be '%s', but got '%s'", s.Text, comment, s.Comment)
+	if s.Token.Comment != comment {
+		t.Fatalf("expected step '%s' comment to be '%s', but got '%s'", s.Text, comment, s.Token.Comment)
 	}
 }
 

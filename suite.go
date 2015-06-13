@@ -73,6 +73,7 @@ type Suite interface {
 type suite struct {
 	steps    map[*regexp.Regexp]StepHandler
 	features []*gherkin.Feature
+	fmt      formatter
 }
 
 // New initializes a suite which supports the Suite
@@ -107,6 +108,7 @@ func (s *suite) Step(exp *regexp.Regexp, h StepHandler) {
 // Run - runs a godog feature suite
 func (s *suite) Run() {
 	var err error
+	s.fmt = cfg.formatter()
 	s.features, err = cfg.features()
 	fatal(err)
 
@@ -118,57 +120,54 @@ func (s *suite) Run() {
 	}
 }
 
+func (s *suite) runStep(step *gherkin.Step) {
+	var handler StepHandler
+	var args []Arg
+	for r, h := range s.steps {
+		if m := r.FindStringSubmatch(step.Text); len(m) > 0 {
+			handler = h
+			for _, a := range m[1:] {
+				args = append(args, Arg(a))
+			}
+			break
+		}
+	}
+	if handler == nil {
+		fmt.Println("PENDING")
+		return
+	}
+	defer func() {
+		if e := recover(); e != nil {
+			fmt.Println("PANIC")
+		}
+	}()
+	if err := handler.HandleStep(args...); err != nil {
+		fmt.Println("ERR")
+	} else {
+		fmt.Println("OK")
+	}
+}
+
 func (s *suite) runFeature(f *gherkin.Feature) {
+	s.fmt.node(f)
+	var background bool
 	for _, scenario := range f.Scenarios {
 		if f.Background != nil {
+			if !background {
+				s.fmt.node(f.Background)
+			}
 			for _, step := range f.Background.Steps {
-				var handler StepHandler
-				var args []Arg
-				for r, h := range s.steps {
-					if m := r.FindStringSubmatch(step.Text); len(m) > 0 {
-						handler = h
-						for _, a := range m[1:] {
-							args = append(args, Arg(a))
-						}
-						break
-					}
-				}
-				if handler != nil {
-					if err := handler.HandleStep(args...); err != nil {
-						// @TODO: scenario fails, step failed
-						fmt.Println("ERR")
-					} else {
-						fmt.Println("OK")
-					}
-					// @TODO: handle panic and recover
-				} else {
-					fmt.Println("PENDING")
+				s.runStep(step)
+				if !background {
+					s.fmt.node(step)
 				}
 			}
+			background = true
 		}
+		s.fmt.node(scenario)
 		for _, step := range scenario.Steps {
-			var handler StepHandler
-			var args []Arg
-			for r, h := range s.steps {
-				if m := r.FindStringSubmatch(step.Text); len(m) > 0 {
-					handler = h
-					for _, a := range m[1:] {
-						args = append(args, Arg(a))
-					}
-					break
-				}
-			}
-			if handler != nil {
-				if err := handler.HandleStep(args...); err != nil {
-					// @TODO: scenario fails, step failed
-					fmt.Println("ERR")
-				} else {
-					fmt.Println("OK")
-				}
-				// @TODO: handle panic and recover
-			} else {
-				fmt.Println("PENDING")
-			}
+			s.runStep(step)
+			s.fmt.node(step)
 		}
 	}
 }

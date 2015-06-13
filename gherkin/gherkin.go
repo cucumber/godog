@@ -77,6 +77,7 @@ type Tag string
 // Tags is an array of tags
 type Tags []Tag
 
+// Has checks whether the tag list has a tag
 func (t Tags) Has(tag Tag) bool {
 	for _, tg := range t {
 		if tg == tag {
@@ -97,17 +98,17 @@ func (t Tags) Has(tag Tag) bool {
 // be used to filter out or run specific
 // initialization tasks
 type Scenario struct {
+	*Token
 	Title    string
 	Steps    []*Step
 	Tags     Tags
 	Examples *Table
-	Comment  string
 }
 
 // Background steps are run before every scenario
 type Background struct {
-	Steps   []*Step
-	Comment string
+	*Token
+	Steps []*Step
 }
 
 // StepType is a general type of step
@@ -121,8 +122,8 @@ const (
 
 // Step describes a Scenario or Background step
 type Step struct {
+	*Token
 	Text     string
-	Comment  string
 	Type     StepType
 	PyString *PyString
 	Table    *Table
@@ -130,6 +131,7 @@ type Step struct {
 
 // Feature describes the whole feature
 type Feature struct {
+	*Token
 	Path        string
 	Tags        Tags
 	Description string
@@ -137,16 +139,17 @@ type Feature struct {
 	Background  *Background
 	Scenarios   []*Scenario
 	AST         *AST
-	Comment     string
 }
 
 // PyString is a multiline text object used with step definition
 type PyString struct {
+	*Token
 	Body string
 }
 
 // Table is a row group object used with step definition
 type Table struct {
+	*Token
 	rows [][]string
 }
 
@@ -229,11 +232,11 @@ func (p *parser) parseFeature() (ft *Feature, err error) {
 		return ft, p.err("expected a file to begin with a feature definition, but got '"+tok.Type.String()+"' instead", tok.Line)
 	}
 	ft.Title = tok.Value
-	ft.Comment = tok.Comment
+	ft.Token = tok
 
 	var desc []string
 	for ; p.peek().Type == TEXT; tok = p.next() {
-		desc = append(desc, tok.Value)
+		desc = append(desc, p.peek().Text)
 	}
 	ft.Description = strings.Join(desc, "\n")
 
@@ -244,7 +247,7 @@ func (p *parser) parseFeature() (ft *Feature, err error) {
 				return ft, p.err("there can only be a single background section, but found another", tok.Line)
 			}
 
-			ft.Background = &Background{Comment: tok.Comment}
+			ft.Background = &Background{Token: tok}
 			p.next() // jump to background steps
 			if ft.Background.Steps, err = p.parseSteps(); err != nil {
 				return ft, err
@@ -283,7 +286,7 @@ func (p *parser) parseFeature() (ft *Feature, err error) {
 
 func (p *parser) parseScenario() (s *Scenario, err error) {
 	tok := p.next()
-	s = &Scenario{Title: tok.Value, Comment: tok.Comment}
+	s = &Scenario{Title: tok.Value, Token: tok}
 	if s.Steps, err = p.parseSteps(); err != nil {
 		return s, err
 	}
@@ -305,7 +308,7 @@ func (p *parser) parseScenario() (s *Scenario, err error) {
 
 func (p *parser) parseSteps() (steps []*Step, err error) {
 	for tok := p.peek(); tok.OfType(allSteps...); tok = p.peek() {
-		step := &Step{Text: tok.Value, Comment: tok.Comment}
+		step := &Step{Text: tok.Value, Token: tok}
 		switch tok.Type {
 		case GIVEN:
 			step.Type = Given
