@@ -6,4 +6,4 @@ Feature: godog bdd suite
   Scenario: parses all features in path
     Given a feature path "features"
     When I parse features
-    Then I should have 1 feature file
+    Then I should have 5 feature file
