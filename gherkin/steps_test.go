@@ -44,12 +44,6 @@ var testStepSamples = map[string]string{
   Then I expect the result`,
 }
 
-func (s *Step) assertType(typ StepType, t *testing.T) {
-	if s.Type != typ {
-		t.Fatalf("expected step '%s' type to be '%s', but got '%s'", s.Text, typ, s.Type)
-	}
-}
-
 func (s *Step) assertText(text string, t *testing.T) {
 	if s.Text != text {
 		t.Fatalf("expected step text to be '%s', but got '%s'", text, s.Text)
@@ -102,7 +96,6 @@ func Test_parse_basic_given_step(t *testing.T) {
 		t.Fatalf("expected one step to be parsed")
 	}
 
-	steps[0].assertType(Given, t)
 	steps[0].assertText("I'm a step", t)
 
 	p.next() // step over to eof
@@ -126,7 +119,6 @@ func Test_parse_step_with_comment(t *testing.T) {
 		t.Fatalf("expected one step to be parsed")
 	}
 
-	steps[0].assertType(Given, t)
 	steps[0].assertText("I'm an admin", t)
 	steps[0].assertComment("sets admin permissions", t)
 
@@ -151,7 +143,6 @@ func Test_parse_hash_table_given_step(t *testing.T) {
 		t.Fatalf("expected one step to be parsed")
 	}
 
-	steps[0].assertType(Given, t)
 	steps[0].assertText("there are users:", t)
 	steps[0].assertTableRow(t, 0, "name", "John Doe")
 
@@ -177,7 +168,6 @@ func Test_parse_table_given_step(t *testing.T) {
 		t.Fatalf("expected one step to be parsed")
 	}
 
-	steps[0].assertType(Given, t)
 	steps[0].assertText("there are users:", t)
 	steps[0].assertTableRow(t, 0, "name", "lastname")
 	steps[0].assertTableRow(t, 1, "John", "Doe")
@@ -207,7 +197,6 @@ func Test_parse_pystring_step(t *testing.T) {
 		t.Fatalf("expected one step to be parsed")
 	}
 
-	steps[0].assertType(Then, t)
 	steps[0].assertText("there should be text:", t)
 	steps[0].assertPyString(strings.Join([]string{
 		indent(4, "Some text"),
@@ -239,7 +228,6 @@ func Test_parse_empty_pystring_step(t *testing.T) {
 		t.Fatalf("expected one step to be parsed")
 	}
 
-	steps[0].assertType(When, t)
 	steps[0].assertText("I do request with body:", t)
 	steps[0].assertPyString("", t)
 
@@ -285,13 +273,9 @@ func Test_parse_step_group(t *testing.T) {
 		t.Fatalf("expected four steps to be parsed, but got: %d", len(steps))
 	}
 
-	steps[0].assertType(Given, t)
 	steps[0].assertText("there are conditions", t)
-	steps[1].assertType(Given, t)
 	steps[1].assertText("there are more conditions", t)
-	steps[2].assertType(When, t)
 	steps[2].assertText("I do something", t)
-	steps[3].assertType(Then, t)
 	steps[3].assertText("something should happen", t)
 
 	p.next() // step over to eof
@@ -318,13 +302,9 @@ func Test_parse_another_step_group(t *testing.T) {
 		t.Fatalf("expected four steps to be parsed, but got: %d", len(steps))
 	}
 
-	steps[0].assertType(Given, t)
 	steps[0].assertText(`an admin user "John Doe"`, t)
-	steps[1].assertType(Given, t)
 	steps[1].assertText(`user "John Doe" belongs to user group "editors"`, t)
-	steps[2].assertType(When, t)
 	steps[2].assertText("I do something", t)
-	steps[3].assertType(Then, t)
 	steps[3].assertText("I expect the result", t)
 
 	p.next() // step over to eof

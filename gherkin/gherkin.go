@@ -111,20 +111,11 @@ type Background struct {
 	Steps []*Step
 }
 
-// StepType is a general type of step
-type StepType string
-
-const (
-	Given StepType = "Given"
-	When  StepType = "When"
-	Then  StepType = "Then"
-)
-
 // Step describes a Scenario or Background step
 type Step struct {
 	*Token
 	Text     string
-	Type     StepType
+	Type     string
 	PyString *PyString
 	Table    *Table
 }
@@ -309,20 +300,6 @@ func (p *parser) parseScenario() (s *Scenario, err error) {
 func (p *parser) parseSteps() (steps []*Step, err error) {
 	for tok := p.peek(); tok.OfType(allSteps...); tok = p.peek() {
 		step := &Step{Text: tok.Value, Token: tok}
-		switch tok.Type {
-		case GIVEN:
-			step.Type = Given
-		case WHEN:
-			step.Type = When
-		case THEN:
-			step.Type = Then
-		case AND, BUT:
-			if len(steps) > 0 {
-				step.Type = steps[len(steps)-1].Type
-			} else {
-				step.Type = Given
-			}
-		}
 
 		p.next() // have read a peeked step
 		if step.Text[len(step.Text)-1] == ':' {

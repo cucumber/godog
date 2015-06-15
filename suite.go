@@ -66,6 +66,11 @@ func (f StepHandlerFunc) HandleStep(args ...Arg) error {
 
 var errPending = fmt.Errorf("pending step")
 
+type stepMatchHandler struct {
+	handler StepHandler
+	expr    *regexp.Regexp
+}
+
 // Suite is an interface which allows various contexts
 // to register step definitions and event handlers
 type Suite interface {
@@ -73,7 +78,7 @@ type Suite interface {
 }
 
 type suite struct {
-	steps    map[*regexp.Regexp]StepHandler
+	steps    []*stepMatchHandler
 	features []*gherkin.Feature
 	fmt      Formatter
 }
@@ -82,9 +87,7 @@ type suite struct {
 // interface. The instance is passed around to all
 // context initialization functions from *_test.go files
 func New() *suite {
-	return &suite{
-		steps: make(map[*regexp.Regexp]StepHandler),
-	}
+	return &suite{}
 }
 
 // Step allows to register a StepHandler in Godog
@@ -97,8 +100,11 @@ func New() *suite {
 //
 // If none of the StepHandlers are matched, then a pending
 // step error will be raised.
-func (s *suite) Step(exp *regexp.Regexp, h StepHandler) {
-	s.steps[exp] = h
+func (s *suite) Step(expr *regexp.Regexp, h StepHandler) {
+	s.steps = append(s.steps, &stepMatchHandler{
+		handler: h,
+		expr:    expr,
+	})
 }
 
 // Run - runs a godog feature suite
@@ -122,33 +128,33 @@ func (s *suite) Run() {
 }
 
 func (s *suite) runStep(step *gherkin.Step) (err error) {
-	defer func() {
-		if e := recover(); e != nil {
-			err = e.(error)
-			s.fmt.Failed(step, err)
-		}
-	}()
-
-	var handler StepHandler
+	var match *stepMatchHandler
 	var args []Arg
-	for r, h := range s.steps {
-		if m := r.FindStringSubmatch(step.Text); len(m) > 0 {
-			handler = h
+	for _, h := range s.steps {
+		if m := h.expr.FindStringSubmatch(step.Text); len(m) > 0 {
+			match = h
 			for _, a := range m[1:] {
 				args = append(args, Arg(a))
 			}
 			break
 		}
 	}
-	if handler == nil {
+	if match == nil {
 		s.fmt.Pending(step)
 		return errPending
 	}
 
-	if err = handler.HandleStep(args...); err != nil {
-		s.fmt.Failed(step, err)
+	defer func() {
+		if e := recover(); e != nil {
+			err = e.(error)
+			s.fmt.Failed(step, match, err)
+		}
+	}()
+
+	if err = match.handler.HandleStep(args...); err != nil {
+		s.fmt.Failed(step, match, err)
 	} else {
-		s.fmt.Passed(step)
+		s.fmt.Passed(step, match)
 	}
 	return
 }

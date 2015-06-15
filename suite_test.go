@@ -28,9 +28,7 @@ func (s *suiteFeature) numParsed(args ...Arg) (err error) {
 
 func SuiteContext(g Suite) {
 	s := &suiteFeature{
-		suite: suite{
-			steps: make(map[*regexp.Regexp]StepHandler),
-		},
+		suite: suite{},
 	}
 
 	g.Step(
