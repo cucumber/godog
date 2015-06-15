@@ -19,7 +19,6 @@ func main() {
 	builtFile := fmt.Sprintf("%s/%dgodog.go", os.TempDir(), time.Now().UnixNano())
 	defer os.Remove(builtFile) // comment out for debug
 
-	// @TODO: handle multiple init functions
 	buf, err := godog.Build()
 	if err != nil {
 		panic(err)
