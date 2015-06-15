@@ -64,6 +64,8 @@ func (f StepHandlerFunc) HandleStep(args ...Arg) error {
 	return f(args...)
 }
 
+var errPending = fmt.Errorf("pending step")
+
 // Suite is an interface which allows various contexts
 // to register step definitions and event handlers
 type Suite interface {
@@ -73,19 +75,13 @@ type Suite interface {
 type suite struct {
 	steps    map[*regexp.Regexp]StepHandler
 	features []*gherkin.Feature
-	fmt      formatter
+	fmt      Formatter
 }
 
 // New initializes a suite which supports the Suite
 // interface. The instance is passed around to all
 // context initialization functions from *_test.go files
 func New() *suite {
-	// @TODO: colorize flag help output
-	flag.StringVar(&cfg.featuresPath, "features", "features", "Path to feature files")
-	flag.StringVar(&cfg.formatterName, "formatter", "pretty", "Formatter name")
-	if !flag.Parsed() {
-		flag.Parse()
-	}
 	return &suite{
 		steps: make(map[*regexp.Regexp]StepHandler),
 	}
@@ -108,6 +104,11 @@ func (s *suite) Step(exp *regexp.Regexp, h StepHandler) {
 // Run - runs a godog feature suite
 func (s *suite) Run() {
 	var err error
+	if !flag.Parsed() {
+		flag.Parse()
+	}
+	fatal(cfg.validate())
+
 	s.fmt = cfg.formatter()
 	s.features, err = cfg.features()
 	fatal(err)
@@ -120,7 +121,14 @@ func (s *suite) Run() {
 	}
 }
 
-func (s *suite) runStep(step *gherkin.Step) {
+func (s *suite) runStep(step *gherkin.Step) (err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			err = e.(error)
+			s.fmt.Failed(step, err)
+		}
+	}()
+
 	var handler StepHandler
 	var args []Arg
 	for r, h := range s.steps {
@@ -133,41 +141,55 @@ func (s *suite) runStep(step *gherkin.Step) {
 		}
 	}
 	if handler == nil {
-		fmt.Println("PENDING")
-		return
+		s.fmt.Pending(step)
+		return errPending
 	}
-	defer func() {
-		if e := recover(); e != nil {
-			fmt.Println("PANIC")
-		}
-	}()
-	if err := handler.HandleStep(args...); err != nil {
-		fmt.Println("ERR")
+
+	if err = handler.HandleStep(args...); err != nil {
+		s.fmt.Failed(step, err)
 	} else {
-		fmt.Println("OK")
+		s.fmt.Passed(step)
+	}
+	return
+}
+
+func (s *suite) runSteps(steps []*gherkin.Step) bool {
+	var failed bool
+	for _, step := range steps {
+		if failed {
+			s.fmt.Skipped(step)
+			continue
+		}
+		if err := s.runStep(step); err != nil {
+			failed = true
+		}
+	}
+	return failed
+}
+
+func (s *suite) skipSteps(steps []*gherkin.Step) {
+	for _, step := range steps {
+		s.fmt.Skipped(step)
 	}
 }
 
 func (s *suite) runFeature(f *gherkin.Feature) {
-	s.fmt.node(f)
-	var background bool
+	s.fmt.Node(f)
+	var failed bool
 	for _, scenario := range f.Scenarios {
-		if f.Background != nil {
-			if !background {
-				s.fmt.node(f.Background)
-			}
-			for _, step := range f.Background.Steps {
-				s.runStep(step)
-				if !background {
-					s.fmt.node(step)
-				}
-			}
-			background = true
+		// background
+		// @TODO: do not print more than once
+		if f.Background != nil && !failed {
+			s.fmt.Node(f.Background)
+			failed = s.runSteps(f.Background.Steps)
 		}
-		s.fmt.node(scenario)
-		for _, step := range scenario.Steps {
-			s.runStep(step)
-			s.fmt.node(step)
+
+		// scenario
+		s.fmt.Node(scenario)
+		if failed {
+			s.skipSteps(scenario.Steps)
+		} else {
+			s.runSteps(scenario.Steps)
 		}
 	}
 }

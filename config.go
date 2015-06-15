@@ -1,6 +1,7 @@
 package godog
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,7 +10,29 @@ import (
 	"github.com/DATA-DOG/godog/gherkin"
 )
 
+type registeredFormatter struct {
+	name string
+	fmt  Formatter
+}
+
+var formatters []*registeredFormatter
+
+// RegisterFormatter registers a feature suite output
+// Formatter for its given name
+func RegisterFormatter(name string, f Formatter) {
+	formatters = append(formatters, &registeredFormatter{
+		name: name,
+		fmt:  f,
+	})
+}
+
 var cfg config
+
+func init() {
+	// @TODO: colorize flag help output
+	flag.StringVar(&cfg.featuresPath, "features", "features", "Path to feature files")
+	flag.StringVar(&cfg.formatterName, "formatter", "pretty", "Formatter name")
+}
 
 type config struct {
 	featuresPath  string
@@ -17,6 +40,7 @@ type config struct {
 }
 
 func (c config) validate() error {
+	// feature path
 	inf, err := os.Stat(c.featuresPath)
 	if err != nil {
 		return err
@@ -24,11 +48,20 @@ func (c config) validate() error {
 	if !inf.IsDir() {
 		return fmt.Errorf("feature path \"%s\" is not a directory.", c.featuresPath)
 	}
-	switch c.formatterName {
-	case "pretty":
-		// ok
-	default:
-		return fmt.Errorf("Unsupported formatter name: %s", c.formatterName)
+
+	// formatter
+	var found bool
+	var names []string
+	for _, f := range formatters {
+		if f.name == c.formatterName {
+			found = true
+			break
+		}
+		names = append(names, f.name)
+	}
+
+	if !found {
+		return fmt.Errorf(`unregistered formatter name: "%s", use one of: %s`, c.formatterName, strings.Join(names, ", "))
 	}
 	return nil
 }
@@ -46,7 +79,7 @@ func (c config) features() (lst []*gherkin.Feature, err error) {
 	})
 }
 
-func (c config) formatter() formatter {
+func (c config) formatter() Formatter {
 	return &pretty{}
 }
 
