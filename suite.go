@@ -119,12 +119,10 @@ func (s *suite) Run() {
 	s.features, err = cfg.features()
 	fatal(err)
 
-	fmt.Println("running", cl("godog", cyan)+", num registered steps:", cl(len(s.steps), yellow))
-	fmt.Println("have loaded", cl(len(s.features), yellow), "features from path:", cl(cfg.featuresPath, green))
-
 	for _, f := range s.features {
 		s.runFeature(f)
 	}
+	s.fmt.Summary()
 }
 
 func (s *suite) runStep(step *gherkin.Step) (err error) {
@@ -140,7 +138,7 @@ func (s *suite) runStep(step *gherkin.Step) (err error) {
 		}
 	}
 	if match == nil {
-		s.fmt.Pending(step)
+		s.fmt.Undefined(step)
 		return errPending
 	}
 
@@ -184,7 +182,6 @@ func (s *suite) runFeature(f *gherkin.Feature) {
 	var failed bool
 	for _, scenario := range f.Scenarios {
 		// background
-		// @TODO: do not print more than once
 		if f.Background != nil && !failed {
 			s.fmt.Node(f.Background)
 			failed = s.runSteps(f.Background.Steps)

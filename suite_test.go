@@ -10,7 +10,7 @@ type suiteFeature struct {
 }
 
 func (s *suiteFeature) featurePath(args ...Arg) error {
-	cfg.featuresPath = args[0].String()
+	cfg.paths = []string{args[0].String()}
 	return nil
 }
 
