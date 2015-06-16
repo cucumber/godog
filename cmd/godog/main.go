@@ -37,6 +37,8 @@ func main() {
 	// @TODO: support for windows
 	cmd := exec.Command("sh", "-c", c)
 	cmd.Stdout = stdout
+	// @TODO: do not read stderr on production version
+	cmd.Stderr = stdout
 
 	err = cmd.Run()
 	switch err.(type) {

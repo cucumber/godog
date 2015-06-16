@@ -102,22 +102,26 @@ type Scenario struct {
 	Title    string
 	Steps    []*Step
 	Tags     Tags
-	Examples *Table
+	Examples *ExampleTable
+	Feature  *Feature
 }
 
 // Background steps are run before every scenario
 type Background struct {
 	*Token
-	Steps []*Step
+	Steps   []*Step
+	Feature *Feature
 }
 
 // Step describes a Scenario or Background step
 type Step struct {
 	*Token
-	Text     string
-	Type     string
-	PyString *PyString
-	Table    *Table
+	Text       string
+	Type       string
+	PyString   *PyString
+	Table      *StepTable
+	Scenario   *Scenario
+	Background *Background
 }
 
 // Feature describes the whole feature
@@ -136,12 +140,26 @@ type Feature struct {
 type PyString struct {
 	*Token
 	Body string
+	Step *Step
 }
 
 // Table is a row group object used with step definition
-type Table struct {
+type table struct {
 	*Token
 	rows [][]string
+}
+
+// ExampleTable is a row group object for
+// scenario outline examples
+type ExampleTable struct {
+	*table
+	OutlineScenario *Scenario
+}
+
+// StepTable is a row group object for steps
+type StepTable struct {
+	*table
+	Step *Step
 }
 
 var allSteps = []TokenType{
@@ -238,10 +256,13 @@ func (p *parser) parseFeature() (ft *Feature, err error) {
 				return ft, p.err("there can only be a single background section, but found another", tok.Line)
 			}
 
-			ft.Background = &Background{Token: tok}
+			ft.Background = &Background{Token: tok, Feature: ft}
 			p.next() // jump to background steps
 			if ft.Background.Steps, err = p.parseSteps(); err != nil {
 				return ft, err
+			}
+			for _, step := range ft.Background.Steps {
+				step.Background = ft.Background
 			}
 			tok = p.peek() // peek to scenario or tags
 		}
@@ -269,6 +290,7 @@ func (p *parser) parseFeature() (ft *Feature, err error) {
 		}
 
 		scenario.Tags = tags
+		scenario.Feature = ft
 		ft.Scenarios = append(ft.Scenarios, scenario)
 	}
 
@@ -281,6 +303,9 @@ func (p *parser) parseScenario() (s *Scenario, err error) {
 	if s.Steps, err = p.parseSteps(); err != nil {
 		return s, err
 	}
+	for _, step := range s.Steps {
+		step.Scenario = s
+	}
 	if examples := p.peek(); examples.Type == EXAMPLES {
 		p.next() // jump over the peeked token
 		peek := p.peek()
@@ -290,9 +315,11 @@ func (p *parser) parseScenario() (s *Scenario, err error) {
 				"but got '" + peek.Type.String() + "' instead, for scenario outline examples",
 			}, " "), examples.Line)
 		}
-		if s.Examples, err = p.parseTable(); err != nil {
+		tbl, err := p.parseTable()
+		if err != nil {
 			return s, err
 		}
+		s.Examples = &ExampleTable{OutlineScenario: s, table: tbl}
 	}
 	return s, nil
 }
@@ -309,10 +336,13 @@ func (p *parser) parseSteps() (steps []*Step, err error) {
 				if step.PyString, err = p.parsePystring(); err != nil {
 					return steps, err
 				}
+				step.PyString.Step = step
 			case TABLE_ROW:
-				if step.Table, err = p.parseTable(); err != nil {
+				tbl, err := p.parseTable()
+				if err != nil {
 					return steps, err
 				}
+				step.Table = &StepTable{Step: step, table: tbl}
 			default:
 				return steps, p.err("pystring or table row was expected, but got: '"+tok.Type.String()+"' instead", tok.Line)
 			}
@@ -339,8 +369,8 @@ func (p *parser) parsePystring() (*PyString, error) {
 	}, nil
 }
 
-func (p *parser) parseTable() (*Table, error) {
-	tbl := &Table{}
+func (p *parser) parseTable() (*table, error) {
+	tbl := &table{}
 	for row := p.peek(); row.Type == TABLE_ROW; row = p.peek() {
 		var cols []string
 		for _, r := range strings.Split(strings.Trim(row.Value, "|"), "|") {
