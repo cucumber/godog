@@ -143,7 +143,7 @@ func (c *config) features() (lst []*gherkin.Feature, err error) {
 			return err
 		})
 		if err != nil {
-			return
+			return lst, fmt.Errorf(`feature path "%s" is not available or accessible`, path)
 		}
 	}
 	return

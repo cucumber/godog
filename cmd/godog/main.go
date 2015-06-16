@@ -14,7 +14,6 @@ import (
 func main() {
 	// will support Ansi colors for windows
 	stdout := ansicolor.NewAnsiColorWriter(os.Stdout)
-	stderr := ansicolor.NewAnsiColorWriter(os.Stdout)
 
 	builtFile := fmt.Sprintf("%s/%dgodog.go", os.TempDir(), time.Now().UnixNano())
 	defer os.Remove(builtFile) // comment out for debug
@@ -38,7 +37,6 @@ func main() {
 	// @TODO: support for windows
 	cmd := exec.Command("sh", "-c", c)
 	cmd.Stdout = stdout
-	cmd.Stderr = stderr
 
 	err = cmd.Run()
 	switch err.(type) {
