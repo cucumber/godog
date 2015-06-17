@@ -51,8 +51,8 @@ func Test_feature_read(t *testing.T) {
 	if tok.Value != val {
 		t.Fatalf("Expected a token value to be '%s', but got: '%s'", val, tok.Value)
 	}
-	if tok.Line != 0 {
-		t.Fatalf("Expected a token line to be '0', but got: '%d'", tok.Line)
+	if tok.Line != 1 {
+		t.Fatalf("Expected a token line to be '1', but got: '%d'", tok.Line)
 	}
 	if tok.Indent != 0 {
 		t.Fatalf("Expected a token identation to be '0', but got: '%d'", tok.Indent)
@@ -63,21 +63,6 @@ func Test_feature_read(t *testing.T) {
 		t.Fatalf("Expected a 'text' type, but got: '%s'", tok.Type)
 	}
 	val = "in order to run features"
-	if tok.Value != val {
-		t.Fatalf("Expected a token value to be '%s', but got: '%s'", val, tok.Value)
-	}
-	if tok.Line != 1 {
-		t.Fatalf("Expected a token line to be '1', but got: '%d'", tok.Line)
-	}
-	if tok.Indent != 2 {
-		t.Fatalf("Expected a token identation to be '2', but got: '%d'", tok.Indent)
-	}
-
-	tok = l.read()
-	if tok.Type != TEXT {
-		t.Fatalf("Expected a 'text' type, but got: '%s'", tok.Type)
-	}
-	val = "as gherkin lexer"
 	if tok.Value != val {
 		t.Fatalf("Expected a token value to be '%s', but got: '%s'", val, tok.Value)
 	}
@@ -92,12 +77,27 @@ func Test_feature_read(t *testing.T) {
 	if tok.Type != TEXT {
 		t.Fatalf("Expected a 'text' type, but got: '%s'", tok.Type)
 	}
-	val = "I need to be able to parse a feature"
+	val = "as gherkin lexer"
 	if tok.Value != val {
 		t.Fatalf("Expected a token value to be '%s', but got: '%s'", val, tok.Value)
 	}
 	if tok.Line != 3 {
 		t.Fatalf("Expected a token line to be '3', but got: '%d'", tok.Line)
+	}
+	if tok.Indent != 2 {
+		t.Fatalf("Expected a token identation to be '2', but got: '%d'", tok.Indent)
+	}
+
+	tok = l.read()
+	if tok.Type != TEXT {
+		t.Fatalf("Expected a 'text' type, but got: '%s'", tok.Type)
+	}
+	val = "I need to be able to parse a feature"
+	if tok.Value != val {
+		t.Fatalf("Expected a token value to be '%s', but got: '%s'", val, tok.Value)
+	}
+	if tok.Line != 4 {
+		t.Fatalf("Expected a token line to be '4', but got: '%d'", tok.Line)
 	}
 	if tok.Indent != 2 {
 		t.Fatalf("Expected a token identation to be '2', but got: '%d'", tok.Indent)

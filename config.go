@@ -108,6 +108,7 @@ func (c *config) validate() error {
 
 func (c *config) features() (lst []*gherkin.Feature, err error) {
 	for _, pat := range c.paths {
+		// check if line number is specified
 		parts := strings.Split(pat, ":")
 		path := parts[0]
 		line := -1
@@ -117,6 +118,7 @@ func (c *config) features() (lst []*gherkin.Feature, err error) {
 				return lst, fmt.Errorf("line number should follow after colon path delimiter")
 			}
 		}
+		// parse features
 		err = filepath.Walk(path, func(p string, f os.FileInfo, err error) error {
 			if err == nil && !f.IsDir() && strings.HasSuffix(p, ".feature") {
 				ft, err := gherkin.Parse(p)
@@ -142,8 +144,14 @@ func (c *config) features() (lst []*gherkin.Feature, err error) {
 			}
 			return err
 		})
-		if err != nil {
-			return lst, fmt.Errorf(`feature path "%s" is not available or accessible`, path)
+		// check error
+		switch {
+		case os.IsNotExist(err):
+			return lst, fmt.Errorf(`feature path "%s" is not available`, path)
+		case os.IsPermission(err):
+			return lst, fmt.Errorf(`feature path "%s" is not accessible`, path)
+		case err != nil:
+			return lst, err
 		}
 	}
 	return

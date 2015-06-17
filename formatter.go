@@ -99,6 +99,10 @@ func (f *pretty) canPrintStep(step *gherkin.Step) bool {
 func (f *pretty) Node(node interface{}) {
 	switch t := node.(type) {
 	case *gherkin.Feature:
+		if f.feature != nil {
+			// not a first feature, add a newline
+			fmt.Println("")
+		}
 		f.feature = t
 		f.doneBackground = false
 		f.background = nil

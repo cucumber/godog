@@ -281,6 +281,9 @@ func (p *parser) parseFeature() (ft *Feature, err error) {
 
 		// there must be a scenario or scenario outline otherwise
 		if !tok.OfType(SCENARIO, SCENARIO_OUTLINE) {
+			if tok.Type == EOF {
+				return ft, nil // there may not be a scenario defined after background
+			}
 			return ft, p.err("expected a scenario or scenario outline, but got '"+tok.Type.String()+"' instead", tok.Line)
 		}
 

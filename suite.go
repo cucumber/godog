@@ -30,17 +30,17 @@ func (f BeforeScenarioHandlerFunc) BeforeScenario(scenario *gherkin.Scenario) {
 // and that the feature runner can move on to the next
 // step.
 type StepHandler interface {
-	HandleStep(args ...Arg) error
+	HandleStep(args ...*Arg) error
 }
 
 // StepHandlerFunc type is an adapter to allow the use of
 // ordinary functions as Step handlers.  If f is a function
 // with the appropriate signature, StepHandlerFunc(f) is a
 // StepHandler object that calls f.
-type StepHandlerFunc func(...Arg) error
+type StepHandlerFunc func(...*Arg) error
 
 // HandleStep calls f(step_arguments...).
-func (f StepHandlerFunc) HandleStep(args ...Arg) error {
+func (f StepHandlerFunc) HandleStep(args ...*Arg) error {
 	return f(args...)
 }
 
@@ -113,12 +113,18 @@ func (s *suite) Run() {
 
 func (s *suite) runStep(step *gherkin.Step) (err error) {
 	var match *stepMatchHandler
-	var args []Arg
+	var args []*Arg
 	for _, h := range s.stepHandlers {
 		if m := h.expr.FindStringSubmatch(step.Text); len(m) > 0 {
 			match = h
 			for _, a := range m[1:] {
-				args = append(args, Arg(a))
+				args = append(args, &Arg{value: a})
+			}
+			if step.Table != nil {
+				args = append(args, &Arg{value: step.Table})
+			}
+			if step.PyString != nil {
+				args = append(args, &Arg{value: step.PyString})
 			}
 			break
 		}

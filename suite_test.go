@@ -16,24 +16,24 @@ func (s *suiteFeature) BeforeScenario(scenario *gherkin.Scenario) {
 	cfg.paths = []string{}
 }
 
-func (s *suiteFeature) featurePath(args ...Arg) error {
+func (s *suiteFeature) featurePath(args ...*Arg) error {
 	cfg.paths = append(cfg.paths, args[0].String())
 	return nil
 }
 
-func (s *suiteFeature) parseFeatures(args ...Arg) (err error) {
+func (s *suiteFeature) parseFeatures(args ...*Arg) (err error) {
 	s.features, err = cfg.features()
 	return
 }
 
-func (s *suiteFeature) numParsed(args ...Arg) (err error) {
+func (s *suiteFeature) numParsed(args ...*Arg) (err error) {
 	if len(s.features) != args[0].Int() {
 		err = fmt.Errorf("expected %d features to be parsed, but have %d", args[0].Int(), len(s.features))
 	}
 	return
 }
 
-func (s *suiteFeature) numScenariosRegistered(args ...Arg) (err error) {
+func (s *suiteFeature) numScenariosRegistered(args ...*Arg) (err error) {
 	var num int
 	for _, ft := range s.features {
 		num += len(ft.Scenarios)
