@@ -16,19 +16,21 @@ func main() {
 	stdout := ansicolor.NewAnsiColorWriter(os.Stdout)
 
 	builtFile := fmt.Sprintf("%s/%dgodog.go", os.TempDir(), time.Now().UnixNano())
-	defer os.Remove(builtFile) // comment out for debug
 
 	buf, err := godog.Build()
 	if err != nil {
+		os.Remove(builtFile)
 		panic(err)
 	}
 
 	w, err := os.Create(builtFile)
 	if err != nil {
+		os.Remove(builtFile)
 		panic(err)
 	}
 	_, err = w.Write(buf)
 	if err != nil {
+		os.Remove(builtFile)
 		panic(err)
 	}
 	w.Close()
@@ -43,8 +45,10 @@ func main() {
 	err = cmd.Run()
 	switch err.(type) {
 	case *exec.ExitError:
+		os.Remove(builtFile)
 		os.Exit(1)
 	case *exec.Error:
+		os.Remove(builtFile)
 		panic(err)
 	}
 }

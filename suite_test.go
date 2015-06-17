@@ -18,6 +18,8 @@ func (s *suiteFeature) BeforeScenario(scenario *gherkin.Scenario) {
 	cfg.paths = []string{}
 	// reset hook test references
 	s.befScenarioHook = nil
+	// reset formatter, which collects all details
+	s.fmt = &testFormatter{}
 }
 
 func (s *suiteFeature) iHaveBeforeScenarioHook(args ...*Arg) error {

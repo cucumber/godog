@@ -3,11 +3,20 @@ package godog
 import (
 	"flag"
 	"fmt"
+	"os"
 	"reflect"
 	"regexp"
 	"runtime"
 
 	"github.com/DATA-DOG/godog/gherkin"
+)
+
+type stepsStatus int
+
+const (
+	stepsStatusPassed stepsStatus = iota
+	stepsStatusFailed
+	stepsStatusUndefined
 )
 
 type BeforeScenarioHandler interface {
@@ -66,7 +75,7 @@ type suite struct {
 	features               []*gherkin.Feature
 	fmt                    Formatter
 
-	stop bool
+	failed bool
 }
 
 // New initializes a suite which supports the Suite
@@ -122,12 +131,15 @@ func (s *suite) Run() {
 
 	for _, f := range s.features {
 		s.runFeature(f)
-		if s.stop {
+		if s.failed && cfg.stopOnFailure {
 			// stop on first failure
 			break
 		}
 	}
 	s.fmt.Summary()
+	if s.failed {
+		os.Exit(1)
+	}
 }
 
 func (s *suite) runStep(step *gherkin.Step) (err error) {
@@ -168,18 +180,21 @@ func (s *suite) runStep(step *gherkin.Step) (err error) {
 	return
 }
 
-func (s *suite) runSteps(steps []*gherkin.Step) bool {
-	var failed bool
+func (s *suite) runSteps(steps []*gherkin.Step) (st stepsStatus) {
 	for _, step := range steps {
-		if failed {
+		if st != stepsStatusPassed {
 			s.fmt.Skipped(step)
 			continue
 		}
-		if err := s.runStep(step); err != nil {
-			failed = true
+		err := s.runStep(step)
+		switch {
+		case err == errPending:
+			st = stepsStatusUndefined
+		case err != nil:
+			st = stepsStatusFailed
 		}
 	}
-	return failed
+	return
 }
 
 func (s *suite) skipSteps(steps []*gherkin.Step) {
@@ -191,7 +206,7 @@ func (s *suite) skipSteps(steps []*gherkin.Step) {
 func (s *suite) runFeature(f *gherkin.Feature) {
 	s.fmt.Node(f)
 	for _, scenario := range f.Scenarios {
-		var failed bool
+		var status stepsStatus
 
 		// run before scenario handlers
 		for _, h := range s.beforeScenarioHandlers {
@@ -201,20 +216,25 @@ func (s *suite) runFeature(f *gherkin.Feature) {
 		// background
 		if f.Background != nil {
 			s.fmt.Node(f.Background)
-			failed = s.runSteps(f.Background.Steps)
+			status = s.runSteps(f.Background.Steps)
 		}
 
 		// scenario
 		s.fmt.Node(scenario)
-		if failed {
+		switch {
+		case status == stepsStatusFailed:
 			s.skipSteps(scenario.Steps)
-		} else {
-			failed = s.runSteps(scenario.Steps)
+		case status == stepsStatusUndefined:
+			s.skipSteps(scenario.Steps)
+		default:
+			status = s.runSteps(scenario.Steps)
 		}
 
-		if failed && cfg.stopOnFailure {
-			s.stop = true
-			return
+		if status == stepsStatusFailed {
+			s.failed = true
+			if cfg.stopOnFailure {
+				return
+			}
 		}
 	}
 }

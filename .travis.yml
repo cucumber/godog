@@ -6,7 +6,12 @@ go:
   - tip
 
 script:
+  # pull all dependencies
   - go get -t ./...
 
+  # run standard go tests
   - go test -v ./...
   - go test -race ./...
+
+  # test me with myself
+  - go run cmd/godog/main.go
