@@ -46,6 +46,13 @@ func (s *suiteFeature) numParsed(args ...*Arg) (err error) {
 	return
 }
 
+func (s *suiteFeature) iRunFeatures(args ...*Arg) error {
+	for _, f := range s.features {
+		s.runFeature(f)
+	}
+	return nil
+}
+
 func (s *suiteFeature) numScenariosRegistered(args ...*Arg) (err error) {
 	var num int
 	for _, ft := range s.features {
@@ -53,6 +60,16 @@ func (s *suiteFeature) numScenariosRegistered(args ...*Arg) (err error) {
 	}
 	if num != args[0].Int() {
 		err = fmt.Errorf("expected %d scenarios to be registered, but got %d", args[0].Int(), num)
+	}
+	return
+}
+
+func (s *suiteFeature) iShouldHaveScenarioRecordedInHook(args ...*Arg) (err error) {
+	if s.befScenarioHook == nil {
+		return fmt.Errorf("there was no scenario executed in before hook")
+	}
+	if s.befScenarioHook.Title != args[0].String() {
+		err = fmt.Errorf(`expected "%s" scenario to be run in hook, but got "%s"`, args[0].String(), s.befScenarioHook.Title)
 	}
 	return
 }
@@ -79,4 +96,10 @@ func SuiteContext(g Suite) {
 	g.Step(
 		regexp.MustCompile(`^I have a before scenario hook$`),
 		StepHandlerFunc(s.iHaveBeforeScenarioHook))
+	g.Step(
+		regexp.MustCompile(`^I run features$`),
+		StepHandlerFunc(s.iRunFeatures))
+	g.Step(
+		regexp.MustCompile(`^I should have a scenario "([^"]*)" recorded in the hook$`),
+		StepHandlerFunc(s.iShouldHaveScenarioRecordedInHook))
 }

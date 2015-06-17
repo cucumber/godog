@@ -8,10 +8,6 @@ Feature: suite hooks
     And a feature path "features/load_features.feature:6"
     And I parse features
 
-  Scenario: hi there
+  Scenario: triggers before scenario hook
     When I run features
-    Then I should have a scenario "" recorded in the hook
-
-  Scenario: and there
-    When I run features
-    Then I should have a scenario "" recorded in the hook
+    Then I should have a scenario "load features within path" recorded in the hook
