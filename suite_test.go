@@ -9,11 +9,22 @@ import (
 
 type suiteFeature struct {
 	suite
+	// for hook tests
+	befScenarioHook *gherkin.Scenario
 }
 
 func (s *suiteFeature) BeforeScenario(scenario *gherkin.Scenario) {
 	// reset feature paths
 	cfg.paths = []string{}
+	// reset hook test references
+	s.befScenarioHook = nil
+}
+
+func (s *suiteFeature) iHaveBeforeScenarioHook(args ...*Arg) error {
+	s.suite.BeforeScenario(BeforeScenarioHandlerFunc(func(scenario *gherkin.Scenario) {
+		s.befScenarioHook = scenario
+	}))
+	return nil
 }
 
 func (s *suiteFeature) featurePath(args ...*Arg) error {
@@ -63,4 +74,7 @@ func SuiteContext(g Suite) {
 	g.Step(
 		regexp.MustCompile(`^I should have ([\d]+) scenarios? registered$`),
 		StepHandlerFunc(s.numScenariosRegistered))
+	g.Step(
+		regexp.MustCompile(`^I have a before scenario hook$`),
+		StepHandlerFunc(s.iHaveBeforeScenarioHook))
 }

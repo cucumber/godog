@@ -6,4 +6,12 @@ Feature: suite hooks
   Background:
     Given I have a before scenario hook
     And a feature path "features/load_features.feature:6"
-    # When I parse and run features
+    And I parse features
+
+  Scenario: hi there
+    When I run features
+    Then I should have a scenario "" recorded in the hook
+
+  Scenario: and there
+    When I run features
+    Then I should have a scenario "" recorded in the hook

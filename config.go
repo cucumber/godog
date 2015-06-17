@@ -41,6 +41,11 @@ func init() {
 
 	flag.StringVar(&cfg.format, "format", "pretty", "")
 	flag.StringVar(&cfg.format, "f", "pretty", "")
+	flag.BoolVar(&cfg.definitions, "definitions", false, "")
+	flag.BoolVar(&cfg.definitions, "d", false, "")
+	flag.BoolVar(&cfg.stopOnFailure, "stop-on-failure", false, "")
+	flag.BoolVar(&cfg.version, "version", false, "")
+
 	flag.Usage = func() {
 		// prints an option or argument with a description, or only description
 		opt := func(name, desc string) string {
@@ -66,11 +71,17 @@ func init() {
 
 		// --- OPTIONS ---
 		fmt.Println(cl("Options:", yellow))
+		// --> step definitions
+		fmt.Println(opt("-d, --definitions", "Print all available step definitions."))
 		// --> format
 		fmt.Println(opt("-f, --format=pretty", "How to format tests output. Available formats:"))
 		for _, f := range formatters {
 			fmt.Println(opt("", s(4)+"- "+cl(f.name, yellow)+": "+f.description))
 		}
+		// --> stop on failure
+		fmt.Println(opt("--stop-on-failure", "Stop processing on first failed scenario."))
+		// --> version
+		fmt.Println(opt("--version", "Show current "+cl("godog", yellow)+" version."))
 		fmt.Println("")
 	}
 }
@@ -78,6 +89,10 @@ func init() {
 type config struct {
 	paths  []string
 	format string
+
+	definitions   bool
+	stopOnFailure bool
+	version       bool
 }
 
 func (c *config) validate() error {

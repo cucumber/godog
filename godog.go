@@ -33,3 +33,5 @@ As you’ll see, Godog is easy to learn, quick to use, and will put the fun back
 Godog was inspired by Behat and the above description is taken from it's documentation.
 */
 package godog
+
+const Version = "v0.1.0-alpha"

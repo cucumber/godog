@@ -3,7 +3,9 @@ package godog
 import (
 	"flag"
 	"fmt"
+	"reflect"
 	"regexp"
+	"runtime"
 
 	"github.com/DATA-DOG/godog/gherkin"
 )
@@ -63,6 +65,8 @@ type suite struct {
 	stepHandlers           []*stepMatchHandler
 	features               []*gherkin.Feature
 	fmt                    Formatter
+
+	stop bool
 }
 
 // New initializes a suite which supports the Suite
@@ -99,14 +103,29 @@ func (s *suite) Run() {
 	if !flag.Parsed() {
 		flag.Parse()
 	}
-	fatal(cfg.validate())
 
+	// check if we need to just show something first
+	switch {
+	case cfg.version:
+		fmt.Println(cl("Godog", green) + " version is " + cl(Version, yellow))
+		return
+	case cfg.definitions:
+		s.printStepDefinitions()
+		return
+	}
+
+	// run a feature suite
+	fatal(cfg.validate())
 	s.fmt = cfg.formatter()
 	s.features, err = cfg.features()
 	fatal(err)
 
 	for _, f := range s.features {
 		s.runFeature(f)
+		if s.stop {
+			// stop on first failure
+			break
+		}
 	}
 	s.fmt.Summary()
 }
@@ -171,14 +190,16 @@ func (s *suite) skipSteps(steps []*gherkin.Step) {
 
 func (s *suite) runFeature(f *gherkin.Feature) {
 	s.fmt.Node(f)
-	var failed bool
 	for _, scenario := range f.Scenarios {
+		var failed bool
+
 		// run before scenario handlers
 		for _, h := range s.beforeScenarioHandlers {
 			h.BeforeScenario(scenario)
 		}
+
 		// background
-		if f.Background != nil && !failed {
+		if f.Background != nil {
 			s.fmt.Node(f.Background)
 			failed = s.runSteps(f.Background.Steps)
 		}
@@ -188,7 +209,28 @@ func (s *suite) runFeature(f *gherkin.Feature) {
 		if failed {
 			s.skipSteps(scenario.Steps)
 		} else {
-			s.runSteps(scenario.Steps)
+			failed = s.runSteps(scenario.Steps)
 		}
+
+		if failed && cfg.stopOnFailure {
+			s.stop = true
+			return
+		}
+	}
+}
+
+func (st *suite) printStepDefinitions() {
+	var longest int
+	for _, def := range st.stepHandlers {
+		if longest < len(def.expr.String()) {
+			longest = len(def.expr.String())
+		}
+	}
+	for _, def := range st.stepHandlers {
+		location := runtime.FuncForPC(reflect.ValueOf(def.handler).Pointer()).Name()
+		fmt.Println(cl(def.expr.String(), yellow)+s(longest-len(def.expr.String())), cl("# "+location, black))
+	}
+	if len(st.stepHandlers) == 0 {
+		fmt.Println("there were no contexts registered, could not find any step definition..")
 	}
 }

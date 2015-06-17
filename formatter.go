@@ -89,10 +89,16 @@ func (f *pretty) line(tok *gherkin.Token) string {
 
 // checks whether it should not print a background step once again
 func (f *pretty) canPrintStep(step *gherkin.Step) bool {
-	if f.background != nil {
-		return step.Background != nil
+	if f.background == nil {
+		return true
 	}
-	return true
+
+	if step.Background == nil {
+		f.doneBackground = true
+		return true
+	}
+
+	return !f.doneBackground
 }
 
 // Node takes a gherkin node for formatting
@@ -110,9 +116,20 @@ func (f *pretty) Node(node interface{}) {
 		fmt.Println(bcl("Feature: ", white) + t.Title)
 		fmt.Println(t.Description)
 	case *gherkin.Background:
-		f.background = t
-		fmt.Println("\n" + bcl("Background:", white))
+		// determine comment position based on step length
+		f.commentPos = len(t.Token.Text)
+		for _, step := range t.Steps {
+			if len(step.Token.Text) > f.commentPos {
+				f.commentPos = len(step.Token.Text)
+			}
+		}
+		// do not repeat background
+		if !f.doneBackground {
+			f.background = t
+			fmt.Println("\n" + strings.Repeat(" ", t.Token.Indent) + bcl("Background:", white))
+		}
 	case *gherkin.Scenario:
+		// determine comment position based on step length
 		f.commentPos = len(t.Token.Text)
 		for _, step := range t.Steps {
 			if len(step.Token.Text) > f.commentPos {
@@ -187,9 +204,6 @@ func (f *pretty) Summary() {
 
 // prints a single matched step
 func (f *pretty) printMatchedStep(step *gherkin.Step, match *stepMatchHandler, c color) {
-	if !f.canPrintStep(step) {
-		return
-	}
 	var text string
 	if m := (match.expr.FindStringSubmatchIndex(step.Text))[2:]; len(m) > 0 {
 		var pos, i int
@@ -228,7 +242,9 @@ func (f *pretty) printMatchedStep(step *gherkin.Step, match *stepMatchHandler, c
 
 // Passed is called to represent a passed step
 func (f *pretty) Passed(step *gherkin.Step, match *stepMatchHandler) {
-	f.printMatchedStep(step, match, green)
+	if f.canPrintStep(step) {
+		f.printMatchedStep(step, match, green)
+	}
 	f.passed = append(f.passed, &passed{step})
 }
 
@@ -250,7 +266,9 @@ func (f *pretty) Undefined(step *gherkin.Step) {
 
 // Failed is called to represent a failed step
 func (f *pretty) Failed(step *gherkin.Step, match *stepMatchHandler, err error) {
-	f.printMatchedStep(step, match, red)
-	fmt.Println(strings.Repeat(" ", step.Token.Indent) + bcl(err, red))
+	if f.canPrintStep(step) {
+		f.printMatchedStep(step, match, red)
+		fmt.Println(strings.Repeat(" ", step.Token.Indent) + bcl(err, red))
+	}
 	f.failed = append(f.failed, &failed{step, err})
 }
