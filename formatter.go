@@ -103,11 +103,11 @@ func (f *pretty) Node(node interface{}) {
 		f.doneBackground = false
 		f.background = nil
 		f.features = append(f.features, t)
-		fmt.Println(bcl("Feature: ", white) + t.Title + "\n")
+		fmt.Println(bcl("Feature: ", white) + t.Title)
 		fmt.Println(t.Description)
 	case *gherkin.Background:
 		f.background = t
-		fmt.Println(bcl("Background:", white) + "\n")
+		fmt.Println("\n" + bcl("Background:", white))
 	case *gherkin.Scenario:
 		f.commentPos = len(t.Token.Text)
 		for _, step := range t.Steps {
@@ -117,7 +117,7 @@ func (f *pretty) Node(node interface{}) {
 		}
 		text := strings.Repeat(" ", t.Token.Indent) + bcl("Scenario: ", white) + t.Title
 		text += strings.Repeat(" ", f.commentPos-len(t.Token.Text)+1) + f.line(t.Token)
-		fmt.Println(text + "\n")
+		fmt.Println("\n" + text)
 	}
 }
 

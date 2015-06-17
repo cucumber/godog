@@ -8,6 +8,16 @@ import (
 	"github.com/DATA-DOG/godog/gherkin"
 )
 
+type BeforeScenarioHandler interface {
+	BeforeScenario(scenario *gherkin.Scenario)
+}
+
+type BeforeScenarioHandlerFunc func(scenario *gherkin.Scenario)
+
+func (f BeforeScenarioHandlerFunc) BeforeScenario(scenario *gherkin.Scenario) {
+	f(scenario)
+}
+
 // Objects implementing the StepHandler interface can be
 // registered as step definitions in godog
 //
@@ -44,13 +54,15 @@ type stepMatchHandler struct {
 // Suite is an interface which allows various contexts
 // to register step definitions and event handlers
 type Suite interface {
-	Step(exp *regexp.Regexp, h StepHandler)
+	Step(expr *regexp.Regexp, h StepHandler)
+	BeforeScenario(h BeforeScenarioHandler)
 }
 
 type suite struct {
-	steps    []*stepMatchHandler
-	features []*gherkin.Feature
-	fmt      Formatter
+	beforeScenarioHandlers []BeforeScenarioHandler
+	stepHandlers           []*stepMatchHandler
+	features               []*gherkin.Feature
+	fmt                    Formatter
 }
 
 // New initializes a suite which supports the Suite
@@ -71,10 +83,14 @@ func New() *suite {
 // If none of the StepHandlers are matched, then a pending
 // step error will be raised.
 func (s *suite) Step(expr *regexp.Regexp, h StepHandler) {
-	s.steps = append(s.steps, &stepMatchHandler{
+	s.stepHandlers = append(s.stepHandlers, &stepMatchHandler{
 		handler: h,
 		expr:    expr,
 	})
+}
+
+func (s *suite) BeforeScenario(h BeforeScenarioHandler) {
+	s.beforeScenarioHandlers = append(s.beforeScenarioHandlers, h)
 }
 
 // Run - runs a godog feature suite
@@ -98,7 +114,7 @@ func (s *suite) Run() {
 func (s *suite) runStep(step *gherkin.Step) (err error) {
 	var match *stepMatchHandler
 	var args []Arg
-	for _, h := range s.steps {
+	for _, h := range s.stepHandlers {
 		if m := h.expr.FindStringSubmatch(step.Text); len(m) > 0 {
 			match = h
 			for _, a := range m[1:] {
@@ -151,6 +167,10 @@ func (s *suite) runFeature(f *gherkin.Feature) {
 	s.fmt.Node(f)
 	var failed bool
 	for _, scenario := range f.Scenarios {
+		// run before scenario handlers
+		for _, h := range s.beforeScenarioHandlers {
+			h.BeforeScenario(scenario)
+		}
 		// background
 		if f.Background != nil && !failed {
 			s.fmt.Node(f.Background)

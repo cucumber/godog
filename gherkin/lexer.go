@@ -46,7 +46,7 @@ func (l *lexer) read() *Token {
 	if len(line) == 0 {
 		return &Token{
 			Type: NEW_LINE,
-			Line: l.lines - 1,
+			Line: l.lines,
 		}
 	}
 	// comment
@@ -55,7 +55,7 @@ func (l *lexer) read() *Token {
 		return &Token{
 			Type:    COMMENT,
 			Indent:  len(m[1]),
-			Line:    l.lines - 1,
+			Line:    l.lines,
 			Value:   comment,
 			Text:    line,
 			Comment: comment,
@@ -66,7 +66,7 @@ func (l *lexer) read() *Token {
 		return &Token{
 			Type:   PYSTRING,
 			Indent: len(m[1]),
-			Line:   l.lines - 1,
+			Line:   l.lines,
 			Text:   line,
 		}
 	}
@@ -74,7 +74,7 @@ func (l *lexer) read() *Token {
 	if m := matchers["step"].FindStringSubmatch(line); len(m) > 0 {
 		tok := &Token{
 			Indent:  len(m[1]),
-			Line:    l.lines - 1,
+			Line:    l.lines,
 			Value:   strings.TrimSpace(m[3]),
 			Text:    line,
 			Comment: strings.Trim(m[4], " #"),
@@ -98,7 +98,7 @@ func (l *lexer) read() *Token {
 		return &Token{
 			Type:    SCENARIO,
 			Indent:  len(m[1]),
-			Line:    l.lines - 1,
+			Line:    l.lines,
 			Value:   strings.TrimSpace(m[2]),
 			Text:    line,
 			Comment: strings.Trim(m[3], " #"),
@@ -109,7 +109,7 @@ func (l *lexer) read() *Token {
 		return &Token{
 			Type:    BACKGROUND,
 			Indent:  len(m[1]),
-			Line:    l.lines - 1,
+			Line:    l.lines,
 			Text:    line,
 			Comment: strings.Trim(m[2], " #"),
 		}
@@ -119,7 +119,7 @@ func (l *lexer) read() *Token {
 		return &Token{
 			Type:    FEATURE,
 			Indent:  len(m[1]),
-			Line:    l.lines - 1,
+			Line:    l.lines,
 			Value:   strings.TrimSpace(m[2]),
 			Text:    line,
 			Comment: strings.Trim(m[3], " #"),
@@ -130,7 +130,7 @@ func (l *lexer) read() *Token {
 		return &Token{
 			Type:    TAGS,
 			Indent:  len(m[1]),
-			Line:    l.lines - 1,
+			Line:    l.lines,
 			Value:   strings.TrimSpace(m[2]),
 			Text:    line,
 			Comment: strings.Trim(m[3], " #"),
@@ -141,7 +141,7 @@ func (l *lexer) read() *Token {
 		return &Token{
 			Type:    TABLE_ROW,
 			Indent:  len(m[1]),
-			Line:    l.lines - 1,
+			Line:    l.lines,
 			Value:   strings.TrimSpace(m[2]),
 			Text:    line,
 			Comment: strings.Trim(m[3], " #"),
@@ -152,7 +152,7 @@ func (l *lexer) read() *Token {
 		return &Token{
 			Type:    SCENARIO_OUTLINE,
 			Indent:  len(m[1]),
-			Line:    l.lines - 1,
+			Line:    l.lines,
 			Value:   strings.TrimSpace(m[2]),
 			Text:    line,
 			Comment: strings.Trim(m[3], " #"),
@@ -163,7 +163,7 @@ func (l *lexer) read() *Token {
 		return &Token{
 			Type:    EXAMPLES,
 			Indent:  len(m[1]),
-			Line:    l.lines - 1,
+			Line:    l.lines,
 			Text:    line,
 			Comment: strings.Trim(m[2], " #"),
 		}
@@ -172,7 +172,7 @@ func (l *lexer) read() *Token {
 	text := strings.TrimLeftFunc(line, unicode.IsSpace)
 	return &Token{
 		Type:   TEXT,
-		Line:   l.lines - 1,
+		Line:   l.lines,
 		Value:  text,
 		Indent: len(line) - len(text),
 		Text:   line,
