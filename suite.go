@@ -11,22 +11,27 @@ import (
 	"github.com/DATA-DOG/godog/gherkin"
 )
 
-type stepsStatus int
+// Status represents a step status
+type Status int
 
 const (
-	stepsStatusPassed stepsStatus = iota
-	stepsStatusFailed
-	stepsStatusUndefined
+	invalid Status = iota
+	Passed
+	Failed
+	Undefined
 )
 
-type BeforeScenarioHandler interface {
-	BeforeScenario(scenario *gherkin.Scenario)
-}
-
-type BeforeScenarioHandlerFunc func(scenario *gherkin.Scenario)
-
-func (f BeforeScenarioHandlerFunc) BeforeScenario(scenario *gherkin.Scenario) {
-	f(scenario)
+// String represents status as string
+func (s Status) String() string {
+	switch s {
+	case Passed:
+		return "passed"
+	case Failed:
+		return "failed"
+	case Undefined:
+		return "undefined"
+	}
+	return "invalid"
 }
 
 // Objects implementing the StepHandler interface can be
@@ -66,16 +71,29 @@ type stepMatchHandler struct {
 // to register step definitions and event handlers
 type Suite interface {
 	Step(expr *regexp.Regexp, h StepHandler)
+	// suite events
+	BeforeSuite(h BeforeSuiteHandler)
 	BeforeScenario(h BeforeScenarioHandler)
+	BeforeStep(h BeforeStepHandler)
+	AfterStep(h AfterStepHandler)
+	AfterScenario(h AfterScenarioHandler)
+	AfterSuite(h AfterSuiteHandler)
 }
 
 type suite struct {
-	beforeScenarioHandlers []BeforeScenarioHandler
-	stepHandlers           []*stepMatchHandler
-	features               []*gherkin.Feature
-	fmt                    Formatter
+	stepHandlers []*stepMatchHandler
+	features     []*gherkin.Feature
+	fmt          Formatter
 
 	failed bool
+
+	// suite event handlers
+	beforeSuiteHandlers    []BeforeSuiteHandler
+	beforeScenarioHandlers []BeforeScenarioHandler
+	beforeStepHandlers     []BeforeStepHandler
+	afterStepHandlers      []AfterStepHandler
+	afterScenarioHandlers  []AfterScenarioHandler
+	afterSuiteHandlers     []AfterSuiteHandler
 }
 
 // New initializes a suite which supports the Suite
@@ -102,8 +120,40 @@ func (s *suite) Step(expr *regexp.Regexp, h StepHandler) {
 	})
 }
 
+// BeforeSuite registers a BeforeSuiteHandler
+// to be run once before suite runner
+func (s *suite) BeforeSuite(h BeforeSuiteHandler) {
+	s.beforeSuiteHandlers = append(s.beforeSuiteHandlers, h)
+}
+
+// BeforeScenario registers a BeforeScenarioHandler
+// to be run before every scenario
 func (s *suite) BeforeScenario(h BeforeScenarioHandler) {
 	s.beforeScenarioHandlers = append(s.beforeScenarioHandlers, h)
+}
+
+// BeforeStep registers a BeforeStepHandler
+// to be run before every scenario
+func (s *suite) BeforeStep(h BeforeStepHandler) {
+	s.beforeStepHandlers = append(s.beforeStepHandlers, h)
+}
+
+// AfterStep registers an AfterStepHandler
+// to be run after every scenario
+func (s *suite) AfterStep(h AfterStepHandler) {
+	s.afterStepHandlers = append(s.afterStepHandlers, h)
+}
+
+// AfterScenario registers an AfterScenarioHandler
+// to be run after every scenario
+func (s *suite) AfterScenario(h AfterScenarioHandler) {
+	s.afterScenarioHandlers = append(s.afterScenarioHandlers, h)
+}
+
+// AfterSuite registers a AfterSuiteHandler
+// to be run once after suite runner
+func (s *suite) AfterSuite(h AfterSuiteHandler) {
+	s.afterSuiteHandlers = append(s.afterSuiteHandlers, h)
 }
 
 // Run - runs a godog feature suite
@@ -129,6 +179,19 @@ func (s *suite) Run() {
 	s.features, err = cfg.features()
 	fatal(err)
 
+	s.run()
+
+	if s.failed {
+		os.Exit(1)
+	}
+}
+
+func (s *suite) run() {
+	// run before suite handlers
+	for _, h := range s.beforeSuiteHandlers {
+		h.HandleBeforeSuite()
+	}
+	// run features
 	for _, f := range s.features {
 		s.runFeature(f)
 		if s.failed && cfg.stopOnFailure {
@@ -136,10 +199,11 @@ func (s *suite) Run() {
 			break
 		}
 	}
-	s.fmt.Summary()
-	if s.failed {
-		os.Exit(1)
+	// run after suite handlers
+	for _, h := range s.afterSuiteHandlers {
+		h.HandleAfterSuite()
 	}
+	s.fmt.Summary()
 }
 
 func (s *suite) runStep(step *gherkin.Step) (err error) {
@@ -180,18 +244,31 @@ func (s *suite) runStep(step *gherkin.Step) (err error) {
 	return
 }
 
-func (s *suite) runSteps(steps []*gherkin.Step) (st stepsStatus) {
+func (s *suite) runSteps(steps []*gherkin.Step) (st Status) {
 	for _, step := range steps {
-		if st != stepsStatusPassed {
+		if st == Failed || st == Undefined {
 			s.fmt.Skipped(step)
 			continue
 		}
+
+		// run before step handlers
+		for _, h := range s.beforeStepHandlers {
+			h.HandleBeforeStep(step)
+		}
+
 		err := s.runStep(step)
-		switch {
-		case err == errPending:
-			st = stepsStatusUndefined
-		case err != nil:
-			st = stepsStatusFailed
+		switch err {
+		case errPending:
+			st = Undefined
+		case nil:
+			st = Passed
+		default:
+			st = Failed
+		}
+
+		// run after step handlers
+		for _, h := range s.afterStepHandlers {
+			h.HandleAfterStep(step, st)
 		}
 	}
 	return
@@ -206,11 +283,11 @@ func (s *suite) skipSteps(steps []*gherkin.Step) {
 func (s *suite) runFeature(f *gherkin.Feature) {
 	s.fmt.Node(f)
 	for _, scenario := range f.Scenarios {
-		var status stepsStatus
+		var status Status
 
 		// run before scenario handlers
 		for _, h := range s.beforeScenarioHandlers {
-			h.BeforeScenario(scenario)
+			h.HandleBeforeScenario(scenario)
 		}
 
 		// background
@@ -222,15 +299,20 @@ func (s *suite) runFeature(f *gherkin.Feature) {
 		// scenario
 		s.fmt.Node(scenario)
 		switch {
-		case status == stepsStatusFailed:
+		case status == Failed:
 			s.skipSteps(scenario.Steps)
-		case status == stepsStatusUndefined:
+		case status == Undefined:
 			s.skipSteps(scenario.Steps)
-		default:
+		case status == invalid:
 			status = s.runSteps(scenario.Steps)
 		}
 
-		if status == stepsStatusFailed {
+		// run after scenario handlers
+		for _, h := range s.afterScenarioHandlers {
+			h.HandleAfterScenario(scenario, status)
+		}
+
+		if status == Failed {
 			s.failed = true
 			if cfg.stopOnFailure {
 				return

@@ -4,10 +4,9 @@ Feature: suite hooks
   I need to provide a way to hook into these events
 
   Background:
-    Given I have a before scenario hook
-    And a feature path "features/load_features.feature:6"
-    And I parse features
+    Given I'm listening to suite events
 
   Scenario: triggers before scenario hook
-    When I run features
-    Then I should have a scenario "load features within path" recorded in the hook
+    Given a feature path "features/load_features.feature:6"
+    When I run feature suite
+    Then there was event triggered before scenario "load features within path"

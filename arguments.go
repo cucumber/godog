@@ -13,6 +13,13 @@ type Arg struct {
 	value interface{}
 }
 
+// StepArgument func creates a step argument.
+// used in cases when calling another step from
+// within a StepHandlerFunc
+func StepArgument(value interface{}) *Arg {
+	return &Arg{value: value}
+}
+
 // Float64 converts an argument to float64
 // or panics if unable to convert it
 func (a *Arg) Float64() float64 {

@@ -3,28 +3,35 @@ package godog
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/DATA-DOG/godog/gherkin"
 )
 
-type suiteFeature struct {
-	suite
-	// for hook tests
-	befScenarioHook *gherkin.Scenario
+type firedEvent struct {
+	name string
+	args []interface{}
 }
 
-func (s *suiteFeature) BeforeScenario(scenario *gherkin.Scenario) {
+type suiteFeature struct {
+	suite
+	events []*firedEvent
+}
+
+func (s *suiteFeature) HandleBeforeScenario(scenario *gherkin.Scenario) {
 	// reset feature paths
 	cfg.paths = []string{}
-	// reset hook test references
-	s.befScenarioHook = nil
+	// reset event stack
+	s.events = []*firedEvent{}
 	// reset formatter, which collects all details
 	s.fmt = &testFormatter{}
 }
 
-func (s *suiteFeature) iHaveBeforeScenarioHook(args ...*Arg) error {
-	s.suite.BeforeScenario(BeforeScenarioHandlerFunc(func(scenario *gherkin.Scenario) {
-		s.befScenarioHook = scenario
+func (s *suiteFeature) iAmListeningToSuiteEvents(args ...*Arg) error {
+	s.BeforeScenario(BeforeScenarioHandlerFunc(func(scenario *gherkin.Scenario) {
+		s.events = append(s.events, &firedEvent{"BeforeScenario", []interface{}{
+			scenario,
+		}})
 	}))
 	return nil
 }
@@ -59,10 +66,11 @@ func (s *suiteFeature) iShouldHaveNumFeatureFiles(args ...*Arg) error {
 	return nil
 }
 
-func (s *suiteFeature) iRunFeatures(args ...*Arg) error {
-	for _, f := range s.features {
-		s.runFeature(f)
+func (s *suiteFeature) iRunFeatureSuite(args ...*Arg) error {
+	if err := s.parseFeatures(); err != nil {
+		return err
 	}
+	s.run()
 	return nil
 }
 
@@ -77,14 +85,39 @@ func (s *suiteFeature) numScenariosRegistered(args ...*Arg) (err error) {
 	return
 }
 
-func (s *suiteFeature) iShouldHaveScenarioRecordedInHook(args ...*Arg) (err error) {
-	if s.befScenarioHook == nil {
-		return fmt.Errorf("there was no scenario executed in before hook")
+func (s *suiteFeature) thereWereNumEventsFired(args ...*Arg) error {
+	var num int
+	for _, event := range s.events {
+		if event.name == args[2].String() {
+			num++
+		}
 	}
-	if s.befScenarioHook.Title != args[0].String() {
-		err = fmt.Errorf(`expected "%s" scenario to be run in hook, but got "%s"`, args[0].String(), s.befScenarioHook.Title)
+	if num != args[1].Int() {
+		return fmt.Errorf("expected %d %s events to be fired, but got %d", args[1].Int(), args[2].String(), num)
 	}
-	return
+	return nil
+}
+
+func (s *suiteFeature) thereWasEventTriggeredBeforeScenario(args ...*Arg) error {
+	var found []string
+	for _, event := range s.events {
+		if event.name != "BeforeScenario" {
+			continue
+		}
+
+		scenario := event.args[0].(*gherkin.Scenario)
+		if scenario.Title == args[0].String() {
+			return nil
+		}
+
+		found = append(found, scenario.Title)
+	}
+
+	if len(found) == 0 {
+		return fmt.Errorf("before scenario event was never triggered or listened")
+	}
+
+	return fmt.Errorf(`expected "%s" scenario, but got these fired %s`, args[0].String(), `"`+strings.Join(found, `", "`)+`"`)
 }
 
 func SuiteContext(g Suite) {
@@ -107,12 +140,15 @@ func SuiteContext(g Suite) {
 		regexp.MustCompile(`^I should have ([\d]+) scenarios? registered$`),
 		StepHandlerFunc(s.numScenariosRegistered))
 	g.Step(
-		regexp.MustCompile(`^I have a before scenario hook$`),
-		StepHandlerFunc(s.iHaveBeforeScenarioHook))
+		regexp.MustCompile(`^I'm listening to suite events$`),
+		StepHandlerFunc(s.iAmListeningToSuiteEvents))
 	g.Step(
-		regexp.MustCompile(`^I run features$`),
-		StepHandlerFunc(s.iRunFeatures))
+		regexp.MustCompile(`^I run feature suite$`),
+		StepHandlerFunc(s.iRunFeatureSuite))
 	g.Step(
-		regexp.MustCompile(`^I should have a scenario "([^"]*)" recorded in the hook$`),
-		StepHandlerFunc(s.iShouldHaveScenarioRecordedInHook))
+		regexp.MustCompile(`^there (was|were) ([\d]+) "([^"]*)" events? fired$`),
+		StepHandlerFunc(s.thereWereNumEventsFired))
+	g.Step(
+		regexp.MustCompile(`^there was event triggered before scenario "([^"]*)"$`),
+		StepHandlerFunc(s.thereWasEventTriggeredBeforeScenario))
 }
