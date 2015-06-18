@@ -1,6 +1,10 @@
 package godog
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+	"strings"
+)
 
 type color int
 
@@ -17,10 +21,25 @@ const (
 	white
 )
 
+// colorizes foreground s with color c
 func cl(s interface{}, c color) string {
 	return fmt.Sprintf("%s[%dm%v%s[0m", ansiEscape, c, s, ansiEscape)
 }
 
+// colorizes foreground s with bold color c
 func bcl(s interface{}, c color) string {
 	return fmt.Sprintf("%s[1;%dm%v%s[0m", ansiEscape, c, s, ansiEscape)
+}
+
+// repeats a space n times
+func s(n int) string {
+	return strings.Repeat(" ", n)
+}
+
+// checks the error and exits with error status code
+func fatal(err error) {
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }

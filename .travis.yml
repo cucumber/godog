@@ -6,8 +6,9 @@ go:
   - tip
 
 script:
-  # pull all dependencies
-  - go get -t ./...
+  # pull all dependencies manually to see how many we have
+  # remove them at all if possible
+  - go get golang.org/x/tools/imports
 
   # run standard go tests
   - go test -v ./...

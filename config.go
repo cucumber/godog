@@ -32,10 +32,6 @@ func RegisterFormatter(name, description string, f Formatter) {
 
 var cfg *config
 
-func s(n int) string {
-	return strings.Repeat(" ", n)
-}
-
 func init() {
 	cfg = &config{}
 
@@ -179,11 +175,4 @@ func (c *config) formatter() (f Formatter) {
 		}
 	}
 	panic("formatter name had to be validated")
-}
-
-func fatal(err error) {
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
 }
