@@ -2,6 +2,7 @@ package godog
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 
@@ -14,19 +15,28 @@ type firedEvent struct {
 }
 
 type suiteFeature struct {
-	testedSuite *suite
-	events      []*firedEvent
+	testedSuite  *suite
+	events       []*firedEvent
+	tempFeatures []string
 }
 
-func (s *suiteFeature) HandleBeforeScenario(scenario *gherkin.Scenario) {
+func (s *suiteFeature) HandleBeforeScenario(*gherkin.Scenario) {
 	// reset whole suite with the state
 	s.testedSuite = &suite{fmt: &testFormatter{}}
 	// our tested suite will have the same context registered
 	SuiteContext(s.testedSuite)
 	// reset feature paths
 	cfg.paths = []string{}
+	s.tempFeatures = []string{}
 	// reset all fired events
 	s.events = []*firedEvent{}
+}
+
+func (s *suiteFeature) HandleAfterScenario(*gherkin.Scenario) {
+	// remove temp files
+	for _, f := range s.tempFeatures {
+		os.Remove("/tmp/" + f)
+	}
 }
 
 func (s *suiteFeature) iAmListeningToSuiteEvents(args ...*Arg) error {
@@ -48,6 +58,14 @@ func (s *suiteFeature) iAmListeningToSuiteEvents(args ...*Arg) error {
 	s.testedSuite.AfterStep(AfterStepHandlerFunc(func(step *gherkin.Step, status Status) {
 		s.events = append(s.events, &firedEvent{"AfterStep", []interface{}{step, status}})
 	}))
+	return nil
+}
+
+func (s *suiteFeature) aFailingStep(...*Arg) error {
+	return fmt.Errorf("intentional failure")
+}
+
+func (s *suiteFeature) tempFeatureFile(args ...*Arg) error {
 	return nil
 }
 
@@ -159,24 +177,18 @@ func SuiteContext(g Suite) {
 
 	g.BeforeScenario(s)
 
-	g.Step(
-		regexp.MustCompile(`^a feature path "([^"]*)"$`),
-		StepHandlerFunc(s.featurePath))
-	g.Step(
-		regexp.MustCompile(`^I parse features$`),
-		StepHandlerFunc(s.parseFeatures))
+	g.Step(regexp.MustCompile(`^a feature path "([^"]*)"$`), StepHandlerFunc(s.featurePath))
+	g.Step(regexp.MustCompile(`^I parse features$`), StepHandlerFunc(s.parseFeatures))
+	g.Step(regexp.MustCompile(`^I'm listening to suite events$`), StepHandlerFunc(s.iAmListeningToSuiteEvents))
+	g.Step(regexp.MustCompile(`^I run feature suite$`), StepHandlerFunc(s.iRunFeatureSuite))
+	g.Step(regexp.MustCompile(`^feature "([^"]*)" file:$`), StepHandlerFunc(s.tempFeatureFile))
+
 	g.Step(
 		regexp.MustCompile(`^I should have ([\d]+) features? files?:$`),
 		StepHandlerFunc(s.iShouldHaveNumFeatureFiles))
 	g.Step(
 		regexp.MustCompile(`^I should have ([\d]+) scenarios? registered$`),
 		StepHandlerFunc(s.numScenariosRegistered))
-	g.Step(
-		regexp.MustCompile(`^I'm listening to suite events$`),
-		StepHandlerFunc(s.iAmListeningToSuiteEvents))
-	g.Step(
-		regexp.MustCompile(`^I run feature suite$`),
-		StepHandlerFunc(s.iRunFeatureSuite))
 	g.Step(
 		regexp.MustCompile(`^there (was|were) ([\d]+) "([^"]*)" events? fired$`),
 		StepHandlerFunc(s.thereWereNumEventsFired))
@@ -186,4 +198,7 @@ func SuiteContext(g Suite) {
 	g.Step(
 		regexp.MustCompile(`^these events had to be fired for a number of times:$`),
 		StepHandlerFunc(s.theseEventsHadToBeFiredForNumberOfTimes))
+
+	g.Step(regexp.MustCompile(`^a failing step`), StepHandlerFunc(s.aFailingStep))
+	g.Step(regexp.MustCompile(`^this step should fail`), StepHandlerFunc(s.aFailingStep))
 }
