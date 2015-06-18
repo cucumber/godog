@@ -111,10 +111,17 @@ func (a *Arg) Bytes() []byte {
 	return []byte(s)
 }
 
-// PyString converts an argument gherkin PyString node
+// PyString converts an argument to *gherkin.PyString node
 func (a *Arg) PyString() *gherkin.PyString {
 	s, ok := a.value.(*gherkin.PyString)
 	a.must(ok, "*gherkin.PyString")
+	return s
+}
+
+// Table converts an argument to *gherkin.Table node
+func (a *Arg) Table() *gherkin.Table {
+	s, ok := a.value.(*gherkin.Table)
+	a.must(ok, "*gherkin.Table")
 	return s
 }
 

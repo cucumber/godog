@@ -102,7 +102,7 @@ type Scenario struct {
 	Title    string
 	Steps    []*Step
 	Tags     Tags
-	Examples *ExampleTable
+	Examples *Table
 	Feature  *Feature
 }
 
@@ -119,7 +119,7 @@ type Step struct {
 	Text       string
 	Type       string
 	PyString   *PyString
-	Table      *StepTable
+	Table      *Table
 	Scenario   *Scenario
 	Background *Background
 }
@@ -149,23 +149,13 @@ func (p *PyString) String() string {
 	return p.Raw
 }
 
-// Table is a row group object used with step definition
-type table struct {
+// Table is a row group object used with
+// step definition or outline scenario
+type Table struct {
 	*Token
-	rows [][]string
-}
-
-// ExampleTable is a row group object for
-// scenario outline examples
-type ExampleTable struct {
-	*table
 	OutlineScenario *Scenario
-}
-
-// StepTable is a row group object for steps
-type StepTable struct {
-	*table
-	Step *Step
+	Step            *Step
+	rows            [][]string
 }
 
 var allSteps = []TokenType{
@@ -324,11 +314,10 @@ func (p *parser) parseScenario() (s *Scenario, err error) {
 				"but got '" + peek.Type.String() + "' instead, for scenario outline examples",
 			}, " "), examples.Line)
 		}
-		tbl, err := p.parseTable()
-		if err != nil {
+		if s.Examples, err = p.parseTable(); err != nil {
 			return s, err
 		}
-		s.Examples = &ExampleTable{OutlineScenario: s, table: tbl}
+		s.Examples.OutlineScenario = s
 	}
 	return s, nil
 }
@@ -347,11 +336,10 @@ func (p *parser) parseSteps() (steps []*Step, err error) {
 				}
 				step.PyString.Step = step
 			case TABLE_ROW:
-				tbl, err := p.parseTable()
-				if err != nil {
+				if step.Table, err = p.parseTable(); err != nil {
 					return steps, err
 				}
-				step.Table = &StepTable{Step: step, table: tbl}
+				step.Table.Step = step
 			default:
 				return steps, p.err("pystring or table row was expected, but got: '"+tok.Type.String()+"' instead", tok.Line)
 			}
@@ -380,8 +368,8 @@ func (p *parser) parsePystring() (*PyString, error) {
 	}, nil
 }
 
-func (p *parser) parseTable() (*table, error) {
-	tbl := &table{}
+func (p *parser) parseTable() (*Table, error) {
+	tbl := &Table{}
 	for row := p.peek(); row.Type == TABLE_ROW; row = p.peek() {
 		var cols []string
 		for _, r := range strings.Split(strings.Trim(row.Value, "|"), "|") {
