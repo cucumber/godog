@@ -11,9 +11,10 @@ import (
 	"github.com/DATA-DOG/godog/gherkin"
 )
 
-// Status represents a step status
+// Status represents a step or scenario status
 type Status int
 
+// step or scenario status constants
 const (
 	invalid Status = iota
 	Passed
@@ -303,7 +304,7 @@ func (s *suite) runFeature(f *gherkin.Feature) {
 			s.skipSteps(scenario.Steps)
 		case status == Undefined:
 			s.skipSteps(scenario.Steps)
-		case status == invalid:
+		case status == Passed || status == invalid:
 			status = s.runSteps(scenario.Steps)
 		}
 

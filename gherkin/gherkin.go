@@ -155,7 +155,7 @@ type Table struct {
 	*Token
 	OutlineScenario *Scenario
 	Step            *Step
-	rows            [][]string
+	Rows            [][]string
 }
 
 var allSteps = []TokenType{
@@ -369,17 +369,17 @@ func (p *parser) parsePystring() (*PyString, error) {
 }
 
 func (p *parser) parseTable() (*Table, error) {
-	tbl := &Table{}
+	tbl := &Table{Token: p.peek()}
 	for row := p.peek(); row.Type == TABLE_ROW; row = p.peek() {
 		var cols []string
 		for _, r := range strings.Split(strings.Trim(row.Value, "|"), "|") {
 			cols = append(cols, strings.TrimFunc(r, unicode.IsSpace))
 		}
 		// ensure the same colum number for each row
-		if len(tbl.rows) > 0 && len(tbl.rows[0]) != len(cols) {
+		if len(tbl.Rows) > 0 && len(tbl.Rows[0]) != len(cols) {
 			return tbl, p.err("table row has not the same number of columns compared to previous row", row.Line)
 		}
-		tbl.rows = append(tbl.rows, cols)
+		tbl.Rows = append(tbl.Rows, cols)
 		p.next() // jump over the peeked token
 	}
 	return tbl, nil

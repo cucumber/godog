@@ -23,6 +23,7 @@ type pretty struct {
 	commentPos     int
 	doneBackground bool
 	background     *gherkin.Background
+	scenario       *gherkin.Scenario
 
 	// summary
 	started   time.Time
@@ -38,20 +39,6 @@ func (f *pretty) line(tok *gherkin.Token) string {
 	return cl(fmt.Sprintf("# %s:%d", f.feature.Path, tok.Line), black)
 }
 
-// checks whether it should not print a background step once again
-func (f *pretty) canPrintStep(step *gherkin.Step) bool {
-	if f.background == nil {
-		return true
-	}
-
-	if step.Background == nil {
-		f.doneBackground = true
-		return true
-	}
-
-	return !f.doneBackground
-}
-
 // Node takes a gherkin node for formatting
 func (f *pretty) Node(node interface{}) {
 	switch t := node.(type) {
@@ -61,25 +48,27 @@ func (f *pretty) Node(node interface{}) {
 			fmt.Println("")
 		}
 		f.feature = t
-		f.doneBackground = false
+		f.scenario = nil
 		f.background = nil
 		f.features = append(f.features, t)
 		fmt.Println(bcl("Feature: ", white) + t.Title)
 		fmt.Println(t.Description)
 	case *gherkin.Background:
-		// determine comment position based on step length
-		f.commentPos = len(t.Token.Text)
-		for _, step := range t.Steps {
-			if len(step.Token.Text) > f.commentPos {
-				f.commentPos = len(step.Token.Text)
-			}
-		}
-		// do not repeat background
-		if !f.doneBackground {
+		// do not repeat background for the same feature
+		if f.background == nil && f.scenario == nil {
 			f.background = t
+			// determine comment position based on step length
+			f.commentPos = len(t.Token.Text)
+			for _, step := range t.Steps {
+				if len(step.Token.Text) > f.commentPos {
+					f.commentPos = len(step.Token.Text)
+				}
+			}
+			// print background node
 			fmt.Println("\n" + s(t.Token.Indent) + bcl("Background:", white))
 		}
 	case *gherkin.Scenario:
+		f.scenario = t
 		// determine comment position based on step length
 		f.commentPos = len(t.Token.Text)
 		for _, step := range t.Steps {
@@ -180,7 +169,8 @@ func (f *pretty) printStep(stepAction interface{}) {
 		fatal(fmt.Errorf("unexpected step type received: %T", typ))
 	}
 
-	if !f.canPrintStep(step) {
+	// do not print background more than once
+	if f.scenario == nil && step.Background != f.background {
 		return
 	}
 
@@ -225,8 +215,30 @@ func (f *pretty) printStep(stepAction interface{}) {
 		fmt.Println(cl(step.PyString.Raw, c))
 		fmt.Println(s(step.Token.Indent+2) + cl(`"""`, c))
 	}
+	if step.Table != nil {
+		f.printTable(step.Table, c)
+	}
 	if err != nil {
 		fmt.Println(s(step.Token.Indent) + bcl(err, red))
+	}
+}
+
+// print table with aligned table cells
+func (f *pretty) printTable(t *gherkin.Table, c color) {
+	var longest = make([]int, len(t.Rows[0]))
+	var cols = make([]string, len(t.Rows[0]))
+	for _, row := range t.Rows {
+		for i, col := range row {
+			if longest[i] < len(col) {
+				longest[i] = len(col)
+			}
+		}
+	}
+	for _, row := range t.Rows {
+		for i, col := range row {
+			cols[i] = col + s(longest[i]-len(col))
+		}
+		fmt.Println(s(t.Token.Indent) + cl("| "+strings.Join(cols, " | ")+" |", c))
 	}
 }
 

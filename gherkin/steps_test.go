@@ -69,13 +69,13 @@ func (s *Step) assertTableRow(t *testing.T, num int, cols ...string) {
 	if s.Table == nil {
 		t.Fatalf("step '%s %s' has no table", s.Type, s.Text)
 	}
-	if len(s.Table.rows) <= num {
+	if len(s.Table.Rows) <= num {
 		t.Fatalf("step '%s %s' table has no row: %d", s.Type, s.Text, num)
 	}
-	if len(s.Table.rows[num]) != len(cols) {
+	if len(s.Table.Rows[num]) != len(cols) {
 		t.Fatalf("step '%s %s' table row length, does not match expected: %d", s.Type, s.Text, len(cols))
 	}
-	for i, col := range s.Table.rows[num] {
+	for i, col := range s.Table.Rows[num] {
 		if col != cols[i] {
 			t.Fatalf("step '%s %s' table row %d, column %d - value '%s', does not match expected: %s", s.Type, s.Text, num, i, col, cols[i])
 		}

@@ -14,24 +14,39 @@ type firedEvent struct {
 }
 
 type suiteFeature struct {
-	suite
-	events []*firedEvent
+	testedSuite *suite
+	events      []*firedEvent
 }
 
 func (s *suiteFeature) HandleBeforeScenario(scenario *gherkin.Scenario) {
+	// reset whole suite with the state
+	s.testedSuite = &suite{fmt: &testFormatter{}}
+	// our tested suite will have the same context registered
+	SuiteContext(s.testedSuite)
 	// reset feature paths
 	cfg.paths = []string{}
-	// reset event stack
+	// reset all fired events
 	s.events = []*firedEvent{}
-	// reset formatter, which collects all details
-	s.fmt = &testFormatter{}
 }
 
 func (s *suiteFeature) iAmListeningToSuiteEvents(args ...*Arg) error {
-	s.BeforeScenario(BeforeScenarioHandlerFunc(func(scenario *gherkin.Scenario) {
-		s.events = append(s.events, &firedEvent{"BeforeScenario", []interface{}{
-			scenario,
-		}})
+	s.testedSuite.BeforeSuite(BeforeSuiteHandlerFunc(func() {
+		s.events = append(s.events, &firedEvent{"BeforeSuite", []interface{}{}})
+	}))
+	s.testedSuite.AfterSuite(AfterSuiteHandlerFunc(func() {
+		s.events = append(s.events, &firedEvent{"AfterSuite", []interface{}{}})
+	}))
+	s.testedSuite.BeforeScenario(BeforeScenarioHandlerFunc(func(scenario *gherkin.Scenario) {
+		s.events = append(s.events, &firedEvent{"BeforeScenario", []interface{}{scenario}})
+	}))
+	s.testedSuite.AfterScenario(AfterScenarioHandlerFunc(func(scenario *gherkin.Scenario, status Status) {
+		s.events = append(s.events, &firedEvent{"AfterScenario", []interface{}{scenario, status}})
+	}))
+	s.testedSuite.BeforeStep(BeforeStepHandlerFunc(func(step *gherkin.Step) {
+		s.events = append(s.events, &firedEvent{"BeforeStep", []interface{}{step}})
+	}))
+	s.testedSuite.AfterStep(AfterStepHandlerFunc(func(step *gherkin.Step, status Status) {
+		s.events = append(s.events, &firedEvent{"AfterStep", []interface{}{step, status}})
 	}))
 	return nil
 }
@@ -42,17 +57,17 @@ func (s *suiteFeature) featurePath(args ...*Arg) error {
 }
 
 func (s *suiteFeature) parseFeatures(args ...*Arg) (err error) {
-	s.features, err = cfg.features()
+	s.testedSuite.features, err = cfg.features()
 	return
 }
 
 func (s *suiteFeature) iShouldHaveNumFeatureFiles(args ...*Arg) error {
-	if len(s.features) != args[0].Int() {
-		return fmt.Errorf("expected %d features to be parsed, but have %d", args[0].Int(), len(s.features))
+	if len(s.testedSuite.features) != args[0].Int() {
+		return fmt.Errorf("expected %d features to be parsed, but have %d", args[0].Int(), len(s.testedSuite.features))
 	}
 	expected := args[1].PyString().Lines
 	var actual []string
-	for _, ft := range s.features {
+	for _, ft := range s.testedSuite.features {
 		actual = append(actual, ft.Path)
 	}
 	if len(expected) != len(actual) {
@@ -70,13 +85,13 @@ func (s *suiteFeature) iRunFeatureSuite(args ...*Arg) error {
 	if err := s.parseFeatures(); err != nil {
 		return err
 	}
-	s.run()
+	s.testedSuite.run()
 	return nil
 }
 
 func (s *suiteFeature) numScenariosRegistered(args ...*Arg) (err error) {
 	var num int
-	for _, ft := range s.features {
+	for _, ft := range s.testedSuite.features {
 		num += len(ft.Scenarios)
 	}
 	if num != args[0].Int() {
@@ -120,10 +135,27 @@ func (s *suiteFeature) thereWasEventTriggeredBeforeScenario(args ...*Arg) error 
 	return fmt.Errorf(`expected "%s" scenario, but got these fired %s`, args[0].String(), `"`+strings.Join(found, `", "`)+`"`)
 }
 
-func SuiteContext(g Suite) {
-	s := &suiteFeature{
-		suite: suite{},
+func (s *suiteFeature) theseEventsHadToBeFiredForNumberOfTimes(args ...*Arg) error {
+	tbl := args[0].Table()
+	if len(tbl.Rows[0]) != 2 {
+		return fmt.Errorf("expected two columns for event table row, got: %d", len(tbl.Rows[0]))
 	}
+
+	for _, row := range tbl.Rows {
+		args := []*Arg{
+			StepArgument(""), // ignored
+			StepArgument(row[1]),
+			StepArgument(row[0]),
+		}
+		if err := s.thereWereNumEventsFired(args...); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func SuiteContext(g Suite) {
+	s := &suiteFeature{}
 
 	g.BeforeScenario(s)
 
@@ -151,4 +183,7 @@ func SuiteContext(g Suite) {
 	g.Step(
 		regexp.MustCompile(`^there was event triggered before scenario "([^"]*)"$`),
 		StepHandlerFunc(s.thereWasEventTriggeredBeforeScenario))
+	g.Step(
+		regexp.MustCompile(`^these events had to be fired for a number of times:$`),
+		StepHandlerFunc(s.theseEventsHadToBeFiredForNumberOfTimes))
 }

@@ -25,13 +25,13 @@ func (s *Scenario) assertExampleRow(t *testing.T, num int, cols ...string) {
 	if s.Examples == nil {
 		t.Fatalf("outline scenario '%s' has no examples", s.Title)
 	}
-	if len(s.Examples.rows) <= num {
+	if len(s.Examples.Rows) <= num {
 		t.Fatalf("outline scenario '%s' table has no row: %d", s.Title, num)
 	}
-	if len(s.Examples.rows[num]) != len(cols) {
+	if len(s.Examples.Rows[num]) != len(cols) {
 		t.Fatalf("outline scenario '%s' table row length, does not match expected: %d", s.Title, len(cols))
 	}
-	for i, col := range s.Examples.rows[num] {
+	for i, col := range s.Examples.Rows[num] {
 		if col != cols[i] {
 			t.Fatalf("outline scenario '%s' table row %d, column %d - value '%s', does not match expected: %s", s.Title, num, i, col, cols[i])
 		}

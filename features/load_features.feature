@@ -8,7 +8,7 @@ Feature: load features
     When I parse features
     Then I should have 2 feature files:
       """
-      features/hooks.feature
+      features/events.feature
       features/load_features.feature
       """
 
@@ -27,10 +27,10 @@ Feature: load features
 
   Scenario: load a number of feature files
     Given a feature path "features/load_features.feature"
-    And a feature path "features/hooks.feature"
+    And a feature path "features/events.feature"
     When I parse features
     Then I should have 2 feature files:
       """
       features/load_features.feature
-      features/hooks.feature
+      features/events.feature
       """
