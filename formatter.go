@@ -20,8 +20,9 @@ type Formatter interface {
 // failed represents a failed step data structure
 // with all necessary references
 type failed struct {
-	step *gherkin.Step
-	err  error
+	step    *gherkin.Step
+	handler *stepMatchHandler
+	err     error
 }
 
 func (f failed) line() string {
@@ -40,7 +41,8 @@ func (f failed) line() string {
 // passed represents a successful step data structure
 // with all necessary references
 type passed struct {
-	step *gherkin.Step
+	step    *gherkin.Step
+	handler *stepMatchHandler
 }
 
 // skipped represents a skipped step data structure

@@ -139,8 +139,14 @@ type Feature struct {
 // PyString is a multiline text object used with step definition
 type PyString struct {
 	*Token
-	Body string
-	Step *Step
+	Raw   string   // raw multiline string body
+	Lines []string // trimmed lines
+	Step  *Step
+}
+
+// String returns raw multiline string
+func (p *PyString) String() string {
+	return p.Raw
 }
 
 // Table is a row group object used with step definition
@@ -360,15 +366,17 @@ func (p *parser) parseSteps() (steps []*Step, err error) {
 func (p *parser) parsePystring() (*PyString, error) {
 	var tok *Token
 	started := p.next() // skip the start of pystring
-	var lines []string
+	var lines, trimmed []string
 	for tok = p.next(); !tok.OfType(EOF, PYSTRING); tok = p.next() {
 		lines = append(lines, tok.Text)
+		trimmed = append(trimmed, strings.TrimSpace(tok.Text))
 	}
 	if tok.Type == EOF {
 		return nil, fmt.Errorf("pystring which was opened on %s:%d was not closed", p.path, started.Line)
 	}
 	return &PyString{
-		Body: strings.Join(lines, "\n"),
+		Raw:   strings.Join(lines, "\n"),
+		Lines: trimmed,
 	}, nil
 }
 

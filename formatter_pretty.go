@@ -153,73 +153,107 @@ func (f *pretty) Summary() {
 	fmt.Println(elapsed)
 }
 
-// prints a single matched step
-func (f *pretty) printMatchedStep(step *gherkin.Step, match *stepMatchHandler, c color) {
-	var text string
-	if m := (match.expr.FindStringSubmatchIndex(step.Text))[2:]; len(m) > 0 {
-		var pos, i int
-		for pos, i = 0, 0; i < len(m); i++ {
-			if math.Mod(float64(i), 2) == 0 {
-				text += cl(step.Text[pos:m[i]], c)
-			} else {
-				text += bcl(step.Text[pos:m[i]], c)
-			}
-			pos = m[i]
-		}
-		text += cl(step.Text[pos:len(step.Text)], c)
-	} else {
-		text = cl(step.Text, c)
+func (f *pretty) printStep(stepAction interface{}) {
+	var c color
+	var step *gherkin.Step
+	var h *stepMatchHandler
+	var err error
+	var suffix, prefix string
+
+	switch typ := stepAction.(type) {
+	case *passed:
+		step = typ.step
+		h = typ.handler
+		c = green
+	case *failed:
+		step = typ.step
+		h = typ.handler
+		err = typ.err
+		c = red
+	case *skipped:
+		step = typ.step
+		c = cyan
+	case *undefined:
+		step = typ.step
+		c = yellow
+	default:
+		fatal(fmt.Errorf("unexpected step type received: %T", typ))
 	}
 
-	// use reflect to get step handler function name
-	name := runtime.FuncForPC(reflect.ValueOf(match.handler).Pointer()).Name()
+	if !f.canPrintStep(step) {
+		return
+	}
 
+	if h != nil {
+		if m := (h.expr.FindStringSubmatchIndex(step.Text))[2:]; len(m) > 0 {
+			var pos, i int
+			for pos, i = 0, 0; i < len(m); i++ {
+				if math.Mod(float64(i), 2) == 0 {
+					suffix += cl(step.Text[pos:m[i]], c)
+				} else {
+					suffix += bcl(step.Text[pos:m[i]], c)
+				}
+				pos = m[i]
+			}
+			suffix += cl(step.Text[pos:len(step.Text)], c)
+		} else {
+			suffix = cl(step.Text, c)
+		}
+		// use reflect to get step handler function name
+		name := runtime.FuncForPC(reflect.ValueOf(h.handler).Pointer()).Name()
+		suffix += s(f.commentPos-len(step.Token.Text)+1) + cl(fmt.Sprintf("# %s", name), black)
+	} else {
+		suffix = cl(step.Text, c)
+	}
+
+	prefix = s(step.Token.Indent)
 	switch step.Token.Type {
 	case gherkin.GIVEN:
-		text = cl("Given", c) + " " + text
+		prefix += cl("Given", c)
 	case gherkin.WHEN:
-		text = cl("When", c) + " " + text
+		prefix += cl("When", c)
 	case gherkin.THEN:
-		text = cl("Then", c) + " " + text
+		prefix += cl("Then", c)
 	case gherkin.AND:
-		text = cl("And", c) + " " + text
+		prefix += cl("And", c)
 	case gherkin.BUT:
-		text = cl("But", c) + " " + text
+		prefix += cl("But", c)
 	}
-	text = s(step.Token.Indent) + text
-	text += s(f.commentPos-len(step.Token.Text)+1) + cl(fmt.Sprintf("# %s", name), black)
-	fmt.Println(text)
+	fmt.Println(prefix, suffix)
+	if step.PyString != nil {
+		fmt.Println(s(step.Token.Indent+2) + cl(`"""`, c))
+		fmt.Println(cl(step.PyString.Raw, c))
+		fmt.Println(s(step.Token.Indent+2) + cl(`"""`, c))
+	}
+	if err != nil {
+		fmt.Println(s(step.Token.Indent) + bcl(err, red))
+	}
 }
 
 // Passed is called to represent a passed step
 func (f *pretty) Passed(step *gherkin.Step, match *stepMatchHandler) {
-	if f.canPrintStep(step) {
-		f.printMatchedStep(step, match, green)
-	}
-	f.passed = append(f.passed, &passed{step})
+	s := &passed{step: step, handler: match}
+	f.printStep(s)
+	f.passed = append(f.passed, s)
 }
 
 // Skipped is called to represent a passed step
 func (f *pretty) Skipped(step *gherkin.Step) {
-	if f.canPrintStep(step) {
-		fmt.Println(cl(step.Token.Text, cyan))
-	}
-	f.skipped = append(f.skipped, &skipped{step})
+	s := &skipped{step: step}
+	f.printStep(s)
+	f.skipped = append(f.skipped, s)
 }
 
 // Undefined is called to represent a pending step
 func (f *pretty) Undefined(step *gherkin.Step) {
-	if f.canPrintStep(step) {
-		fmt.Println(cl(step.Token.Text, yellow))
-	}
-	f.undefined = append(f.undefined, &undefined{step})
+	s := &undefined{step: step}
+	f.printStep(s)
+	f.undefined = append(f.undefined, s)
 }
 
 // Failed is called to represent a failed step
 func (f *pretty) Failed(step *gherkin.Step, match *stepMatchHandler, err error) {
-	if f.canPrintStep(step) {
-		f.printMatchedStep(step, match, red)
-		fmt.Println(s(step.Token.Indent) + bcl(err, red))
-	}
-	f.failed = append(f.failed, &failed{step, err})
+	s := &failed{step: step, handler: match, err: err}
+	f.printStep(s)
+	f.failed = append(f.failed, s)
 }

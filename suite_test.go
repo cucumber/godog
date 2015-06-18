@@ -39,11 +39,24 @@ func (s *suiteFeature) parseFeatures(args ...*Arg) (err error) {
 	return
 }
 
-func (s *suiteFeature) numParsed(args ...*Arg) (err error) {
+func (s *suiteFeature) iShouldHaveNumFeatureFiles(args ...*Arg) error {
 	if len(s.features) != args[0].Int() {
-		err = fmt.Errorf("expected %d features to be parsed, but have %d", args[0].Int(), len(s.features))
+		return fmt.Errorf("expected %d features to be parsed, but have %d", args[0].Int(), len(s.features))
 	}
-	return
+	expected := args[1].PyString().Lines
+	var actual []string
+	for _, ft := range s.features {
+		actual = append(actual, ft.Path)
+	}
+	if len(expected) != len(actual) {
+		return fmt.Errorf("expected %d feature paths to be parsed, but have %d", len(expected), len(actual))
+	}
+	for i := 0; i < len(expected); i++ {
+		if expected[i] != actual[i] {
+			return fmt.Errorf(`expected feature path "%s" at position: %d, does not match actual "%s"`, expected[i], i, actual[i])
+		}
+	}
+	return nil
 }
 
 func (s *suiteFeature) iRunFeatures(args ...*Arg) error {
@@ -88,8 +101,8 @@ func SuiteContext(g Suite) {
 		regexp.MustCompile(`^I parse features$`),
 		StepHandlerFunc(s.parseFeatures))
 	g.Step(
-		regexp.MustCompile(`^I should have ([\d]+) features? files?$`),
-		StepHandlerFunc(s.numParsed))
+		regexp.MustCompile(`^I should have ([\d]+) features? files?:$`),
+		StepHandlerFunc(s.iShouldHaveNumFeatureFiles))
 	g.Step(
 		regexp.MustCompile(`^I should have ([\d]+) scenarios? registered$`),
 		StepHandlerFunc(s.numScenariosRegistered))

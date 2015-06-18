@@ -54,8 +54,8 @@ func (s *Step) assertPyString(text string, t *testing.T) {
 	if s.PyString == nil {
 		t.Fatalf("step '%s %s' has no pystring", s.Type, s.Text)
 	}
-	if s.PyString.Body != text {
-		t.Fatalf("expected step pystring body to be '%s', but got '%s'", text, s.PyString.Body)
+	if s.PyString.Raw != text {
+		t.Fatalf("expected step pystring body to be '%s', but got '%s'", text, s.PyString.Raw)
 	}
 }
 
