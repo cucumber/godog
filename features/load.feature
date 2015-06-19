@@ -6,31 +6,32 @@ Feature: load features
   Scenario: load features within path
     Given a feature path "features"
     When I parse features
-    Then I should have 2 feature files:
+    Then I should have 3 feature files:
       """
       features/events.feature
-      features/load_features.feature
+      features/load.feature
+      features/run.feature
       """
 
   Scenario: load a specific feature file
-    Given a feature path "features/load_features.feature"
+    Given a feature path "features/load.feature"
     When I parse features
     Then I should have 1 feature file:
       """
-      features/load_features.feature
+      features/load.feature
       """
 
   Scenario: load a feature file with a specified scenario
-    Given a feature path "features/load_features.feature:6"
+    Given a feature path "features/load.feature:6"
     When I parse features
     Then I should have 1 scenario registered
 
   Scenario: load a number of feature files
-    Given a feature path "features/load_features.feature"
+    Given a feature path "features/load.feature"
     And a feature path "features/events.feature"
     When I parse features
     Then I should have 2 feature files:
       """
-      features/load_features.feature
+      features/load.feature
       features/events.feature
       """

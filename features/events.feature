@@ -7,12 +7,12 @@ Feature: suite events
     Given I'm listening to suite events
 
   Scenario: triggers before scenario event
-    Given a feature path "features/load_features.feature:6"
+    Given a feature path "features/load.feature:6"
     When I run feature suite
     Then there was event triggered before scenario "load features within path"
 
   Scenario: triggers appropriate events for a single scenario
-    Given a feature path "features/load_features.feature:6"
+    Given a feature path "features/load.feature:6"
     When I run feature suite
     Then these events had to be fired for a number of times:
       | BeforeSuite    | 1 |
@@ -23,7 +23,7 @@ Feature: suite events
       | AfterSuite     | 1 |
 
   Scenario: triggers appropriate events whole feature
-    Given a feature path "features/load_features.feature"
+    Given a feature path "features/load.feature"
     When I run feature suite
     Then these events had to be fired for a number of times:
       | BeforeSuite    | 1  |

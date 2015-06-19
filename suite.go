@@ -11,12 +11,21 @@ import (
 	"github.com/DATA-DOG/godog/gherkin"
 )
 
+// Regexp is an unified type for regular expression
+// it can be either a string or a *regexp.Regexp
+type Regexp interface{}
+
+// Handler is an unified type for a StepHandler
+// interface satisfaction. It may be a function
+// or a step handler
+type Handler interface{}
+
 // Status represents a step or scenario status
 type Status int
 
 // step or scenario status constants
 const (
-	invalid Status = iota
+	Invalid Status = iota
 	Passed
 	Failed
 	Undefined
@@ -71,7 +80,7 @@ type stepMatchHandler struct {
 // Suite is an interface which allows various contexts
 // to register step definitions and event handlers
 type Suite interface {
-	Step(expr *regexp.Regexp, h StepHandler)
+	Step(expr Regexp, h Handler)
 	// suite events
 	BeforeSuite(h BeforeSuiteHandler)
 	BeforeScenario(h BeforeScenarioHandler)
@@ -106,7 +115,10 @@ func New() *suite {
 
 // Step allows to register a StepHandler in Godog
 // feature suite, the handler will be applied to all
-// steps matching the given regexp
+// steps matching the given regexp expr
+//
+// It will panic if expr is not a valid regular expression
+// or handler does not satisfy StepHandler interface
 //
 // Note that if there are two handlers which may match
 // the same step, then the only first matched handler
@@ -114,10 +126,34 @@ func New() *suite {
 //
 // If none of the StepHandlers are matched, then a pending
 // step error will be raised.
-func (s *suite) Step(expr *regexp.Regexp, h StepHandler) {
+func (s *suite) Step(expr Regexp, h Handler) {
+	var handler StepHandler
+	var regex *regexp.Regexp
+
+	switch t := expr.(type) {
+	case *regexp.Regexp:
+		regex = t
+	case string:
+		regex = regexp.MustCompile(t)
+	case []byte:
+		regex = regexp.MustCompile(string(t))
+	default:
+		panic(fmt.Sprintf("expecting expr to be a *regexp.Regexp or a string, got type: %T", expr))
+	}
+
+	switch t := h.(type) {
+	case StepHandlerFunc:
+		handler = t
+	case StepHandler:
+		handler = t
+	case func(...*Arg) error:
+		handler = StepHandlerFunc(t)
+	default:
+		panic(fmt.Sprintf("expecting handler to satisfy StepHandler interface, got type: %T", h))
+	}
 	s.stepHandlers = append(s.stepHandlers, &stepMatchHandler{
-		handler: h,
-		expr:    expr,
+		handler: handler,
+		expr:    regex,
 	})
 }
 
@@ -304,7 +340,7 @@ func (s *suite) runFeature(f *gherkin.Feature) {
 			s.skipSteps(scenario.Steps)
 		case status == Undefined:
 			s.skipSteps(scenario.Steps)
-		case status == Passed || status == invalid:
+		case status == Passed || status == Invalid:
 			status = s.runSteps(scenario.Steps)
 		}
 

@@ -2,8 +2,6 @@ package godog
 
 import (
 	"fmt"
-	"os"
-	"regexp"
 	"strings"
 
 	"github.com/DATA-DOG/godog/gherkin"
@@ -15,9 +13,8 @@ type firedEvent struct {
 }
 
 type suiteFeature struct {
-	testedSuite  *suite
-	events       []*firedEvent
-	tempFeatures []string
+	testedSuite *suite
+	events      []*firedEvent
 }
 
 func (s *suiteFeature) HandleBeforeScenario(*gherkin.Scenario) {
@@ -27,16 +24,8 @@ func (s *suiteFeature) HandleBeforeScenario(*gherkin.Scenario) {
 	SuiteContext(s.testedSuite)
 	// reset feature paths
 	cfg.paths = []string{}
-	s.tempFeatures = []string{}
 	// reset all fired events
 	s.events = []*firedEvent{}
-}
-
-func (s *suiteFeature) HandleAfterScenario(*gherkin.Scenario) {
-	// remove temp files
-	for _, f := range s.tempFeatures {
-		os.Remove("/tmp/" + f)
-	}
 }
 
 func (s *suiteFeature) iAmListeningToSuiteEvents(args ...*Arg) error {
@@ -65,8 +54,13 @@ func (s *suiteFeature) aFailingStep(...*Arg) error {
 	return fmt.Errorf("intentional failure")
 }
 
-func (s *suiteFeature) tempFeatureFile(args ...*Arg) error {
-	return nil
+// parse a given feature file body as a feature
+func (s *suiteFeature) aFeatureFile(args ...*Arg) error {
+	name := args[0].String()
+	body := args[1].PyString().Raw
+	feature, err := gherkin.Parse(strings.NewReader(body), name)
+	s.testedSuite.features = append(s.testedSuite.features, feature)
+	return err
 }
 
 func (s *suiteFeature) featurePath(args ...*Arg) error {
@@ -77,6 +71,13 @@ func (s *suiteFeature) featurePath(args ...*Arg) error {
 func (s *suiteFeature) parseFeatures(args ...*Arg) (err error) {
 	s.testedSuite.features, err = cfg.features()
 	return
+}
+
+func (s *suiteFeature) theSuitePassedSuccessfully(...*Arg) error {
+	if s.testedSuite.failed {
+		return fmt.Errorf("the feature suite has failed")
+	}
+	return nil
 }
 
 func (s *suiteFeature) iShouldHaveNumFeatureFiles(args ...*Arg) error {
@@ -177,28 +178,19 @@ func SuiteContext(g Suite) {
 
 	g.BeforeScenario(s)
 
-	g.Step(regexp.MustCompile(`^a feature path "([^"]*)"$`), StepHandlerFunc(s.featurePath))
-	g.Step(regexp.MustCompile(`^I parse features$`), StepHandlerFunc(s.parseFeatures))
-	g.Step(regexp.MustCompile(`^I'm listening to suite events$`), StepHandlerFunc(s.iAmListeningToSuiteEvents))
-	g.Step(regexp.MustCompile(`^I run feature suite$`), StepHandlerFunc(s.iRunFeatureSuite))
-	g.Step(regexp.MustCompile(`^feature "([^"]*)" file:$`), StepHandlerFunc(s.tempFeatureFile))
+	g.Step(`^a feature path "([^"]*)"$`, s.featurePath)
+	g.Step(`^I parse features$`, s.parseFeatures)
+	g.Step(`^I'm listening to suite events$`, s.iAmListeningToSuiteEvents)
+	g.Step(`^I run feature suite$`, s.iRunFeatureSuite)
+	g.Step(`^a feature "([^"]*)" file:$`, s.aFeatureFile)
+	g.Step(`^the suite should have passed successfully$`, s.theSuitePassedSuccessfully)
 
-	g.Step(
-		regexp.MustCompile(`^I should have ([\d]+) features? files?:$`),
-		StepHandlerFunc(s.iShouldHaveNumFeatureFiles))
-	g.Step(
-		regexp.MustCompile(`^I should have ([\d]+) scenarios? registered$`),
-		StepHandlerFunc(s.numScenariosRegistered))
-	g.Step(
-		regexp.MustCompile(`^there (was|were) ([\d]+) "([^"]*)" events? fired$`),
-		StepHandlerFunc(s.thereWereNumEventsFired))
-	g.Step(
-		regexp.MustCompile(`^there was event triggered before scenario "([^"]*)"$`),
-		StepHandlerFunc(s.thereWasEventTriggeredBeforeScenario))
-	g.Step(
-		regexp.MustCompile(`^these events had to be fired for a number of times:$`),
-		StepHandlerFunc(s.theseEventsHadToBeFiredForNumberOfTimes))
+	g.Step(`^I should have ([\d]+) features? files?:$`, s.iShouldHaveNumFeatureFiles)
+	g.Step(`^I should have ([\d]+) scenarios? registered$`, s.numScenariosRegistered)
+	g.Step(`^there (was|were) ([\d]+) "([^"]*)" events? fired$`, s.thereWereNumEventsFired)
+	g.Step(`^there was event triggered before scenario "([^"]*)"$`, s.thereWasEventTriggeredBeforeScenario)
+	g.Step(`^these events had to be fired for a number of times:$`, s.theseEventsHadToBeFiredForNumberOfTimes)
 
-	g.Step(regexp.MustCompile(`^a failing step`), StepHandlerFunc(s.aFailingStep))
-	g.Step(regexp.MustCompile(`^this step should fail`), StepHandlerFunc(s.aFailingStep))
+	g.Step(`^a failing step`, s.aFailingStep)
+	g.Step(`^this step should fail`, s.aFailingStep)
 }
