@@ -39,13 +39,13 @@ func main() {
 	// @TODO: support for windows
 	cmd := exec.Command("sh", "-c", c)
 	cmd.Stdout = stdout
-	// @TODO: do not read stderr on production version
 	cmd.Stderr = stdout
 
 	err = cmd.Run()
 	switch err.(type) {
 	case *exec.ExitError:
-		os.Remove(builtFile)
+		// then there is a suite error, we need to provide a
+		// way to see the built file and do not remove it here
 		os.Exit(1)
 	case *exec.Error:
 		os.Remove(builtFile)

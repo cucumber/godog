@@ -7,19 +7,44 @@ import (
 	"github.com/DATA-DOG/godog/gherkin"
 )
 
+func SuiteContext(s Suite) {
+	c := &suiteContext{}
+
+	s.BeforeScenario(c)
+
+	s.Step(`^a feature path "([^"]*)"$`, c.featurePath)
+	s.Step(`^I parse features$`, c.parseFeatures)
+	s.Step(`^I'm listening to suite events$`, c.iAmListeningToSuiteEvents)
+	s.Step(`^I run feature suite$`, c.iRunFeatureSuite)
+	s.Step(`^a feature "([^"]*)" file:$`, c.aFeatureFile)
+	s.Step(`^the suite should have (passed|failed)$`, c.theSuiteShouldHave)
+
+	s.Step(`^I should have ([\d]+) features? files?:$`, c.iShouldHaveNumFeatureFiles)
+	s.Step(`^I should have ([\d]+) scenarios? registered$`, c.numScenariosRegistered)
+	s.Step(`^there (was|were) ([\d]+) "([^"]*)" events? fired$`, c.thereWereNumEventsFired)
+	s.Step(`^there was event triggered before scenario "([^"]*)"$`, c.thereWasEventTriggeredBeforeScenario)
+	s.Step(`^these events had to be fired for a number of times:$`, c.theseEventsHadToBeFiredForNumberOfTimes)
+
+	s.Step(`^a failing step`, c.aFailingStep)
+	s.Step(`^this step should fail`, c.aFailingStep)
+	s.Step(`^the following steps? should be (passed|failed|skipped|undefined):`, c.followingStepsShouldHave)
+}
+
 type firedEvent struct {
 	name string
 	args []interface{}
 }
 
-type suiteFeature struct {
+type suiteContext struct {
 	testedSuite *suite
 	events      []*firedEvent
+	fmt         *testFormatter
 }
 
-func (s *suiteFeature) HandleBeforeScenario(*gherkin.Scenario) {
+func (s *suiteContext) HandleBeforeScenario(*gherkin.Scenario) {
 	// reset whole suite with the state
-	s.testedSuite = &suite{fmt: &testFormatter{}}
+	s.fmt = &testFormatter{}
+	s.testedSuite = &suite{fmt: s.fmt}
 	// our tested suite will have the same context registered
 	SuiteContext(s.testedSuite)
 	// reset feature paths
@@ -28,7 +53,65 @@ func (s *suiteFeature) HandleBeforeScenario(*gherkin.Scenario) {
 	s.events = []*firedEvent{}
 }
 
-func (s *suiteFeature) iAmListeningToSuiteEvents(args ...*Arg) error {
+func (s *suiteContext) followingStepsShouldHave(args ...*Arg) error {
+	var expected []string = args[1].PyString().Lines
+	var actual, unmatched []string
+	var matched []int
+
+	switch args[0].String() {
+	case "passed":
+		for _, st := range s.fmt.passed {
+			actual = append(actual, st.step.Text)
+		}
+	case "failed":
+		for _, st := range s.fmt.failed {
+			actual = append(actual, st.step.Text)
+		}
+	case "skipped":
+		for _, st := range s.fmt.skipped {
+			actual = append(actual, st.step.Text)
+		}
+	case "undefined":
+		for _, st := range s.fmt.undefined {
+			actual = append(actual, st.step.Text)
+		}
+	default:
+		return fmt.Errorf("unexpected step status wanted: %s", args[0].String())
+	}
+
+	if len(expected) > len(actual) {
+		return fmt.Errorf("number of expected %s steps: %d is less than actual %s steps: %d", args[0].String(), len(expected), args[0].String(), len(actual))
+	}
+
+	for _, a := range actual {
+		for i, e := range expected {
+			if a == e {
+				matched = append(matched, i)
+				break
+			}
+		}
+	}
+
+	if len(matched) == len(expected) {
+		return nil
+	}
+
+	for i, s := range expected {
+		var found bool
+		for _, m := range matched {
+			if i == m {
+				found = true
+			}
+		}
+		if !found {
+			unmatched = append(unmatched, s)
+		}
+	}
+
+	return fmt.Errorf("the steps: %s - is not %s", strings.Join(unmatched, ", "), args[0].String())
+}
+
+func (s *suiteContext) iAmListeningToSuiteEvents(args ...*Arg) error {
 	s.testedSuite.BeforeSuite(BeforeSuiteHandlerFunc(func() {
 		s.events = append(s.events, &firedEvent{"BeforeSuite", []interface{}{}})
 	}))
@@ -50,12 +133,12 @@ func (s *suiteFeature) iAmListeningToSuiteEvents(args ...*Arg) error {
 	return nil
 }
 
-func (s *suiteFeature) aFailingStep(...*Arg) error {
+func (s *suiteContext) aFailingStep(...*Arg) error {
 	return fmt.Errorf("intentional failure")
 }
 
 // parse a given feature file body as a feature
-func (s *suiteFeature) aFeatureFile(args ...*Arg) error {
+func (s *suiteContext) aFeatureFile(args ...*Arg) error {
 	name := args[0].String()
 	body := args[1].PyString().Raw
 	feature, err := gherkin.Parse(strings.NewReader(body), name)
@@ -63,24 +146,31 @@ func (s *suiteFeature) aFeatureFile(args ...*Arg) error {
 	return err
 }
 
-func (s *suiteFeature) featurePath(args ...*Arg) error {
+func (s *suiteContext) featurePath(args ...*Arg) error {
 	cfg.paths = append(cfg.paths, args[0].String())
 	return nil
 }
 
-func (s *suiteFeature) parseFeatures(args ...*Arg) (err error) {
-	s.testedSuite.features, err = cfg.features()
-	return
+func (s *suiteContext) parseFeatures(args ...*Arg) error {
+	features, err := cfg.features()
+	if err != nil {
+		return err
+	}
+	s.testedSuite.features = append(s.testedSuite.features, features...)
+	return nil
 }
 
-func (s *suiteFeature) theSuitePassedSuccessfully(...*Arg) error {
-	if s.testedSuite.failed {
+func (s *suiteContext) theSuiteShouldHave(args ...*Arg) error {
+	if s.testedSuite.failed && args[0].String() == "passed" {
 		return fmt.Errorf("the feature suite has failed")
+	}
+	if !s.testedSuite.failed && args[0].String() == "failed" {
+		return fmt.Errorf("the feature suite has passed")
 	}
 	return nil
 }
 
-func (s *suiteFeature) iShouldHaveNumFeatureFiles(args ...*Arg) error {
+func (s *suiteContext) iShouldHaveNumFeatureFiles(args ...*Arg) error {
 	if len(s.testedSuite.features) != args[0].Int() {
 		return fmt.Errorf("expected %d features to be parsed, but have %d", args[0].Int(), len(s.testedSuite.features))
 	}
@@ -100,7 +190,7 @@ func (s *suiteFeature) iShouldHaveNumFeatureFiles(args ...*Arg) error {
 	return nil
 }
 
-func (s *suiteFeature) iRunFeatureSuite(args ...*Arg) error {
+func (s *suiteContext) iRunFeatureSuite(args ...*Arg) error {
 	if err := s.parseFeatures(); err != nil {
 		return err
 	}
@@ -108,7 +198,7 @@ func (s *suiteFeature) iRunFeatureSuite(args ...*Arg) error {
 	return nil
 }
 
-func (s *suiteFeature) numScenariosRegistered(args ...*Arg) (err error) {
+func (s *suiteContext) numScenariosRegistered(args ...*Arg) (err error) {
 	var num int
 	for _, ft := range s.testedSuite.features {
 		num += len(ft.Scenarios)
@@ -119,7 +209,7 @@ func (s *suiteFeature) numScenariosRegistered(args ...*Arg) (err error) {
 	return
 }
 
-func (s *suiteFeature) thereWereNumEventsFired(args ...*Arg) error {
+func (s *suiteContext) thereWereNumEventsFired(args ...*Arg) error {
 	var num int
 	for _, event := range s.events {
 		if event.name == args[2].String() {
@@ -132,7 +222,7 @@ func (s *suiteFeature) thereWereNumEventsFired(args ...*Arg) error {
 	return nil
 }
 
-func (s *suiteFeature) thereWasEventTriggeredBeforeScenario(args ...*Arg) error {
+func (s *suiteContext) thereWasEventTriggeredBeforeScenario(args ...*Arg) error {
 	var found []string
 	for _, event := range s.events {
 		if event.name != "BeforeScenario" {
@@ -154,7 +244,7 @@ func (s *suiteFeature) thereWasEventTriggeredBeforeScenario(args ...*Arg) error 
 	return fmt.Errorf(`expected "%s" scenario, but got these fired %s`, args[0].String(), `"`+strings.Join(found, `", "`)+`"`)
 }
 
-func (s *suiteFeature) theseEventsHadToBeFiredForNumberOfTimes(args ...*Arg) error {
+func (s *suiteContext) theseEventsHadToBeFiredForNumberOfTimes(args ...*Arg) error {
 	tbl := args[0].Table()
 	if len(tbl.Rows[0]) != 2 {
 		return fmt.Errorf("expected two columns for event table row, got: %d", len(tbl.Rows[0]))
@@ -171,26 +261,4 @@ func (s *suiteFeature) theseEventsHadToBeFiredForNumberOfTimes(args ...*Arg) err
 		}
 	}
 	return nil
-}
-
-func SuiteContext(g Suite) {
-	s := &suiteFeature{}
-
-	g.BeforeScenario(s)
-
-	g.Step(`^a feature path "([^"]*)"$`, s.featurePath)
-	g.Step(`^I parse features$`, s.parseFeatures)
-	g.Step(`^I'm listening to suite events$`, s.iAmListeningToSuiteEvents)
-	g.Step(`^I run feature suite$`, s.iRunFeatureSuite)
-	g.Step(`^a feature "([^"]*)" file:$`, s.aFeatureFile)
-	g.Step(`^the suite should have passed successfully$`, s.theSuitePassedSuccessfully)
-
-	g.Step(`^I should have ([\d]+) features? files?:$`, s.iShouldHaveNumFeatureFiles)
-	g.Step(`^I should have ([\d]+) scenarios? registered$`, s.numScenariosRegistered)
-	g.Step(`^there (was|were) ([\d]+) "([^"]*)" events? fired$`, s.thereWereNumEventsFired)
-	g.Step(`^there was event triggered before scenario "([^"]*)"$`, s.thereWasEventTriggeredBeforeScenario)
-	g.Step(`^these events had to be fired for a number of times:$`, s.theseEventsHadToBeFiredForNumberOfTimes)
-
-	g.Step(`^a failing step`, s.aFailingStep)
-	g.Step(`^this step should fail`, s.aFailingStep)
 }
