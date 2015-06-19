@@ -43,7 +43,6 @@ func Test_parse_scenario_outline(t *testing.T) {
 	p := &parser{
 		lx:   newLexer(strings.NewReader(testLexerSamples["scenario_outline_with_examples"])),
 		path: "usual.feature",
-		ast:  newAST(),
 	}
 	s, err := p.parseScenario()
 	if err != nil {
@@ -51,7 +50,7 @@ func Test_parse_scenario_outline(t *testing.T) {
 	}
 	s.assertTitle("ls supports kinds of options", t)
 
-	p.ast.assertMatchesTypes([]TokenType{
+	p.assertMatchesTypes([]TokenType{
 		SCENARIO_OUTLINE,
 		GIVEN,
 		AND,

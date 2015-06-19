@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	feature, err := gherkin.Parse("ls.feature")
+	feature, err := gherkin.ParseFile("ls.feature")
 	switch {
 	case err == gherkin.ErrEmpty:
 		log.Println("the feature file is empty and does not describe any feature")

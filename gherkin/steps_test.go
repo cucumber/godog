@@ -86,7 +86,6 @@ func Test_parse_basic_given_step(t *testing.T) {
 	p := &parser{
 		lx:   newLexer(strings.NewReader(testStepSamples["given"])),
 		path: "some.feature",
-		ast:  newAST(),
 	}
 	steps, err := p.parseSteps()
 	if err != nil {
@@ -99,7 +98,7 @@ func Test_parse_basic_given_step(t *testing.T) {
 	steps[0].assertText("I'm a step", t)
 
 	p.next() // step over to eof
-	p.ast.assertMatchesTypes([]TokenType{
+	p.assertMatchesTypes([]TokenType{
 		GIVEN,
 		EOF,
 	}, t)
@@ -109,7 +108,6 @@ func Test_parse_step_with_comment(t *testing.T) {
 	p := &parser{
 		lx:   newLexer(strings.NewReader(testStepSamples["step_comment"])),
 		path: "some.feature",
-		ast:  newAST(),
 	}
 	steps, err := p.parseSteps()
 	if err != nil {
@@ -123,7 +121,7 @@ func Test_parse_step_with_comment(t *testing.T) {
 	steps[0].assertComment("sets admin permissions", t)
 
 	p.next() // step over to eof
-	p.ast.assertMatchesTypes([]TokenType{
+	p.assertMatchesTypes([]TokenType{
 		GIVEN,
 		EOF,
 	}, t)
@@ -133,7 +131,6 @@ func Test_parse_hash_table_given_step(t *testing.T) {
 	p := &parser{
 		lx:   newLexer(strings.NewReader(testStepSamples["given_table_hash"])),
 		path: "some.feature",
-		ast:  newAST(),
 	}
 	steps, err := p.parseSteps()
 	if err != nil {
@@ -147,7 +144,7 @@ func Test_parse_hash_table_given_step(t *testing.T) {
 	steps[0].assertTableRow(t, 0, "name", "John Doe")
 
 	p.next() // step over to eof
-	p.ast.assertMatchesTypes([]TokenType{
+	p.assertMatchesTypes([]TokenType{
 		GIVEN,
 		TABLE_ROW,
 		EOF,
@@ -158,7 +155,6 @@ func Test_parse_table_given_step(t *testing.T) {
 	p := &parser{
 		lx:   newLexer(strings.NewReader(testStepSamples["given_table"])),
 		path: "some.feature",
-		ast:  newAST(),
 	}
 	steps, err := p.parseSteps()
 	if err != nil {
@@ -174,7 +170,7 @@ func Test_parse_table_given_step(t *testing.T) {
 	steps[0].assertTableRow(t, 2, "Jane", "Doe")
 
 	p.next() // step over to eof
-	p.ast.assertMatchesTypes([]TokenType{
+	p.assertMatchesTypes([]TokenType{
 		GIVEN,
 		TABLE_ROW,
 		TABLE_ROW,
@@ -187,7 +183,6 @@ func Test_parse_pystring_step(t *testing.T) {
 	p := &parser{
 		lx:   newLexer(strings.NewReader(testStepSamples["then_pystring"])),
 		path: "some.feature",
-		ast:  newAST(),
 	}
 	steps, err := p.parseSteps()
 	if err != nil {
@@ -204,7 +199,7 @@ func Test_parse_pystring_step(t *testing.T) {
 	}, "\n"), t)
 
 	p.next() // step over to eof
-	p.ast.assertMatchesTypes([]TokenType{
+	p.assertMatchesTypes([]TokenType{
 		THEN,
 		PYSTRING,
 		TEXT,
@@ -218,7 +213,6 @@ func Test_parse_empty_pystring_step(t *testing.T) {
 	p := &parser{
 		lx:   newLexer(strings.NewReader(testStepSamples["when_pystring_empty"])),
 		path: "some.feature",
-		ast:  newAST(),
 	}
 	steps, err := p.parseSteps()
 	if err != nil {
@@ -232,7 +226,7 @@ func Test_parse_empty_pystring_step(t *testing.T) {
 	steps[0].assertPyString("", t)
 
 	p.next() // step over to eof
-	p.ast.assertMatchesTypes([]TokenType{
+	p.assertMatchesTypes([]TokenType{
 		WHEN,
 		PYSTRING,
 		PYSTRING,
@@ -244,13 +238,12 @@ func Test_parse_unclosed_pystring_step(t *testing.T) {
 	p := &parser{
 		lx:   newLexer(strings.NewReader(testStepSamples["when_pystring_unclosed"])),
 		path: "some.feature",
-		ast:  newAST(),
 	}
 	_, err := p.parseSteps()
 	if err == nil {
 		t.Fatalf("expected an error, but got none")
 	}
-	p.ast.assertMatchesTypes([]TokenType{
+	p.assertMatchesTypes([]TokenType{
 		WHEN,
 		PYSTRING,
 		TEXT,
@@ -263,7 +256,6 @@ func Test_parse_step_group(t *testing.T) {
 	p := &parser{
 		lx:   newLexer(strings.NewReader(testStepSamples["step_group"])),
 		path: "some.feature",
-		ast:  newAST(),
 	}
 	steps, err := p.parseSteps()
 	if err != nil {
@@ -279,7 +271,7 @@ func Test_parse_step_group(t *testing.T) {
 	steps[3].assertText("something should happen", t)
 
 	p.next() // step over to eof
-	p.ast.assertMatchesTypes([]TokenType{
+	p.assertMatchesTypes([]TokenType{
 		GIVEN,
 		AND,
 		WHEN,
@@ -292,7 +284,6 @@ func Test_parse_another_step_group(t *testing.T) {
 	p := &parser{
 		lx:   newLexer(strings.NewReader(testStepSamples["step_group_another"])),
 		path: "some.feature",
-		ast:  newAST(),
 	}
 	steps, err := p.parseSteps()
 	if err != nil {
@@ -308,7 +299,7 @@ func Test_parse_another_step_group(t *testing.T) {
 	steps[3].assertText("I expect the result", t)
 
 	p.next() // step over to eof
-	p.ast.assertMatchesTypes([]TokenType{
+	p.assertMatchesTypes([]TokenType{
 		GIVEN,
 		AND,
 		WHEN,

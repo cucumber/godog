@@ -34,7 +34,6 @@ func Test_parse_normal_feature(t *testing.T) {
 	p := &parser{
 		lx:   newLexer(strings.NewReader(testFeatureSamples["feature"])),
 		path: "some.feature",
-		ast:  newAST(),
 	}
 	ft, err := p.parseFeature()
 	if err != nil {
@@ -47,7 +46,7 @@ func Test_parse_normal_feature(t *testing.T) {
 		t.Fatalf("expected a feature description to be available")
 	}
 
-	ft.AST.assertMatchesTypes([]TokenType{
+	p.assertMatchesTypes([]TokenType{
 		FEATURE,
 		TEXT,
 		TEXT,
@@ -59,7 +58,6 @@ func Test_parse_feature_without_description(t *testing.T) {
 	p := &parser{
 		lx:   newLexer(strings.NewReader(testFeatureSamples["only_title"])),
 		path: "some.feature",
-		ast:  newAST(),
 	}
 	ft, err := p.parseFeature()
 	if err != nil {
@@ -72,7 +70,7 @@ func Test_parse_feature_without_description(t *testing.T) {
 		t.Fatalf("feature description was not expected")
 	}
 
-	ft.AST.assertMatchesTypes([]TokenType{
+	p.assertMatchesTypes([]TokenType{
 		FEATURE,
 	}, t)
 }
@@ -81,7 +79,6 @@ func Test_parse_empty_feature_file(t *testing.T) {
 	p := &parser{
 		lx:   newLexer(strings.NewReader(testFeatureSamples["empty"])),
 		path: "some.feature",
-		ast:  newAST(),
 	}
 	_, err := p.parseFeature()
 	if err != ErrEmpty {
@@ -93,13 +90,12 @@ func Test_parse_invalid_feature_with_random_text(t *testing.T) {
 	p := &parser{
 		lx:   newLexer(strings.NewReader(testFeatureSamples["invalid"])),
 		path: "some.feature",
-		ast:  newAST(),
 	}
 	_, err := p.parseFeature()
 	if err == nil {
 		t.Fatalf("expected an error but got none")
 	}
-	p.ast.assertMatchesTypes([]TokenType{
+	p.assertMatchesTypes([]TokenType{
 		TEXT,
 	}, t)
 }
@@ -108,7 +104,6 @@ func Test_parse_feature_with_newlines(t *testing.T) {
 	p := &parser{
 		lx:   newLexer(strings.NewReader(testFeatureSamples["starts_with_newlines"])),
 		path: "some.feature",
-		ast:  newAST(),
 	}
 	ft, err := p.parseFeature()
 	if err != nil {
@@ -121,7 +116,7 @@ func Test_parse_feature_with_newlines(t *testing.T) {
 		t.Fatalf("feature description was not expected")
 	}
 
-	ft.AST.assertMatchesTypes([]TokenType{
+	p.assertMatchesTypes([]TokenType{
 		NEW_LINE,
 		NEW_LINE,
 		FEATURE,

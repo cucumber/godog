@@ -61,6 +61,7 @@ package gherkin
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"unicode"
@@ -133,7 +134,7 @@ type Feature struct {
 	Title       string
 	Background  *Background
 	Scenarios   []*Scenario
-	AST         *AST
+	AST         []*Token
 }
 
 // PyString is a multiline text object used with step definition
@@ -173,34 +174,39 @@ var ErrEmpty = errors.New("the feature file is empty")
 type parser struct {
 	lx     *lexer
 	path   string
-	ast    *AST
+	ast    []*Token
 	peeked *Token
 }
 
-// Parse the feature file on the given path into
-// the Feature struct
+// ParseFile parses a feature file on the given
+// path into the Feature struct
 // Returns a Feature struct and error if there is any
-func Parse(path string) (*Feature, error) {
+func ParseFile(path string) (*Feature, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
+	return Parse(file, path)
+}
+
+// Parse the feature as a given name to the Feature struct
+// Returns a Feature struct and error if there is any
+func Parse(in io.Reader, name string) (*Feature, error) {
 	return (&parser{
-		lx:   newLexer(file),
-		path: path,
-		ast:  newAST(),
+		lx:   newLexer(in),
+		path: name,
 	}).parseFeature()
 }
 
 // reads tokens into AST and skips comments or new lines
 func (p *parser) next() *Token {
-	if p.ast.tail != nil && p.ast.tail.value.Type == EOF {
-		return p.ast.tail.value // has reached EOF, do not record it more than once
+	if len(p.ast) > 0 && p.ast[len(p.ast)-1].Type == EOF {
+		return p.ast[len(p.ast)-1] // has reached EOF, do not record it more than once
 	}
 	tok := p.peek()
-	p.ast.addTail(tok)
+	p.ast = append(p.ast, tok)
 	p.peeked = nil
 	return tok
 }
@@ -212,7 +218,7 @@ func (p *parser) peek() *Token {
 	}
 
 	for p.peeked = p.lx.read(); p.peeked.OfType(COMMENT, NEW_LINE); p.peeked = p.lx.read() {
-		p.ast.addTail(p.peeked) // record comments and newlines
+		p.ast = append(p.ast, p.peeked) // record comments and newlines
 	}
 
 	return p.peeked

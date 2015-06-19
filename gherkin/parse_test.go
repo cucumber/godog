@@ -5,6 +5,22 @@ import (
 	"testing"
 )
 
+func (a *parser) assertMatchesTypes(expected []TokenType, t *testing.T) {
+	key := -1
+	for _, tok := range a.ast {
+		key += 1
+		if len(expected) <= key {
+			t.Fatalf("there are more tokens in AST then expected, next is '%s'", tok.Type)
+		}
+		if expected[key] != tok.Type {
+			t.Fatalf("expected ast token '%s', but got '%s' at position: %d", expected[key], tok.Type, key)
+		}
+	}
+	if len(expected)-1 != key {
+		t.Fatalf("expected ast length %d, does not match actual: %d", len(expected), key+1)
+	}
+}
+
 func (s *Scenario) assertHasTag(tag string, t *testing.T) {
 	if !s.Tags.Has(Tag(tag)) {
 		t.Fatalf("expected scenario '%s' to have '%s' tag, but it did not", s.Title, tag)
@@ -43,7 +59,6 @@ func Test_parse_feature_file(t *testing.T) {
 	p := &parser{
 		lx:   newLexer(strings.NewReader(content)),
 		path: "usual.feature",
-		ast:  newAST(),
 	}
 	ft, err := p.parseFeature()
 	if err != nil {
@@ -51,7 +66,7 @@ func Test_parse_feature_file(t *testing.T) {
 	}
 	ft.assertTitle("gherkin parser", t)
 
-	ft.AST.assertMatchesTypes([]TokenType{
+	p.assertMatchesTypes([]TokenType{
 		TAGS,
 		FEATURE,
 		TEXT,

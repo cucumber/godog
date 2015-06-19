@@ -132,7 +132,7 @@ func (c *config) features() (lst []*gherkin.Feature, err error) {
 		// parse features
 		err = filepath.Walk(path, func(p string, f os.FileInfo, err error) error {
 			if err == nil && !f.IsDir() && strings.HasSuffix(p, ".feature") {
-				ft, err := gherkin.Parse(p)
+				ft, err := gherkin.ParseFile(p)
 				switch {
 				case err == gherkin.ErrEmpty:
 					// its ok, just skip it
