@@ -11,6 +11,16 @@ func (s *Scenario) assertTitle(title string, t *testing.T) {
 	}
 }
 
+func (s *Scenario) assertOutlineStep(text string, t *testing.T) *Step {
+	for _, stp := range s.Outline.Steps {
+		if stp.Text == text {
+			return stp
+		}
+	}
+	t.Fatal("expected scenario '%s' to have step: '%s', but it did not", s.Title, text)
+	return nil
+}
+
 func (s *Scenario) assertStep(text string, t *testing.T) *Step {
 	for _, stp := range s.Steps {
 		if stp.Text == text {
@@ -22,16 +32,16 @@ func (s *Scenario) assertStep(text string, t *testing.T) *Step {
 }
 
 func (s *Scenario) assertExampleRow(t *testing.T, num int, cols ...string) {
-	if s.Examples == nil {
+	if s.Outline.Examples == nil {
 		t.Fatalf("outline scenario '%s' has no examples", s.Title)
 	}
-	if len(s.Examples.Rows) <= num {
+	if len(s.Outline.Examples.Rows) <= num {
 		t.Fatalf("outline scenario '%s' table has no row: %d", s.Title, num)
 	}
-	if len(s.Examples.Rows[num]) != len(cols) {
+	if len(s.Outline.Examples.Rows[num]) != len(cols) {
 		t.Fatalf("outline scenario '%s' table row length, does not match expected: %d", s.Title, len(cols))
 	}
-	for i, col := range s.Examples.Rows[num] {
+	for i, col := range s.Outline.Examples.Rows[num] {
 		if col != cols[i] {
 			t.Fatalf("outline scenario '%s' table row %d, column %d - value '%s', does not match expected: %s", s.Title, num, i, col, cols[i])
 		}
@@ -64,11 +74,11 @@ func Test_parse_scenario_outline(t *testing.T) {
 		TABLE_ROW,
 	}, t)
 
-	s.assertStep(`I am in a directory "test"`, t)
-	s.assertStep(`I have a file named "foo"`, t)
-	s.assertStep(`I have a file named "bar"`, t)
-	s.assertStep(`I run "ls" with options "<options>"`, t)
-	s.assertStep(`I should see "<result>"`, t)
+	s.assertOutlineStep(`I am in a directory "test"`, t)
+	s.assertOutlineStep(`I have a file named "foo"`, t)
+	s.assertOutlineStep(`I have a file named "bar"`, t)
+	s.assertOutlineStep(`I run "ls" with options "<options>"`, t)
+	s.assertOutlineStep(`I should see "<result>"`, t)
 
 	s.assertExampleRow(t, 0, "options", "result")
 	s.assertExampleRow(t, 1, "-t", "bar foo")

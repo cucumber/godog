@@ -10,8 +10,8 @@ import (
 // output summary presentation
 type Formatter interface {
 	Node(interface{})
-	Failed(*gherkin.Step, *stepMatchHandler, error)
-	Passed(*gherkin.Step, *stepMatchHandler)
+	Failed(*gherkin.Step, *StepDef, error)
+	Passed(*gherkin.Step, *StepDef)
 	Skipped(*gherkin.Step)
 	Undefined(*gherkin.Step)
 	Summary()
@@ -20,9 +20,9 @@ type Formatter interface {
 // failed represents a failed step data structure
 // with all necessary references
 type failed struct {
-	step    *gherkin.Step
-	handler *stepMatchHandler
-	err     error
+	step *gherkin.Step
+	def  *StepDef
+	err  error
 }
 
 func (f failed) line() string {
@@ -41,8 +41,8 @@ func (f failed) line() string {
 // passed represents a successful step data structure
 // with all necessary references
 type passed struct {
-	step    *gherkin.Step
-	handler *stepMatchHandler
+	step *gherkin.Step
+	def  *StepDef
 }
 
 // skipped represents a skipped step data structure

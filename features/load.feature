@@ -21,10 +21,16 @@ Feature: load features
       features/load.feature
       """
 
-  Scenario: load a feature file with a specified scenario
-    Given a feature path "features/load.feature:6"
+  Scenario Outline: loaded feature should have a number of scenarios
+    Given a feature path "<feature>"
     When I parse features
-    Then I should have 1 scenario registered
+    Then I should have <number> scenario registered
+
+    Examples:
+      | feature                 | number |
+      | features/load.feature:3 | 0      |
+      | features/load.feature:6 | 1      |
+      | features/load.feature   | 4      |
 
   Scenario: load a number of feature files
     Given a feature path "features/load.feature"

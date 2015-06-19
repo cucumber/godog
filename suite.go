@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"regexp"
 	"runtime"
+	"strings"
 
 	"github.com/DATA-DOG/godog/gherkin"
 )
@@ -19,30 +20,6 @@ type Regexp interface{}
 // interface satisfaction. It may be a function
 // or a step handler
 type Handler interface{}
-
-// Status represents a step or scenario status
-type Status int
-
-// step or scenario status constants
-const (
-	Invalid Status = iota
-	Passed
-	Failed
-	Undefined
-)
-
-// String represents status as string
-func (s Status) String() string {
-	switch s {
-	case Passed:
-		return "passed"
-	case Failed:
-		return "failed"
-	case Undefined:
-		return "undefined"
-	}
-	return "invalid"
-}
 
 // Objects implementing the StepHandler interface can be
 // registered as step definitions in godog
@@ -70,11 +47,17 @@ func (f StepHandlerFunc) HandleStep(args ...*Arg) error {
 	return f(args...)
 }
 
-var errPending = fmt.Errorf("pending step")
+// ErrUndefined is returned in case if step definition was not found
+var ErrUndefined = fmt.Errorf("step is undefined")
 
-type stepMatchHandler struct {
-	handler StepHandler
-	expr    *regexp.Regexp
+// StepDef is a registered step definition
+// contains a StepHandler, a regexp which
+// is used to match a step and Args which
+// were matched by last step
+type StepDef struct {
+	Args    []*Arg
+	Handler StepHandler
+	Expr    *regexp.Regexp
 }
 
 // Suite is an interface which allows various contexts
@@ -91,7 +74,7 @@ type Suite interface {
 }
 
 type suite struct {
-	stepHandlers []*stepMatchHandler
+	stepHandlers []*StepDef
 	features     []*gherkin.Feature
 	fmt          Formatter
 
@@ -151,9 +134,9 @@ func (s *suite) Step(expr Regexp, h Handler) {
 	default:
 		panic(fmt.Sprintf("expecting handler to satisfy StepHandler interface, got type: %T", h))
 	}
-	s.stepHandlers = append(s.stepHandlers, &stepMatchHandler{
-		handler: handler,
-		expr:    regex,
+	s.stepHandlers = append(s.stepHandlers, &StepDef{
+		Handler: handler,
+		Expr:    regex,
 	})
 }
 
@@ -243,12 +226,10 @@ func (s *suite) run() {
 	s.fmt.Summary()
 }
 
-func (s *suite) runStep(step *gherkin.Step) (err error) {
-	var match *stepMatchHandler
-	var args []*Arg
+func (s *suite) matchStep(step *gherkin.Step) *StepDef {
 	for _, h := range s.stepHandlers {
-		if m := h.expr.FindStringSubmatch(step.Text); len(m) > 0 {
-			match = h
+		if m := h.Expr.FindStringSubmatch(step.Text); len(m) > 0 {
+			var args []*Arg
 			for _, a := range m[1:] {
 				args = append(args, &Arg{value: a})
 			}
@@ -258,12 +239,18 @@ func (s *suite) runStep(step *gherkin.Step) (err error) {
 			if step.PyString != nil {
 				args = append(args, &Arg{value: step.PyString})
 			}
-			break
+			h.Args = args
+			return h
 		}
 	}
+	return nil
+}
+
+func (s *suite) runStep(step *gherkin.Step) (err error) {
+	match := s.matchStep(step)
 	if match == nil {
 		s.fmt.Undefined(step)
-		return errPending
+		return ErrUndefined
 	}
 
 	defer func() {
@@ -273,7 +260,7 @@ func (s *suite) runStep(step *gherkin.Step) (err error) {
 		}
 	}()
 
-	if err = match.handler.HandleStep(args...); err != nil {
+	if err = match.Handler.HandleStep(match.Args...); err != nil {
 		s.fmt.Failed(step, match, err)
 	} else {
 		s.fmt.Passed(step, match)
@@ -281,9 +268,9 @@ func (s *suite) runStep(step *gherkin.Step) (err error) {
 	return
 }
 
-func (s *suite) runSteps(steps []*gherkin.Step) (st Status) {
+func (s *suite) runSteps(steps []*gherkin.Step) (err error) {
 	for _, step := range steps {
-		if st == Failed || st == Undefined {
+		if err != nil {
 			s.fmt.Skipped(step)
 			continue
 		}
@@ -293,19 +280,11 @@ func (s *suite) runSteps(steps []*gherkin.Step) (st Status) {
 			h.HandleBeforeStep(step)
 		}
 
-		err := s.runStep(step)
-		switch err {
-		case errPending:
-			st = Undefined
-		case nil:
-			st = Passed
-		default:
-			st = Failed
-		}
+		err = s.runStep(step)
 
 		// run after step handlers
 		for _, h := range s.afterStepHandlers {
-			h.HandleAfterStep(step, st)
+			h.HandleAfterStep(step, err)
 		}
 	}
 	return
@@ -317,39 +296,52 @@ func (s *suite) skipSteps(steps []*gherkin.Step) {
 	}
 }
 
+func (s *suite) runOutline(scenario *gherkin.Scenario) (err error) {
+	placeholders := scenario.Outline.Examples.Rows[0]
+	examples := scenario.Outline.Examples.Rows[1:]
+	for _, example := range examples {
+		var steps []*gherkin.Step
+		for _, step := range scenario.Outline.Steps {
+			text := step.Text
+			for i, placeholder := range placeholders {
+				text = strings.Replace(text, "<"+placeholder+">", example[i], -1)
+			}
+			// clone a step
+			cloned := &gherkin.Step{
+				Token:      step.Token,
+				Text:       text,
+				Type:       step.Type,
+				PyString:   step.PyString,
+				Table:      step.Table,
+				Background: step.Background,
+				Scenario:   scenario,
+			}
+			steps = append(steps, cloned)
+		}
+
+		// set steps to scenario
+		scenario.Steps = steps
+		if err = s.runScenario(scenario); err != nil && err != ErrUndefined {
+			s.failed = true
+			if cfg.stopOnFailure {
+				return
+			}
+		}
+	}
+	return
+}
+
 func (s *suite) runFeature(f *gherkin.Feature) {
 	s.fmt.Node(f)
 	for _, scenario := range f.Scenarios {
-		var status Status
-
-		// run before scenario handlers
-		for _, h := range s.beforeScenarioHandlers {
-			h.HandleBeforeScenario(scenario)
+		var err error
+		// handle scenario outline differently
+		if scenario.Outline != nil {
+			err = s.runOutline(scenario)
+		} else {
+			err = s.runScenario(scenario)
 		}
-
-		// background
-		if f.Background != nil {
-			s.fmt.Node(f.Background)
-			status = s.runSteps(f.Background.Steps)
-		}
-
-		// scenario
-		s.fmt.Node(scenario)
-		switch {
-		case status == Failed:
-			s.skipSteps(scenario.Steps)
-		case status == Undefined:
-			s.skipSteps(scenario.Steps)
-		case status == Passed || status == Invalid:
-			status = s.runSteps(scenario.Steps)
-		}
-
-		// run after scenario handlers
-		for _, h := range s.afterScenarioHandlers {
-			h.HandleAfterScenario(scenario, status)
-		}
-
-		if status == Failed {
+		if err != nil && err != ErrUndefined {
 			s.failed = true
 			if cfg.stopOnFailure {
 				return
@@ -358,16 +350,47 @@ func (s *suite) runFeature(f *gherkin.Feature) {
 	}
 }
 
+func (s *suite) runScenario(scenario *gherkin.Scenario) (err error) {
+	// run before scenario handlers
+	for _, h := range s.beforeScenarioHandlers {
+		h.HandleBeforeScenario(scenario)
+	}
+
+	// background
+	if scenario.Feature.Background != nil {
+		s.fmt.Node(scenario.Feature.Background)
+		err = s.runSteps(scenario.Feature.Background.Steps)
+	}
+
+	// scenario
+	s.fmt.Node(scenario)
+	switch err {
+	case ErrUndefined:
+		s.skipSteps(scenario.Steps)
+	case nil:
+		err = s.runSteps(scenario.Steps)
+	default:
+		s.skipSteps(scenario.Steps)
+	}
+
+	// run after scenario handlers
+	for _, h := range s.afterScenarioHandlers {
+		h.HandleAfterScenario(scenario, err)
+	}
+
+	return
+}
+
 func (st *suite) printStepDefinitions() {
 	var longest int
 	for _, def := range st.stepHandlers {
-		if longest < len(def.expr.String()) {
-			longest = len(def.expr.String())
+		if longest < len(def.Expr.String()) {
+			longest = len(def.Expr.String())
 		}
 	}
 	for _, def := range st.stepHandlers {
-		location := runtime.FuncForPC(reflect.ValueOf(def.handler).Pointer()).Name()
-		fmt.Println(cl(def.expr.String(), yellow)+s(longest-len(def.expr.String())), cl("# "+location, black))
+		location := runtime.FuncForPC(reflect.ValueOf(def.Handler).Pointer()).Name()
+		fmt.Println(cl(def.Expr.String(), yellow)+s(longest-len(def.Expr.String())), cl("# "+location, black))
 	}
 	if len(st.stepHandlers) == 0 {
 		fmt.Println("there were no contexts registered, could not find any step definition..")

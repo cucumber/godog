@@ -88,6 +88,17 @@ func (t Tags) Has(tag Tag) bool {
 	return false
 }
 
+// Outline is a scenario outline with an
+// example table. Steps are listed with
+// placeholders which are replaced with
+// each example table row
+type Outline struct {
+	*Token
+	Scenario *Scenario
+	Steps    []*Step
+	Examples *Table
+}
+
 // Scenario describes the scenario details
 //
 // if Examples table is not nil, then it
@@ -100,11 +111,11 @@ func (t Tags) Has(tag Tag) bool {
 // initialization tasks
 type Scenario struct {
 	*Token
-	Title    string
-	Steps    []*Step
-	Tags     Tags
-	Examples *Table
-	Feature  *Feature
+	Title   string
+	Steps   []*Step
+	Tags    Tags
+	Outline *Outline
+	Feature *Feature
 }
 
 // Background steps are run before every scenario
@@ -154,9 +165,8 @@ func (p *PyString) String() string {
 // step definition or outline scenario
 type Table struct {
 	*Token
-	OutlineScenario *Scenario
-	Step            *Step
-	Rows            [][]string
+	Step *Step
+	Rows [][]string
 }
 
 var allSteps = []TokenType{
@@ -320,10 +330,18 @@ func (p *parser) parseScenario() (s *Scenario, err error) {
 				"but got '" + peek.Type.String() + "' instead, for scenario outline examples",
 			}, " "), examples.Line)
 		}
-		if s.Examples, err = p.parseTable(); err != nil {
+		s.Outline = &Outline{
+			Token:    examples,
+			Scenario: s,
+			Steps:    s.Steps,
+		}
+		s.Steps = []*Step{} // move steps to outline
+		if s.Outline.Examples, err = p.parseTable(); err != nil {
 			return s, err
 		}
-		s.Examples.OutlineScenario = s
+		if len(s.Outline.Examples.Rows) < 2 {
+			return s, p.err("expected an example table to have at least two rows: header and at least one example", examples.Line)
+		}
 	}
 	return s, nil
 }

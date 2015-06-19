@@ -56,34 +56,34 @@ func (f BeforeStepHandlerFunc) HandleBeforeStep(step *gherkin.Step) {
 // in Suite to be executed after every step
 // which will be run
 type AfterStepHandler interface {
-	HandleAfterStep(step *gherkin.Step, status Status)
+	HandleAfterStep(step *gherkin.Step, err error)
 }
 
 // AfterStepHandlerFunc is a function implementing
 // AfterStepHandler interface
-type AfterStepHandlerFunc func(step *gherkin.Step, status Status)
+type AfterStepHandlerFunc func(step *gherkin.Step, err error)
 
 // HandleAfterStep is called with a *gherkin.Step argument
 // for after every step which is run by suite
-func (f AfterStepHandlerFunc) HandleAfterStep(step *gherkin.Step, status Status) {
-	f(step, status)
+func (f AfterStepHandlerFunc) HandleAfterStep(step *gherkin.Step, err error) {
+	f(step, err)
 }
 
 // AfterScenarioHandler can be registered
 // in Suite to be executed after every scenario
 // which will be run
 type AfterScenarioHandler interface {
-	HandleAfterScenario(scenario *gherkin.Scenario, status Status)
+	HandleAfterScenario(scenario *gherkin.Scenario, err error)
 }
 
 // AfterScenarioHandlerFunc is a function implementing
 // AfterScenarioHandler interface
-type AfterScenarioHandlerFunc func(scenario *gherkin.Scenario, status Status)
+type AfterScenarioHandlerFunc func(scenario *gherkin.Scenario, err error)
 
 // HandleAfterScenario is called with a *gherkin.Scenario argument
 // for after every scenario which is run by suite
-func (f AfterScenarioHandlerFunc) HandleAfterScenario(scenario *gherkin.Scenario, status Status) {
-	f(scenario, status)
+func (f AfterScenarioHandlerFunc) HandleAfterScenario(scenario *gherkin.Scenario, err error) {
+	f(scenario, err)
 }
 
 // AfterSuiteHandler can be registered

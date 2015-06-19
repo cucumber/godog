@@ -23,8 +23,8 @@ func (f *testFormatter) Node(node interface{}) {
 
 func (f *testFormatter) Summary() {}
 
-func (f *testFormatter) Passed(step *gherkin.Step, match *stepMatchHandler) {
-	f.passed = append(f.passed, &passed{step: step, handler: match})
+func (f *testFormatter) Passed(step *gherkin.Step, match *StepDef) {
+	f.passed = append(f.passed, &passed{step: step, def: match})
 }
 
 func (f *testFormatter) Skipped(step *gherkin.Step) {
@@ -35,6 +35,6 @@ func (f *testFormatter) Undefined(step *gherkin.Step) {
 	f.undefined = append(f.undefined, &undefined{step: step})
 }
 
-func (f *testFormatter) Failed(step *gherkin.Step, match *stepMatchHandler, err error) {
-	f.failed = append(f.failed, &failed{step: step, handler: match, err: err})
+func (f *testFormatter) Failed(step *gherkin.Step, match *StepDef, err error) {
+	f.failed = append(f.failed, &failed{step: step, def: match, err: err})
 }

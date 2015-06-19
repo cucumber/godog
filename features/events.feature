@@ -27,8 +27,8 @@ Feature: suite events
     When I run feature suite
     Then these events had to be fired for a number of times:
       | BeforeSuite    | 1  |
-      | BeforeScenario | 4  |
-      | BeforeStep     | 13 |
-      | AfterStep      | 13 |
-      | AfterScenario  | 4  |
+      | BeforeScenario | 6  |
+      | BeforeStep     | 19 |
+      | AfterStep      | 19 |
+      | AfterScenario  | 6  |
       | AfterSuite     | 1  |

@@ -121,14 +121,14 @@ func (s *suiteContext) iAmListeningToSuiteEvents(args ...*Arg) error {
 	s.testedSuite.BeforeScenario(BeforeScenarioHandlerFunc(func(scenario *gherkin.Scenario) {
 		s.events = append(s.events, &firedEvent{"BeforeScenario", []interface{}{scenario}})
 	}))
-	s.testedSuite.AfterScenario(AfterScenarioHandlerFunc(func(scenario *gherkin.Scenario, status Status) {
-		s.events = append(s.events, &firedEvent{"AfterScenario", []interface{}{scenario, status}})
+	s.testedSuite.AfterScenario(AfterScenarioHandlerFunc(func(scenario *gherkin.Scenario, err error) {
+		s.events = append(s.events, &firedEvent{"AfterScenario", []interface{}{scenario, err}})
 	}))
 	s.testedSuite.BeforeStep(BeforeStepHandlerFunc(func(step *gherkin.Step) {
 		s.events = append(s.events, &firedEvent{"BeforeStep", []interface{}{step}})
 	}))
-	s.testedSuite.AfterStep(AfterStepHandlerFunc(func(step *gherkin.Step, status Status) {
-		s.events = append(s.events, &firedEvent{"AfterStep", []interface{}{step, status}})
+	s.testedSuite.AfterStep(AfterStepHandlerFunc(func(step *gherkin.Step, err error) {
+		s.events = append(s.events, &firedEvent{"AfterStep", []interface{}{step, err}})
 	}))
 	return nil
 }

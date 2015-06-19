@@ -21,6 +21,30 @@ var matchers = map[string]*regexp.Regexp{
 	"table_row":        regexp.MustCompile("^(\\s*)\\|([^#]*)(#.*)?"),
 }
 
+// for now only english language is supported
+var keywords = map[TokenType]string{
+	// special
+	ILLEGAL:   "Illegal",
+	EOF:       "End of file",
+	NEW_LINE:  "New line",
+	TAGS:      "Tags",
+	COMMENT:   "Comment",
+	PYSTRING:  "PyString",
+	TABLE_ROW: "Table row",
+	TEXT:      "Text",
+	// general
+	GIVEN:            "Given",
+	WHEN:             "When",
+	THEN:             "Then",
+	AND:              "And",
+	BUT:              "But",
+	FEATURE:          "Feature",
+	BACKGROUND:       "Background",
+	SCENARIO:         "Scenario",
+	SCENARIO_OUTLINE: "Scenario Outline",
+	EXAMPLES:         "Examples",
+}
+
 type lexer struct {
 	reader *bufio.Reader
 	lines  int
@@ -36,8 +60,9 @@ func (l *lexer) read() *Token {
 	line, err := l.reader.ReadString(byte('\n'))
 	if err != nil && len(line) == 0 {
 		return &Token{
-			Type: EOF,
-			Line: l.lines,
+			Type:    EOF,
+			Line:    l.lines + 1,
+			Keyword: keywords[EOF],
 		}
 	}
 	l.lines++
@@ -45,8 +70,9 @@ func (l *lexer) read() *Token {
 	// newline
 	if len(line) == 0 {
 		return &Token{
-			Type: NEW_LINE,
-			Line: l.lines,
+			Type:    NEW_LINE,
+			Line:    l.lines,
+			Keyword: keywords[NEW_LINE],
 		}
 	}
 	// comment
@@ -59,15 +85,17 @@ func (l *lexer) read() *Token {
 			Value:   comment,
 			Text:    line,
 			Comment: comment,
+			Keyword: keywords[COMMENT],
 		}
 	}
 	// pystring
 	if m := matchers["pystring"].FindStringSubmatch(line); len(m) > 0 {
 		return &Token{
-			Type:   PYSTRING,
-			Indent: len(m[1]),
-			Line:   l.lines,
-			Text:   line,
+			Type:    PYSTRING,
+			Indent:  len(m[1]),
+			Line:    l.lines,
+			Text:    line,
+			Keyword: keywords[PYSTRING],
 		}
 	}
 	// step
@@ -91,6 +119,7 @@ func (l *lexer) read() *Token {
 		case "But":
 			tok.Type = BUT
 		}
+		tok.Keyword = keywords[tok.Type]
 		return tok
 	}
 	// scenario
@@ -102,6 +131,7 @@ func (l *lexer) read() *Token {
 			Value:   strings.TrimSpace(m[2]),
 			Text:    line,
 			Comment: strings.Trim(m[3], " #"),
+			Keyword: keywords[SCENARIO],
 		}
 	}
 	// background
@@ -112,6 +142,7 @@ func (l *lexer) read() *Token {
 			Line:    l.lines,
 			Text:    line,
 			Comment: strings.Trim(m[2], " #"),
+			Keyword: keywords[BACKGROUND],
 		}
 	}
 	// feature
@@ -123,6 +154,7 @@ func (l *lexer) read() *Token {
 			Value:   strings.TrimSpace(m[2]),
 			Text:    line,
 			Comment: strings.Trim(m[3], " #"),
+			Keyword: keywords[FEATURE],
 		}
 	}
 	// tags
@@ -134,6 +166,7 @@ func (l *lexer) read() *Token {
 			Value:   strings.TrimSpace(m[2]),
 			Text:    line,
 			Comment: strings.Trim(m[3], " #"),
+			Keyword: keywords[TAGS],
 		}
 	}
 	// table row
@@ -145,6 +178,7 @@ func (l *lexer) read() *Token {
 			Value:   strings.TrimSpace(m[2]),
 			Text:    line,
 			Comment: strings.Trim(m[3], " #"),
+			Keyword: keywords[TABLE_ROW],
 		}
 	}
 	// scenario outline
@@ -156,6 +190,7 @@ func (l *lexer) read() *Token {
 			Value:   strings.TrimSpace(m[2]),
 			Text:    line,
 			Comment: strings.Trim(m[3], " #"),
+			Keyword: keywords[SCENARIO_OUTLINE],
 		}
 	}
 	// examples
@@ -166,15 +201,17 @@ func (l *lexer) read() *Token {
 			Line:    l.lines,
 			Text:    line,
 			Comment: strings.Trim(m[2], " #"),
+			Keyword: keywords[EXAMPLES],
 		}
 	}
 	// text
 	text := strings.TrimLeftFunc(line, unicode.IsSpace)
 	return &Token{
-		Type:   TEXT,
-		Line:   l.lines,
-		Value:  text,
-		Indent: len(line) - len(text),
-		Text:   line,
+		Type:    TEXT,
+		Line:    l.lines,
+		Value:   text,
+		Indent:  len(line) - len(text),
+		Text:    line,
+		Keyword: keywords[TEXT],
 	}
 }

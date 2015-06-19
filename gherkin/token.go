@@ -1,29 +1,26 @@
 package gherkin
 
+import (
+	"strings"
+	"unicode"
+)
+
 type TokenType int
 
 const (
 	ILLEGAL TokenType = iota
-
-	specials
 	COMMENT
 	NEW_LINE
 	EOF
-
-	elements
 	TEXT
 	TAGS
 	TABLE_ROW
 	PYSTRING
-
-	keywords
 	FEATURE
 	BACKGROUND
 	SCENARIO
 	SCENARIO_OUTLINE
 	EXAMPLES
-
-	steps
 	GIVEN
 	WHEN
 	THEN
@@ -31,54 +28,22 @@ const (
 	BUT
 )
 
+// String gives a string representation of token type
 func (t TokenType) String() string {
-	switch t {
-	case COMMENT:
-		return "comment"
-	case NEW_LINE:
-		return "new line"
-	case EOF:
-		return "end of file"
-	case TEXT:
-		return "text"
-	case TAGS:
-		return "tags"
-	case TABLE_ROW:
-		return "table row"
-	case PYSTRING:
-		return "pystring"
-	case FEATURE:
-		return "feature"
-	case BACKGROUND:
-		return "background"
-	case SCENARIO:
-		return "scenario"
-	case SCENARIO_OUTLINE:
-		return "scenario outline"
-	case EXAMPLES:
-		return "examples"
-	case GIVEN:
-		return "given step"
-	case WHEN:
-		return "when step"
-	case THEN:
-		return "then step"
-	case AND:
-		return "and step"
-	case BUT:
-		return "but step"
-	}
-	return "illegal"
+	return keywords[t]
 }
 
+// Token represents a line in gherkin feature file
 type Token struct {
 	Type         TokenType // type of token
 	Line, Indent int       // line and indentation number
 	Value        string    // interpreted value
 	Text         string    // same text as read
+	Keyword      string    // @TODO: the translated keyword
 	Comment      string    // a comment
 }
 
+// OfType checks whether token is one of types
 func (t *Token) OfType(all ...TokenType) bool {
 	for _, typ := range all {
 		if typ == t.Type {
@@ -86,4 +51,13 @@ func (t *Token) OfType(all ...TokenType) bool {
 		}
 	}
 	return false
+}
+
+// Length gives a token text length with indentation
+// and keyword, but without comment
+func (t *Token) Length() int {
+	if pos := strings.Index(t.Text, "#"); pos != -1 {
+		return len(strings.TrimRightFunc(t.Text[:pos], unicode.IsSpace))
+	}
+	return len(t.Text)
 }
