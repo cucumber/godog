@@ -16,15 +16,10 @@ import (
 // it can be either a string or a *regexp.Regexp
 type Regexp interface{}
 
-// Handler is an unified type for a StepHandler
-// interface satisfaction. It may be a function
-// or a step handler
-type Handler interface{}
-
-// Objects implementing the StepHandler interface can be
-// registered as step definitions in godog
+// StepHandler is a function contract for
+// step handler
 //
-// HandleStep method receives all arguments which
+// It receives all arguments which
 // will be matched according to the regular expression
 // which is passed with a step registration.
 // The error in return - represents a reason of failure.
@@ -32,20 +27,7 @@ type Handler interface{}
 // Returning signals that the step has finished
 // and that the feature runner can move on to the next
 // step.
-type StepHandler interface {
-	HandleStep(args ...*Arg) error
-}
-
-// StepHandlerFunc type is an adapter to allow the use of
-// ordinary functions as Step handlers.  If f is a function
-// with the appropriate signature, StepHandlerFunc(f) is a
-// StepHandler object that calls f.
-type StepHandlerFunc func(...*Arg) error
-
-// HandleStep calls f(step_arguments...).
-func (f StepHandlerFunc) HandleStep(args ...*Arg) error {
-	return f(args...)
-}
+type StepHandler func(...*Arg) error
 
 // ErrUndefined is returned in case if step definition was not found
 var ErrUndefined = fmt.Errorf("step is undefined")
@@ -63,7 +45,7 @@ type StepDef struct {
 // Suite is an interface which allows various contexts
 // to register step definitions and event handlers
 type Suite interface {
-	Step(expr Regexp, h Handler)
+	Step(expr Regexp, h StepHandler)
 	// suite events
 	BeforeSuite(f func())
 	BeforeScenario(f func(*gherkin.Scenario))
@@ -109,8 +91,7 @@ func New() *suite {
 //
 // If none of the StepHandlers are matched, then a pending
 // step error will be raised.
-func (s *suite) Step(expr Regexp, h Handler) {
-	var handler StepHandler
+func (s *suite) Step(expr Regexp, h StepHandler) {
 	var regex *regexp.Regexp
 
 	switch t := expr.(type) {
@@ -124,18 +105,8 @@ func (s *suite) Step(expr Regexp, h Handler) {
 		panic(fmt.Sprintf("expecting expr to be a *regexp.Regexp or a string, got type: %T", expr))
 	}
 
-	switch t := h.(type) {
-	case StepHandlerFunc:
-		handler = t
-	case StepHandler:
-		handler = t
-	case func(...*Arg) error:
-		handler = StepHandlerFunc(t)
-	default:
-		panic(fmt.Sprintf("expecting handler to satisfy StepHandler interface, got type: %T", h))
-	}
 	s.stepHandlers = append(s.stepHandlers, &StepDef{
-		Handler: handler,
+		Handler: h,
 		Expr:    regex,
 	})
 }
@@ -260,7 +231,7 @@ func (s *suite) runStep(step *gherkin.Step) (err error) {
 		}
 	}()
 
-	if err = match.Handler.HandleStep(match.Args...); err != nil {
+	if err = match.Handler(match.Args...); err != nil {
 		s.fmt.Failed(step, match, err)
 	} else {
 		s.fmt.Passed(step, match)
