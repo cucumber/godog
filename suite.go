@@ -65,12 +65,12 @@ type StepDef struct {
 type Suite interface {
 	Step(expr Regexp, h Handler)
 	// suite events
-	BeforeSuite(h BeforeSuiteHandler)
-	BeforeScenario(h BeforeScenarioHandler)
-	BeforeStep(h BeforeStepHandler)
-	AfterStep(h AfterStepHandler)
-	AfterScenario(h AfterScenarioHandler)
-	AfterSuite(h AfterSuiteHandler)
+	BeforeSuite(f func())
+	BeforeScenario(f func(*gherkin.Scenario))
+	BeforeStep(f func(*gherkin.Step))
+	AfterStep(f func(*gherkin.Step, error))
+	AfterScenario(f func(*gherkin.Scenario, error))
+	AfterSuite(f func())
 }
 
 type suite struct {
@@ -81,12 +81,12 @@ type suite struct {
 	failed bool
 
 	// suite event handlers
-	beforeSuiteHandlers    []BeforeSuiteHandler
-	beforeScenarioHandlers []BeforeScenarioHandler
-	beforeStepHandlers     []BeforeStepHandler
-	afterStepHandlers      []AfterStepHandler
-	afterScenarioHandlers  []AfterScenarioHandler
-	afterSuiteHandlers     []AfterSuiteHandler
+	beforeSuiteHandlers    []func()
+	beforeScenarioHandlers []func(*gherkin.Scenario)
+	beforeStepHandlers     []func(*gherkin.Step)
+	afterStepHandlers      []func(*gherkin.Step, error)
+	afterScenarioHandlers  []func(*gherkin.Scenario, error)
+	afterSuiteHandlers     []func()
 }
 
 // New initializes a suite which supports the Suite
@@ -140,40 +140,40 @@ func (s *suite) Step(expr Regexp, h Handler) {
 	})
 }
 
-// BeforeSuite registers a BeforeSuiteHandler
+// BeforeSuite registers a function or method
 // to be run once before suite runner
-func (s *suite) BeforeSuite(h BeforeSuiteHandler) {
-	s.beforeSuiteHandlers = append(s.beforeSuiteHandlers, h)
+func (s *suite) BeforeSuite(f func()) {
+	s.beforeSuiteHandlers = append(s.beforeSuiteHandlers, f)
 }
 
-// BeforeScenario registers a BeforeScenarioHandler
+// BeforeScenario registers a function or method
 // to be run before every scenario
-func (s *suite) BeforeScenario(h BeforeScenarioHandler) {
-	s.beforeScenarioHandlers = append(s.beforeScenarioHandlers, h)
+func (s *suite) BeforeScenario(f func(*gherkin.Scenario)) {
+	s.beforeScenarioHandlers = append(s.beforeScenarioHandlers, f)
 }
 
-// BeforeStep registers a BeforeStepHandler
+// BeforeStep registers a function or method
 // to be run before every scenario
-func (s *suite) BeforeStep(h BeforeStepHandler) {
-	s.beforeStepHandlers = append(s.beforeStepHandlers, h)
+func (s *suite) BeforeStep(f func(*gherkin.Step)) {
+	s.beforeStepHandlers = append(s.beforeStepHandlers, f)
 }
 
-// AfterStep registers an AfterStepHandler
+// AfterStep registers an function or method
 // to be run after every scenario
-func (s *suite) AfterStep(h AfterStepHandler) {
-	s.afterStepHandlers = append(s.afterStepHandlers, h)
+func (s *suite) AfterStep(f func(*gherkin.Step, error)) {
+	s.afterStepHandlers = append(s.afterStepHandlers, f)
 }
 
-// AfterScenario registers an AfterScenarioHandler
+// AfterScenario registers an function or method
 // to be run after every scenario
-func (s *suite) AfterScenario(h AfterScenarioHandler) {
-	s.afterScenarioHandlers = append(s.afterScenarioHandlers, h)
+func (s *suite) AfterScenario(f func(*gherkin.Scenario, error)) {
+	s.afterScenarioHandlers = append(s.afterScenarioHandlers, f)
 }
 
-// AfterSuite registers a AfterSuiteHandler
+// AfterSuite registers a function or method
 // to be run once after suite runner
-func (s *suite) AfterSuite(h AfterSuiteHandler) {
-	s.afterSuiteHandlers = append(s.afterSuiteHandlers, h)
+func (s *suite) AfterSuite(f func()) {
+	s.afterSuiteHandlers = append(s.afterSuiteHandlers, f)
 }
 
 // Run - runs a godog feature suite
@@ -208,8 +208,8 @@ func (s *suite) Run() {
 
 func (s *suite) run() {
 	// run before suite handlers
-	for _, h := range s.beforeSuiteHandlers {
-		h.HandleBeforeSuite()
+	for _, f := range s.beforeSuiteHandlers {
+		f()
 	}
 	// run features
 	for _, f := range s.features {
@@ -220,8 +220,8 @@ func (s *suite) run() {
 		}
 	}
 	// run after suite handlers
-	for _, h := range s.afterSuiteHandlers {
-		h.HandleAfterSuite()
+	for _, f := range s.afterSuiteHandlers {
+		f()
 	}
 	s.fmt.Summary()
 }
@@ -276,15 +276,15 @@ func (s *suite) runSteps(steps []*gherkin.Step) (err error) {
 		}
 
 		// run before step handlers
-		for _, h := range s.beforeStepHandlers {
-			h.HandleBeforeStep(step)
+		for _, f := range s.beforeStepHandlers {
+			f(step)
 		}
 
 		err = s.runStep(step)
 
 		// run after step handlers
-		for _, h := range s.afterStepHandlers {
-			h.HandleAfterStep(step, err)
+		for _, f := range s.afterStepHandlers {
+			f(step, err)
 		}
 	}
 	return
@@ -352,8 +352,8 @@ func (s *suite) runFeature(f *gherkin.Feature) {
 
 func (s *suite) runScenario(scenario *gherkin.Scenario) (err error) {
 	// run before scenario handlers
-	for _, h := range s.beforeScenarioHandlers {
-		h.HandleBeforeScenario(scenario)
+	for _, f := range s.beforeScenarioHandlers {
+		f(scenario)
 	}
 
 	// background
@@ -374,8 +374,8 @@ func (s *suite) runScenario(scenario *gherkin.Scenario) (err error) {
 	}
 
 	// run after scenario handlers
-	for _, h := range s.afterScenarioHandlers {
-		h.HandleAfterScenario(scenario, err)
+	for _, f := range s.afterScenarioHandlers {
+		f(scenario, err)
 	}
 
 	return

@@ -10,7 +10,7 @@ import (
 func SuiteContext(s Suite) {
 	c := &suiteContext{}
 
-	s.BeforeScenario(c)
+	s.BeforeScenario(c.HandleBeforeScenario)
 
 	s.Step(`^a feature path "([^"]*)"$`, c.featurePath)
 	s.Step(`^I parse features$`, c.parseFeatures)
@@ -112,24 +112,24 @@ func (s *suiteContext) followingStepsShouldHave(args ...*Arg) error {
 }
 
 func (s *suiteContext) iAmListeningToSuiteEvents(args ...*Arg) error {
-	s.testedSuite.BeforeSuite(BeforeSuiteHandlerFunc(func() {
+	s.testedSuite.BeforeSuite(func() {
 		s.events = append(s.events, &firedEvent{"BeforeSuite", []interface{}{}})
-	}))
-	s.testedSuite.AfterSuite(AfterSuiteHandlerFunc(func() {
+	})
+	s.testedSuite.AfterSuite(func() {
 		s.events = append(s.events, &firedEvent{"AfterSuite", []interface{}{}})
-	}))
-	s.testedSuite.BeforeScenario(BeforeScenarioHandlerFunc(func(scenario *gherkin.Scenario) {
+	})
+	s.testedSuite.BeforeScenario(func(scenario *gherkin.Scenario) {
 		s.events = append(s.events, &firedEvent{"BeforeScenario", []interface{}{scenario}})
-	}))
-	s.testedSuite.AfterScenario(AfterScenarioHandlerFunc(func(scenario *gherkin.Scenario, err error) {
+	})
+	s.testedSuite.AfterScenario(func(scenario *gherkin.Scenario, err error) {
 		s.events = append(s.events, &firedEvent{"AfterScenario", []interface{}{scenario, err}})
-	}))
-	s.testedSuite.BeforeStep(BeforeStepHandlerFunc(func(step *gherkin.Step) {
+	})
+	s.testedSuite.BeforeStep(func(step *gherkin.Step) {
 		s.events = append(s.events, &firedEvent{"BeforeStep", []interface{}{step}})
-	}))
-	s.testedSuite.AfterStep(AfterStepHandlerFunc(func(step *gherkin.Step, err error) {
+	})
+	s.testedSuite.AfterStep(func(step *gherkin.Step, err error) {
 		s.events = append(s.events, &firedEvent{"AfterStep", []interface{}{step, err}})
-	}))
+	})
 	return nil
 }
 
