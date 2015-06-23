@@ -47,8 +47,6 @@ func (s *suiteContext) HandleBeforeScenario(*gherkin.Scenario) {
 	s.testedSuite = &suite{fmt: s.fmt}
 	// our tested suite will have the same context registered
 	SuiteContext(s.testedSuite)
-	// reset feature paths
-	cfg.paths = []string{}
 	// reset all fired events
 	s.events = []*firedEvent{}
 }
@@ -147,17 +145,12 @@ func (s *suiteContext) aFeatureFile(args ...*Arg) error {
 }
 
 func (s *suiteContext) featurePath(args ...*Arg) error {
-	cfg.paths = append(cfg.paths, args[0].String())
+	s.testedSuite.paths = append(s.testedSuite.paths, args[0].String())
 	return nil
 }
 
 func (s *suiteContext) parseFeatures(args ...*Arg) error {
-	features, err := cfg.features()
-	if err != nil {
-		return err
-	}
-	s.testedSuite.features = append(s.testedSuite.features, features...)
-	return nil
+	return s.testedSuite.parseFeatures()
 }
 
 func (s *suiteContext) theSuiteShouldHave(args ...*Arg) error {

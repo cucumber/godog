@@ -1,12 +1,13 @@
 package godog
 
 import (
-	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"github.com/DATA-DOG/godog/gherkin"
@@ -75,6 +76,14 @@ type suite struct {
 	fmt          Formatter
 
 	failed bool
+
+	// options
+	paths         []string
+	format        string
+	tags          string
+	definitions   bool
+	stopOnFailure bool
+	version       bool
 
 	// suite event handlers
 	beforeSuiteHandlers    []func()
@@ -175,27 +184,43 @@ func (s *suite) AfterSuite(f func()) {
 
 // Run starts the Godog feature suite
 func (s *suite) Run() {
-	var err error
-	if !flag.Parsed() {
-		flag.Parse()
+	flagSet := flags(s)
+	fatal(flagSet.Parse(os.Args[1:]))
+
+	s.paths = flagSet.Args()
+	// check the default path
+	if len(s.paths) == 0 {
+		inf, err := os.Stat("features")
+		if err == nil && inf.IsDir() {
+			s.paths = []string{"features"}
+		}
+	}
+	// validate formatter
+	var names []string
+	for _, f := range formatters {
+		if f.name == s.format {
+			s.fmt = f.fmt
+			break
+		}
+		names = append(names, f.name)
+	}
+
+	if s.fmt == nil {
+		fatal(fmt.Errorf(`unregistered formatter name: "%s", use one of: %s`, s.format, strings.Join(names, ", ")))
 	}
 
 	// check if we need to just show something first
 	switch {
-	case cfg.version:
+	case s.version:
 		fmt.Println(cl("Godog", green) + " version is " + cl(Version, yellow))
 		return
-	case cfg.definitions:
+	case s.definitions:
 		s.printStepDefinitions()
 		return
 	}
 
+	fatal(s.parseFeatures())
 	// run a feature suite
-	fatal(cfg.validate())
-	s.fmt = cfg.formatter()
-	s.features, err = cfg.features()
-	fatal(err)
-
 	s.run()
 
 	if s.failed {
@@ -211,7 +236,7 @@ func (s *suite) run() {
 	// run features
 	for _, f := range s.features {
 		s.runFeature(f)
-		if s.failed && cfg.stopOnFailure {
+		if s.failed && s.stopOnFailure {
 			// stop on first failure
 			break
 		}
@@ -320,7 +345,7 @@ func (s *suite) runOutline(scenario *gherkin.Scenario) (err error) {
 		scenario.Steps = steps
 		if err = s.runScenario(scenario); err != nil && err != ErrUndefined {
 			s.failed = true
-			if cfg.stopOnFailure {
+			if s.stopOnFailure {
 				return
 			}
 		}
@@ -340,7 +365,7 @@ func (s *suite) runFeature(f *gherkin.Feature) {
 		}
 		if err != nil && err != ErrUndefined {
 			s.failed = true
-			if cfg.stopOnFailure {
+			if s.stopOnFailure {
 				return
 			}
 		}
@@ -392,5 +417,80 @@ func (s *suite) printStepDefinitions() {
 	}
 	if len(s.stepHandlers) == 0 {
 		fmt.Println("there were no contexts registered, could not find any step definition..")
+	}
+}
+
+func (s *suite) parseFeatures() (err error) {
+	for _, pat := range s.paths {
+		// check if line number is specified
+		parts := strings.Split(pat, ":")
+		path := parts[0]
+		line := -1
+		if len(parts) > 1 {
+			line, err = strconv.Atoi(parts[1])
+			if err != nil {
+				return fmt.Errorf("line number should follow after colon path delimiter")
+			}
+		}
+		// parse features
+		err = filepath.Walk(path, func(p string, f os.FileInfo, err error) error {
+			if err == nil && !f.IsDir() && strings.HasSuffix(p, ".feature") {
+				ft, err := gherkin.ParseFile(p)
+				switch {
+				case err == gherkin.ErrEmpty:
+					// its ok, just skip it
+				case err != nil:
+					return err
+				default:
+					s.features = append(s.features, ft)
+				}
+				// filter scenario by line number
+				if line != -1 {
+					var scenarios []*gherkin.Scenario
+					for _, s := range ft.Scenarios {
+						if s.Token.Line == line {
+							scenarios = append(scenarios, s)
+							break
+						}
+					}
+					ft.Scenarios = scenarios
+				}
+				s.applyTagFilter(ft)
+			}
+			return err
+		})
+		// check error
+		switch {
+		case os.IsNotExist(err):
+			return fmt.Errorf(`feature path "%s" is not available`, path)
+		case os.IsPermission(err):
+			return fmt.Errorf(`feature path "%s" is not accessible`, path)
+		case err != nil:
+			return err
+		}
+	}
+	return
+}
+
+func (s *suite) applyTagFilter(ft *gherkin.Feature) {
+	if len(s.tags) == 0 {
+		return
+	}
+
+	for _, tag := range strings.Split(s.tags, " ") {
+		var scenarios []*gherkin.Scenario
+		var inverse bool
+		if tag[0] == '!' {
+			tag = tag[1:]
+			inverse = true
+		}
+		for _, scenario := range ft.Scenarios {
+			if inverse && !scenario.Tags.Has(gherkin.Tag(tag)) {
+				scenarios = append(scenarios, scenario)
+			} else if !inverse && scenario.Tags.Has(gherkin.Tag(tag)) {
+				scenarios = append(scenarios, scenario)
+			}
+		}
+		ft.Scenarios = scenarios
 	}
 }

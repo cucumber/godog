@@ -6,6 +6,25 @@ import (
 	"github.com/DATA-DOG/godog/gherkin"
 )
 
+type registeredFormatter struct {
+	name        string
+	fmt         Formatter
+	description string
+}
+
+var formatters []*registeredFormatter
+
+// RegisterFormatter registers a feature suite output
+// Formatter as the name and descriptiongiven.
+// Formatter is used to represent suite output
+func RegisterFormatter(name, description string, f Formatter) {
+	formatters = append(formatters, &registeredFormatter{
+		name:        name,
+		fmt:         f,
+		description: description,
+	})
+}
+
 // Formatter is an interface for feature runner
 // output summary presentation.
 //

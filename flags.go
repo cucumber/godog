@@ -1,0 +1,64 @@
+package godog
+
+import (
+	"flag"
+	"fmt"
+)
+
+func flags(s *suite) *flag.FlagSet {
+	set := flag.NewFlagSet("godog", flag.ExitOnError)
+	set.StringVar(&s.format, "format", "pretty", "")
+	set.StringVar(&s.format, "f", "pretty", "")
+	set.StringVar(&s.tags, "tags", "", "")
+	set.StringVar(&s.tags, "t", "", "")
+	set.BoolVar(&s.definitions, "definitions", false, "")
+	set.BoolVar(&s.definitions, "d", false, "")
+	set.BoolVar(&s.stopOnFailure, "stop-on-failure", false, "")
+	set.BoolVar(&s.version, "version", false, "")
+	set.Usage = usage
+	return set
+}
+
+func usage() {
+	// prints an option or argument with a description, or only description
+	opt := func(name, desc string) string {
+		if len(name) > 0 {
+			name += ":"
+		}
+		return s(2) + cl(name, green) + s(30-len(name)) + desc
+	}
+
+	// --- GENERAL ---
+	fmt.Println(cl("Usage:", yellow))
+	fmt.Println(s(2) + "godog [options] [<paths>]\n")
+
+	// --- ARGUMENTS ---
+	fmt.Println(cl("Arguments:", yellow))
+	// --> paths
+	fmt.Println(opt("paths", "Optional path(s) to execute. Can be:"))
+	fmt.Println(opt("", s(4)+"- dir "+cl("(features/)", yellow)))
+	fmt.Println(opt("", s(4)+"- feature "+cl("(*.feature)", yellow)))
+	fmt.Println(opt("", s(4)+"- scenario at specific line "+cl("(*.feature:10)", yellow)))
+	fmt.Println(opt("", "If no paths are listed, suite tries "+cl("features", yellow)+" path by default."))
+	fmt.Println("")
+
+	// --- OPTIONS ---
+	fmt.Println(cl("Options:", yellow))
+	// --> step definitions
+	fmt.Println(opt("-d, --definitions", "Print all available step definitions."))
+	// --> format
+	fmt.Println(opt("-f, --format=pretty", "How to format tests output. Available formats:"))
+	for _, f := range formatters {
+		fmt.Println(opt("", s(4)+"- "+cl(f.name, yellow)+": "+f.description))
+	}
+	// --> tags
+	fmt.Println(opt("-t, --tags", "Filter scenarios by tags. Expression can be:"))
+	fmt.Println(opt("", s(4)+"- "+cl(`"wip"`, yellow)+": run all scenarios with wip tag"))
+	fmt.Println(opt("", s(4)+"- "+cl(`"!wip"`, yellow)+": exclude all scenarios with wip tag"))
+	fmt.Println(opt("", s(4)+"- "+cl(`"wip !new"`, yellow)+": run wip scenarios, but exclude new"))
+	// --> stop on failure
+	fmt.Println(opt("--stop-on-failure", "Stop processing on first failed scenario."))
+	// --> version
+	fmt.Println(opt("--version", "Show current "+cl("godog", yellow)+" version."))
+	fmt.Println("")
+}

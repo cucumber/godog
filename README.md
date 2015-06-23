@@ -119,6 +119,11 @@ See **.travis.yml** for supported **go** versions.
 
 The public API is stable enough, but it may break until **1.0.0** version, see `godog --version`.
 
+### FAQ
+
+**Q:** Where can I configure common options globally?
+**A:** You can't. Alias your common or project based commands: `alias mygodog="godog --format=progress"`
+
 ### Contributions
 
 Feel free to open a pull request. Note, if you wish to contribute an extension to public (exported methods or types) -
