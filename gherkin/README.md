@@ -8,16 +8,15 @@ specification. It parses a feature file into the it's structural representation.
 creates an AST tree of gherkin Tokens read from the file.
 
 With gherkin language you can describe your application behavior as features in
-human-readable and machine friendly language. See the example directory.
-
-### Be aware that
-
-The work is still in progress and is not functional yet, neither it is intended for production usage.
-The general public API may brake.
+human-readable and machine friendly language.
 
 ### Documentation
 
 See [godoc][godoc].
+
+The public API is stable enough, but it may break until **1.0.0** version, see `godog --version`.
+
+Has no external dependencies.
 
 ### License
 

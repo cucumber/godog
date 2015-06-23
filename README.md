@@ -11,17 +11,20 @@ The project is inspired by [behat][behat] and [cucumber][cucumber] and is based 
 
 ### Install
 
-    go install github.com/DATA-DOG/godog/cmd/godog
-
-### Be aware that
-
-The work is still in progress and is not functional yet, neither it is intended for production usage.
-The general public API may brake.
+    go get github.com/DATA-DOG/godog/cmd/godog
 
 ### Documentation
 
-See [godoc][godoc] and [gherkin godoc][godoc_gherkin].
+See [godoc][godoc] and [gherkin godoc][godoc_gherkin] for general API details.
 See **.travis.yml** for supported **go** versions.
+
+The public API is stable enough, but it may break until **1.0.0** version, see `godog --version`.
+
+### Contributions
+
+Feel free to open a pull request. Note, if you wish to contribute an extension to public (exported methods or types) -
+please open an issue before to discuss whether these changes can be accepted. All backward incompatible changes are
+and will be treated cautiously.
 
 ### License
 
