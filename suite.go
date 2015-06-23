@@ -58,6 +58,7 @@ type StepDef struct {
 // executions are catching panic error since it may
 // be a context specific error.
 type Suite interface {
+	Run()
 	Step(expr Regexp, h StepHandler)
 	// suite events
 	BeforeSuite(f func())
@@ -84,10 +85,9 @@ type suite struct {
 	afterSuiteHandlers     []func()
 }
 
-// New initializes a suite which supports the Suite
-// interface. The instance is passed around to all
-// context initialization functions from *_test.go files
-func New() *suite {
+// New initializes a Suite. The instance is passed around
+// to all context initialization functions from *_test.go files
+func New() Suite {
 	return &suite{}
 }
 
@@ -378,18 +378,19 @@ func (s *suite) runScenario(scenario *gherkin.Scenario) (err error) {
 	return
 }
 
-func (st *suite) printStepDefinitions() {
+func (s *suite) printStepDefinitions() {
 	var longest int
-	for _, def := range st.stepHandlers {
+	for _, def := range s.stepHandlers {
 		if longest < len(def.Expr.String()) {
 			longest = len(def.Expr.String())
 		}
 	}
-	for _, def := range st.stepHandlers {
+	for _, def := range s.stepHandlers {
 		location := runtime.FuncForPC(reflect.ValueOf(def.Handler).Pointer()).Name()
-		fmt.Println(cl(def.Expr.String(), yellow)+s(longest-len(def.Expr.String())), cl("# "+location, black))
+		spaces := strings.Repeat(" ", longest-len(def.Expr.String()))
+		fmt.Println(cl(def.Expr.String(), yellow)+spaces, cl("# "+location, black))
 	}
-	if len(st.stepHandlers) == 0 {
+	if len(s.stepHandlers) == 0 {
 		fmt.Println("there were no contexts registered, could not find any step definition..")
 	}
 }

@@ -17,7 +17,7 @@ func (s *Scenario) assertOutlineStep(text string, t *testing.T) *Step {
 			return stp
 		}
 	}
-	t.Fatal("expected scenario '%s' to have step: '%s', but it did not", s.Title, text)
+	t.Fatalf("expected scenario '%s' to have step: '%s', but it did not", s.Title, text)
 	return nil
 }
 
@@ -27,7 +27,7 @@ func (s *Scenario) assertStep(text string, t *testing.T) *Step {
 			return stp
 		}
 	}
-	t.Fatal("expected scenario '%s' to have step: '%s', but it did not", s.Title, text)
+	t.Fatalf("expected scenario '%s' to have step: '%s', but it did not", s.Title, text)
 	return nil
 }
 
@@ -61,17 +61,17 @@ func Test_parse_scenario_outline(t *testing.T) {
 	s.assertTitle("ls supports kinds of options", t)
 
 	p.assertMatchesTypes([]TokenType{
-		SCENARIO_OUTLINE,
+		OUTLINE,
 		GIVEN,
 		AND,
 		AND,
 		WHEN,
 		THEN,
-		NEW_LINE,
+		NEWLINE,
 		EXAMPLES,
-		TABLE_ROW,
-		TABLE_ROW,
-		TABLE_ROW,
+		TABLEROW,
+		TABLEROW,
+		TABLEROW,
 	}, t)
 
 	s.assertOutlineStep(`I am in a directory "test"`, t)

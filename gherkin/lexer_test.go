@@ -133,11 +133,11 @@ func Test_minimal_feature(t *testing.T) {
 		TEXT,
 		TEXT,
 		TEXT,
-		NEW_LINE,
+		NEWLINE,
 
 		BACKGROUND,
 		GIVEN,
-		NEW_LINE,
+		NEWLINE,
 
 		COMMENT,
 		SCENARIO,
@@ -171,9 +171,9 @@ func Test_table_row_reading(t *testing.T) {
 	expectedTypes := []TokenType{
 		BACKGROUND,
 		GIVEN,
-		TABLE_ROW,
-		TABLE_ROW,
-		TABLE_ROW,
+		TABLEROW,
+		TABLEROW,
+		TABLEROW,
 		GIVEN,
 	}
 	expectedIndents := []int{2, 4, 6, 6, 6, 4}
@@ -200,18 +200,18 @@ func Test_lexing_of_scenario_outline(t *testing.T) {
 		tokens = append(tokens, tok.Type)
 	}
 	expected := []TokenType{
-		SCENARIO_OUTLINE,
+		OUTLINE,
 		GIVEN,
 		AND,
 		AND,
 		WHEN,
 		THEN,
-		NEW_LINE,
+		NEWLINE,
 
 		EXAMPLES,
-		TABLE_ROW,
-		TABLE_ROW,
-		TABLE_ROW,
+		TABLEROW,
+		TABLEROW,
+		TABLEROW,
 	}
 	for i := 0; i < len(expected); i++ {
 		if expected[i] != tokens[i] {

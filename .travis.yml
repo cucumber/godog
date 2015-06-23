@@ -6,13 +6,23 @@ go:
   - tip
 
 script:
-  # pull all dependencies manually to see how many we have
+  # linters and vet
+  - go get golang.org/x/tools/cmd/vet
+  - go get github.com/golang/lint/golint
+
+  # pull all external dependencies
   # remove them at all if possible
   - go get golang.org/x/tools/imports
+  - go get github.com/shiena/ansicolor
 
   # run standard go tests
   - go test -v ./...
   - go test -race ./...
 
   # test me with myself
-  - go run cmd/godog/main.go
+  - go run cmd/godog/main.go -f progress
+
+  # code correctness
+  - sh -c 'if [ ! -z "$(go fmt ./...)" ]; then exit 1; fi'
+  - golint ./...
+  - go vet ./...

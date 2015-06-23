@@ -5,21 +5,23 @@ import (
 	"unicode"
 )
 
+// TokenType defines a gherkin token type
 type TokenType int
 
+// TokenType constants
 const (
 	ILLEGAL TokenType = iota
 	COMMENT
-	NEW_LINE
+	NEWLINE
 	EOF
 	TEXT
 	TAGS
-	TABLE_ROW
+	TABLEROW
 	PYSTRING
 	FEATURE
 	BACKGROUND
 	SCENARIO
-	SCENARIO_OUTLINE
+	OUTLINE
 	EXAMPLES
 	GIVEN
 	WHEN

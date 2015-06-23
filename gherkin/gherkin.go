@@ -227,7 +227,7 @@ func (p *parser) peek() *Token {
 		return p.peeked
 	}
 
-	for p.peeked = p.lx.read(); p.peeked.OfType(COMMENT, NEW_LINE); p.peeked = p.lx.read() {
+	for p.peeked = p.lx.read(); p.peeked.OfType(COMMENT, NEWLINE); p.peeked = p.lx.read() {
 		p.ast = append(p.ast, p.peeked) // record comments and newlines
 	}
 
@@ -292,7 +292,7 @@ func (p *parser) parseFeature() (ft *Feature, err error) {
 		}
 
 		// there must be a scenario or scenario outline otherwise
-		if !tok.OfType(SCENARIO, SCENARIO_OUTLINE) {
+		if !tok.OfType(SCENARIO, OUTLINE) {
 			if tok.Type == EOF {
 				return ft, nil // there may not be a scenario defined after background
 			}
@@ -324,7 +324,7 @@ func (p *parser) parseScenario() (s *Scenario, err error) {
 	if examples := p.peek(); examples.Type == EXAMPLES {
 		p.next() // jump over the peeked token
 		peek := p.peek()
-		if peek.Type != TABLE_ROW {
+		if peek.Type != TABLEROW {
 			return s, p.err(strings.Join([]string{
 				"expected a table row,",
 				"but got '" + peek.Type.String() + "' instead, for scenario outline examples",
@@ -359,7 +359,7 @@ func (p *parser) parseSteps() (steps []*Step, err error) {
 					return steps, err
 				}
 				step.PyString.Step = step
-			case TABLE_ROW:
+			case TABLEROW:
 				if step.Table, err = p.parseTable(); err != nil {
 					return steps, err
 				}
@@ -394,7 +394,7 @@ func (p *parser) parsePystring() (*PyString, error) {
 
 func (p *parser) parseTable() (*Table, error) {
 	tbl := &Table{Token: p.peek()}
-	for row := p.peek(); row.Type == TABLE_ROW; row = p.peek() {
+	for row := p.peek(); row.Type == TABLEROW; row = p.peek() {
 		var cols []string
 		for _, r := range strings.Split(strings.Trim(row.Value, "|"), "|") {
 			cols = append(cols, strings.TrimFunc(r, unicode.IsSpace))

@@ -54,7 +54,7 @@ func (s *suiteContext) HandleBeforeScenario(*gherkin.Scenario) {
 }
 
 func (s *suiteContext) followingStepsShouldHave(args ...*Arg) error {
-	var expected []string = args[1].PyString().Lines
+	var expected = args[1].PyString().Lines
 	var actual, unmatched []string
 	var matched []int
 

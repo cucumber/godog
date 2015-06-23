@@ -18,7 +18,7 @@ func init() {
 	})
 }
 
-var outlinePlaceholderRegexp *regexp.Regexp = regexp.MustCompile("<[^>]+>")
+var outlinePlaceholderRegexp = regexp.MustCompile("<[^>]+>")
 
 // a built in default pretty formatter
 type pretty struct {
@@ -306,7 +306,7 @@ func (f *pretty) printStepKind(stepAction interface{}) {
 	case step.Background != nil && f.backgroundSteps == 0:
 		return
 	case step.Background != nil && f.backgroundSteps > 0:
-		f.backgroundSteps -= 1
+		f.backgroundSteps--
 	}
 
 	if f.outlineExamples != 0 {
@@ -314,7 +314,7 @@ func (f *pretty) printStepKind(stepAction interface{}) {
 		if len(f.outlineSteps) == f.outlineNumSteps {
 			// an outline example steps has went through
 			f.printOutlineExample(step.Scenario)
-			f.outlineExamples -= 1
+			f.outlineExamples--
 		}
 		return // wait till example steps
 	}

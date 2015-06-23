@@ -24,25 +24,25 @@ var matchers = map[string]*regexp.Regexp{
 // for now only english language is supported
 var keywords = map[TokenType]string{
 	// special
-	ILLEGAL:   "Illegal",
-	EOF:       "End of file",
-	NEW_LINE:  "New line",
-	TAGS:      "Tags",
-	COMMENT:   "Comment",
-	PYSTRING:  "PyString",
-	TABLE_ROW: "Table row",
-	TEXT:      "Text",
+	ILLEGAL:  "Illegal",
+	EOF:      "End of file",
+	NEWLINE:  "New line",
+	TAGS:     "Tags",
+	COMMENT:  "Comment",
+	PYSTRING: "PyString",
+	TABLEROW: "Table row",
+	TEXT:     "Text",
 	// general
-	GIVEN:            "Given",
-	WHEN:             "When",
-	THEN:             "Then",
-	AND:              "And",
-	BUT:              "But",
-	FEATURE:          "Feature",
-	BACKGROUND:       "Background",
-	SCENARIO:         "Scenario",
-	SCENARIO_OUTLINE: "Scenario Outline",
-	EXAMPLES:         "Examples",
+	GIVEN:      "Given",
+	WHEN:       "When",
+	THEN:       "Then",
+	AND:        "And",
+	BUT:        "But",
+	FEATURE:    "Feature",
+	BACKGROUND: "Background",
+	SCENARIO:   "Scenario",
+	OUTLINE:    "Scenario Outline",
+	EXAMPLES:   "Examples",
 }
 
 type lexer struct {
@@ -70,9 +70,9 @@ func (l *lexer) read() *Token {
 	// newline
 	if len(line) == 0 {
 		return &Token{
-			Type:    NEW_LINE,
+			Type:    NEWLINE,
 			Line:    l.lines,
-			Keyword: keywords[NEW_LINE],
+			Keyword: keywords[NEWLINE],
 		}
 	}
 	// comment
@@ -172,25 +172,25 @@ func (l *lexer) read() *Token {
 	// table row
 	if m := matchers["table_row"].FindStringSubmatch(line); len(m) > 0 {
 		return &Token{
-			Type:    TABLE_ROW,
+			Type:    TABLEROW,
 			Indent:  len(m[1]),
 			Line:    l.lines,
 			Value:   strings.TrimSpace(m[2]),
 			Text:    line,
 			Comment: strings.Trim(m[3], " #"),
-			Keyword: keywords[TABLE_ROW],
+			Keyword: keywords[TABLEROW],
 		}
 	}
 	// scenario outline
 	if m := matchers["scenario_outline"].FindStringSubmatch(line); len(m) > 0 {
 		return &Token{
-			Type:    SCENARIO_OUTLINE,
+			Type:    OUTLINE,
 			Indent:  len(m[1]),
 			Line:    l.lines,
 			Value:   strings.TrimSpace(m[2]),
 			Text:    line,
 			Comment: strings.Trim(m[3], " #"),
-			Keyword: keywords[SCENARIO_OUTLINE],
+			Keyword: keywords[OUTLINE],
 		}
 	}
 	// examples

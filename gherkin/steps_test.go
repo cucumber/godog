@@ -146,7 +146,7 @@ func Test_parse_hash_table_given_step(t *testing.T) {
 	p.next() // step over to eof
 	p.assertMatchesTypes([]TokenType{
 		GIVEN,
-		TABLE_ROW,
+		TABLEROW,
 		EOF,
 	}, t)
 }
@@ -172,9 +172,9 @@ func Test_parse_table_given_step(t *testing.T) {
 	p.next() // step over to eof
 	p.assertMatchesTypes([]TokenType{
 		GIVEN,
-		TABLE_ROW,
-		TABLE_ROW,
-		TABLE_ROW,
+		TABLEROW,
+		TABLEROW,
+		TABLEROW,
 		EOF,
 	}, t)
 }

@@ -8,7 +8,7 @@ import (
 func (a *parser) assertMatchesTypes(expected []TokenType, t *testing.T) {
 	key := -1
 	for _, tok := range a.ast {
-		key += 1
+		key++
 		if len(expected) <= key {
 			t.Fatalf("there are more tokens in AST then expected, next is '%s'", tok.Type)
 		}
@@ -72,19 +72,19 @@ func Test_parse_feature_file(t *testing.T) {
 		TEXT,
 		TEXT,
 		TEXT,
-		NEW_LINE,
+		NEWLINE,
 
 		BACKGROUND,
 		GIVEN,
-		TABLE_ROW,
-		NEW_LINE,
+		TABLEROW,
+		NEWLINE,
 
 		SCENARIO,
 		GIVEN,
 		AND,
 		WHEN,
 		THEN,
-		NEW_LINE,
+		NEWLINE,
 
 		TAGS,
 		SCENARIO,
@@ -92,23 +92,23 @@ func Test_parse_feature_file(t *testing.T) {
 		AND,
 		WHEN,
 		THEN,
-		NEW_LINE,
+		NEWLINE,
 
 		TAGS,
 		SCENARIO,
-		NEW_LINE,
+		NEWLINE,
 
-		SCENARIO_OUTLINE,
+		OUTLINE,
 		GIVEN,
 		AND,
 		AND,
 		WHEN,
 		THEN,
-		NEW_LINE,
+		NEWLINE,
 		EXAMPLES,
-		TABLE_ROW,
-		TABLE_ROW,
-		TABLE_ROW,
+		TABLEROW,
+		TABLEROW,
+		TABLEROW,
 	}, t)
 
 	ft.assertHasNumScenarios(4, t)

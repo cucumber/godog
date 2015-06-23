@@ -117,8 +117,8 @@ func Test_parse_feature_with_newlines(t *testing.T) {
 	}
 
 	p.assertMatchesTypes([]TokenType{
-		NEW_LINE,
-		NEW_LINE,
+		NEWLINE,
+		NEWLINE,
 		FEATURE,
 	}, t)
 }

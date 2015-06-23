@@ -109,7 +109,7 @@ func (f *progress) step(step interface{}) {
 	case *undefined:
 		fmt.Print(cl("U", yellow))
 	}
-	f.steps += 1
+	f.steps++
 	if math.Mod(float64(f.steps), float64(f.stepsPerRow)) == 0 {
 		fmt.Printf(" %d\n", f.steps)
 	}
