@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
 	"time"
 
 	"github.com/DATA-DOG/godog"
@@ -35,9 +34,8 @@ func main() {
 	}
 	w.Close()
 
-	c := strings.TrimSpace("go run " + builtFile + " " + strings.Join(os.Args[1:], " "))
-	// @TODO: support for windows
-	cmd := exec.Command("sh", "-c", c)
+	cmd := exec.Command("go")
+	cmd.Args = append([]string{"go", "run", builtFile}, os.Args[1:]...)
 	cmd.Stdout = stdout
 	cmd.Stderr = stdout
 
