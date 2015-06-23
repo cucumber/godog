@@ -7,7 +7,12 @@ import (
 )
 
 // Formatter is an interface for feature runner
-// output summary presentation
+// output summary presentation.
+//
+// New formatters may be created to represent
+// suite results in different ways. These new
+// formatters needs to be registered with a
+// RegisterFormatter function call
 type Formatter interface {
 	Node(interface{})
 	Failed(*gherkin.Step, *StepDef, error)

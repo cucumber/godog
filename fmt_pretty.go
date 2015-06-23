@@ -22,11 +22,9 @@ var outlinePlaceholderRegexp *regexp.Regexp = regexp.MustCompile("<[^>]+>")
 
 // a built in default pretty formatter
 type pretty struct {
-	feature        *gherkin.Feature
-	commentPos     int
-	doneBackground bool
-	background     *gherkin.Background
-	scenario       *gherkin.Scenario
+	feature         *gherkin.Feature
+	commentPos      int
+	backgroundSteps int
 
 	// outline
 	outlineExamples int
@@ -56,21 +54,17 @@ func (f *pretty) Node(node interface{}) {
 			fmt.Println("")
 		}
 		f.feature = t
-		f.scenario = nil
-		f.background = nil
 		f.features = append(f.features, t)
+		// print feature header
 		fmt.Println(bcl(t.Token.Keyword+": ", white) + t.Title)
 		fmt.Println(t.Description)
-	case *gherkin.Background:
-		// do not repeat background for the same feature
-		if f.background == nil && f.scenario == nil {
-			f.background = t
-			f.commentPos = longestStep(t.Steps, t.Token.Length())
-			// print background node
-			fmt.Println("\n" + s(t.Token.Indent) + bcl(t.Token.Keyword+":", white))
+		// print background header
+		if t.Background != nil {
+			f.commentPos = longestStep(t.Background.Steps, t.Background.Token.Length())
+			f.backgroundSteps = len(t.Background.Steps)
+			fmt.Println("\n" + s(t.Background.Token.Indent) + bcl(t.Background.Token.Keyword+":", white))
 		}
 	case *gherkin.Scenario:
-		f.scenario = t
 		f.commentPos = longestStep(t.Steps, t.Token.Length())
 		if t.Outline != nil {
 			f.outlineSteps = []interface{}{} // reset steps list
@@ -162,10 +156,10 @@ func (f *pretty) Summary() {
 	fmt.Println(elapsed)
 }
 
-func (f *pretty) printOutlineExample() {
+func (f *pretty) printOutlineExample(scenario *gherkin.Scenario) {
 	var failed error
 	clr := green
-	tbl := f.scenario.Outline.Examples
+	tbl := scenario.Outline.Examples
 	firstExample := f.outlineExamples == len(tbl.Rows)-1
 
 	for i, act := range f.outlineSteps {
@@ -187,7 +181,7 @@ func (f *pretty) printOutlineExample() {
 		if firstExample {
 			// in first example, we need to print steps
 			var text string
-			ostep := f.scenario.Outline.Steps[i]
+			ostep := scenario.Outline.Steps[i]
 			if def != nil {
 				if m := outlinePlaceholderRegexp.FindAllStringIndex(ostep.Text, -1); len(m) > 0 {
 					var pos int
@@ -216,7 +210,7 @@ func (f *pretty) printOutlineExample() {
 	max := longest(tbl)
 	// an example table header
 	if firstExample {
-		out := f.scenario.Outline
+		out := scenario.Outline
 		fmt.Println("")
 		fmt.Println(s(out.Token.Indent) + bcl(out.Token.Keyword+":", white))
 		row := tbl.Rows[0]
@@ -308,15 +302,18 @@ func (f *pretty) printStepKind(stepAction interface{}) {
 	step, def, c, err = f.stepDetails(stepAction)
 
 	// do not print background more than once
-	if f.scenario == nil && step.Background != f.background {
+	switch {
+	case step.Background != nil && f.backgroundSteps == 0:
 		return
+	case step.Background != nil && f.backgroundSteps > 0:
+		f.backgroundSteps -= 1
 	}
 
 	if f.outlineExamples != 0 {
 		f.outlineSteps = append(f.outlineSteps, stepAction)
 		if len(f.outlineSteps) == f.outlineNumSteps {
 			// an outline example steps has went through
-			f.printOutlineExample()
+			f.printOutlineExample(step.Scenario)
 			f.outlineExamples -= 1
 		}
 		return // wait till example steps
@@ -385,7 +382,7 @@ func longestStep(steps []*gherkin.Step, base int) int {
 	ret := base
 	for _, step := range steps {
 		length := step.Token.Length()
-		if length > base {
+		if length > ret {
 			ret = length
 		}
 	}

@@ -9,6 +9,10 @@ describe a feature of your application and how it should work, and only then imp
 
 The project is inspired by [behat][behat] and [cucumber][cucumber] and is based on cucumber [gherkin specification][gherkin].
 
+### Install
+
+    go install github.com/DATA-DOG/godog/cmd/godog
+
 ### Be aware that
 
 The work is still in progress and is not functional yet, neither it is intended for production usage.
@@ -21,7 +25,9 @@ See **.travis.yml** for supported **go** versions.
 
 ### License
 
-Licensed under the [three clause BSD license][license]
+All package dependencies are **MIT** or **BSD** licensed.
+
+**Godog** is licensed under the [three clause BSD license][license]
 
 [godoc]: http://godoc.org/github.com/DATA-DOG/godog "Documentation on godoc"
 [godoc_gherkin]: http://godoc.org/github.com/DATA-DOG/godog/gherkin "Documentation on godoc for gherkin"

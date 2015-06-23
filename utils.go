@@ -6,10 +6,12 @@ import (
 	"strings"
 )
 
+// a color code type
 type color int
 
 const ansiEscape = "\x1b"
 
+// some ansi colors
 const (
 	black color = iota + 30
 	red

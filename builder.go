@@ -22,8 +22,8 @@ type builder struct {
 	tpl      *template.Template
 }
 
-func newBuilder() *builder {
-	return &builder{
+func newBuilder(buildPath string) (*builder, error) {
+	b := &builder{
 		files: make(map[string]*ast.File),
 		fset:  token.NewFileSet(),
 		tpl: template.Must(template.New("main").Parse(`package main
@@ -39,6 +39,18 @@ func main() {
 	suite.Run()
 }`)),
 	}
+
+	return b, filepath.Walk(buildPath, func(path string, file os.FileInfo, err error) error {
+		if file.IsDir() && file.Name() != "." {
+			return filepath.SkipDir
+		}
+		if err == nil && strings.HasSuffix(path, ".go") {
+			if err := b.parseFile(path); err != nil {
+				return err
+			}
+		}
+		return err
+	})
 }
 
 func (b *builder) parseFile(path string) error {
@@ -129,24 +141,18 @@ func (b *builder) merge() (*ast.File, error) {
 	return ast.MergePackageFiles(pkg, ast.FilterImportDuplicates), nil
 }
 
-// Build creates a runnable godog executable file
-// from current package source and test files
-// it merges the files with the help of go/ast into
+// Build creates a runnable Godog executable file
+// from current package source and test source files.
+//
+// The package files are merged with the help of go/ast into
 // a single main package file which has a custom
-// main function to run features
+// main function to run test suite features.
+//
+// Currently, to manage imports we use "golang.org/x/tools/imports"
+// package, but that may be replaced in order to have
+// no external dependencies
 func Build() ([]byte, error) {
-	b := newBuilder()
-	err := filepath.Walk(".", func(path string, file os.FileInfo, err error) error {
-		if file.IsDir() && file.Name() != "." {
-			return filepath.SkipDir
-		}
-		if err == nil && strings.HasSuffix(path, ".go") {
-			if err := b.parseFile(path); err != nil {
-				return err
-			}
-		}
-		return err
-	})
+	b, err := newBuilder(".")
 	if err != nil {
 		return nil, err
 	}

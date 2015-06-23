@@ -16,26 +16,30 @@ import (
 // it can be either a string or a *regexp.Regexp
 type Regexp interface{}
 
-// StepHandler is a function contract for
-// step handler
+// StepHandler is a func to handle the step
 //
-// It receives all arguments which
-// will be matched according to the regular expression
+// The handler receives all arguments which
+// will be matched according to the Regexp
 // which is passed with a step registration.
-// The error in return - represents a reason of failure.
 //
-// Returning signals that the step has finished
-// and that the feature runner can move on to the next
-// step.
+// The error in return - represents a reason of failure.
+// All consequent scenario steps are skipped.
+//
+// Returning signals that the step has finished and that
+// the feature runner can move on to the next step.
 type StepHandler func(...*Arg) error
 
 // ErrUndefined is returned in case if step definition was not found
 var ErrUndefined = fmt.Errorf("step is undefined")
 
 // StepDef is a registered step definition
-// contains a StepHandler, a regexp which
-// is used to match a step and Args which
-// were matched by last step
+// contains a StepHandler and regexp which
+// is used to match a step. Args which
+// were matched by last executed step
+//
+// This structure is passed to the formatter
+// when step is matched and is either failed
+// or successful
 type StepDef struct {
 	Args    []*Arg
 	Handler StepHandler
@@ -43,7 +47,16 @@ type StepDef struct {
 }
 
 // Suite is an interface which allows various contexts
-// to register step definitions and event handlers
+// to register steps and event handlers.
+//
+// When running a test suite, this interface is passed
+// to all functions (contexts), which have it as a
+// first and only argument.
+//
+// Note that all event hooks does not catch panic errors
+// in order to have a trace information. Only step
+// executions are catching panic error since it may
+// be a context specific error.
 type Suite interface {
 	Step(expr Regexp, h StepHandler)
 	// suite events
@@ -80,17 +93,16 @@ func New() *suite {
 
 // Step allows to register a StepHandler in Godog
 // feature suite, the handler will be applied to all
-// steps matching the given regexp expr
+// steps matching the given Regexp expr
 //
 // It will panic if expr is not a valid regular expression
-// or handler does not satisfy StepHandler interface
 //
 // Note that if there are two handlers which may match
 // the same step, then the only first matched handler
-// will be applied
+// will be applied.
 //
-// If none of the StepHandlers are matched, then a pending
-// step error will be raised.
+// If none of the StepHandlers are matched, then
+// ErrUndefined error will be returned.
 func (s *suite) Step(expr Regexp, h StepHandler) {
 	var regex *regexp.Regexp
 
@@ -112,13 +124,20 @@ func (s *suite) Step(expr Regexp, h StepHandler) {
 }
 
 // BeforeSuite registers a function or method
-// to be run once before suite runner
+// to be run once before suite runner.
+//
+// Use it to prepare the test suite for a spin.
+// Connect and prepare database for instance...
 func (s *suite) BeforeSuite(f func()) {
 	s.beforeSuiteHandlers = append(s.beforeSuiteHandlers, f)
 }
 
 // BeforeScenario registers a function or method
-// to be run before every scenario
+// to be run before every scenario.
+//
+// It is a good practice to restore the default state
+// before every scenario so it would be isolated from
+// any kind of state.
 func (s *suite) BeforeScenario(f func(*gherkin.Scenario)) {
 	s.beforeScenarioHandlers = append(s.beforeScenarioHandlers, f)
 }
@@ -131,6 +150,13 @@ func (s *suite) BeforeStep(f func(*gherkin.Step)) {
 
 // AfterStep registers an function or method
 // to be run after every scenario
+//
+// It may be convenient to return a different kind of error
+// in order to print more state details which may help
+// in case of step failure
+//
+// In some cases, for example when running a headless
+// browser, to take a screenshot after failure.
 func (s *suite) AfterStep(f func(*gherkin.Step, error)) {
 	s.afterStepHandlers = append(s.afterStepHandlers, f)
 }
@@ -147,7 +173,7 @@ func (s *suite) AfterSuite(f func()) {
 	s.afterSuiteHandlers = append(s.afterSuiteHandlers, f)
 }
 
-// Run - runs a godog feature suite
+// Run starts the Godog feature suite
 func (s *suite) Run() {
 	var err error
 	if !flag.Parsed() {

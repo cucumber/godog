@@ -8,14 +8,18 @@ import (
 )
 
 // Arg is an argument for StepHandler parsed from
-// the regexp submatch to handle the step
+// the regexp submatch to handle the step.
+//
+// In future versions, it may be replaced with
+// an argument injection toolkit using reflect
+// package.
 type Arg struct {
 	value interface{}
 }
 
 // StepArgument func creates a step argument.
 // used in cases when calling another step from
-// within a StepHandlerFunc
+// within a StepHandler function.
 func StepArgument(value interface{}) *Arg {
 	return &Arg{value: value}
 }
