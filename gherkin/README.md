@@ -10,6 +10,29 @@ creates an AST tree of gherkin Tokens read from the file.
 With gherkin language you can describe your application behavior as features in
 human-readable and machine friendly language.
 
+``` go
+package main
+
+import (
+	"log"
+	"os"
+
+	"github.com/DATA-DOG/godog/gherkin"
+)
+
+func main() {
+	feature, err := gherkin.ParseFile("ls.feature")
+	switch {
+	case err == gherkin.ErrEmpty:
+		log.Println("the feature file is empty and does not describe any feature")
+		return
+	case err != nil:
+		log.Fatalln("the feature file is incorrect or could not be read:", err)
+	}
+	log.Println("have parsed a feature:", feature.Title, "with", len(feature.Scenarios), "scenarios")
+}
+```
+
 ### Documentation
 
 See [godoc][godoc].

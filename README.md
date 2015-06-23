@@ -9,6 +9,13 @@ describe a feature of your application and how it should work, and only then imp
 
 The project is inspired by [behat][behat] and [cucumber][cucumber] and is based on cucumber [gherkin specification][gherkin].
 
+**Godog** does not intervene with the standard **go test** command and it's behavior. You can leverage both frameworks
+to functionally test your application while maintaining all test related source code in **_test.go** files.
+
+**Godog** acts similar compared to **go test** command. It builds all package sources to a single main package file
+and replaces **main** func with it's own and runs the build to test described application behavior in feature files.
+Production builds remains clean without any overhead.
+
 ### Install
 
     go get github.com/DATA-DOG/godog/cmd/godog
