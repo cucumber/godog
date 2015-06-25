@@ -477,20 +477,30 @@ func (s *suite) applyTagFilter(ft *gherkin.Feature) {
 		return
 	}
 
-	for _, tag := range strings.Split(s.tags, " ") {
-		var scenarios []*gherkin.Scenario
-		var inverse bool
-		if tag[0] == '!' {
-			tag = tag[1:]
-			inverse = true
+	var scenarios []*gherkin.Scenario
+	for _, scenario := range ft.Scenarios {
+		if s.matchesTags(scenario.Tags) {
+			scenarios = append(scenarios, scenario)
 		}
-		for _, scenario := range ft.Scenarios {
-			if inverse && !scenario.Tags.Has(gherkin.Tag(tag)) {
-				scenarios = append(scenarios, scenario)
-			} else if !inverse && scenario.Tags.Has(gherkin.Tag(tag)) {
-				scenarios = append(scenarios, scenario)
+	}
+	ft.Scenarios = scenarios
+}
+
+// based on http://behat.readthedocs.org/en/v2.5/guides/6.cli.html#gherkin-filters
+func (s *suite) matchesTags(tags gherkin.Tags) (ok bool) {
+	ok = true
+	for _, andTags := range strings.Split(s.tags, "&&") {
+		var okComma bool
+		for _, tag := range strings.Split(andTags, ",") {
+			tag = strings.Replace(strings.TrimSpace(tag), "@", "", -1)
+			if tag[0] == '~' {
+				tag = tag[1:]
+				okComma = !tags.Has(gherkin.Tag(tag)) || okComma
+			} else {
+				okComma = tags.Has(gherkin.Tag(tag)) || okComma
 			}
 		}
-		ft.Scenarios = scenarios
+		ok = (false != okComma && ok && okComma) || false
 	}
+	return
 }

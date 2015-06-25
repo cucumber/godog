@@ -53,9 +53,10 @@ func usage() {
 	}
 	// --> tags
 	fmt.Println(opt("-t, --tags", "Filter scenarios by tags. Expression can be:"))
-	fmt.Println(opt("", s(4)+"- "+cl(`"wip"`, yellow)+": run all scenarios with wip tag"))
-	fmt.Println(opt("", s(4)+"- "+cl(`"!wip"`, yellow)+": exclude all scenarios with wip tag"))
-	fmt.Println(opt("", s(4)+"- "+cl(`"wip !new"`, yellow)+": run wip scenarios, but exclude new"))
+	fmt.Println(opt("", s(4)+"- "+cl(`"@wip"`, yellow)+": run all scenarios with wip tag"))
+	fmt.Println(opt("", s(4)+"- "+cl(`"~@wip"`, yellow)+": exclude all scenarios with wip tag"))
+	fmt.Println(opt("", s(4)+"- "+cl(`"@wip && ~@new"`, yellow)+": run wip scenarios, but exclude new"))
+	fmt.Println(opt("", s(4)+"- "+cl(`"@wip,@undone"`, yellow)+": run wip or undone scenarios"))
 	// --> stop on failure
 	fmt.Println(opt("--stop-on-failure", "Stop processing on first failed scenario."))
 	// --> version
