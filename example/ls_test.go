@@ -46,7 +46,7 @@ func (f *lsFeature) iHaveFileOrDirectoryNamed(args ...*godog.Arg) (err error) {
 }
 
 func (f *lsFeature) iShouldGetOutput(args ...*godog.Arg) error {
-	expected := args[0].PyString().Lines
+	expected := strings.Split(args[0].DocString().Content, "\n")
 	actual := strings.Split(strings.TrimSpace(f.buf.String()), "\n")
 	if len(expected) != len(actual) {
 		return fmt.Errorf("number of expected output lines %d, does not match actual: %d", len(expected), len(actual))

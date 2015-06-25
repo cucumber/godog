@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/DATA-DOG/godog/gherkin"
+	"github.com/cucumber/gherkin-go"
 )
 
 func SuiteContext(s Suite) {
 	c := &suiteContext{}
 
-	s.BeforeScenario(c.HandleBeforeScenario)
+	s.BeforeScenario(c.ResetBeforeEachScenario)
 
 	s.Step(`^a feature path "([^"]*)"$`, c.featurePath)
 	s.Step(`^I parse features$`, c.parseFeatures)
@@ -28,6 +28,11 @@ func SuiteContext(s Suite) {
 	s.Step(`^a failing step`, c.aFailingStep)
 	s.Step(`^this step should fail`, c.aFailingStep)
 	s.Step(`^the following steps? should be (passed|failed|skipped|undefined):`, c.followingStepsShouldHave)
+
+	// lt
+	s.Step(`^savybių aplankas "([^"]*)"$`, c.featurePath)
+	s.Step(`^aš išskaitau savybes$`, c.parseFeatures)
+	s.Step(`^aš turėčiau turėti ([\d]+) savybių failus:$`, c.iShouldHaveNumFeatureFiles)
 }
 
 type firedEvent struct {
@@ -41,7 +46,7 @@ type suiteContext struct {
 	fmt         *testFormatter
 }
 
-func (s *suiteContext) HandleBeforeScenario(*gherkin.Scenario) {
+func (s *suiteContext) ResetBeforeEachScenario(interface{}) {
 	// reset whole suite with the state
 	s.fmt = &testFormatter{}
 	s.testedSuite = &suite{fmt: s.fmt}
@@ -52,7 +57,7 @@ func (s *suiteContext) HandleBeforeScenario(*gherkin.Scenario) {
 }
 
 func (s *suiteContext) followingStepsShouldHave(args ...*Arg) error {
-	var expected = args[1].PyString().Lines
+	var expected = strings.Split(args[1].DocString().Content, "\n")
 	var actual, unmatched []string
 	var matched []int
 
@@ -116,10 +121,10 @@ func (s *suiteContext) iAmListeningToSuiteEvents(args ...*Arg) error {
 	s.testedSuite.AfterSuite(func() {
 		s.events = append(s.events, &firedEvent{"AfterSuite", []interface{}{}})
 	})
-	s.testedSuite.BeforeScenario(func(scenario *gherkin.Scenario) {
+	s.testedSuite.BeforeScenario(func(scenario interface{}) {
 		s.events = append(s.events, &firedEvent{"BeforeScenario", []interface{}{scenario}})
 	})
-	s.testedSuite.AfterScenario(func(scenario *gherkin.Scenario, err error) {
+	s.testedSuite.AfterScenario(func(scenario interface{}, err error) {
 		s.events = append(s.events, &firedEvent{"AfterScenario", []interface{}{scenario, err}})
 	})
 	s.testedSuite.BeforeStep(func(step *gherkin.Step) {
@@ -138,9 +143,9 @@ func (s *suiteContext) aFailingStep(...*Arg) error {
 // parse a given feature file body as a feature
 func (s *suiteContext) aFeatureFile(args ...*Arg) error {
 	name := args[0].String()
-	body := args[1].PyString().Raw
-	feature, err := gherkin.Parse(strings.NewReader(body), name)
-	s.testedSuite.features = append(s.testedSuite.features, feature)
+	body := args[1].DocString().Content
+	ft, err := gherkin.ParseFeature(strings.NewReader(body))
+	s.testedSuite.features = append(s.testedSuite.features, &feature{Feature: ft, Path: name})
 	return err
 }
 
@@ -167,7 +172,7 @@ func (s *suiteContext) iShouldHaveNumFeatureFiles(args ...*Arg) error {
 	if len(s.testedSuite.features) != args[0].Int() {
 		return fmt.Errorf("expected %d features to be parsed, but have %d", args[0].Int(), len(s.testedSuite.features))
 	}
-	expected := args[1].PyString().Lines
+	expected := strings.Split(args[1].DocString().Content, "\n")
 	var actual []string
 	for _, ft := range s.testedSuite.features {
 		actual = append(actual, ft.Path)
@@ -194,7 +199,7 @@ func (s *suiteContext) iRunFeatureSuite(args ...*Arg) error {
 func (s *suiteContext) numScenariosRegistered(args ...*Arg) (err error) {
 	var num int
 	for _, ft := range s.testedSuite.features {
-		num += len(ft.Scenarios)
+		num += len(ft.ScenarioDefinitions)
 	}
 	if num != args[0].Int() {
 		err = fmt.Errorf("expected %d scenarios to be registered, but got %d", args[0].Int(), num)
@@ -222,12 +227,18 @@ func (s *suiteContext) thereWasEventTriggeredBeforeScenario(args ...*Arg) error 
 			continue
 		}
 
-		scenario := event.args[0].(*gherkin.Scenario)
-		if scenario.Title == args[0].String() {
+		var name string
+		switch t := event.args[0].(type) {
+		case *gherkin.Scenario:
+			name = t.Name
+		case *gherkin.ScenarioOutline:
+			name = t.Name
+		}
+		if name == args[0].String() {
 			return nil
 		}
 
-		found = append(found, scenario.Title)
+		found = append(found, name)
 	}
 
 	if len(found) == 0 {
@@ -238,16 +249,16 @@ func (s *suiteContext) thereWasEventTriggeredBeforeScenario(args ...*Arg) error 
 }
 
 func (s *suiteContext) theseEventsHadToBeFiredForNumberOfTimes(args ...*Arg) error {
-	tbl := args[0].Table()
-	if len(tbl.Rows[0]) != 2 {
-		return fmt.Errorf("expected two columns for event table row, got: %d", len(tbl.Rows[0]))
+	tbl := args[0].DataTable()
+	if len(tbl.Rows[0].Cells) != 2 {
+		return fmt.Errorf("expected two columns for event table row, got: %d", len(tbl.Rows[0].Cells))
 	}
 
 	for _, row := range tbl.Rows {
 		args := []*Arg{
 			StepArgument(""), // ignored
-			StepArgument(row[1]),
-			StepArgument(row[0]),
+			StepArgument(row.Cells[1].Value),
+			StepArgument(row.Cells[0].Value),
 		}
 		if err := s.thereWereNumEventsFired(args...); err != nil {
 			return err

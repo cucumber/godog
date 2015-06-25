@@ -3,7 +3,7 @@ package godog
 import (
 	"fmt"
 
-	"github.com/DATA-DOG/godog/gherkin"
+	"github.com/cucumber/gherkin-go"
 )
 
 type registeredFormatter struct {
@@ -33,6 +33,7 @@ func RegisterFormatter(name, description string, f Formatter) {
 // formatters needs to be registered with a
 // RegisterFormatter function call
 type Formatter interface {
+	Feature(*gherkin.Feature, string)
 	Node(interface{})
 	Failed(*gherkin.Step, *StepDef, error)
 	Passed(*gherkin.Step, *StepDef)
@@ -44,39 +45,38 @@ type Formatter interface {
 // failed represents a failed step data structure
 // with all necessary references
 type failed struct {
-	step *gherkin.Step
-	def  *StepDef
-	err  error
+	feature *feature
+	owner   interface{}
+	step    *gherkin.Step
+	def     *StepDef
+	err     error
 }
 
 func (f failed) line() string {
-	var tok *gherkin.Token
-	var ft *gherkin.Feature
-	if f.step.Scenario != nil {
-		tok = f.step.Scenario.Token
-		ft = f.step.Scenario.Feature
-	} else {
-		tok = f.step.Background.Token
-		ft = f.step.Background.Feature
-	}
-	return fmt.Sprintf("%s:%d", ft.Path, tok.Line)
+	return fmt.Sprintf("%s:%d", f.feature.Path, f.step.Location.Line)
 }
 
 // passed represents a successful step data structure
 // with all necessary references
 type passed struct {
-	step *gherkin.Step
-	def  *StepDef
+	feature *feature
+	owner   interface{}
+	step    *gherkin.Step
+	def     *StepDef
 }
 
 // skipped represents a skipped step data structure
 // with all necessary references
 type skipped struct {
-	step *gherkin.Step
+	feature *feature
+	owner   interface{}
+	step    *gherkin.Step
 }
 
 // undefined represents a pending step data structure
 // with all necessary references
 type undefined struct {
-	step *gherkin.Step
+	feature *feature
+	owner   interface{}
+	step    *gherkin.Step
 }

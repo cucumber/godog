@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/DATA-DOG/godog/gherkin"
+	"github.com/cucumber/gherkin-go"
 )
 
 // Arg is an argument for StepHandler parsed from
@@ -122,17 +122,17 @@ func (a *Arg) Bytes() []byte {
 	return []byte(s)
 }
 
-// PyString converts an argument to *gherkin.PyString node
-func (a *Arg) PyString() *gherkin.PyString {
-	s, ok := a.value.(*gherkin.PyString)
-	a.must(ok, "*gherkin.PyString")
+// DocString converts an argument to *gherkin.DocString node
+func (a *Arg) DocString() *gherkin.DocString {
+	s, ok := a.value.(*gherkin.DocString)
+	a.must(ok, "*gherkin.DocString")
 	return s
 }
 
-// Table converts an argument to *gherkin.Table node
-func (a *Arg) Table() *gherkin.Table {
-	s, ok := a.value.(*gherkin.Table)
-	a.must(ok, "*gherkin.Table")
+// DataTable converts an argument to *gherkin.DataTable node
+func (a *Arg) DataTable() *gherkin.DataTable {
+	s, ok := a.value.(*gherkin.DataTable)
+	a.must(ok, "*gherkin.DataTable")
 	return s
 }
 

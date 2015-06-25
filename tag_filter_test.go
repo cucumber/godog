@@ -2,29 +2,19 @@ package godog
 
 import (
 	"testing"
-
-	"github.com/DATA-DOG/godog/gherkin"
 )
 
 func assertNotMatchesTagFilter(tags []string, filter string, t *testing.T) {
-	gtags := gherkin.Tags{}
-	for _, tag := range tags {
-		gtags = append(gtags, gherkin.Tag(tag))
-	}
 	s := &suite{tags: filter}
-	if s.matchesTags(gtags) {
-		t.Errorf(`expected tags: %v not to match tag filter "%s", but it did`, gtags, filter)
+	if s.matchesTags(tags) {
+		t.Errorf(`expected tags: %v not to match tag filter "%s", but it did`, tags, filter)
 	}
 }
 
 func assertMatchesTagFilter(tags []string, filter string, t *testing.T) {
-	gtags := gherkin.Tags{}
-	for _, tag := range tags {
-		gtags = append(gtags, gherkin.Tag(tag))
-	}
 	s := &suite{tags: filter}
-	if !s.matchesTags(gtags) {
-		t.Errorf(`expected tags: %v to match tag filter "%s", but it did not`, gtags, filter)
+	if !s.matchesTags(tags) {
+		t.Errorf(`expected tags: %v to match tag filter "%s", but it did not`, tags, filter)
 	}
 }
 

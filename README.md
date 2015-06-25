@@ -114,7 +114,7 @@ Now when you run the `godog godog.feature` again, you should see:
 
 ### Documentation
 
-See [godoc][godoc] and [gherkin godoc][godoc_gherkin] for general API details.
+See [godoc][godoc] for general API details.
 See **.travis.yml** for supported **go** versions.
 
 The public API is stable enough, but it may break until **1.0.0** version, see `godog --version`.
@@ -137,7 +137,6 @@ All package dependencies are **MIT** or **BSD** licensed.
 **Godog** is licensed under the [three clause BSD license][license]
 
 [godoc]: http://godoc.org/github.com/DATA-DOG/godog "Documentation on godoc"
-[godoc_gherkin]: http://godoc.org/github.com/DATA-DOG/godog/gherkin "Documentation on godoc for gherkin"
 [golang]: https://golang.org/  "GO programming language"
 [behat]: http://docs.behat.org/ "Behavior driven development framework for PHP"
 [cucumber]: https://cucumber.io/ "Behavior driven development framework for Ruby"
