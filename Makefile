@@ -10,5 +10,6 @@ test:
 
 # updates dependencies
 deps:
+	go get -u github.com/cucumber/gherkin-go
 	go get -u golang.org/x/tools/imports
 	go get -u github.com/shiena/ansicolor

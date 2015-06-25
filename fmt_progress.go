@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DATA-DOG/godog/gherkin"
+	"github.com/cucumber/gherkin-go"
 )
 
 func init() {
@@ -20,7 +20,9 @@ type progress struct {
 	stepsPerRow int
 	started     time.Time
 	steps       int
-	features    []*gherkin.Feature
+
+	features []*feature
+	owner    interface{}
 
 	failed    []*failed
 	passed    []*passed
@@ -28,10 +30,18 @@ type progress struct {
 	undefined []*undefined
 }
 
-func (f *progress) Node(node interface{}) {
-	switch t := node.(type) {
-	case *gherkin.Feature:
-		f.features = append(f.features, t)
+func (f *progress) Feature(ft *gherkin.Feature, p string) {
+	f.features = append(f.features, &feature{Path: p, Feature: ft})
+}
+
+func (f *progress) Node(n interface{}) {
+	switch t := n.(type) {
+	case *gherkin.ScenarioOutline:
+		f.owner = t
+	case *gherkin.Scenario:
+		f.owner = t
+	case *gherkin.Background:
+		f.owner = t
 	}
 }
 
@@ -49,13 +59,22 @@ func (f *progress) Summary() {
 	if len(f.failed) > 0 {
 		fmt.Println("\n--- " + cl("Failed steps:", red) + "\n")
 		for _, fail := range f.failed {
-			fmt.Println(s(4) + cl(fail.step.Token.Keyword+" "+fail.step.Text, red) + cl(" # "+fail.line(), black))
+			fmt.Println(s(4) + cl(fail.step.Keyword+" "+fail.step.Text, red) + cl(" # "+fail.line(), black))
 			fmt.Println(s(6) + cl("Error: ", red) + bcl(fail.err, red) + "\n")
 		}
 	}
 	var total, passed int
 	for _, ft := range f.features {
-		total += len(ft.Scenarios)
+		for _, def := range ft.ScenarioDefinitions {
+			switch t := def.(type) {
+			case *gherkin.Scenario:
+				total++
+			case *gherkin.ScenarioOutline:
+				for _, ex := range t.Examples {
+					total += len(ex.TableBody)
+				}
+			}
+		}
 	}
 	passed = total
 
@@ -116,25 +135,25 @@ func (f *progress) step(step interface{}) {
 }
 
 func (f *progress) Passed(step *gherkin.Step, match *StepDef) {
-	s := &passed{step: step, def: match}
+	s := &passed{owner: f.owner, feature: f.features[len(f.features)-1], step: step, def: match}
 	f.passed = append(f.passed, s)
 	f.step(s)
 }
 
 func (f *progress) Skipped(step *gherkin.Step) {
-	s := &skipped{step: step}
+	s := &skipped{owner: f.owner, feature: f.features[len(f.features)-1], step: step}
 	f.skipped = append(f.skipped, s)
 	f.step(s)
 }
 
 func (f *progress) Undefined(step *gherkin.Step) {
-	s := &undefined{step: step}
+	s := &undefined{owner: f.owner, feature: f.features[len(f.features)-1], step: step}
 	f.undefined = append(f.undefined, s)
 	f.step(s)
 }
 
 func (f *progress) Failed(step *gherkin.Step, match *StepDef, err error) {
-	s := &failed{step: step, def: match, err: err}
+	s := &failed{owner: f.owner, feature: f.features[len(f.features)-1], step: step, def: match, err: err}
 	f.failed = append(f.failed, s)
 	f.step(s)
 }

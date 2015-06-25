@@ -81,7 +81,7 @@ Feature: run features
           Then I should have 1 scenario registered
       """
     When I run feature suite
-    Then the suite should have passed           # we do not treat undefined scenarios as fails
+    Then the suite should have passed
     And the following step should be passed:
       """
       a feature path "features/load.feature:6"

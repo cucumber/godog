@@ -12,6 +12,7 @@ script:
 
   # pull all external dependencies
   # remove them at all if possible
+  - go get github.com/cucumber/gherkin-go
   - go get golang.org/x/tools/imports
   - go get github.com/shiena/ansicolor
 
