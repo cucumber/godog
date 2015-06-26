@@ -28,12 +28,16 @@ func SuiteContext(s Suite) {
 
 	s.Step(`^a failing step`, c.aFailingStep)
 	s.Step(`^this step should fail`, c.aFailingStep)
-	s.Step(`^the following steps? should be (passed|failed|skipped|undefined):`, c.followingStepsShouldHave)
+	s.Step(`^the following steps? should be (passed|failed|skipped|undefined|pending):`, c.followingStepsShouldHave)
 
 	// lt
 	s.Step(`^savybių aplankas "([^"]*)"$`, c.featurePath)
 	s.Step(`^aš išskaitau savybes$`, c.parseFeatures)
 	s.Step(`^aš turėčiau turėti ([\d]+) savybių failus:$`, c.iShouldHaveNumFeatureFiles)
+
+	s.Step(`^pending step$`, func(...*Arg) error {
+		return ErrPending
+	})
 }
 
 type firedEvent struct {
@@ -77,6 +81,10 @@ func (s *suiteContext) followingStepsShouldHave(status string, steps *gherkin.Do
 		}
 	case "undefined":
 		for _, st := range s.fmt.undefined {
+			actual = append(actual, st.step.Text)
+		}
+	case "pending":
+		for _, st := range s.fmt.pending {
 			actual = append(actual, st.step.Text)
 		}
 	default:

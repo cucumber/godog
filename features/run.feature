@@ -94,3 +94,72 @@ Feature: run features
       """
       I should have 1 scenario registered
       """
+
+  Scenario: should match undefined steps in a row
+    Given a feature "undefined.feature" file:
+      """
+      Feature: undefined feature
+
+        Scenario: parse a scenario
+          Given undefined step
+          When undefined action
+          Then I should have 1 scenario registered
+      """
+    When I run feature suite
+    Then the suite should have passed
+    And the following steps should be undefined:
+      """
+      undefined step
+      undefined action
+      """
+    And the following step should be skipped:
+      """
+      I should have 1 scenario registered
+      """
+
+  Scenario: should skip steps on pending
+    Given a feature "pending.feature" file:
+      """
+      Feature: pending feature
+
+        Scenario: parse a scenario
+          Given undefined step
+          When pending step
+          Then I should have 1 scenario registered
+      """
+    When I run feature suite
+    Then the suite should have passed
+    And the following step should be undefined:
+      """
+      undefined step
+      """
+    And the following step should be skipped:
+      """
+      pending step
+      I should have 1 scenario registered
+      """
+
+  Scenario: should handle pending step
+    Given a feature "pending.feature" file:
+      """
+      Feature: pending feature
+
+        Scenario: parse a scenario
+          Given a feature path "features/load.feature:6"
+          When pending step
+          Then I should have 1 scenario registered
+      """
+    When I run feature suite
+    Then the suite should have passed
+    And the following step should be passed:
+      """
+      a feature path "features/load.feature:6"
+      """
+    And the following step should be pending:
+      """
+      pending step
+      """
+    And the following step should be skipped:
+      """
+      I should have 1 scenario registered
+      """

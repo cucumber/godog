@@ -39,6 +39,7 @@ type Formatter interface {
 	Passed(*gherkin.Step, *StepDef)
 	Skipped(*gherkin.Step)
 	Undefined(*gherkin.Step)
+	Pending(*gherkin.Step, *StepDef)
 	Summary()
 }
 
@@ -73,10 +74,19 @@ type skipped struct {
 	step    *gherkin.Step
 }
 
-// undefined represents a pending step data structure
+// undefined represents an undefined step data structure
 // with all necessary references
 type undefined struct {
 	feature *feature
 	owner   interface{}
 	step    *gherkin.Step
+}
+
+// pending represents a pending step data structure
+// with all necessary references
+type pending struct {
+	feature *feature
+	owner   interface{}
+	step    *gherkin.Step
+	def     *StepDef
 }

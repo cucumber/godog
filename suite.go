@@ -24,6 +24,10 @@ type feature struct {
 // ErrUndefined is returned in case if step definition was not found
 var ErrUndefined = fmt.Errorf("step is undefined")
 
+// ErrPending should be returned by step definition if
+// step implementation is pending
+var ErrPending = fmt.Errorf("step implementation is pending")
+
 // Suite is an interface which allows various contexts
 // to register steps and event handlers.
 //
@@ -282,11 +286,16 @@ func (s *suite) matchStep(step *gherkin.Step) *StepDef {
 	return nil
 }
 
-func (s *suite) runStep(step *gherkin.Step) (err error) {
+func (s *suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
 	match := s.matchStep(step)
 	if match == nil {
 		s.fmt.Undefined(step)
 		return ErrUndefined
+	}
+
+	if prevStepErr != nil {
+		s.fmt.Skipped(step)
+		return nil
 	}
 
 	defer func() {
@@ -299,27 +308,35 @@ func (s *suite) runStep(step *gherkin.Step) (err error) {
 		}
 	}()
 
-	if err = match.run(); err != nil {
-		s.fmt.Failed(step, match, err)
-	} else {
+	err = match.run()
+	switch err {
+	case nil:
 		s.fmt.Passed(step, match)
+	case ErrPending:
+		s.fmt.Pending(step, match)
+	default:
+		s.fmt.Failed(step, match, err)
 	}
 	return
 }
 
 func (s *suite) runSteps(steps []*gherkin.Step) (err error) {
 	for _, step := range steps {
-		if err != nil {
-			s.fmt.Skipped(step)
-			continue
-		}
-
 		// run before step handlers
 		for _, f := range s.beforeStepHandlers {
 			f(step)
 		}
 
-		err = s.runStep(step)
+		stepErr := s.runStep(step, err)
+		switch stepErr {
+		case ErrUndefined:
+			err = stepErr
+		case ErrPending:
+			err = stepErr
+		case nil:
+		default:
+			err = stepErr
+		}
 
 		// run after step handlers
 		for _, f := range s.afterStepHandlers {
@@ -401,7 +418,7 @@ func (s *suite) runFeature(f *feature) {
 		case *gherkin.Scenario:
 			err = s.runScenario(t, f.Background)
 		}
-		if err != nil && err != ErrUndefined {
+		if err != nil && err != ErrUndefined && err != ErrPending {
 			s.failed = true
 			if s.stopOnFailure {
 				return
@@ -424,6 +441,8 @@ func (s *suite) runScenario(scenario *gherkin.Scenario, b *gherkin.Background) (
 	// scenario
 	s.fmt.Node(scenario)
 	switch err {
+	case ErrPending:
+		s.skipSteps(scenario.Steps)
 	case ErrUndefined:
 		s.skipSteps(scenario.Steps)
 	case nil:

@@ -28,6 +28,7 @@ type progress struct {
 	passed    []*passed
 	skipped   []*skipped
 	undefined []*undefined
+	pending   []*pending
 }
 
 func (f *progress) Feature(ft *gherkin.Feature, p string) {
@@ -63,7 +64,7 @@ func (f *progress) Summary() {
 			fmt.Println(s(6) + cl("Error: ", red) + bcl(fail.err, red) + "\n")
 		}
 	}
-	var total, passed int
+	var total, passed, undefined int
 	for _, ft := range f.features {
 		for _, def := range ft.ScenarioDefinitions {
 			switch t := def.(type) {
@@ -77,11 +78,21 @@ func (f *progress) Summary() {
 		}
 	}
 	passed = total
+	var owner interface{}
+	for _, undef := range f.undefined {
+		if owner != undef.owner {
+			undefined++
+			owner = undef.owner
+		}
+	}
 
 	var steps, parts, scenarios []string
-	nsteps := len(f.passed) + len(f.failed) + len(f.skipped) + len(f.undefined)
+	nsteps := len(f.passed) + len(f.failed) + len(f.skipped) + len(f.undefined) + len(f.pending)
 	if len(f.passed) > 0 {
 		steps = append(steps, cl(fmt.Sprintf("%d passed", len(f.passed)), green))
+	}
+	if len(f.pending) > 0 {
+		steps = append(steps, cl(fmt.Sprintf("%d pending", len(f.pending)), yellow))
 	}
 	if len(f.failed) > 0 {
 		passed -= len(f.failed)
@@ -92,9 +103,9 @@ func (f *progress) Summary() {
 		steps = append(steps, cl(fmt.Sprintf("%d skipped", len(f.skipped)), cyan))
 	}
 	if len(f.undefined) > 0 {
-		passed -= len(f.undefined)
-		parts = append(parts, cl(fmt.Sprintf("%d undefined", len(f.undefined)), yellow))
-		steps = append(steps, parts[len(parts)-1])
+		passed -= undefined
+		parts = append(parts, cl(fmt.Sprintf("%d undefined", undefined), yellow))
+		steps = append(steps, cl(fmt.Sprintf("%d undefined", len(f.undefined)), yellow))
 	}
 	if passed > 0 {
 		scenarios = append(scenarios, cl(fmt.Sprintf("%d passed", passed), green))
@@ -127,6 +138,8 @@ func (f *progress) step(step interface{}) {
 		fmt.Print(cl("F", red))
 	case *undefined:
 		fmt.Print(cl("U", yellow))
+	case *pending:
+		fmt.Print(cl("P", yellow))
 	}
 	f.steps++
 	if math.Mod(float64(f.steps), float64(f.stepsPerRow)) == 0 {
@@ -155,5 +168,11 @@ func (f *progress) Undefined(step *gherkin.Step) {
 func (f *progress) Failed(step *gherkin.Step, match *StepDef, err error) {
 	s := &failed{owner: f.owner, feature: f.features[len(f.features)-1], step: step, def: match, err: err}
 	f.failed = append(f.failed, s)
+	f.step(s)
+}
+
+func (f *progress) Pending(step *gherkin.Step, match *StepDef) {
+	s := &pending{owner: f.owner, feature: f.features[len(f.features)-1], step: step, def: match}
+	f.pending = append(f.pending, s)
 	f.step(s)
 }

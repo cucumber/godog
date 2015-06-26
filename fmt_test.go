@@ -11,6 +11,7 @@ type testFormatter struct {
 	passed    []*passed
 	skipped   []*skipped
 	undefined []*undefined
+	pending   []*pending
 }
 
 func (f *testFormatter) Feature(ft *gherkin.Feature, p string) {
@@ -46,4 +47,9 @@ func (f *testFormatter) Undefined(step *gherkin.Step) {
 
 func (f *testFormatter) Failed(step *gherkin.Step, match *StepDef, err error) {
 	f.failed = append(f.failed, &failed{owner: f.owner, feature: f.features[len(f.features)-1], step: step, def: match, err: err})
+}
+
+func (f *testFormatter) Pending(step *gherkin.Step, match *StepDef) {
+	s := &pending{owner: f.owner, feature: f.features[len(f.features)-1], step: step, def: match}
+	f.pending = append(f.pending, s)
 }

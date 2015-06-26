@@ -27,7 +27,6 @@ type pretty struct {
 	backgroundSteps int
 
 	// outline
-	outline            *gherkin.ScenarioOutline
 	outlineSteps       []interface{}
 	outlineNumExample  int
 	outlineNumExamples int
@@ -39,6 +38,7 @@ type pretty struct {
 	passed    []*passed
 	skipped   []*skipped
 	undefined []*undefined
+	pending   []*pending
 }
 
 // a line number representation in feature file
@@ -95,7 +95,6 @@ func (f *pretty) Node(node interface{}) {
 		fmt.Println("\n" + text)
 	case *gherkin.ScenarioOutline:
 		f.scope = t
-		f.outline = t
 		f.commentPos = f.longestStep(t.Steps, f.length(t))
 		text := s(f.indent) + bcl(t.Keyword+": ", white) + t.Name
 		text += s(f.commentPos-f.length(t)+1) + f.line(t.Location)
@@ -136,7 +135,7 @@ func (f *pretty) Summary() {
 			fmt.Println("    " + cl(fail, red))
 		}
 	}
-	var total, passed int
+	var total, passed, undefined int
 	for _, ft := range f.features {
 		for _, def := range ft.ScenarioDefinitions {
 			switch t := def.(type) {
@@ -150,11 +149,21 @@ func (f *pretty) Summary() {
 		}
 	}
 	passed = total
+	var owner interface{}
+	for _, undef := range f.undefined {
+		if owner != undef.owner {
+			undefined++
+			owner = undef.owner
+		}
+	}
 
 	var steps, parts, scenarios []string
-	nsteps := len(f.passed) + len(f.failed) + len(f.skipped) + len(f.undefined)
+	nsteps := len(f.passed) + len(f.failed) + len(f.skipped) + len(f.undefined) + len(f.pending)
 	if len(f.passed) > 0 {
 		steps = append(steps, cl(fmt.Sprintf("%d passed", len(f.passed)), green))
+	}
+	if len(f.pending) > 0 {
+		steps = append(steps, cl(fmt.Sprintf("%d pending", len(f.pending)), yellow))
 	}
 	if len(f.failed) > 0 {
 		passed -= len(f.failed)
@@ -165,9 +174,9 @@ func (f *pretty) Summary() {
 		steps = append(steps, cl(fmt.Sprintf("%d skipped", len(f.skipped)), cyan))
 	}
 	if len(f.undefined) > 0 {
-		passed -= len(f.undefined)
-		parts = append(parts, cl(fmt.Sprintf("%d undefined", len(f.undefined)), yellow))
-		steps = append(steps, parts[len(parts)-1])
+		passed -= undefined
+		parts = append(parts, cl(fmt.Sprintf("%d undefined", undefined), yellow))
+		steps = append(steps, cl(fmt.Sprintf("%d undefined", len(f.undefined)), yellow))
 	}
 	if passed > 0 {
 		scenarios = append(scenarios, cl(fmt.Sprintf("%d passed", passed), green))
@@ -324,6 +333,11 @@ func (f *pretty) stepDetails(stepAction interface{}) (owner interface{}, step *g
 		step = typ.step
 		owner = typ.owner
 		c = yellow
+	case *pending:
+		step = typ.step
+		def = typ.def
+		owner = typ.owner
+		c = yellow
 	default:
 		fatal(fmt.Errorf("unexpected step type received: %T", typ))
 	}
@@ -357,6 +371,9 @@ func (f *pretty) printStepKind(stepAction interface{}) {
 	f.printStep(step, def, c)
 	if err != nil {
 		fmt.Println(s(f.indent*2) + bcl(err, red))
+	}
+	if _, ok := stepAction.(*pending); ok {
+		fmt.Println(s(f.indent*3) + cl("TODO: write pending definition", yellow))
 	}
 }
 
@@ -398,6 +415,12 @@ func (f *pretty) Failed(step *gherkin.Step, match *StepDef, err error) {
 	s := &failed{owner: f.scope, feature: f.features[len(f.features)-1], step: step, def: match, err: err}
 	f.printStepKind(s)
 	f.failed = append(f.failed, s)
+}
+
+func (f *pretty) Pending(step *gherkin.Step, match *StepDef) {
+	s := &pending{owner: f.scope, feature: f.features[len(f.features)-1], step: step, def: match}
+	f.printStepKind(s)
+	f.pending = append(f.pending, s)
 }
 
 // longest gives a list of longest columns of all rows in Table
