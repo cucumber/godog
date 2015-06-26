@@ -12,8 +12,10 @@ import (
 
 func init() {
 	RegisterFormatter("pretty", "Prints every feature with runtime statuses.", &pretty{
-		started: time.Now(),
-		indent:  2,
+		basefmt: basefmt{
+			started: time.Now(),
+			indent:  2,
+		},
 	})
 }
 
@@ -21,8 +23,7 @@ var outlinePlaceholderRegexp = regexp.MustCompile("<[^>]+>")
 
 // a built in default pretty formatter
 type pretty struct {
-	scope           interface{}
-	indent          int
+	basefmt
 	commentPos      int
 	backgroundSteps int
 
@@ -30,15 +31,6 @@ type pretty struct {
 	outlineSteps       []interface{}
 	outlineNumExample  int
 	outlineNumExamples int
-
-	// summary
-	started   time.Time
-	features  []*feature
-	failed    []*failed
-	passed    []*passed
-	skipped   []*skipped
-	undefined []*undefined
-	pending   []*pending
 }
 
 // a line number representation in feature file
@@ -81,20 +73,18 @@ func (f *pretty) Feature(ft *gherkin.Feature, p string) {
 
 // Node takes a gherkin node for formatting
 func (f *pretty) Node(node interface{}) {
+	f.basefmt.Node(node)
+
 	switch t := node.(type) {
 	case *gherkin.Examples:
 		f.outlineNumExamples = len(t.TableBody)
 		f.outlineNumExample++
-	case *gherkin.Background:
-		f.scope = t
 	case *gherkin.Scenario:
-		f.scope = t
 		f.commentPos = f.longestStep(t.Steps, f.length(t))
 		text := s(f.indent) + bcl(t.Keyword+": ", white) + t.Name
 		text += s(f.commentPos-f.length(t)+1) + f.line(t.Location)
 		fmt.Println("\n" + text)
 	case *gherkin.ScenarioOutline:
-		f.scope = t
 		f.commentPos = f.longestStep(t.Steps, f.length(t))
 		text := s(f.indent) + bcl(t.Keyword+": ", white) + t.Name
 		text += s(f.commentPos-f.length(t)+1) + f.line(t.Location)
@@ -135,68 +125,7 @@ func (f *pretty) Summary() {
 			fmt.Println("    " + cl(fail, red))
 		}
 	}
-	var total, passed, undefined int
-	for _, ft := range f.features {
-		for _, def := range ft.ScenarioDefinitions {
-			switch t := def.(type) {
-			case *gherkin.Scenario:
-				total++
-			case *gherkin.ScenarioOutline:
-				for _, ex := range t.Examples {
-					total += len(ex.TableBody)
-				}
-			}
-		}
-	}
-	passed = total
-	var owner interface{}
-	for _, undef := range f.undefined {
-		if owner != undef.owner {
-			undefined++
-			owner = undef.owner
-		}
-	}
-
-	var steps, parts, scenarios []string
-	nsteps := len(f.passed) + len(f.failed) + len(f.skipped) + len(f.undefined) + len(f.pending)
-	if len(f.passed) > 0 {
-		steps = append(steps, cl(fmt.Sprintf("%d passed", len(f.passed)), green))
-	}
-	if len(f.pending) > 0 {
-		steps = append(steps, cl(fmt.Sprintf("%d pending", len(f.pending)), yellow))
-	}
-	if len(f.failed) > 0 {
-		passed -= len(f.failed)
-		parts = append(parts, cl(fmt.Sprintf("%d failed", len(f.failed)), red))
-		steps = append(steps, parts[len(parts)-1])
-	}
-	if len(f.skipped) > 0 {
-		steps = append(steps, cl(fmt.Sprintf("%d skipped", len(f.skipped)), cyan))
-	}
-	if len(f.undefined) > 0 {
-		passed -= undefined
-		parts = append(parts, cl(fmt.Sprintf("%d undefined", undefined), yellow))
-		steps = append(steps, cl(fmt.Sprintf("%d undefined", len(f.undefined)), yellow))
-	}
-	if passed > 0 {
-		scenarios = append(scenarios, cl(fmt.Sprintf("%d passed", passed), green))
-	}
-	scenarios = append(scenarios, parts...)
-	elapsed := time.Since(f.started)
-
-	fmt.Println("")
-	if total == 0 {
-		fmt.Println("No scenarios")
-	} else {
-		fmt.Println(fmt.Sprintf("%d scenarios (%s)", total, strings.Join(scenarios, ", ")))
-	}
-
-	if nsteps == 0 {
-		fmt.Println("No steps")
-	} else {
-		fmt.Println(fmt.Sprintf("%d steps (%s)", nsteps, strings.Join(steps, ", ")))
-	}
-	fmt.Println(elapsed)
+	f.basefmt.Summary()
 }
 
 func (f *pretty) printOutlineExample(outline *gherkin.ScenarioOutline) {
@@ -389,38 +318,29 @@ func (f *pretty) printTable(t *gherkin.DataTable, c color) {
 	}
 }
 
-// Passed is called to represent a passed step
 func (f *pretty) Passed(step *gherkin.Step, match *StepDef) {
-	s := &passed{owner: f.scope, feature: f.features[len(f.features)-1], step: step, def: match}
-	f.printStepKind(s)
-	f.passed = append(f.passed, s)
+	f.basefmt.Passed(step, match)
+	f.printStepKind(f.passed[len(f.passed)-1])
 }
 
-// Skipped is called to represent a passed step
 func (f *pretty) Skipped(step *gherkin.Step) {
-	s := &skipped{owner: f.scope, feature: f.features[len(f.features)-1], step: step}
-	f.printStepKind(s)
-	f.skipped = append(f.skipped, s)
+	f.basefmt.Skipped(step)
+	f.printStepKind(f.skipped[len(f.skipped)-1])
 }
 
-// Undefined is called to represent a pending step
 func (f *pretty) Undefined(step *gherkin.Step) {
-	s := &undefined{owner: f.scope, feature: f.features[len(f.features)-1], step: step}
-	f.printStepKind(s)
-	f.undefined = append(f.undefined, s)
+	f.basefmt.Undefined(step)
+	f.printStepKind(f.undefined[len(f.undefined)-1])
 }
 
-// Failed is called to represent a failed step
 func (f *pretty) Failed(step *gherkin.Step, match *StepDef, err error) {
-	s := &failed{owner: f.scope, feature: f.features[len(f.features)-1], step: step, def: match, err: err}
-	f.printStepKind(s)
-	f.failed = append(f.failed, s)
+	f.basefmt.Failed(step, match, err)
+	f.printStepKind(f.failed[len(f.failed)-1])
 }
 
 func (f *pretty) Pending(step *gherkin.Step, match *StepDef) {
-	s := &pending{owner: f.scope, feature: f.features[len(f.features)-1], step: step, def: match}
-	f.printStepKind(s)
-	f.pending = append(f.pending, s)
+	f.basefmt.Pending(step, match)
+	f.printStepKind(f.pending[len(f.pending)-1])
 }
 
 // longest gives a list of longest columns of all rows in Table

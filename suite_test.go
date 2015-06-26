@@ -35,7 +35,7 @@ func SuiteContext(s Suite) {
 	s.Step(`^aš išskaitau savybes$`, c.parseFeatures)
 	s.Step(`^aš turėčiau turėti ([\d]+) savybių failus:$`, c.iShouldHaveNumFeatureFiles)
 
-	s.Step(`^pending step$`, func(...*Arg) error {
+	s.Step(`^pending step$`, func() error {
 		return ErrPending
 	})
 }

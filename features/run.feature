@@ -163,3 +163,30 @@ Feature: run features
       """
       I should have 1 scenario registered
       """
+
+  Scenario: should mark undefined steps after pending
+    Given a feature "pending.feature" file:
+      """
+      Feature: pending feature
+
+        Scenario: parse a scenario
+          Given pending step
+          When undefined
+          Then undefined 2
+          And I should have 1 scenario registered
+      """
+    When I run feature suite
+    Then the suite should have passed
+    And the following steps should be undefined:
+      """
+      undefined
+      undefined 2
+      """
+    And the following step should be pending:
+      """
+      pending step
+      """
+    And the following step should be skipped:
+      """
+      I should have 1 scenario registered
+      """
