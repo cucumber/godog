@@ -79,19 +79,19 @@ func (c *GodogCart) resetReserve(interface{}) {
 	c.reserve = 0
 }
 
-func (c *GodogCart) thereAreNumGodogsInReserve(args ...*godog.Arg) error {
-	c.reserve = args[0].Int()
+func (c *GodogCart) thereAreNumGodogsInReserve(avail int) error {
+	c.reserve = avail
 	return nil
 }
 
-func (c *GodogCart) iEatNum(args ...*godog.Arg) error {
-	c.Eat(args[0].Int())
+func (c *GodogCart) iEatNum(num int) error {
+	c.Eat(num)
 	return nil
 }
 
-func (c *GodogCart) thereShouldBeNumRemaining(args ...*godog.Arg) error {
-	if c.Available() != args[0].Int() {
-		return fmt.Errorf("expected %d godogs to be remaining, but there is %d", args[0].Int(), c.Available())
+func (c *GodogCart) thereShouldBeNumRemaining(left int) error {
+	if c.Available() != left {
+		return fmt.Errorf("expected %d godogs to be remaining, but there is %d", left, c.Available())
 	}
 	return nil
 }

@@ -2,6 +2,7 @@ package godog
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/cucumber/gherkin-go"
@@ -56,12 +57,12 @@ func (s *suiteContext) ResetBeforeEachScenario(interface{}) {
 	s.events = []*firedEvent{}
 }
 
-func (s *suiteContext) followingStepsShouldHave(args ...*Arg) error {
-	var expected = strings.Split(args[1].DocString().Content, "\n")
+func (s *suiteContext) followingStepsShouldHave(status string, steps *gherkin.DocString) error {
+	var expected = strings.Split(steps.Content, "\n")
 	var actual, unmatched []string
 	var matched []int
 
-	switch args[0].String() {
+	switch status {
 	case "passed":
 		for _, st := range s.fmt.passed {
 			actual = append(actual, st.step.Text)
@@ -79,11 +80,11 @@ func (s *suiteContext) followingStepsShouldHave(args ...*Arg) error {
 			actual = append(actual, st.step.Text)
 		}
 	default:
-		return fmt.Errorf("unexpected step status wanted: %s", args[0].String())
+		return fmt.Errorf("unexpected step status wanted: %s", status)
 	}
 
 	if len(expected) > len(actual) {
-		return fmt.Errorf("number of expected %s steps: %d is less than actual %s steps: %d", args[0].String(), len(expected), args[0].String(), len(actual))
+		return fmt.Errorf("number of expected %s steps: %d is less than actual %s steps: %d", status, len(expected), status, len(actual))
 	}
 
 	for _, a := range actual {
@@ -111,10 +112,10 @@ func (s *suiteContext) followingStepsShouldHave(args ...*Arg) error {
 		}
 	}
 
-	return fmt.Errorf("the steps: %s - is not %s", strings.Join(unmatched, ", "), args[0].String())
+	return fmt.Errorf("the steps: %s - is not %s", strings.Join(unmatched, ", "), status)
 }
 
-func (s *suiteContext) iAmListeningToSuiteEvents(args ...*Arg) error {
+func (s *suiteContext) iAmListeningToSuiteEvents() error {
 	s.testedSuite.BeforeSuite(func() {
 		s.events = append(s.events, &firedEvent{"BeforeSuite", []interface{}{}})
 	})
@@ -136,43 +137,41 @@ func (s *suiteContext) iAmListeningToSuiteEvents(args ...*Arg) error {
 	return nil
 }
 
-func (s *suiteContext) aFailingStep(...*Arg) error {
+func (s *suiteContext) aFailingStep() error {
 	return fmt.Errorf("intentional failure")
 }
 
 // parse a given feature file body as a feature
-func (s *suiteContext) aFeatureFile(args ...*Arg) error {
-	name := args[0].String()
-	body := args[1].DocString().Content
-	ft, err := gherkin.ParseFeature(strings.NewReader(body))
+func (s *suiteContext) aFeatureFile(name string, body *gherkin.DocString) error {
+	ft, err := gherkin.ParseFeature(strings.NewReader(body.Content))
 	s.testedSuite.features = append(s.testedSuite.features, &feature{Feature: ft, Path: name})
 	return err
 }
 
-func (s *suiteContext) featurePath(args ...*Arg) error {
-	s.testedSuite.paths = append(s.testedSuite.paths, args[0].String())
+func (s *suiteContext) featurePath(path string) error {
+	s.testedSuite.paths = append(s.testedSuite.paths, path)
 	return nil
 }
 
-func (s *suiteContext) parseFeatures(args ...*Arg) error {
+func (s *suiteContext) parseFeatures() error {
 	return s.testedSuite.parseFeatures()
 }
 
-func (s *suiteContext) theSuiteShouldHave(args ...*Arg) error {
-	if s.testedSuite.failed && args[0].String() == "passed" {
+func (s *suiteContext) theSuiteShouldHave(state string) error {
+	if s.testedSuite.failed && state == "passed" {
 		return fmt.Errorf("the feature suite has failed")
 	}
-	if !s.testedSuite.failed && args[0].String() == "failed" {
+	if !s.testedSuite.failed && state == "failed" {
 		return fmt.Errorf("the feature suite has passed")
 	}
 	return nil
 }
 
-func (s *suiteContext) iShouldHaveNumFeatureFiles(args ...*Arg) error {
-	if len(s.testedSuite.features) != args[0].Int() {
-		return fmt.Errorf("expected %d features to be parsed, but have %d", args[0].Int(), len(s.testedSuite.features))
+func (s *suiteContext) iShouldHaveNumFeatureFiles(num int, files *gherkin.DocString) error {
+	if len(s.testedSuite.features) != num {
+		return fmt.Errorf("expected %d features to be parsed, but have %d", num, len(s.testedSuite.features))
 	}
-	expected := strings.Split(args[1].DocString().Content, "\n")
+	expected := strings.Split(files.Content, "\n")
 	var actual []string
 	for _, ft := range s.testedSuite.features {
 		actual = append(actual, ft.Path)
@@ -188,7 +187,7 @@ func (s *suiteContext) iShouldHaveNumFeatureFiles(args ...*Arg) error {
 	return nil
 }
 
-func (s *suiteContext) iRunFeatureSuite(args ...*Arg) error {
+func (s *suiteContext) iRunFeatureSuite() error {
 	if err := s.parseFeatures(); err != nil {
 		return err
 	}
@@ -196,31 +195,31 @@ func (s *suiteContext) iRunFeatureSuite(args ...*Arg) error {
 	return nil
 }
 
-func (s *suiteContext) numScenariosRegistered(args ...*Arg) (err error) {
+func (s *suiteContext) numScenariosRegistered(expected int) (err error) {
 	var num int
 	for _, ft := range s.testedSuite.features {
 		num += len(ft.ScenarioDefinitions)
 	}
-	if num != args[0].Int() {
-		err = fmt.Errorf("expected %d scenarios to be registered, but got %d", args[0].Int(), num)
+	if num != expected {
+		err = fmt.Errorf("expected %d scenarios to be registered, but got %d", expected, num)
 	}
 	return
 }
 
-func (s *suiteContext) thereWereNumEventsFired(args ...*Arg) error {
+func (s *suiteContext) thereWereNumEventsFired(_ string, expected int, typ string) error {
 	var num int
 	for _, event := range s.events {
-		if event.name == args[2].String() {
+		if event.name == typ {
 			num++
 		}
 	}
-	if num != args[1].Int() {
-		return fmt.Errorf("expected %d %s events to be fired, but got %d", args[1].Int(), args[2].String(), num)
+	if num != expected {
+		return fmt.Errorf("expected %d %s events to be fired, but got %d", expected, typ, num)
 	}
 	return nil
 }
 
-func (s *suiteContext) thereWasEventTriggeredBeforeScenario(args ...*Arg) error {
+func (s *suiteContext) thereWasEventTriggeredBeforeScenario(expected string) error {
 	var found []string
 	for _, event := range s.events {
 		if event.name != "BeforeScenario" {
@@ -234,7 +233,7 @@ func (s *suiteContext) thereWasEventTriggeredBeforeScenario(args ...*Arg) error 
 		case *gherkin.ScenarioOutline:
 			name = t.Name
 		}
-		if name == args[0].String() {
+		if name == expected {
 			return nil
 		}
 
@@ -245,22 +244,20 @@ func (s *suiteContext) thereWasEventTriggeredBeforeScenario(args ...*Arg) error 
 		return fmt.Errorf("before scenario event was never triggered or listened")
 	}
 
-	return fmt.Errorf(`expected "%s" scenario, but got these fired %s`, args[0].String(), `"`+strings.Join(found, `", "`)+`"`)
+	return fmt.Errorf(`expected "%s" scenario, but got these fired %s`, expected, `"`+strings.Join(found, `", "`)+`"`)
 }
 
-func (s *suiteContext) theseEventsHadToBeFiredForNumberOfTimes(args ...*Arg) error {
-	tbl := args[0].DataTable()
+func (s *suiteContext) theseEventsHadToBeFiredForNumberOfTimes(tbl *gherkin.DataTable) error {
 	if len(tbl.Rows[0].Cells) != 2 {
 		return fmt.Errorf("expected two columns for event table row, got: %d", len(tbl.Rows[0].Cells))
 	}
 
 	for _, row := range tbl.Rows {
-		args := []*Arg{
-			StepArgument(""), // ignored
-			StepArgument(row.Cells[1].Value),
-			StepArgument(row.Cells[0].Value),
+		num, err := strconv.ParseInt(row.Cells[1].Value, 10, 0)
+		if err != nil {
+			return err
 		}
-		if err := s.thereWereNumEventsFired(args...); err != nil {
+		if err := s.thereWereNumEventsFired("", int(num), row.Cells[0].Value); err != nil {
 			return err
 		}
 	}
