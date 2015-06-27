@@ -7,7 +7,7 @@
 What is behavior-driven development, you ask? It’s the idea that you start by writing human-readable sentences that
 describe a feature of your application and how it should work, and only then implement this behavior in software.
 
-The project is inspired by [behat][behat] and [cucumber][cucumber] and is based on cucumber [gherkin specification][gherkin].
+The project is inspired by [behat][behat] and [cucumber][cucumber] and is based on cucumber [gherkin3 parser][gherkin].
 
 **Godog** does not intervene with the standard **go test** command and it's behavior. You can leverage both frameworks
 to functionally test your application while maintaining all test related source code in **_test.go** files.
@@ -22,13 +22,14 @@ Production builds remains clean without any overhead.
 
 ### Example
 
-Imagine we have a **godog cart** to serve godogs for dinner. At first, we describe our feature:
+Imagine we have a **godog cart** to serve godogs for dinner. At first, we describe our feature
+in plain text:
 
 ``` gherkin
 # file: /tmp/godog/godog.feature
 Feature: eat godogs
-  In order to be satiated
-  As an user
+  In order to be happy
+  As a hungry gopher
   I need to be able to eat godogs
 
   Scenario: Eat 5 out of 12
@@ -45,6 +46,8 @@ You should see that the steps are undefined:
 
 ![Screenshot](https://raw.github.com/DATA-DOG/godog/master/screenshots/undefined.png)
 
+**NOTE:** the undefined step templates are still in development and scheduled for **0.2.0**
+
 ``` go
 /* file: /tmp/godog/godog.go */
 package main
@@ -60,9 +63,6 @@ func (c *GodogCart) Available() int { return c.reserve }
 func main() { /* usual main func */ }
 ```
 
-If you run `godog godog.feature` inside the **/tmp/godog** directory.
-You should see that the steps are undefined.
-
 Now lets describe all steps to test the application behavior:
 
 ``` go
@@ -73,10 +73,9 @@ import (
 	"fmt"
 
 	"github.com/DATA-DOG/godog"
-	"github.com/DATA-DOG/godog/gherkin"
 )
 
-func (c *GodogCart) resetReserve(*gherkin.Scenario) {
+func (c *GodogCart) resetReserve(interface{}) {
 	c.reserve = 0
 }
 
@@ -140,5 +139,5 @@ All package dependencies are **MIT** or **BSD** licensed.
 [golang]: https://golang.org/  "GO programming language"
 [behat]: http://docs.behat.org/ "Behavior driven development framework for PHP"
 [cucumber]: https://cucumber.io/ "Behavior driven development framework for Ruby"
-[gherkin]: https://cucumber.io/docs/reference "Gherkin feature file language"
+[gherkin]: https://github.com/cucumber/gherkin-go "Gherkin3 parser for GO"
 [license]: http://en.wikipedia.org/wiki/BSD_licenses "The three clause BSD license"

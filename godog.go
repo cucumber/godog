@@ -3,9 +3,9 @@ Package godog is a behavior-driven development framework, a tool to describe you
 application based on the behavior and run these specifications. The features are
 described by a human-readable gherkin language.
 
-Godog does not intervene with the standard **go test** command and it's behavior.
+Godog does not intervene with the standard "go test" command and it's behavior.
 You can leverage both frameworks to functionally test your application while
-maintaining all test related source code in **_test.go** files.
+maintaining all test related source code in *_test.go files.
 
 Godog acts similar compared to "go test" command. It builds all package sources
 to a single main package file and replaces main func with it's own and runs the
