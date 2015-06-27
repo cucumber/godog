@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/DATA-DOG/godog"
+	"github.com/cucumber/gherkin-go"
 )
 
 type lsFeature struct {
@@ -24,29 +25,29 @@ func lsFeatureContext(s godog.Suite) {
 	s.Step(`^I should get output:$`, c.iShouldGetOutput)
 }
 
-func (f *lsFeature) iAmInDirectory(args ...*godog.Arg) error {
-	f.dir = os.TempDir() + "/" + args[0].String()
+func (f *lsFeature) iAmInDirectory(name string) error {
+	f.dir = os.TempDir() + "/" + name
 	if err := os.RemoveAll(f.dir); err != nil && !os.IsNotExist(err) {
 		return err
 	}
 	return os.Mkdir(f.dir, 0775)
 }
 
-func (f *lsFeature) iHaveFileOrDirectoryNamed(args ...*godog.Arg) (err error) {
+func (f *lsFeature) iHaveFileOrDirectoryNamed(typ, name string) (err error) {
 	if len(f.dir) == 0 {
 		return fmt.Errorf("the directory was not chosen yet")
 	}
-	switch args[0].String() {
+	switch typ {
 	case "file":
-		err = ioutil.WriteFile(f.dir+"/"+args[1].String(), []byte{}, 0664)
+		err = ioutil.WriteFile(f.dir+"/"+name, []byte{}, 0664)
 	case "directory":
-		err = os.Mkdir(f.dir+"/"+args[1].String(), 0775)
+		err = os.Mkdir(f.dir+"/"+name, 0775)
 	}
 	return err
 }
 
-func (f *lsFeature) iShouldGetOutput(args ...*godog.Arg) error {
-	expected := strings.Split(args[0].DocString().Content, "\n")
+func (f *lsFeature) iShouldGetOutput(names *gherkin.DocString) error {
+	expected := strings.Split(names.Content, "\n")
 	actual := strings.Split(strings.TrimSpace(f.buf.String()), "\n")
 	if len(expected) != len(actual) {
 		return fmt.Errorf("number of expected output lines %d, does not match actual: %d", len(expected), len(actual))
@@ -59,7 +60,7 @@ func (f *lsFeature) iShouldGetOutput(args ...*godog.Arg) error {
 	return nil
 }
 
-func (f *lsFeature) iRunLs(args ...*godog.Arg) error {
+func (f *lsFeature) iRunLs() error {
 	f.buf.Reset()
 	return ls(f.dir, f.buf)
 }

@@ -13,27 +13,12 @@ import (
 	"github.com/cucumber/gherkin-go"
 )
 
+var errorInterface = reflect.TypeOf((*error)(nil)).Elem()
+
 type feature struct {
 	*gherkin.Feature
 	Path string `json:"path"`
 }
-
-// Regexp is an unified type for regular expression
-// it can be either a string or a *regexp.Regexp
-type Regexp interface{}
-
-// StepHandler is a func to handle the step
-//
-// The handler receives all arguments which
-// will be matched according to the Regexp
-// which is passed with a step registration.
-//
-// The error in return - represents a reason of failure.
-// All consequent scenario steps are skipped.
-//
-// Returning signals that the step has finished and that
-// the feature runner can move on to the next step.
-type StepHandler func(...*Arg) error
 
 // ErrUndefined is returned in case if step definition was not found
 var ErrUndefined = fmt.Errorf("step is undefined")
@@ -47,9 +32,133 @@ var ErrUndefined = fmt.Errorf("step is undefined")
 // when step is matched and is either failed
 // or successful
 type StepDef struct {
-	Args    []*Arg
-	Handler StepHandler
+	args    []interface{}
+	hv      reflect.Value
 	Expr    *regexp.Regexp
+	Handler interface{}
+}
+
+func (sd *StepDef) run() error {
+	typ := sd.hv.Type()
+	if len(sd.args) < typ.NumIn() {
+		return fmt.Errorf("func expects %d arguments, which is more than %d matched from step", typ.NumIn(), len(sd.args))
+	}
+	var values []reflect.Value
+	for i := 0; i < typ.NumIn(); i++ {
+		param := typ.In(i)
+		switch param.Kind() {
+		case reflect.Int:
+			s, err := sd.shouldBeString(i)
+			if err != nil {
+				return err
+			}
+			v, err := strconv.ParseInt(s, 10, 0)
+			if err != nil {
+				return fmt.Errorf(`cannot convert argument %d: "%s" to int: %s`, i, s, err)
+			}
+			values = append(values, reflect.ValueOf(int(v)))
+		case reflect.Int64:
+			s, err := sd.shouldBeString(i)
+			if err != nil {
+				return err
+			}
+			v, err := strconv.ParseInt(s, 10, 64)
+			if err != nil {
+				return fmt.Errorf(`cannot convert argument %d: "%s" to int64: %s`, i, s, err)
+			}
+			values = append(values, reflect.ValueOf(int64(v)))
+		case reflect.Int32:
+			s, err := sd.shouldBeString(i)
+			if err != nil {
+				return err
+			}
+			v, err := strconv.ParseInt(s, 10, 32)
+			if err != nil {
+				return fmt.Errorf(`cannot convert argument %d: "%s" to int32: %s`, i, s, err)
+			}
+			values = append(values, reflect.ValueOf(int32(v)))
+		case reflect.Int16:
+			s, err := sd.shouldBeString(i)
+			if err != nil {
+				return err
+			}
+			v, err := strconv.ParseInt(s, 10, 16)
+			if err != nil {
+				return fmt.Errorf(`cannot convert argument %d: "%s" to int16: %s`, i, s, err)
+			}
+			values = append(values, reflect.ValueOf(int16(v)))
+		case reflect.Int8:
+			s, err := sd.shouldBeString(i)
+			if err != nil {
+				return err
+			}
+			v, err := strconv.ParseInt(s, 10, 8)
+			if err != nil {
+				return fmt.Errorf(`cannot convert argument %d: "%s" to int8: %s`, i, s, err)
+			}
+			values = append(values, reflect.ValueOf(int8(v)))
+		case reflect.String:
+			s, err := sd.shouldBeString(i)
+			if err != nil {
+				return err
+			}
+			values = append(values, reflect.ValueOf(s))
+		case reflect.Float64:
+			s, err := sd.shouldBeString(i)
+			if err != nil {
+				return err
+			}
+			v, err := strconv.ParseFloat(s, 64)
+			if err != nil {
+				return fmt.Errorf(`cannot convert argument %d: "%s" to float64: %s`, i, s, err)
+			}
+			values = append(values, reflect.ValueOf(v))
+		case reflect.Float32:
+			s, err := sd.shouldBeString(i)
+			if err != nil {
+				return err
+			}
+			v, err := strconv.ParseFloat(s, 32)
+			if err != nil {
+				return fmt.Errorf(`cannot convert argument %d: "%s" to float32: %s`, i, s, err)
+			}
+			values = append(values, reflect.ValueOf(float32(v)))
+		case reflect.Ptr:
+			arg := sd.args[i]
+			switch param.Elem().String() {
+			case "gherkin.DocString":
+				v, ok := arg.(*gherkin.DocString)
+				if !ok {
+					return fmt.Errorf(`cannot convert argument %d: "%v" of type "%T" to *gherkin.DocString`, i, arg, arg)
+				}
+				values = append(values, reflect.ValueOf(v))
+			case "gherkin.DataTable":
+				v, ok := arg.(*gherkin.DataTable)
+				if !ok {
+					return fmt.Errorf(`cannot convert argument %d: "%v" of type "%T" to *gherkin.DocString`, i, arg, arg)
+				}
+				values = append(values, reflect.ValueOf(v))
+			default:
+				return fmt.Errorf("the argument %d type %T is not supported", i, arg)
+			}
+		default:
+			return fmt.Errorf("the argument %d type %s is not supported", i, param.Kind())
+		}
+	}
+	ret := sd.hv.Call(values)[0].Interface()
+	if nil == ret {
+		return nil
+	}
+	return ret.(error)
+}
+
+func (sd *StepDef) shouldBeString(idx int) (string, error) {
+	arg := sd.args[idx]
+	s, ok := arg.(string)
+	if !ok {
+		return "", fmt.Errorf(`cannot convert argument %d: "%v" of type "%T" to string`, idx, arg, arg)
+	}
+	return s, nil
 }
 
 // Suite is an interface which allows various contexts
@@ -64,14 +173,36 @@ type StepDef struct {
 // executions are catching panic error since it may
 // be a context specific error.
 type Suite interface {
+	// Run the test suite
 	Run()
-	Step(expr Regexp, h StepHandler)
-	// suite events
+
+	// Registers a step which will execute stepFunc
+	// on step expr match
+	//
+	// expr can be either a string or a *regexp.Regexp
+	// stepFunc is a func to handle the step, arguments
+	// are set from matched step
+	Step(expr interface{}, h interface{})
+
+	// BeforeSuite registers a func to run on initial
+	// suite startup
 	BeforeSuite(f func())
+
+	// BeforeScenario registers a func to run before
+	// every *gherkin.Scenario or *gherkin.ScenarioOutline
 	BeforeScenario(f func(interface{}))
+
+	// BeforeStep register a handler before every step
 	BeforeStep(f func(*gherkin.Step))
+
+	// AfterStep register a handler after every step
 	AfterStep(f func(*gherkin.Step, error))
+
+	// AfterScenario registers a func to run after
+	// every *gherkin.Scenario or *gherkin.ScenarioOutline
 	AfterScenario(f func(interface{}, error))
+
+	// AfterSuite runs func int the end of tests
 	AfterSuite(f func())
 }
 
@@ -117,7 +248,7 @@ func New() Suite {
 //
 // If none of the StepHandlers are matched, then
 // ErrUndefined error will be returned.
-func (s *suite) Step(expr Regexp, h StepHandler) {
+func (s *suite) Step(expr interface{}, stepFunc interface{}) {
 	var regex *regexp.Regexp
 
 	switch t := expr.(type) {
@@ -131,9 +262,21 @@ func (s *suite) Step(expr Regexp, h StepHandler) {
 		panic(fmt.Sprintf("expecting expr to be a *regexp.Regexp or a string, got type: %T", expr))
 	}
 
+	v := reflect.ValueOf(stepFunc)
+	typ := v.Type()
+	if typ.Kind() != reflect.Func {
+		panic(fmt.Sprintf("expected handler to be func, but got: %T", stepFunc))
+	}
+	if typ.NumOut() != 1 {
+		panic(fmt.Sprintf("expected handler to return an error, but it has more values in return: %d", typ.NumOut()))
+	}
+	if typ.Out(0).Kind() != reflect.Interface || !typ.Out(0).Implements(errorInterface) {
+		panic(fmt.Sprintf("expected handler to return an error interface, but we have: %s", typ.Out(0).Kind()))
+	}
 	s.stepHandlers = append(s.stepHandlers, &StepDef{
-		Handler: h,
+		Handler: stepFunc,
 		Expr:    regex,
+		hv:      v,
 	})
 }
 
@@ -262,14 +405,14 @@ func (s *suite) run() {
 func (s *suite) matchStep(step *gherkin.Step) *StepDef {
 	for _, h := range s.stepHandlers {
 		if m := h.Expr.FindStringSubmatch(step.Text); len(m) > 0 {
-			var args []*Arg
-			for _, a := range m[1:] {
-				args = append(args, &Arg{value: a})
+			var args []interface{}
+			for _, m := range m[1:] {
+				args = append(args, m)
 			}
 			if step.Argument != nil {
-				args = append(args, &Arg{value: step.Argument})
+				args = append(args, step.Argument)
 			}
-			h.Args = args
+			h.args = args
 			return h
 		}
 	}
@@ -293,7 +436,7 @@ func (s *suite) runStep(step *gherkin.Step) (err error) {
 		}
 	}()
 
-	if err = match.Handler(match.Args...); err != nil {
+	if err = match.run(); err != nil {
 		s.fmt.Failed(step, match, err)
 	} else {
 		s.fmt.Passed(step, match)
