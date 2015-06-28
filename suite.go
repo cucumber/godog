@@ -14,6 +14,7 @@ import (
 )
 
 var errorInterface = reflect.TypeOf((*error)(nil)).Elem()
+var typeOfBytes = reflect.TypeOf([]byte(nil))
 
 type feature struct {
 	*gherkin.Feature
@@ -22,144 +23,6 @@ type feature struct {
 
 // ErrUndefined is returned in case if step definition was not found
 var ErrUndefined = fmt.Errorf("step is undefined")
-
-// StepDef is a registered step definition
-// contains a StepHandler and regexp which
-// is used to match a step. Args which
-// were matched by last executed step
-//
-// This structure is passed to the formatter
-// when step is matched and is either failed
-// or successful
-type StepDef struct {
-	args    []interface{}
-	hv      reflect.Value
-	Expr    *regexp.Regexp
-	Handler interface{}
-}
-
-func (sd *StepDef) run() error {
-	typ := sd.hv.Type()
-	if len(sd.args) < typ.NumIn() {
-		return fmt.Errorf("func expects %d arguments, which is more than %d matched from step", typ.NumIn(), len(sd.args))
-	}
-	var values []reflect.Value
-	for i := 0; i < typ.NumIn(); i++ {
-		param := typ.In(i)
-		switch param.Kind() {
-		case reflect.Int:
-			s, err := sd.shouldBeString(i)
-			if err != nil {
-				return err
-			}
-			v, err := strconv.ParseInt(s, 10, 0)
-			if err != nil {
-				return fmt.Errorf(`cannot convert argument %d: "%s" to int: %s`, i, s, err)
-			}
-			values = append(values, reflect.ValueOf(int(v)))
-		case reflect.Int64:
-			s, err := sd.shouldBeString(i)
-			if err != nil {
-				return err
-			}
-			v, err := strconv.ParseInt(s, 10, 64)
-			if err != nil {
-				return fmt.Errorf(`cannot convert argument %d: "%s" to int64: %s`, i, s, err)
-			}
-			values = append(values, reflect.ValueOf(int64(v)))
-		case reflect.Int32:
-			s, err := sd.shouldBeString(i)
-			if err != nil {
-				return err
-			}
-			v, err := strconv.ParseInt(s, 10, 32)
-			if err != nil {
-				return fmt.Errorf(`cannot convert argument %d: "%s" to int32: %s`, i, s, err)
-			}
-			values = append(values, reflect.ValueOf(int32(v)))
-		case reflect.Int16:
-			s, err := sd.shouldBeString(i)
-			if err != nil {
-				return err
-			}
-			v, err := strconv.ParseInt(s, 10, 16)
-			if err != nil {
-				return fmt.Errorf(`cannot convert argument %d: "%s" to int16: %s`, i, s, err)
-			}
-			values = append(values, reflect.ValueOf(int16(v)))
-		case reflect.Int8:
-			s, err := sd.shouldBeString(i)
-			if err != nil {
-				return err
-			}
-			v, err := strconv.ParseInt(s, 10, 8)
-			if err != nil {
-				return fmt.Errorf(`cannot convert argument %d: "%s" to int8: %s`, i, s, err)
-			}
-			values = append(values, reflect.ValueOf(int8(v)))
-		case reflect.String:
-			s, err := sd.shouldBeString(i)
-			if err != nil {
-				return err
-			}
-			values = append(values, reflect.ValueOf(s))
-		case reflect.Float64:
-			s, err := sd.shouldBeString(i)
-			if err != nil {
-				return err
-			}
-			v, err := strconv.ParseFloat(s, 64)
-			if err != nil {
-				return fmt.Errorf(`cannot convert argument %d: "%s" to float64: %s`, i, s, err)
-			}
-			values = append(values, reflect.ValueOf(v))
-		case reflect.Float32:
-			s, err := sd.shouldBeString(i)
-			if err != nil {
-				return err
-			}
-			v, err := strconv.ParseFloat(s, 32)
-			if err != nil {
-				return fmt.Errorf(`cannot convert argument %d: "%s" to float32: %s`, i, s, err)
-			}
-			values = append(values, reflect.ValueOf(float32(v)))
-		case reflect.Ptr:
-			arg := sd.args[i]
-			switch param.Elem().String() {
-			case "gherkin.DocString":
-				v, ok := arg.(*gherkin.DocString)
-				if !ok {
-					return fmt.Errorf(`cannot convert argument %d: "%v" of type "%T" to *gherkin.DocString`, i, arg, arg)
-				}
-				values = append(values, reflect.ValueOf(v))
-			case "gherkin.DataTable":
-				v, ok := arg.(*gherkin.DataTable)
-				if !ok {
-					return fmt.Errorf(`cannot convert argument %d: "%v" of type "%T" to *gherkin.DocString`, i, arg, arg)
-				}
-				values = append(values, reflect.ValueOf(v))
-			default:
-				return fmt.Errorf("the argument %d type %T is not supported", i, arg)
-			}
-		default:
-			return fmt.Errorf("the argument %d type %s is not supported", i, param.Kind())
-		}
-	}
-	ret := sd.hv.Call(values)[0].Interface()
-	if nil == ret {
-		return nil
-	}
-	return ret.(error)
-}
-
-func (sd *StepDef) shouldBeString(idx int) (string, error) {
-	arg := sd.args[idx]
-	s, ok := arg.(string)
-	if !ok {
-		return "", fmt.Errorf(`cannot convert argument %d: "%v" of type "%T" to string`, idx, arg, arg)
-	}
-	return s, nil
-}
 
 // Suite is an interface which allows various contexts
 // to register steps and event handlers.
@@ -207,9 +70,9 @@ type Suite interface {
 }
 
 type suite struct {
-	stepHandlers []*StepDef
-	features     []*feature
-	fmt          Formatter
+	steps    []*StepDef
+	features []*feature
+	fmt      Formatter
 
 	failed bool
 
@@ -273,7 +136,7 @@ func (s *suite) Step(expr interface{}, stepFunc interface{}) {
 	if typ.Out(0).Kind() != reflect.Interface || !typ.Out(0).Implements(errorInterface) {
 		panic(fmt.Sprintf("expected handler to return an error interface, but we have: %s", typ.Out(0).Kind()))
 	}
-	s.stepHandlers = append(s.stepHandlers, &StepDef{
+	s.steps = append(s.steps, &StepDef{
 		Handler: stepFunc,
 		Expr:    regex,
 		hv:      v,
@@ -403,7 +266,7 @@ func (s *suite) run() {
 }
 
 func (s *suite) matchStep(step *gherkin.Step) *StepDef {
-	for _, h := range s.stepHandlers {
+	for _, h := range s.steps {
 		if m := h.Expr.FindStringSubmatch(step.Text); len(m) > 0 {
 			var args []interface{}
 			for _, m := range m[1:] {
@@ -473,11 +336,6 @@ func (s *suite) skipSteps(steps []*gherkin.Step) {
 }
 
 func (s *suite) runOutline(outline *gherkin.ScenarioOutline, b *gherkin.Background) (err error) {
-	// run before scenario handlers
-	defer func() {
-		// run after scenario handlers
-	}()
-
 	s.fmt.Node(outline)
 
 	for _, example := range outline.Examples {
@@ -584,17 +442,17 @@ func (s *suite) runScenario(scenario *gherkin.Scenario, b *gherkin.Background) (
 
 func (s *suite) printStepDefinitions() {
 	var longest int
-	for _, def := range s.stepHandlers {
+	for _, def := range s.steps {
 		if longest < len(def.Expr.String()) {
 			longest = len(def.Expr.String())
 		}
 	}
-	for _, def := range s.stepHandlers {
-		location := runtime.FuncForPC(reflect.ValueOf(def.Handler).Pointer()).Name()
+	for _, def := range s.steps {
+		location := runtime.FuncForPC(def.hv.Pointer()).Name()
 		spaces := strings.Repeat(" ", longest-len(def.Expr.String()))
 		fmt.Println(cl(def.Expr.String(), yellow)+spaces, cl("# "+location, black))
 	}
-	if len(s.stepHandlers) == 0 {
+	if len(s.steps) == 0 {
 		fmt.Println("there were no contexts registered, could not find any step definition..")
 	}
 }

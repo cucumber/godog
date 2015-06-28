@@ -11,7 +11,6 @@ script:
   - go get github.com/golang/lint/golint
 
   # pull all external dependencies
-  # remove them at all if possible
   - go get github.com/cucumber/gherkin-go
   - go get golang.org/x/tools/imports
   - go get github.com/shiena/ansicolor
@@ -20,10 +19,10 @@ script:
   - go test -v ./...
   - go test -race ./...
 
-  # test me with myself
+  # run features
   - go run cmd/godog/main.go -f progress
 
   # code correctness
-  - sh -c 'if [ ! -z "$(go fmt ./...)" ]; then exit 1; fi'
-  - golint ./...
+  - sh -c 'RES="$(go fmt ./...)"; if [ ! -z "$RES" ]; then echo $RES; exit 1; fi'
+  - sh -c 'RES="$(golint ./...)"; if [ ! -z "$RES" ]; then echo $RES; exit 1; fi'
   - go vet ./...

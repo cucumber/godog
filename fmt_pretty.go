@@ -3,9 +3,7 @@ package godog
 import (
 	"fmt"
 	"math"
-	"reflect"
 	"regexp"
-	"runtime"
 	"strings"
 	"time"
 
@@ -230,9 +228,7 @@ func (f *pretty) printOutlineExample(outline *gherkin.ScenarioOutline) {
 				} else {
 					text = cl(ostep.Text, cyan)
 				}
-				// use reflect to get step handler function name
-				name := runtime.FuncForPC(reflect.ValueOf(def.Handler).Pointer()).Name()
-				text += s(f.commentPos-f.length(ostep)+1) + cl(fmt.Sprintf("# %s", name), black)
+				text += s(f.commentPos-f.length(ostep)+1) + cl(fmt.Sprintf("# %s", def.funcName()), black)
 			} else {
 				text = cl(ostep.Text, cyan)
 			}
@@ -285,9 +281,7 @@ func (f *pretty) printStep(step *gherkin.Step, def *StepDef, c color) {
 		} else {
 			text += cl(step.Text, c)
 		}
-		// use reflect to get step handler function name
-		name := runtime.FuncForPC(reflect.ValueOf(def.Handler).Pointer()).Name()
-		text += s(f.commentPos-f.length(step)+1) + cl(fmt.Sprintf("# %s", name), black)
+		text += s(f.commentPos-f.length(step)+1) + cl(fmt.Sprintf("# %s", def.funcName()), black)
 	default:
 		text += cl(step.Text, c)
 	}
@@ -297,7 +291,11 @@ func (f *pretty) printStep(step *gherkin.Step, def *StepDef, c color) {
 	case *gherkin.DataTable:
 		f.printTable(t, c)
 	case *gherkin.DocString:
-		fmt.Println(s(f.indent*3) + cl(t.Delimitter, c)) // @TODO: content type
+		var ct string
+		if len(t.ContentType) > 0 {
+			ct = " " + cl(t.ContentType, c)
+		}
+		fmt.Println(s(f.indent*3) + cl(t.Delimitter, c) + ct)
 		for _, ln := range strings.Split(t.Content, "\n") {
 			fmt.Println(s(f.indent*3) + cl(ln, c))
 		}

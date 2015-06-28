@@ -121,7 +121,7 @@ The public API is stable enough, but it may break until **1.0.0** version, see `
 ### FAQ
 
 **Q:** Where can I configure common options globally?
-**A:** You can't. Alias your common or project based commands: `alias mygodog="godog --format=progress"`
+**A:** You can't. Alias your common or project based commands: `alias mygodog="godog --format=progress --tags=@wip"`
 
 ### Contributions
 
