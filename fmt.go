@@ -1,12 +1,44 @@
 package godog
 
 import (
+	"bytes"
 	"fmt"
+	"regexp"
 	"strings"
+	"text/template"
 	"time"
+	"unicode"
 
 	"github.com/cucumber/gherkin-go"
 )
+
+// some snippet formatting regexps
+var snippetExprCleanup = regexp.MustCompile("([\\/\\[\\]\\(\\)\\\\^\\$\\.\\|\\?\\*\\+\\'])")
+var snippetExprQuoted = regexp.MustCompile("(\\s*|^)\"(?:[^\"]*)\"(\\s+|$)")
+var snippetMethodName = regexp.MustCompile("[^a-zA-Z\\_\\ ]")
+var snippetNumbers = regexp.MustCompile("(\\d+)")
+
+var snippetHelperFuncs = template.FuncMap{
+	"backticked": func(s string) string {
+		return "`" + s + "`"
+	},
+}
+
+var undefinedSnippetsTpl = template.Must(template.New("snippets").Funcs(snippetHelperFuncs).Parse(`
+{{ range . }}func {{ .Method }}({{ .Args }}) error {
+	return godog.ErrPending
+}
+
+{{end}}func featureContext(s godog.Suite) { {{ range . }}
+	s.Step({{ backticked .Expr }}, {{ .Method }}){{end}}
+}
+`))
+
+type undefinedSnippet struct {
+	Method   string
+	Expr     string
+	argument interface{} // gherkin step argument
+}
 
 type registeredFormatter struct {
 	name        string
@@ -180,6 +212,8 @@ func (f *basefmt) Summary() {
 		steps = append(steps, parts[len(parts)-1])
 	}
 	if len(f.pending) > 0 {
+		passed -= len(f.pending)
+		parts = append(parts, cl(fmt.Sprintf("%d pending", len(f.pending)), yellow))
 		steps = append(steps, cl(fmt.Sprintf("%d pending", len(f.pending)), yellow))
 	}
 	if len(f.undefined) > 0 {
@@ -209,4 +243,100 @@ func (f *basefmt) Summary() {
 		fmt.Println(fmt.Sprintf("%d steps (%s)", nsteps, strings.Join(steps, ", ")))
 	}
 	fmt.Println(elapsed)
+
+	f.snippets()
+}
+
+func (s *undefinedSnippet) Args() string {
+	var args []string
+	var pos, idx int
+	var breakLoop bool
+	for !breakLoop {
+		part := s.Expr[pos:]
+		ipos := strings.Index(part, "(\\d+)")
+		spos := strings.Index(part, "\"([^\"]*)\"")
+		switch {
+		case spos == -1 && ipos == -1:
+			breakLoop = true
+		case spos == -1:
+			idx++
+			pos += ipos + len("(\\d+)")
+			args = append(args, fmt.Sprintf("arg%d int", idx))
+		case ipos == -1:
+			idx++
+			pos += spos + len("\"([^\"]*)\"")
+			args = append(args, fmt.Sprintf("arg%d string", idx))
+		case ipos < spos:
+			idx++
+			pos += ipos + len("(\\d+)")
+			args = append(args, fmt.Sprintf("arg%d int", idx))
+		case spos < ipos:
+			idx++
+			pos += spos + len("\"([^\"]*)\"")
+			args = append(args, fmt.Sprintf("arg%d string", idx))
+		}
+	}
+	if s.argument != nil {
+		idx++
+		switch s.argument.(type) {
+		case *gherkin.DocString:
+			args = append(args, fmt.Sprintf("arg%d *gherkin.DocString", idx))
+		case *gherkin.DataTable:
+			args = append(args, fmt.Sprintf("arg%d *gherkin.DataTable", idx))
+		}
+	}
+	return strings.Join(args, ", ")
+}
+
+func (f *basefmt) snippets() {
+	if len(f.undefined) == 0 {
+		return
+	}
+
+	fmt.Println(cl("\nYou can implement step definitions for undefined steps with these snippets:", yellow))
+
+	var index int
+	var snips []*undefinedSnippet
+	// build snippets
+	for _, u := range f.undefined {
+		expr := snippetExprCleanup.ReplaceAllString(u.step.Text, "\\\\$1")
+		expr = snippetNumbers.ReplaceAllString(expr, "(\\d+)")
+		expr = snippetExprQuoted.ReplaceAllString(expr, " \"([^\"]*)\" ")
+		expr = "^" + strings.TrimSpace(expr) + "$"
+
+		name := snippetNumbers.ReplaceAllString(u.step.Text, "")
+		name = snippetExprQuoted.ReplaceAllString(name, "")
+		name = snippetMethodName.ReplaceAllString(name, "")
+		var words []string
+		for i, w := range strings.Split(name, " ") {
+			if i != 0 {
+				w = strings.Title(w)
+			} else {
+				w = string(unicode.ToLower(rune(w[0]))) + w[1:]
+			}
+			words = append(words, w)
+		}
+		name = strings.Join(words, "")
+		if len(name) == 0 {
+			index++
+			name = fmt.Sprintf("stepDefinition%d", index)
+		}
+
+		var found bool
+		for _, snip := range snips {
+			if snip.Expr == expr {
+				found = true
+				break
+			}
+		}
+		if !found {
+			snips = append(snips, &undefinedSnippet{Method: name, Expr: expr, argument: u.step.Argument})
+		}
+	}
+
+	var buf bytes.Buffer
+	if err := undefinedSnippetsTpl.Execute(&buf, snips); err != nil {
+		panic(err)
+	}
+	fmt.Println(cl(buf.String(), yellow))
 }

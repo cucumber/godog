@@ -46,24 +46,25 @@ You should see that the steps are undefined:
 
 ![Screenshot](https://raw.github.com/DATA-DOG/godog/master/screenshots/undefined.png)
 
-**NOTE:** the undefined step templates are still in development and scheduled for **0.2.0**
+It gives you undefined step snippets to implement in your test context. You may copy these snippets
+into **godog_test.go** file.
+
+Now if you run the tests again. You should see that the definition is now pending. You may change
+**ErrPending** to **nil** and the scenario will pass successfully.
+
+Since we need a working implementation, we may start by implementing what is necessary.
+We only need a number of **godogs** for now.
 
 ``` go
 /* file: /tmp/godog/godog.go */
 package main
 
-type GodogCart struct {
-	reserve int
-}
-
-func (c *GodogCart) Eat(num int) { c.reserve -= num }
-
-func (c *GodogCart) Available() int { return c.reserve }
+var Godogs int
 
 func main() { /* usual main func */ }
 ```
 
-Now lets describe all steps to test the application behavior:
+Now lets finish our step implementations in order to test our feature requirements:
 
 ``` go
 /* file: /tmp/godog/godog_test.go */
@@ -75,41 +76,44 @@ import (
 	"github.com/DATA-DOG/godog"
 )
 
-func (c *GodogCart) resetReserve(interface{}) {
-	c.reserve = 0
-}
-
-func (c *GodogCart) thereAreNumGodogsInReserve(avail int) error {
-	c.reserve = avail
+func thereAreGodogs(available int) error {
+	Godogs = available
 	return nil
 }
 
-func (c *GodogCart) iEatNum(num int) error {
-	c.Eat(num)
+func iEat(num int) error {
+	if Godogs < num {
+		return fmt.Errorf("you cannot eat %d godogs, there are %d available", num, Godogs)
+	}
+	Godogs -= num
 	return nil
 }
 
-func (c *GodogCart) thereShouldBeNumRemaining(left int) error {
-	if c.Available() != left {
-		return fmt.Errorf("expected %d godogs to be remaining, but there is %d", left, c.Available())
+func thereShouldBeRemaining(remaining int) error {
+	if Godogs != remaining {
+		return fmt.Errorf("expected %d godogs to be remaining, but there is %d", remaining, Godogs)
 	}
 	return nil
 }
 
-func godogCartContext(s godog.Suite) {
-	c := &GodogCart{}
-	// each time before running scenario reset reserve
-	s.BeforeScenario(c.resetReserve)
-	// register steps
-	s.Step(`^there are (\d+) godogs?$`, c.thereAreNumGodogsInReserve)
-	s.Step(`^I eat (\d+)$`, c.iEatNum)
-	s.Step(`^there should be (\d+) remaining$`, c.thereShouldBeNumRemaining)
+func featureContext(s godog.Suite) {
+	s.Step(`^there are (\d+) godogs$`, thereAreGodogs)
+	s.Step(`^I eat (\d+)$`, iEat)
+	s.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
+
+	s.BeforeScenario(func(interface{}) {
+		Godogs = 0 // clean the state before every scenario
+	})
 }
 ```
 
 Now when you run the `godog godog.feature` again, you should see:
 
 ![Screenshot](https://raw.github.com/DATA-DOG/godog/master/screenshots/passed.png)
+
+**Note:** we have hooked to **BeforeScenario** event in order to reset state. You may hook into
+more events, like **AfterStep** to test against an error and print more details about the error
+or state before failure. Or **BeforeSuite** to prepare a database.
 
 ### Documentation
 
