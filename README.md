@@ -14,7 +14,10 @@ to functionally test your application while maintaining all test related source 
 
 **Godog** acts similar compared to **go test** command. It builds all package sources to a single main package file
 and replaces **main** func with it's own and runs the build to test described application behavior in feature files.
-Production builds remains clean without any overhead.
+Production builds remain clean without any test related source code.
+
+The public [API][godoc] is small and should be stable for the future releases. Something may be added or exported, but
+not changed most likely. I'll try to respect **backward compatibility** as much as possible.
 
 ### Install
 
@@ -119,13 +122,12 @@ or state before failure. Or **BeforeSuite** to prepare a database.
 
 See [godoc][godoc] for general API details.
 See **.travis.yml** for supported **go** versions.
-
-The public API is stable enough, but it may break until **1.0.0** version, see `godog --version`.
+See `godog -h` for general command options.
 
 ### FAQ
 
 **Q:** Where can I configure common options globally?
-**A:** You can't. Alias your common or project based commands: `alias mygodog="godog --format=progress --tags=@wip"`
+**A:** You can't. Alias your common or project based commands: `alias godog-wip="godog --format=progress --tags=@wip"`
 
 ### Contributions
 
