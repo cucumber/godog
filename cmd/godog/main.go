@@ -10,43 +10,44 @@ import (
 	"github.com/shiena/ansicolor"
 )
 
-func main() {
+func buildAndRun() error {
 	// will support Ansi colors for windows
 	stdout := ansicolor.NewAnsiColorWriter(os.Stdout)
 
 	builtFile := fmt.Sprintf("%s/%dgodog.go", os.TempDir(), time.Now().UnixNano())
+	// @TODO: then there is a suite error or panic, it may
+	// be interesting to see the built file. But we
+	// even cannot determine the status of exit error
+	// so leaving it for the future
+	defer os.Remove(builtFile)
 
 	buf, err := godog.Build()
 	if err != nil {
-		os.Remove(builtFile)
-		panic(err)
+		return err
 	}
-
 	w, err := os.Create(builtFile)
 	if err != nil {
-		os.Remove(builtFile)
-		panic(err)
+		return err
 	}
-	_, err = w.Write(buf)
-	if err != nil {
-		os.Remove(builtFile)
-		panic(err)
+	if _, err = w.Write(buf); err != nil {
+		w.Close()
+		return err
 	}
 	w.Close()
 
-	cmd := exec.Command("go")
-	cmd.Args = append([]string{"go", "run", builtFile}, os.Args[1:]...)
+	cmd := exec.Command("go", append([]string{"run", builtFile}, os.Args[1:]...)...)
 	cmd.Stdout = stdout
 	cmd.Stderr = stdout
 
-	err = cmd.Run()
-	switch err.(type) {
+	return cmd.Run()
+}
+
+func main() {
+	switch err := buildAndRun().(type) {
+	case nil:
 	case *exec.ExitError:
-		// then there is a suite error, we need to provide a
-		// way to see the built file and do not remove it here
 		os.Exit(1)
-	case *exec.Error:
-		os.Remove(builtFile)
+	default:
 		panic(err)
 	}
 }
