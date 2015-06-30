@@ -38,6 +38,9 @@ func SuiteContext(s Suite) {
 	s.Step(`^pending step$`, func() error {
 		return ErrPending
 	})
+	s.Step(`^passing step$`, func() error {
+		return nil
+	})
 }
 
 type firedEvent struct {
@@ -63,8 +66,7 @@ func (s *suiteContext) ResetBeforeEachScenario(interface{}) {
 
 func (s *suiteContext) followingStepsShouldHave(status string, steps *gherkin.DocString) error {
 	var expected = strings.Split(steps.Content, "\n")
-	var actual, unmatched []string
-	var matched []int
+	var actual, unmatched, matched []string
 
 	switch status {
 	case "passed":
@@ -96,23 +98,23 @@ func (s *suiteContext) followingStepsShouldHave(status string, steps *gherkin.Do
 	}
 
 	for _, a := range actual {
-		for i, e := range expected {
+		for _, e := range expected {
 			if a == e {
-				matched = append(matched, i)
+				matched = append(matched, e)
 				break
 			}
 		}
 	}
 
-	if len(matched) == len(expected) {
+	if len(matched) >= len(expected) {
 		return nil
 	}
-
-	for i, s := range expected {
+	for _, s := range expected {
 		var found bool
 		for _, m := range matched {
-			if i == m {
+			if s == m {
 				found = true
+				break
 			}
 		}
 		if !found {
@@ -120,7 +122,7 @@ func (s *suiteContext) followingStepsShouldHave(status string, steps *gherkin.Do
 		}
 	}
 
-	return fmt.Errorf("the steps: %s - is not %s", strings.Join(unmatched, ", "), status)
+	return fmt.Errorf("the steps: %s - are not %s", strings.Join(unmatched, ", "), status)
 }
 
 func (s *suiteContext) iAmListeningToSuiteEvents() error {

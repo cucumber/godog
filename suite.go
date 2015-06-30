@@ -298,6 +298,11 @@ func (s *suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
 		return nil
 	}
 
+	// run before step handlers
+	for _, f := range s.beforeStepHandlers {
+		f(step)
+	}
+
 	defer func() {
 		if e := recover(); e != nil {
 			err, ok := e.(error)
@@ -317,16 +322,17 @@ func (s *suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
 	default:
 		s.fmt.Failed(step, match, err)
 	}
+
+	// run after step handlers
+	for _, f := range s.afterStepHandlers {
+		f(step, err)
+	}
 	return
 }
 
-func (s *suite) runSteps(steps []*gherkin.Step) (err error) {
+func (s *suite) runSteps(steps []*gherkin.Step, prevErr error) (err error) {
+	err = prevErr
 	for _, step := range steps {
-		// run before step handlers
-		for _, f := range s.beforeStepHandlers {
-			f(step)
-		}
-
 		stepErr := s.runStep(step, err)
 		switch stepErr {
 		case ErrUndefined:
@@ -336,11 +342,6 @@ func (s *suite) runSteps(steps []*gherkin.Step) (err error) {
 		case nil:
 		default:
 			err = stepErr
-		}
-
-		// run after step handlers
-		for _, f := range s.afterStepHandlers {
-			f(step, err)
 		}
 	}
 	return
@@ -352,7 +353,7 @@ func (s *suite) skipSteps(steps []*gherkin.Step) {
 	}
 }
 
-func (s *suite) runOutline(outline *gherkin.ScenarioOutline, b *gherkin.Background) (err error) {
+func (s *suite) runOutline(outline *gherkin.ScenarioOutline, b *gherkin.Background) (failErr error) {
 	s.fmt.Node(outline)
 
 	for _, example := range outline.Examples {
@@ -381,24 +382,21 @@ func (s *suite) runOutline(outline *gherkin.ScenarioOutline, b *gherkin.Backgrou
 				steps = append(steps, step)
 			}
 			// run background
+			var err error
 			if b != nil {
-				err = s.runSteps(b.Steps)
+				err = s.runSteps(b.Steps, err)
 			}
-			switch err {
-			case ErrUndefined:
-				s.skipSteps(steps)
-			case nil:
-				err = s.runSteps(steps)
-			default:
-				s.skipSteps(steps)
-			}
+			err = s.runSteps(steps, err)
 
 			for _, f := range s.afterScenarioHandlers {
 				f(outline, err)
 			}
 
-			if s.stopOnFailure && err != ErrUndefined {
-				return
+			if err != nil && err != ErrUndefined && err != ErrPending {
+				failErr = err
+				if s.stopOnFailure {
+					return
+				}
 			}
 		}
 	}
@@ -435,21 +433,12 @@ func (s *suite) runScenario(scenario *gherkin.Scenario, b *gherkin.Background) (
 
 	// background
 	if b != nil {
-		err = s.runSteps(b.Steps)
+		err = s.runSteps(b.Steps, err)
 	}
 
 	// scenario
 	s.fmt.Node(scenario)
-	switch err {
-	case ErrPending:
-		s.skipSteps(scenario.Steps)
-	case ErrUndefined:
-		s.skipSteps(scenario.Steps)
-	case nil:
-		err = s.runSteps(scenario.Steps)
-	default:
-		s.skipSteps(scenario.Steps)
-	}
+	err = s.runSteps(scenario.Steps, err)
 
 	// run after scenario handlers
 	for _, f := range s.afterScenarioHandlers {

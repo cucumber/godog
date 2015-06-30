@@ -45,17 +45,17 @@ func (f *progress) Summary() {
 	f.basefmt.Summary()
 }
 
-func (f *progress) step(step interface{}) {
-	switch step.(type) {
-	case *passed:
+func (f *progress) step(res *stepResult) {
+	switch res.typ {
+	case passed:
 		fmt.Print(cl(".", green))
-	case *skipped:
+	case skipped:
 		fmt.Print(cl("-", cyan))
-	case *failed:
+	case failed:
 		fmt.Print(cl("F", red))
-	case *undefined:
+	case undefined:
 		fmt.Print(cl("U", yellow))
-	case *pending:
+	case pending:
 		fmt.Print(cl("P", yellow))
 	}
 	f.steps++

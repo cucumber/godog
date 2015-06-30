@@ -28,7 +28,7 @@ type pretty struct {
 	backgroundSteps int
 
 	// outline
-	outlineSteps       []interface{}
+	outlineSteps       []*stepResult
 	outlineNumExample  int
 	outlineNumExamples int
 }
@@ -96,7 +96,7 @@ func (f *pretty) Node(node interface{}) {
 // Summary sumarize the feature formatter output
 func (f *pretty) Summary() {
 	// failed steps on background are not scenarios
-	var failedScenarios []*failed
+	var failedScenarios []*stepResult
 	for _, fail := range f.failed {
 		switch fail.owner.(type) {
 		case *gherkin.Scenario:
@@ -129,31 +129,29 @@ func (f *pretty) Summary() {
 }
 
 func (f *pretty) printOutlineExample(outline *gherkin.ScenarioOutline) {
-	var failed error
+	var msg string
 	clr := green
 
 	example := outline.Examples[f.outlineNumExample]
 	firstExample := f.outlineNumExamples == len(example.TableBody)
 	printSteps := firstExample && f.outlineNumExample == 0
 
-	// var replace make(map[])
-	for i, act := range f.outlineSteps {
-		_, _, def, c, err := f.stepDetails(act)
+	for i, res := range f.outlineSteps {
 		// determine example row status
 		switch {
-		case err != nil:
-			failed = err
-			clr = red
-		case c == yellow:
-			clr = yellow
-		case c == cyan && clr == green:
+		case res.typ == failed:
+			msg = res.err.Error()
+			clr = res.typ.clr()
+		case res.typ == undefined || res.typ == pending:
+			clr = res.typ.clr()
+		case res.typ == skipped && clr == green:
 			clr = cyan
 		}
 		if printSteps {
 			// in first example, we need to print steps
 			var text string
 			ostep := outline.Steps[i]
-			if def != nil {
+			if res.def != nil {
 				if m := outlinePlaceholderRegexp.FindAllStringIndex(ostep.Text, -1); len(m) > 0 {
 					var pos int
 					for i := 0; i < len(m); i++ {
@@ -166,7 +164,7 @@ func (f *pretty) printOutlineExample(outline *gherkin.ScenarioOutline) {
 				} else {
 					text = cl(ostep.Text, cyan)
 				}
-				text += s(f.commentPos-f.length(ostep)+1) + cl(fmt.Sprintf("# %s", def.funcName()), black)
+				text += s(f.commentPos-f.length(ostep)+1) + cl(fmt.Sprintf("# %s", res.def.funcName()), black)
 			} else {
 				text = cl(ostep.Text, cyan)
 			}
@@ -196,8 +194,8 @@ func (f *pretty) printOutlineExample(outline *gherkin.ScenarioOutline) {
 	fmt.Println(s(f.indent*3) + "| " + strings.Join(cells, " | ") + " |")
 
 	// if there is an error
-	if failed != nil {
-		fmt.Println(s(f.indent*3) + bcl(failed, red))
+	if msg != "" {
+		fmt.Println(s(f.indent*4) + bcl(msg, red))
 	}
 }
 
@@ -241,43 +239,9 @@ func (f *pretty) printStep(step *gherkin.Step, def *StepDef, c color) {
 	}
 }
 
-func (f *pretty) stepDetails(stepAction interface{}) (owner interface{}, step *gherkin.Step, def *StepDef, c color, err error) {
-	switch typ := stepAction.(type) {
-	case *passed:
-		step = typ.step
-		def = typ.def
-		owner = typ.owner
-		c = green
-	case *failed:
-		step = typ.step
-		def = typ.def
-		owner = typ.owner
-		err = typ.err
-		c = red
-	case *skipped:
-		step = typ.step
-		owner = typ.owner
-		c = cyan
-	case *undefined:
-		step = typ.step
-		owner = typ.owner
-		c = yellow
-	case *pending:
-		step = typ.step
-		def = typ.def
-		owner = typ.owner
-		c = yellow
-	default:
-		fatal(fmt.Errorf("unexpected step type received: %T", typ))
-	}
-	return
-}
-
-func (f *pretty) printStepKind(stepAction interface{}) {
-	owner, step, def, c, err := f.stepDetails(stepAction)
-
+func (f *pretty) printStepKind(res *stepResult) {
 	// do not print background more than once
-	if _, ok := owner.(*gherkin.Background); ok {
+	if _, ok := res.owner.(*gherkin.Background); ok {
 		switch {
 		case f.backgroundSteps == 0:
 			return
@@ -286,22 +250,22 @@ func (f *pretty) printStepKind(stepAction interface{}) {
 		}
 	}
 
-	if outline, ok := owner.(*gherkin.ScenarioOutline); ok {
-		f.outlineSteps = append(f.outlineSteps, stepAction)
+	if outline, ok := res.owner.(*gherkin.ScenarioOutline); ok {
+		f.outlineSteps = append(f.outlineSteps, res)
 		if len(f.outlineSteps) == len(outline.Steps) {
 			// an outline example steps has went through
 			f.printOutlineExample(outline)
-			f.outlineSteps = []interface{}{}
+			f.outlineSteps = []*stepResult{}
 			f.outlineNumExamples--
 		}
 		return
 	}
 
-	f.printStep(step, def, c)
-	if err != nil {
-		fmt.Println(s(f.indent*2) + bcl(err, red))
+	f.printStep(res.step, res.def, res.typ.clr())
+	if res.err != nil {
+		fmt.Println(s(f.indent*2) + bcl(res.err, red))
 	}
-	if _, ok := stepAction.(*pending); ok {
+	if res.typ == pending {
 		fmt.Println(s(f.indent*3) + cl("TODO: write pending definition", yellow))
 	}
 }

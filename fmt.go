@@ -77,9 +77,31 @@ type Formatter interface {
 	Summary()
 }
 
-// failed represents a failed step data structure
-// with all necessary references
-type failed struct {
+type stepType int
+
+const (
+	passed stepType = iota
+	failed
+	skipped
+	undefined
+	pending
+)
+
+func (st stepType) clr() color {
+	switch st {
+	case passed:
+		return green
+	case failed:
+		return red
+	case skipped:
+		return cyan
+	default:
+		return yellow
+	}
+}
+
+type stepResult struct {
+	typ     stepType
 	feature *feature
 	owner   interface{}
 	step    *gherkin.Step
@@ -87,42 +109,8 @@ type failed struct {
 	err     error
 }
 
-func (f failed) line() string {
+func (f stepResult) line() string {
 	return fmt.Sprintf("%s:%d", f.feature.Path, f.step.Location.Line)
-}
-
-// passed represents a successful step data structure
-// with all necessary references
-type passed struct {
-	feature *feature
-	owner   interface{}
-	step    *gherkin.Step
-	def     *StepDef
-}
-
-// skipped represents a skipped step data structure
-// with all necessary references
-type skipped struct {
-	feature *feature
-	owner   interface{}
-	step    *gherkin.Step
-}
-
-// undefined represents an undefined step data structure
-// with all necessary references
-type undefined struct {
-	feature *feature
-	owner   interface{}
-	step    *gherkin.Step
-}
-
-// pending represents a pending step data structure
-// with all necessary references
-type pending struct {
-	feature *feature
-	owner   interface{}
-	step    *gherkin.Step
-	def     *StepDef
 }
 
 type basefmt struct {
@@ -131,11 +119,11 @@ type basefmt struct {
 
 	started   time.Time
 	features  []*feature
-	failed    []*failed
-	passed    []*passed
-	skipped   []*skipped
-	undefined []*undefined
-	pending   []*pending
+	failed    []*stepResult
+	passed    []*stepResult
+	skipped   []*stepResult
+	undefined []*stepResult
+	pending   []*stepResult
 }
 
 func (f *basefmt) Node(n interface{}) {
@@ -154,27 +142,56 @@ func (f *basefmt) Feature(ft *gherkin.Feature, p string) {
 }
 
 func (f *basefmt) Passed(step *gherkin.Step, match *StepDef) {
-	s := &passed{owner: f.owner, feature: f.features[len(f.features)-1], step: step, def: match}
+	s := &stepResult{
+		owner:   f.owner,
+		feature: f.features[len(f.features)-1],
+		step:    step,
+		def:     match,
+		typ:     passed,
+	}
 	f.passed = append(f.passed, s)
 }
 
 func (f *basefmt) Skipped(step *gherkin.Step) {
-	s := &skipped{owner: f.owner, feature: f.features[len(f.features)-1], step: step}
+	s := &stepResult{
+		owner:   f.owner,
+		feature: f.features[len(f.features)-1],
+		step:    step,
+		typ:     skipped,
+	}
 	f.skipped = append(f.skipped, s)
 }
 
 func (f *basefmt) Undefined(step *gherkin.Step) {
-	s := &undefined{owner: f.owner, feature: f.features[len(f.features)-1], step: step}
+	s := &stepResult{
+		owner:   f.owner,
+		feature: f.features[len(f.features)-1],
+		step:    step,
+		typ:     undefined,
+	}
 	f.undefined = append(f.undefined, s)
 }
 
 func (f *basefmt) Failed(step *gherkin.Step, match *StepDef, err error) {
-	s := &failed{owner: f.owner, feature: f.features[len(f.features)-1], step: step, def: match, err: err}
+	s := &stepResult{
+		owner:   f.owner,
+		feature: f.features[len(f.features)-1],
+		step:    step,
+		def:     match,
+		err:     err,
+		typ:     failed,
+	}
 	f.failed = append(f.failed, s)
 }
 
 func (f *basefmt) Pending(step *gherkin.Step, match *StepDef) {
-	s := &pending{owner: f.owner, feature: f.features[len(f.features)-1], step: step, def: match}
+	s := &stepResult{
+		owner:   f.owner,
+		feature: f.features[len(f.features)-1],
+		step:    step,
+		def:     match,
+		typ:     pending,
+	}
 	f.pending = append(f.pending, s)
 }
 
