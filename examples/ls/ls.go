@@ -1,3 +1,4 @@
+// Example - demonstrates ls command implementation tests.
 package main
 
 import (

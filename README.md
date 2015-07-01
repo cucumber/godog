@@ -124,6 +124,11 @@ See [godoc][godoc] for general API details.
 See **.travis.yml** for supported **go** versions.
 See `godog -h` for general command options.
 
+See implementation examples:
+
+- [rest API server](https://github.com/DATA-DOG/godog/tree/master/examples/api) implementation and tests
+- [ls command](https://github.com/DATA-DOG/godog/tree/master/examples/ls) implementation and tests
+
 ### FAQ
 
 **Q:** Where can I configure common options globally?
