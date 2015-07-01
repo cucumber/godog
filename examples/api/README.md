@@ -92,6 +92,7 @@ Now we can implemented steps, since we know what behavior we expect:
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -151,7 +152,7 @@ func (a *apiFeature) theResponseShouldMatchJSON(body *gherkin.DocString) (err er
 		return
 	}
 	actual = a.resp.Body.Bytes()
-	if string(actual) != string(expected) {
+	if !bytes.Equal(actual, expected) {
 		err = fmt.Errorf("expected json, does not match actual: %s", string(actual))
 	}
 	return
@@ -170,6 +171,9 @@ func featureContext(s godog.Suite) {
 
 **NOTE:** the `getVersion` handler call on **/version** endpoint. We actually need to implement it now.
 If we made some mistakes in step implementations, we will know about it when we run the tests.
+
+Though, we could also improve our **JSON** comparison function to range through the interfaces and
+match their types and values.
 
 In case if some router is used, you may search the handler based on the endpoint. Current example
 uses a standard http package.
