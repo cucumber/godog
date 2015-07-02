@@ -25,5 +25,5 @@ script:
 
   # code correctness
   - sh -c 'RES="$(go fmt ./...)"; if [ ! -z "$RES" ]; then echo $RES; exit 1; fi'
-  - sh -c 'RES="$(golint ./...)"; if [ ! -z "$RES" ]; then echo $RES; exit 1; fi'
+  - sh -c 'RES="$(golint .)"; if [ ! -z "$RES" ]; then echo $RES; exit 1; fi'
   - go vet ./...
