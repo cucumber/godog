@@ -1,10 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
-	"time"
 
 	"github.com/DATA-DOG/godog"
 	"github.com/shiena/ansicolor"
@@ -14,12 +12,11 @@ func buildAndRun() error {
 	// will support Ansi colors for windows
 	stdout := ansicolor.NewAnsiColorWriter(os.Stdout)
 
-	builtFile := fmt.Sprintf("%s/%dgodog.go", os.TempDir(), time.Now().UnixNano())
+	builtFile := "/tmp/bgodog.go"
 	// @TODO: then there is a suite error or panic, it may
 	// be interesting to see the built file. But we
 	// even cannot determine the status of exit error
 	// so leaving it for the future
-	defer os.Remove(builtFile)
 
 	buf, err := godog.Build()
 	if err != nil {
@@ -29,6 +26,7 @@ func buildAndRun() error {
 	if err != nil {
 		return err
 	}
+	defer os.Remove(builtFile)
 	if _, err = w.Write(buf); err != nil {
 		w.Close()
 		return err
