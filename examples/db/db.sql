@@ -1,0 +1,7 @@
+CREATE TABLE users (
+  `id` BIGINT UNSIGNED AUTO_INCREMENT NOT NULL,
+  `username` VARCHAR(32) NOT NULL,
+  `email` VARCHAR(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `uniq_email` (`email`)
+) DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci ENGINE = InnoDB;
