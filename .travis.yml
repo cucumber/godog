@@ -17,8 +17,8 @@ script:
   - go get github.com/shiena/ansicolor
 
   # run standard go tests
-  - go test -v ./...
-  - go test -race ./...
+  - go test -v
+  - go test -race
 
   # run features
   - go run cmd/godog/main.go -f progress
