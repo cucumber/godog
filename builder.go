@@ -49,11 +49,12 @@ func newBuilder(buildPath string) (*builder, error) {
 ){{ end }}
 
 func main() {
-	suite := {{ if not .Internal }}godog.{{ end }}New()
-	{{range .Contexts}}
-		{{ . }}(suite)
-	{{end}}
-	suite.Run()
+
+	{{ if not .Internal }}godog.{{ end }}Run(func (suite *{{ if not .Internal }}godog.{{ end }}Suite) {
+		{{range .Contexts}}
+			{{ . }}(suite)
+		{{end}}
+	})
 }`)),
 	}
 

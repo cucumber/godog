@@ -21,7 +21,7 @@ script:
   - go test -race
 
   # run features
-  - go run cmd/godog/main.go -f progress
+  - go run cmd/godog/main.go --format=progress --concurrency=4
 
   # code correctness
   - sh -c 'RES="$(go fmt ./...)"; if [ ! -z "$RES" ]; then echo $RES; exit 1; fi'

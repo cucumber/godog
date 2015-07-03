@@ -3,6 +3,7 @@ package godog
 import (
 	"fmt"
 	"math"
+	"sync"
 	"time"
 
 	"github.com/cucumber/gherkin-go"
@@ -20,8 +21,21 @@ func init() {
 
 type progress struct {
 	basefmt
+	sync.Mutex
 	stepsPerRow int
 	steps       int
+}
+
+func (f *progress) Node(n interface{}) {
+	f.Lock()
+	defer f.Unlock()
+	f.basefmt.Node(n)
+}
+
+func (f *progress) Feature(ft *gherkin.Feature, p string) {
+	f.Lock()
+	defer f.Unlock()
+	f.basefmt.Feature(ft, p)
 }
 
 func (f *progress) Summary() {
@@ -65,26 +79,36 @@ func (f *progress) step(res *stepResult) {
 }
 
 func (f *progress) Passed(step *gherkin.Step, match *StepDef) {
+	f.Lock()
+	defer f.Unlock()
 	f.basefmt.Passed(step, match)
 	f.step(f.passed[len(f.passed)-1])
 }
 
 func (f *progress) Skipped(step *gherkin.Step) {
+	f.Lock()
+	defer f.Unlock()
 	f.basefmt.Skipped(step)
 	f.step(f.skipped[len(f.skipped)-1])
 }
 
 func (f *progress) Undefined(step *gherkin.Step) {
+	f.Lock()
+	defer f.Unlock()
 	f.basefmt.Undefined(step)
 	f.step(f.undefined[len(f.undefined)-1])
 }
 
 func (f *progress) Failed(step *gherkin.Step, match *StepDef, err error) {
+	f.Lock()
+	defer f.Unlock()
 	f.basefmt.Failed(step, match, err)
 	f.step(f.failed[len(f.failed)-1])
 }
 
 func (f *progress) Pending(step *gherkin.Step, match *StepDef) {
+	f.Lock()
+	defer f.Unlock()
 	f.basefmt.Pending(step, match)
 	f.step(f.pending[len(f.pending)-1])
 }

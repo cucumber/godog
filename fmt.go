@@ -49,6 +49,22 @@ type registeredFormatter struct {
 
 var formatters []*registeredFormatter
 
+func findFmt(format string) (f Formatter, err error) {
+	var names []string
+	for _, el := range formatters {
+		if el.name == format {
+			f = el.fmt
+			break
+		}
+		names = append(names, el.name)
+	}
+
+	if f == nil {
+		err = fmt.Errorf(`unregistered formatter name: "%s", use one of: %s`, format, strings.Join(names, ", "))
+	}
+	return
+}
+
 // RegisterFormatter registers a feature suite output
 // Formatter as the name and descriptiongiven.
 // Formatter is used to represent suite output

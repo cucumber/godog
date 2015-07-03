@@ -6,7 +6,7 @@ test:
 	@golint ./...
 	go vet ./...
 	go test
-	go run cmd/godog/main.go -f progress
+	go run cmd/godog/main.go -f progress -c 4
 
 deps:
 	@echo "updating all dependencies"

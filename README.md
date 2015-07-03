@@ -71,6 +71,7 @@ We only need a number of **godogs** for now. Lets define steps.
 /* file: examples/godogs/godog.go */
 package main
 
+// Godogs to eat
 var Godogs int
 
 func main() { /* usual main func */ }
@@ -146,6 +147,9 @@ See implementation examples:
 - changed **godog.Suite** from interface to struct. Context registration should be updated accordingly. The reason
 for change: since it exports the same methods and there is no need to mock a function in tests, there is no
 obvious reason to keep an interface.
+- in order to support running suite concurrently, needed to refactor an entry point of application. The **Run** method
+now is a func of godog package which initializes and run the suite (or more suites). Method **New** is removed. This
+change made godog a little cleaner.
 
 ### FAQ
 

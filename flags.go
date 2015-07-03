@@ -5,18 +5,18 @@ import (
 	"fmt"
 )
 
-// Flags builds a *flag.FlagSet with all flags
-// required for the godog suite
-func flags(s *Suite) *flag.FlagSet {
+func flags(format, tags *string, defs, sof, vers *bool, cl *int) *flag.FlagSet {
 	set := flag.NewFlagSet("godog", flag.ExitOnError)
-	set.StringVar(&s.format, "format", "pretty", "")
-	set.StringVar(&s.format, "f", "pretty", "")
-	set.StringVar(&s.tags, "tags", "", "")
-	set.StringVar(&s.tags, "t", "", "")
-	set.BoolVar(&s.definitions, "definitions", false, "")
-	set.BoolVar(&s.definitions, "d", false, "")
-	set.BoolVar(&s.stopOnFailure, "stop-on-failure", false, "")
-	set.BoolVar(&s.version, "version", false, "")
+	set.StringVar(format, "format", "pretty", "")
+	set.StringVar(format, "f", "pretty", "")
+	set.StringVar(tags, "tags", "", "")
+	set.StringVar(tags, "t", "", "")
+	set.IntVar(cl, "concurrency", 1, "")
+	set.IntVar(cl, "c", 1, "")
+	set.BoolVar(defs, "definitions", false, "")
+	set.BoolVar(defs, "d", false, "")
+	set.BoolVar(sof, "stop-on-failure", false, "")
+	set.BoolVar(vers, "version", false, "")
 	set.Usage = usage
 	return set
 }
@@ -27,7 +27,7 @@ func usage() {
 		if len(name) > 0 {
 			name += ":"
 		}
-		return s(2) + cl(name, green) + s(30-len(name)) + desc
+		return s(2) + cl(name, green) + s(22-len(name)) + desc
 	}
 
 	// --- GENERAL ---
@@ -48,6 +48,11 @@ func usage() {
 	fmt.Println(cl("Options:", yellow))
 	// --> step definitions
 	fmt.Println(opt("-d, --definitions", "Print all available step definitions."))
+	// --> concurrency
+	fmt.Println(opt("-c, --concurrency=1", "Run the test suite with concurrency level:"))
+	fmt.Println(opt("", s(4)+"- "+cl(`= 1`, yellow)+": supports all types of formats."))
+	fmt.Println(opt("", s(4)+"- "+cl(`>= 2`, yellow)+": only supports "+cl("progress", yellow)+". Note, that"))
+	fmt.Println(opt("", s(4)+"your context needs to support parallel execution."))
 	// --> format
 	fmt.Println(opt("-f, --format=pretty", "How to format tests output. Available formats:"))
 	for _, f := range formatters {

@@ -44,15 +44,8 @@ type Suite struct {
 	features []*feature
 	fmt      Formatter
 
-	failed bool
-
-	// options
-	paths         []string
-	format        string
-	tags          string
-	definitions   bool
+	failed        bool
 	stopOnFailure bool
-	version       bool
 
 	// suite event handlers
 	beforeSuiteHandlers    []func()
@@ -61,12 +54,6 @@ type Suite struct {
 	afterStepHandlers      []func(*gherkin.Step, error)
 	afterScenarioHandlers  []func(interface{}, error)
 	afterSuiteHandlers     []func()
-}
-
-// New initializes a Suite. The instance is passed around
-// to all context initialization functions from *_test.go files.
-func New() *Suite {
-	return &Suite{}
 }
 
 // Step allows to register a *StepDef in Godog
@@ -172,52 +159,6 @@ func (s *Suite) AfterSuite(f func()) {
 	s.afterSuiteHandlers = append(s.afterSuiteHandlers, f)
 }
 
-// Run starts the Godog feature suite
-func (s *Suite) Run() {
-	flagSet := flags(s)
-	fatal(flagSet.Parse(os.Args[1:]))
-
-	s.paths = flagSet.Args()
-	// check the default path
-	if len(s.paths) == 0 {
-		inf, err := os.Stat("features")
-		if err == nil && inf.IsDir() {
-			s.paths = []string{"features"}
-		}
-	}
-	// validate formatter
-	var names []string
-	for _, f := range formatters {
-		if f.name == s.format {
-			s.fmt = f.fmt
-			break
-		}
-		names = append(names, f.name)
-	}
-
-	if s.fmt == nil {
-		fatal(fmt.Errorf(`unregistered formatter name: "%s", use one of: %s`, s.format, strings.Join(names, ", ")))
-	}
-
-	// check if we need to just show something first
-	switch {
-	case s.version:
-		fmt.Println(cl("Godog", green) + " version is " + cl(Version, yellow))
-		return
-	case s.definitions:
-		s.printStepDefinitions()
-		return
-	}
-
-	fatal(s.parseFeatures())
-	// run a feature suite
-	s.run()
-
-	if s.failed {
-		os.Exit(1)
-	}
-}
-
 func (s *Suite) run() {
 	// run before suite handlers
 	for _, f := range s.beforeSuiteHandlers {
@@ -235,7 +176,6 @@ func (s *Suite) run() {
 	for _, f := range s.afterSuiteHandlers {
 		f()
 	}
-	s.fmt.Summary()
 }
 
 func (s *Suite) matchStep(step *gherkin.Step) *StepDef {
@@ -434,8 +374,8 @@ func (s *Suite) printStepDefinitions() {
 	}
 }
 
-func (s *Suite) parseFeatures() (err error) {
-	for _, pat := range s.paths {
+func parseFeatures(filter string, paths []string) (features []*feature, err error) {
+	for _, pat := range paths {
 		// check if line number is specified
 		parts := strings.Split(pat, ":")
 		path := parts[0]
@@ -443,7 +383,7 @@ func (s *Suite) parseFeatures() (err error) {
 		if len(parts) > 1 {
 			line, err = strconv.Atoi(parts[1])
 			if err != nil {
-				return fmt.Errorf("line number should follow after colon path delimiter")
+				return features, fmt.Errorf("line number should follow after colon path delimiter")
 			}
 		}
 		// parse features
@@ -458,7 +398,7 @@ func (s *Suite) parseFeatures() (err error) {
 				if err != nil {
 					return err
 				}
-				s.features = append(s.features, &feature{Path: p, Feature: ft})
+				features = append(features, &feature{Path: p, Feature: ft})
 				// filter scenario by line number
 				if line != -1 {
 					var scenarios []interface{}
@@ -477,31 +417,31 @@ func (s *Suite) parseFeatures() (err error) {
 					}
 					ft.ScenarioDefinitions = scenarios
 				}
-				s.applyTagFilter(ft)
+				applyTagFilter(filter, ft)
 			}
 			return err
 		})
 		// check error
 		switch {
 		case os.IsNotExist(err):
-			return fmt.Errorf(`feature path "%s" is not available`, path)
+			return features, fmt.Errorf(`feature path "%s" is not available`, path)
 		case os.IsPermission(err):
-			return fmt.Errorf(`feature path "%s" is not accessible`, path)
+			return features, fmt.Errorf(`feature path "%s" is not accessible`, path)
 		case err != nil:
-			return err
+			return features, err
 		}
 	}
 	return
 }
 
-func (s *Suite) applyTagFilter(ft *gherkin.Feature) {
-	if len(s.tags) == 0 {
+func applyTagFilter(tags string, ft *gherkin.Feature) {
+	if len(tags) == 0 {
 		return
 	}
 
 	var scenarios []interface{}
 	for _, scenario := range ft.ScenarioDefinitions {
-		if s.matchesTags(allTags(ft, scenario)) {
+		if matchesTags(tags, allTags(ft, scenario)) {
 			scenarios = append(scenarios, scenario)
 		}
 	}
@@ -554,9 +494,9 @@ func hasTag(tags []string, tag string) bool {
 }
 
 // based on http://behat.readthedocs.org/en/v2.5/guides/6.cli.html#gherkin-filters
-func (s *Suite) matchesTags(tags []string) (ok bool) {
+func matchesTags(filter string, tags []string) (ok bool) {
 	ok = true
-	for _, andTags := range strings.Split(s.tags, "&&") {
+	for _, andTags := range strings.Split(filter, "&&") {
 		var okComma bool
 		for _, tag := range strings.Split(andTags, ",") {
 			tag = strings.Replace(strings.TrimSpace(tag), "@", "", -1)

@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/DATA-DOG/godog"
 	"github.com/shiena/ansicolor"
@@ -12,7 +14,7 @@ func buildAndRun() error {
 	// will support Ansi colors for windows
 	stdout := ansicolor.NewAnsiColorWriter(os.Stdout)
 
-	builtFile := "/tmp/bgodog.go"
+	builtFile := fmt.Sprintf("%s/%dgodog.go", os.TempDir(), time.Now().UnixNano())
 	// @TODO: then there is a suite error or panic, it may
 	// be interesting to see the built file. But we
 	// even cannot determine the status of exit error

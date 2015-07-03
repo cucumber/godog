@@ -50,6 +50,7 @@ type firedEvent struct {
 }
 
 type suiteContext struct {
+	paths       []string
 	testedSuite *Suite
 	events      []*firedEvent
 	fmt         *testFormatter
@@ -58,6 +59,7 @@ type suiteContext struct {
 func (s *suiteContext) ResetBeforeEachScenario(interface{}) {
 	// reset whole suite with the state
 	s.fmt = &testFormatter{}
+	s.paths = []string{}
 	s.testedSuite = &Suite{fmt: s.fmt}
 	// our tested suite will have the same context registered
 	SuiteContext(s.testedSuite)
@@ -177,12 +179,17 @@ func (s *suiteContext) aFeatureFile(name string, body *gherkin.DocString) error 
 }
 
 func (s *suiteContext) featurePath(path string) error {
-	s.testedSuite.paths = append(s.testedSuite.paths, path)
+	s.paths = append(s.paths, path)
 	return nil
 }
 
 func (s *suiteContext) parseFeatures() error {
-	return s.testedSuite.parseFeatures()
+	fts, err := parseFeatures("", s.paths)
+	if err != nil {
+		return err
+	}
+	s.testedSuite.features = append(s.testedSuite.features, fts...)
+	return nil
 }
 
 func (s *suiteContext) theSuiteShouldHave(state string) error {
