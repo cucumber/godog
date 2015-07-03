@@ -13,7 +13,7 @@ type server struct {
 	db *sql.DB
 }
 
-type User struct {
+type user struct {
 	ID       int64  `json:"-"`
 	Username string `json:"username"`
 	Email    string `json:"-"`
@@ -25,14 +25,15 @@ func (s *server) users(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users := make([]*User, 0)
+	var users []*user
 	rows, err := s.db.Query("SELECT id, email, username FROM users")
 	defer rows.Close()
 	switch err {
 	case sql.ErrNoRows:
+		users = make([]*user, 0) // an empty array in this case
 	case nil:
 		for rows.Next() {
-			user := &User{}
+			user := &user{}
 			if err := rows.Scan(&user.ID, &user.Email, &user.Username); err != nil {
 				fail(w, fmt.Sprintf("failed to scan an user: %s", err), http.StatusInternalServerError)
 				return
@@ -45,7 +46,7 @@ func (s *server) users(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		Users []*User `json:"users"`
+		Users []*user `json:"users"`
 	}{Users: users}
 
 	ok(w, data)
