@@ -3,6 +3,8 @@
 
 # Godog
 
+**The API is likely to change a few times before we reach 1.0.0**
+
 **Godog** is an open source behavior-driven development framework for [go][golang] programming language.
 What is behavior-driven development, you ask? It’s the idea that you start by writing human-readable sentences that
 describe a feature of your application and how it should work, and only then implement this behavior in software.
@@ -15,9 +17,6 @@ to functionally test your application while maintaining all test related source 
 **Godog** acts similar compared to **go test** command. It builds all package sources to a single main package file
 and replaces **main** func with it's own and runs the build to test described application behavior in feature files.
 Production builds remain clean without any test related source code.
-
-The public [API][godoc] is small and should be stable for the future releases. Something may be added or exported, but
-not changed most likely. I'll try to respect **backward compatibility** as much as possible.
 
 ### Install
 
