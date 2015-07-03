@@ -3,6 +3,7 @@ package godog
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 	"text/template"
@@ -261,10 +262,13 @@ func (f *basefmt) Summary() {
 	}
 	fmt.Println(elapsed)
 
-	f.snippets()
+	if text := f.snippets(); text != "" {
+		fmt.Println(cl("\nYou can implement step definitions for undefined steps with these snippets:", yellow))
+		fmt.Println(cl(text, yellow))
+	}
 }
 
-func (s *undefinedSnippet) Args() string {
+func (s *undefinedSnippet) Args() (ret string) {
 	var args []string
 	var pos, idx int
 	var breakLoop bool
@@ -278,39 +282,47 @@ func (s *undefinedSnippet) Args() string {
 		case spos == -1:
 			idx++
 			pos += ipos + len("(\\d+)")
-			args = append(args, fmt.Sprintf("arg%d int", idx))
+			args = append(args, reflect.Int.String())
 		case ipos == -1:
 			idx++
 			pos += spos + len("\"([^\"]*)\"")
-			args = append(args, fmt.Sprintf("arg%d string", idx))
+			args = append(args, reflect.String.String())
 		case ipos < spos:
 			idx++
 			pos += ipos + len("(\\d+)")
-			args = append(args, fmt.Sprintf("arg%d int", idx))
+			args = append(args, reflect.Int.String())
 		case spos < ipos:
 			idx++
 			pos += spos + len("\"([^\"]*)\"")
-			args = append(args, fmt.Sprintf("arg%d string", idx))
+			args = append(args, reflect.String.String())
 		}
 	}
 	if s.argument != nil {
 		idx++
 		switch s.argument.(type) {
 		case *gherkin.DocString:
-			args = append(args, fmt.Sprintf("arg%d *gherkin.DocString", idx))
+			args = append(args, "*gherkin.DocString")
 		case *gherkin.DataTable:
-			args = append(args, fmt.Sprintf("arg%d *gherkin.DataTable", idx))
+			args = append(args, "*gherkin.DataTable")
 		}
 	}
-	return strings.Join(args, ", ")
+
+	var last string
+	for i, arg := range args {
+		if last == "" || last == arg {
+			ret += fmt.Sprintf("arg%d, ", i+1)
+		} else {
+			ret = strings.TrimRight(ret, ", ") + fmt.Sprintf(" %s, arg%d, ", last, i+1)
+		}
+		last = arg
+	}
+	return strings.TrimRight(ret, ", ") + " " + last
 }
 
-func (f *basefmt) snippets() {
+func (f *basefmt) snippets() string {
 	if len(f.undefined) == 0 {
-		return
+		return ""
 	}
-
-	fmt.Println(cl("\nYou can implement step definitions for undefined steps with these snippets:", yellow))
 
 	var index int
 	var snips []*undefinedSnippet
@@ -355,5 +367,5 @@ func (f *basefmt) snippets() {
 	if err := undefinedSnippetsTpl.Execute(&buf, snips); err != nil {
 		panic(err)
 	}
-	fmt.Println(cl(buf.String(), yellow))
+	return buf.String()
 }

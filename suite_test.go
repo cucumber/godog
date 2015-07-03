@@ -29,6 +29,7 @@ func SuiteContext(s Suite) {
 	s.Step(`^a failing step`, c.aFailingStep)
 	s.Step(`^this step should fail`, c.aFailingStep)
 	s.Step(`^the following steps? should be (passed|failed|skipped|undefined|pending):`, c.followingStepsShouldHave)
+	s.Step(`^the undefined step snippets should be:$`, c.theUndefinedStepSnippetsShouldBe)
 
 	// lt
 	s.Step(`^savybių aplankas "([^"]*)"$`, c.featurePath)
@@ -62,6 +63,23 @@ func (s *suiteContext) ResetBeforeEachScenario(interface{}) {
 	SuiteContext(s.testedSuite)
 	// reset all fired events
 	s.events = []*firedEvent{}
+}
+
+func (s *suiteContext) cleanupSnippet(snip string) string {
+	lines := strings.Split(strings.TrimSpace(snip), "\n")
+	for i := 0; i < len(lines); i++ {
+		lines[i] = strings.TrimSpace(lines[i])
+	}
+	return strings.Join(lines, "\n")
+}
+
+func (s *suiteContext) theUndefinedStepSnippetsShouldBe(body *gherkin.DocString) error {
+	actual := s.cleanupSnippet(s.fmt.snippets())
+	expected := s.cleanupSnippet(body.Content)
+	if actual != expected {
+		return fmt.Errorf("snippets do not match actual: %s", s.fmt.snippets())
+	}
+	return nil
 }
 
 func (s *suiteContext) followingStepsShouldHave(status string, steps *gherkin.DocString) error {
