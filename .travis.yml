@@ -23,7 +23,7 @@ script:
   # run features
   - go run cmd/godog/main.go --format=progress --concurrency=4
 
-  # code correctness
-  - sh -c 'RES="$(go fmt ./...)"; if [ ! -z "$RES" ]; then echo $RES; exit 1; fi'
-  - sh -c 'RES="$(golint ./...)"; if [ ! -z "$RES" ]; then echo $RES; exit 1; fi'
+  # code correctness, 1.2 version has different fmt version, skip it
+  - (go version | grep -e "go1.[1-2]") || sh -c 'RES="$(go fmt ./...)"; if [ ! -z "$RES" ]; then echo $RES; exit 1; fi'
+  - (go version | grep "go1.1") || sh -c 'RES="$(golint ./...)"; if [ ! -z "$RES" ]; then echo $RES; exit 1; fi'
   - go vet ./...
