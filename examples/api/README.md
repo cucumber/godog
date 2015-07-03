@@ -75,7 +75,7 @@ func (a *apiFeature) theResponseShouldMatchJSON(body *gherkin.DocString) error {
 	return godog.ErrPending
 }
 
-func featureContext(s godog.Suite) {
+func featureContext(s *godog.Suite) {
 	api := &apiFeature{}
 	s.Step(`^I send "([^"]*)" request to "([^"]*)"$`, api.iSendrequestTo)
 	s.Step(`^the response code should be (\d+)$`, api.theResponseCodeShouldBe)
@@ -158,7 +158,7 @@ func (a *apiFeature) theResponseShouldMatchJSON(body *gherkin.DocString) (err er
 	return
 }
 
-func featureContext(s godog.Suite) {
+func featureContext(s *godog.Suite) {
 	api := &apiFeature{}
 
 	s.BeforeScenario(api.resetResponse)

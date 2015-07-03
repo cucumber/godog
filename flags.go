@@ -5,7 +5,9 @@ import (
 	"fmt"
 )
 
-func flags(s *suite) *flag.FlagSet {
+// Flags builds a *flag.FlagSet with all flags
+// required for the godog suite
+func flags(s *Suite) *flag.FlagSet {
 	set := flag.NewFlagSet("godog", flag.ExitOnError)
 	set.StringVar(&s.format, "format", "pretty", "")
 	set.StringVar(&s.format, "f", "pretty", "")

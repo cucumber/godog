@@ -28,52 +28,18 @@ var ErrUndefined = fmt.Errorf("step is undefined")
 // step implementation is pending
 var ErrPending = fmt.Errorf("step implementation is pending")
 
-// Suite is an interface which allows various contexts
+// Suite allows various contexts
 // to register steps and event handlers.
 //
-// When running a test suite, this interface is passed
-// to all functions (contexts), which have it as a
-// first and only argument.
+// When running a test suite, the instance of Suite
+// is passed to all functions (contexts), which
+// have it as a first and only argument.
 //
 // Note that all event hooks does not catch panic errors
 // in order to have a trace information. Only step
 // executions are catching panic error since it may
 // be a context specific error.
-type Suite interface {
-	// Run the test suite
-	Run()
-
-	// Registers a step which will execute stepFunc
-	// on step expr match
-	//
-	// expr can be either a string or a *regexp.Regexp
-	// stepFunc is a func to handle the step, arguments
-	// are set from matched step
-	Step(expr interface{}, h interface{})
-
-	// BeforeSuite registers a func to run on initial
-	// suite startup
-	BeforeSuite(f func())
-
-	// BeforeScenario registers a func to run before
-	// every *gherkin.Scenario or *gherkin.ScenarioOutline
-	BeforeScenario(f func(interface{}))
-
-	// BeforeStep register a handler before every step
-	BeforeStep(f func(*gherkin.Step))
-
-	// AfterStep register a handler after every step
-	AfterStep(f func(*gherkin.Step, error))
-
-	// AfterScenario registers a func to run after
-	// every *gherkin.Scenario or *gherkin.ScenarioOutline
-	AfterScenario(f func(interface{}, error))
-
-	// AfterSuite runs func int the end of tests
-	AfterSuite(f func())
-}
-
-type suite struct {
+type Suite struct {
 	steps    []*StepDef
 	features []*feature
 	fmt      Formatter
@@ -98,24 +64,27 @@ type suite struct {
 }
 
 // New initializes a Suite. The instance is passed around
-// to all context initialization functions from *_test.go files
-func New() Suite {
-	return &suite{}
+// to all context initialization functions from *_test.go files.
+func New() *Suite {
+	return &Suite{}
 }
 
-// Step allows to register a StepHandler in Godog
-// feature suite, the handler will be applied to all
-// steps matching the given Regexp expr
+// Step allows to register a *StepDef in Godog
+// feature suite, the definition will be applied
+// to all steps matching the given Regexp expr.
 //
-// It will panic if expr is not a valid regular expression
+// It will panic if expr is not a valid regular
+// expression or stepFunc is not a valid step
+// handler.
 //
-// Note that if there are two handlers which may match
-// the same step, then the only first matched handler
+// Note that if there are two definitions which may match
+// the same step, then only the first matched handler
 // will be applied.
 //
-// If none of the StepHandlers are matched, then
-// ErrUndefined error will be returned.
-func (s *suite) Step(expr interface{}, stepFunc interface{}) {
+// If none of the *StepDef is matched, then
+// ErrUndefined error will be returned when
+// running steps.
+func (s *Suite) Step(expr interface{}, stepFunc interface{}) {
 	var regex *regexp.Regexp
 
 	switch t := expr.(type) {
@@ -152,7 +121,7 @@ func (s *suite) Step(expr interface{}, stepFunc interface{}) {
 //
 // Use it to prepare the test suite for a spin.
 // Connect and prepare database for instance...
-func (s *suite) BeforeSuite(f func()) {
+func (s *Suite) BeforeSuite(f func()) {
 	s.beforeSuiteHandlers = append(s.beforeSuiteHandlers, f)
 }
 
@@ -165,13 +134,13 @@ func (s *suite) BeforeSuite(f func()) {
 // It is a good practice to restore the default state
 // before every scenario so it would be isolated from
 // any kind of state.
-func (s *suite) BeforeScenario(f func(interface{})) {
+func (s *Suite) BeforeScenario(f func(interface{})) {
 	s.beforeScenarioHandlers = append(s.beforeScenarioHandlers, f)
 }
 
 // BeforeStep registers a function or method
 // to be run before every scenario
-func (s *suite) BeforeStep(f func(*gherkin.Step)) {
+func (s *Suite) BeforeStep(f func(*gherkin.Step)) {
 	s.beforeStepHandlers = append(s.beforeStepHandlers, f)
 }
 
@@ -184,7 +153,7 @@ func (s *suite) BeforeStep(f func(*gherkin.Step)) {
 //
 // In some cases, for example when running a headless
 // browser, to take a screenshot after failure.
-func (s *suite) AfterStep(f func(*gherkin.Step, error)) {
+func (s *Suite) AfterStep(f func(*gherkin.Step, error)) {
 	s.afterStepHandlers = append(s.afterStepHandlers, f)
 }
 
@@ -193,18 +162,18 @@ func (s *suite) AfterStep(f func(*gherkin.Step, error)) {
 //
 // The interface argument may be *gherkin.Scenario
 // or *gherkin.ScenarioOutline
-func (s *suite) AfterScenario(f func(interface{}, error)) {
+func (s *Suite) AfterScenario(f func(interface{}, error)) {
 	s.afterScenarioHandlers = append(s.afterScenarioHandlers, f)
 }
 
 // AfterSuite registers a function or method
 // to be run once after suite runner
-func (s *suite) AfterSuite(f func()) {
+func (s *Suite) AfterSuite(f func()) {
 	s.afterSuiteHandlers = append(s.afterSuiteHandlers, f)
 }
 
 // Run starts the Godog feature suite
-func (s *suite) Run() {
+func (s *Suite) Run() {
 	flagSet := flags(s)
 	fatal(flagSet.Parse(os.Args[1:]))
 
@@ -249,7 +218,7 @@ func (s *suite) Run() {
 	}
 }
 
-func (s *suite) run() {
+func (s *Suite) run() {
 	// run before suite handlers
 	for _, f := range s.beforeSuiteHandlers {
 		f()
@@ -269,7 +238,7 @@ func (s *suite) run() {
 	s.fmt.Summary()
 }
 
-func (s *suite) matchStep(step *gherkin.Step) *StepDef {
+func (s *Suite) matchStep(step *gherkin.Step) *StepDef {
 	for _, h := range s.steps {
 		if m := h.Expr.FindStringSubmatch(step.Text); len(m) > 0 {
 			var args []interface{}
@@ -286,7 +255,7 @@ func (s *suite) matchStep(step *gherkin.Step) *StepDef {
 	return nil
 }
 
-func (s *suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
+func (s *Suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
 	match := s.matchStep(step)
 	if match == nil {
 		s.fmt.Undefined(step)
@@ -330,7 +299,7 @@ func (s *suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
 	return
 }
 
-func (s *suite) runSteps(steps []*gherkin.Step, prevErr error) (err error) {
+func (s *Suite) runSteps(steps []*gherkin.Step, prevErr error) (err error) {
 	err = prevErr
 	for _, step := range steps {
 		stepErr := s.runStep(step, err)
@@ -347,13 +316,13 @@ func (s *suite) runSteps(steps []*gherkin.Step, prevErr error) (err error) {
 	return
 }
 
-func (s *suite) skipSteps(steps []*gherkin.Step) {
+func (s *Suite) skipSteps(steps []*gherkin.Step) {
 	for _, step := range steps {
 		s.fmt.Skipped(step)
 	}
 }
 
-func (s *suite) runOutline(outline *gherkin.ScenarioOutline, b *gherkin.Background) (failErr error) {
+func (s *Suite) runOutline(outline *gherkin.ScenarioOutline, b *gherkin.Background) (failErr error) {
 	s.fmt.Node(outline)
 
 	for _, example := range outline.Examples {
@@ -403,7 +372,7 @@ func (s *suite) runOutline(outline *gherkin.ScenarioOutline, b *gherkin.Backgrou
 	return
 }
 
-func (s *suite) runFeature(f *feature) {
+func (s *Suite) runFeature(f *feature) {
 	s.fmt.Feature(f.Feature, f.Path)
 	for _, scenario := range f.ScenarioDefinitions {
 		var err error
@@ -425,7 +394,7 @@ func (s *suite) runFeature(f *feature) {
 	}
 }
 
-func (s *suite) runScenario(scenario *gherkin.Scenario, b *gherkin.Background) (err error) {
+func (s *Suite) runScenario(scenario *gherkin.Scenario, b *gherkin.Background) (err error) {
 	// run before scenario handlers
 	for _, f := range s.beforeScenarioHandlers {
 		f(scenario)
@@ -448,7 +417,7 @@ func (s *suite) runScenario(scenario *gherkin.Scenario, b *gherkin.Background) (
 	return
 }
 
-func (s *suite) printStepDefinitions() {
+func (s *Suite) printStepDefinitions() {
 	var longest int
 	for _, def := range s.steps {
 		if longest < len(def.Expr.String()) {
@@ -465,7 +434,7 @@ func (s *suite) printStepDefinitions() {
 	}
 }
 
-func (s *suite) parseFeatures() (err error) {
+func (s *Suite) parseFeatures() (err error) {
 	for _, pat := range s.paths {
 		// check if line number is specified
 		parts := strings.Split(pat, ":")
@@ -525,7 +494,7 @@ func (s *suite) parseFeatures() (err error) {
 	return
 }
 
-func (s *suite) applyTagFilter(ft *gherkin.Feature) {
+func (s *Suite) applyTagFilter(ft *gherkin.Feature) {
 	if len(s.tags) == 0 {
 		return
 	}
@@ -585,7 +554,7 @@ func hasTag(tags []string, tag string) bool {
 }
 
 // based on http://behat.readthedocs.org/en/v2.5/guides/6.cli.html#gherkin-filters
-func (s *suite) matchesTags(tags []string) (ok bool) {
+func (s *Suite) matchesTags(tags []string) (ok bool) {
 	ok = true
 	for _, andTags := range strings.Split(s.tags, "&&") {
 		var okComma bool

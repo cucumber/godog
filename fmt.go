@@ -30,7 +30,7 @@ var undefinedSnippetsTpl = template.Must(template.New("snippets").Funcs(snippetH
 	return godog.ErrPending
 }
 
-{{end}}func featureContext(s godog.Suite) { {{ range . }}
+{{end}}func featureContext(s *godog.Suite) { {{ range . }}
 	s.Step({{ backticked .Expr }}, {{ .Method }}){{end}}
 }
 `))

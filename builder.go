@@ -82,7 +82,7 @@ func (b *builder) parseFile(path string) error {
 		b.Internal = true
 	}
 	b.deleteMainFunc(f)
-	b.registerSteps(f)
+	b.registerContexts(f)
 	b.deleteImports(f)
 	b.files[path] = f
 
@@ -122,22 +122,25 @@ func (b *builder) deleteMainFunc(f *ast.File) {
 	f.Decls = decls
 }
 
-func (b *builder) registerSteps(f *ast.File) {
+func (b *builder) registerContexts(f *ast.File) {
 	for _, d := range f.Decls {
 		switch fun := d.(type) {
 		case *ast.FuncDecl:
 			for _, param := range fun.Type.Params.List {
 				switch expr := param.Type.(type) {
-				case *ast.SelectorExpr:
+				case *ast.StarExpr:
 					switch x := expr.X.(type) {
 					case *ast.Ident:
-						if x.Name == "godog" && expr.Sel.Name == "Suite" {
+						if x.Name == "Suite" {
 							b.Contexts = append(b.Contexts, fun.Name.Name)
 						}
-					}
-				case *ast.Ident:
-					if expr.Name == "Suite" {
-						b.Contexts = append(b.Contexts, fun.Name.Name)
+					case *ast.SelectorExpr:
+						switch t := x.X.(type) {
+						case *ast.Ident:
+							if t.Name == "godog" && x.Sel.Name == "Suite" {
+								b.Contexts = append(b.Contexts, fun.Name.Name)
+							}
+						}
 					}
 				}
 			}

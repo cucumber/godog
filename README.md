@@ -25,11 +25,15 @@ not changed most likely. I'll try to respect **backward compatibility** as much 
 
 ### Example
 
+The following example can be [found here](https://github.com/DATA-DOG/godog/tree/master/examples/godogs).
+
+#### Step 1
+
 Imagine we have a **godog cart** to serve godogs for dinner. At first, we describe our feature
 in plain text:
 
 ``` gherkin
-# file: /tmp/godog/godog.feature
+# file: examples/godogs/godog.feature
 Feature: eat godogs
   In order to be happy
   As a hungry gopher
@@ -44,22 +48,27 @@ Feature: eat godogs
 As a developer, your work is done as soon as you’ve made the program behave as
 described in the Scenario.
 
-If you run `godog godog.feature` inside the **/tmp/godog** directory.
+#### Step 2
+
+If you run `godog godog.feature` inside the **examples/godogs** directory.
 You should see that the steps are undefined:
 
 ![Screenshot](https://raw.github.com/DATA-DOG/godog/master/screenshots/undefined.png)
 
 It gives you undefined step snippets to implement in your test context. You may copy these snippets
-into **godog_test.go** file.
+into your `*_test.go` file.
 
 Now if you run the tests again. You should see that the definition is now pending. You may change
 **ErrPending** to **nil** and the scenario will pass successfully.
 
-Since we need a working implementation, we may start by implementing what is necessary.
-We only need a number of **godogs** for now.
+Since we need a working implementation, we may start by implementing only what is necessary.
+
+#### Step 3
+
+We only need a number of **godogs** for now. Lets define steps.
 
 ``` go
-/* file: /tmp/godog/godog.go */
+/* file: examples/godogs/godog.go */
 package main
 
 var Godogs int
@@ -67,10 +76,12 @@ var Godogs int
 func main() { /* usual main func */ }
 ```
 
+#### Step 4
+
 Now lets finish our step implementations in order to test our feature requirements:
 
 ``` go
-/* file: /tmp/godog/godog_test.go */
+/* file: examples/godogs/godog_test.go */
 package main
 
 import (
@@ -99,7 +110,7 @@ func thereShouldBeRemaining(remaining int) error {
 	return nil
 }
 
-func featureContext(s godog.Suite) {
+func featureContext(s *godog.Suite) {
 	s.Step(`^there are (\d+) godogs$`, thereAreGodogs)
 	s.Step(`^I eat (\d+)$`, iEat)
 	s.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
@@ -126,8 +137,15 @@ See `godog -h` for general command options.
 
 See implementation examples:
 
-- [rest API server](https://github.com/DATA-DOG/godog/tree/master/examples/api) implementation and tests
-- [ls command](https://github.com/DATA-DOG/godog/tree/master/examples/ls) implementation and tests
+- [rest API server](https://github.com/DATA-DOG/godog/tree/master/examples/api)
+- [godogs](https://github.com/DATA-DOG/godog/tree/master/examples/godogs)
+
+### Changes
+
+**2015-07-03**
+- changed **godog.Suite** from interface to struct. Context registration should be updated accordingly. The reason
+for change: since it exports the same methods and there is no need to mock a function in tests, there is no
+obvious reason to keep an interface.
 
 ### FAQ
 

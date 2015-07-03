@@ -8,7 +8,7 @@ import (
 	"github.com/cucumber/gherkin-go"
 )
 
-func SuiteContext(s Suite) {
+func SuiteContext(s *Suite) {
 	c := &suiteContext{}
 
 	s.BeforeScenario(c.ResetBeforeEachScenario)
@@ -50,7 +50,7 @@ type firedEvent struct {
 }
 
 type suiteContext struct {
-	testedSuite *suite
+	testedSuite *Suite
 	events      []*firedEvent
 	fmt         *testFormatter
 }
@@ -58,7 +58,7 @@ type suiteContext struct {
 func (s *suiteContext) ResetBeforeEachScenario(interface{}) {
 	// reset whole suite with the state
 	s.fmt = &testFormatter{}
-	s.testedSuite = &suite{fmt: s.fmt}
+	s.testedSuite = &Suite{fmt: s.fmt}
 	// our tested suite will have the same context registered
 	SuiteContext(s.testedSuite)
 	// reset all fired events

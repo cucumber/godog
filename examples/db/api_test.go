@@ -117,7 +117,7 @@ func (a *apiFeature) thereAreUsers(users *gherkin.DataTable) error {
 	return nil
 }
 
-func featureContext(s godog.Suite) {
+func featureContext(s *godog.Suite) {
 	api := &apiFeature{}
 
 	s.BeforeScenario(api.resetResponse)
