@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	RegisterFormatter("progress", "Prints a character per step.", &progress{
+	Format("progress", "Prints a character per step.", &progress{
 		basefmt: basefmt{
 			started: time.Now(),
 			indent:  2,

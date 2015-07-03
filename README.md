@@ -150,6 +150,7 @@ obvious reason to keep an interface.
 - in order to support running suite concurrently, needed to refactor an entry point of application. The **Run** method
 now is a func of godog package which initializes and run the suite (or more suites). Method **New** is removed. This
 change made godog a little cleaner.
+- renamed **RegisterFormatter** func to **Format** to be more consistent.
 
 ### FAQ
 

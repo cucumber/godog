@@ -65,10 +65,10 @@ func findFmt(format string) (f Formatter, err error) {
 	return
 }
 
-// RegisterFormatter registers a feature suite output
+// Format registers a feature suite output
 // Formatter as the name and descriptiongiven.
 // Formatter is used to represent suite output
-func RegisterFormatter(name, description string, f Formatter) {
+func Format(name, description string, f Formatter) {
 	formatters = append(formatters, &registeredFormatter{
 		name:        name,
 		fmt:         f,
@@ -82,7 +82,7 @@ func RegisterFormatter(name, description string, f Formatter) {
 // New formatters may be created to represent
 // suite results in different ways. These new
 // formatters needs to be registered with a
-// RegisterFormatter function call
+// godog.Format function call
 type Formatter interface {
 	Feature(*gherkin.Feature, string)
 	Node(interface{})

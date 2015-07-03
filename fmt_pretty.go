@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	RegisterFormatter("pretty", "Prints every feature with runtime statuses.", &pretty{
+	Format("pretty", "Prints every feature with runtime statuses.", &pretty{
 		basefmt: basefmt{
 			started: time.Now(),
 			indent:  2,
