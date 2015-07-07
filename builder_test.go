@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/parser"
 	"go/token"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -83,6 +84,9 @@ func (b *builder) cleanSpacing(src string) string {
 }
 
 func TestUsualSourceFileMerge(t *testing.T) {
+	if strings.HasPrefix(runtime.Version(), "go1.1") {
+		t.Skip("skipping this test for go1.1")
+	}
 	b := newBuilderSkel()
 	err := b.registerMulti([]string{
 		builderMainFile, builderPackAliases, builderAnonymousImport,
