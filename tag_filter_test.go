@@ -16,7 +16,7 @@ func assertMatchesTagFilter(tags []string, filter string, t *testing.T) {
 	}
 }
 
-func Test_tag_filter(t *testing.T) {
+func TestTagFilter(t *testing.T) {
 	assertMatchesTagFilter([]string{"wip"}, "@wip", t)
 	assertMatchesTagFilter([]string{}, "~@wip", t)
 	assertMatchesTagFilter([]string{"one", "two"}, "@two,@three", t)

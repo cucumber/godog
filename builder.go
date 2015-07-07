@@ -39,8 +39,8 @@ func (b *builder) hasImport(a *ast.ImportSpec) bool {
 	return false
 }
 
-func newBuilder(buildPath string) (*builder, error) {
-	b := &builder{
+func newBuilderSkel() *builder {
+	return &builder{
 		files: make(map[string]*ast.File),
 		fset:  token.NewFileSet(),
 		tpl: template.Must(template.New("main").Parse(`package main
@@ -57,15 +57,20 @@ func main() {
 	})
 }`)),
 	}
+}
 
+func newBuilder(buildPath string) (*builder, error) {
+	b := newBuilderSkel()
 	err := filepath.Walk(buildPath, func(path string, file os.FileInfo, err error) error {
 		if file.IsDir() && file.Name() != "." {
 			return filepath.SkipDir
 		}
 		if err == nil && strings.HasSuffix(path, ".go") {
-			if err := b.parseFile(path); err != nil {
+			f, err := parser.ParseFile(b.fset, path, nil, 0)
+			if err != nil {
 				return err
 			}
+			b.register(f, path)
 		}
 		return err
 	})
@@ -73,11 +78,7 @@ func main() {
 	return b, err
 }
 
-func (b *builder) parseFile(path string) error {
-	f, err := parser.ParseFile(b.fset, path, nil, 0)
-	if err != nil {
-		return err
-	}
+func (b *builder) register(f *ast.File, path string) {
 	// mark godog package as internal
 	if f.Name.Name == "godog" && !b.Internal {
 		b.Internal = true
@@ -86,8 +87,6 @@ func (b *builder) parseFile(path string) error {
 	b.registerContexts(f)
 	b.deleteImports(f)
 	b.files[path] = f
-
-	return nil
 }
 
 func (b *builder) deleteImports(f *ast.File) {
@@ -149,7 +148,7 @@ func (b *builder) registerContexts(f *ast.File) {
 	}
 }
 
-func (b *builder) merge() (*ast.File, error) {
+func (b *builder) merge() ([]byte, error) {
 	var buf bytes.Buffer
 	if err := b.tpl.Execute(&buf, b); err != nil {
 		return nil, err
@@ -168,7 +167,7 @@ func (b *builder) merge() (*ast.File, error) {
 
 	ret, err := ast.MergePackageFiles(pkg, 0), nil
 	if err != nil {
-		return ret, err
+		return nil, err
 	}
 
 	// @TODO: we reread the file, probably something goes wrong with position
@@ -190,7 +189,13 @@ func (b *builder) merge() (*ast.File, error) {
 		ipath, _ := strconv.Unquote(spec.Path.Value)
 		addImport(b.fset, ret, name, ipath)
 	}
-	return ret, nil
+
+	buf.Reset()
+	if err := format.Node(&buf, b.fset, ret); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
 
 // Build creates a runnable Godog executable file
@@ -209,18 +214,7 @@ func Build() ([]byte, error) {
 		return nil, err
 	}
 
-	merged, err := b.merge()
-	if err != nil {
-		return nil, err
-	}
-
-	var buf bytes.Buffer
-
-	if err := format.Node(&buf, b.fset, merged); err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
+	return b.merge()
 }
 
 // taken from https://github.com/golang/tools/blob/master/go/ast/astutil/imports.go#L17
