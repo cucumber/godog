@@ -8,13 +8,14 @@ import (
 	"net/http/httptest"
 	"strings"
 
+	"github.com/DATA-DOG/go-txdb"
 	"github.com/DATA-DOG/godog"
 	"github.com/cucumber/gherkin-go"
 )
 
 func init() {
 	// we register an sql driver txdb
-	Register("mysql", "root@/godog_test")
+	txdb.Register("txdb", "mysql", "root@/godog_test")
 }
 
 type apiFeature struct {
@@ -27,7 +28,7 @@ func (a *apiFeature) resetResponse(interface{}) {
 	if a.db != nil {
 		a.db.Close()
 	}
-	db, err := sql.Open("txdb", "")
+	db, err := sql.Open("txdb", "api")
 	if err != nil {
 		panic(err)
 	}

@@ -29,8 +29,6 @@ func (s *server) users(w http.ResponseWriter, r *http.Request) {
 	rows, err := s.db.Query("SELECT id, email, username FROM users")
 	defer rows.Close()
 	switch err {
-	case sql.ErrNoRows:
-		users = make([]*user, 0) // an empty array in this case
 	case nil:
 		for rows.Next() {
 			user := &user{}
@@ -39,6 +37,9 @@ func (s *server) users(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			users = append(users, user)
+		}
+		if len(users) == 0 {
+			users = make([]*user, 0) // an empty array in this case
 		}
 	default:
 		fail(w, fmt.Sprintf("failed to fetch users: %s", err), http.StatusInternalServerError)
