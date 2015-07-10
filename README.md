@@ -3,7 +3,7 @@
 
 # Godog
 
-![Logo](https://raw.github.com/DATA-DOG/godog/master/logo.png)
+<p align="center"><img src="https://raw.github.com/DATA-DOG/godog/master/logo.png" alt="Godog logo" style="width:250px;" /></p>
 
 **The API is likely to change a few times before we reach 1.0.0**
 
