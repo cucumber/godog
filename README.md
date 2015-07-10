@@ -3,6 +3,8 @@
 
 # Godog
 
+![Logo](https://raw.github.com/DATA-DOG/godog/master/logo.png)
+
 **The API is likely to change a few times before we reach 1.0.0**
 
 **Godog** is an open source behavior-driven development framework for [go][golang] programming language.
