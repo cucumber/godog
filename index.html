@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Godog : Cucumber like BDD framework for GO">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Godog</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/DATA-DOG/godog">View on GitHub</a>
+
+          <h1 id="project_title">Godog</h1>
+          <h2 id="project_tagline">Cucumber like BDD framework for GO</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/DATA-DOG/godog/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/DATA-DOG/godog/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <p><a href="https://travis-ci.org/DATA-DOG/godog"><img src="https://travis-ci.org/DATA-DOG/godog.svg?branch=master" alt="Build Status"></a>
+<a href="https://godoc.org/github.com/DATA-DOG/godog"><img src="https://godoc.org/github.com/DATA-DOG/godog?status.svg" alt="GoDoc"></a></p>
+
+<h1>
+<a id="godog" class="anchor" href="#godog" aria-hidden="true"><span class="octicon octicon-link"></span></a>Godog</h1>
+
+<p align="center"><img src="https://raw.github.com/DATA-DOG/godog/master/logo.png" alt="Godog logo"></p>
+
+<p><strong>The API is likely to change a few times before we reach 1.0.0</strong></p>
+
+<p><strong>Godog</strong> is an open source behavior-driven development framework for <a href="https://golang.org/" title="GO programming language">go</a> programming language.
+What is behavior-driven development, you ask? It’s the idea that you start by writing human-readable sentences that
+describe a feature of your application and how it should work, and only then implement this behavior in software.</p>
+
+<p>The project is inspired by <a href="http://docs.behat.org/" title="Behavior driven development framework for PHP">behat</a> and <a href="https://cucumber.io/" title="Behavior driven development framework for Ruby">cucumber</a> and is based on cucumber <a href="https://github.com/cucumber/gherkin-go" title="Gherkin3 parser for GO">gherkin3 parser</a>.</p>
+
+<p><strong>Godog</strong> does not intervene with the standard <strong>go test</strong> command and it's behavior. You can leverage both frameworks
+to functionally test your application while maintaining all test related source code in <strong>_test.go</strong> files.</p>
+
+<p><strong>Godog</strong> acts similar compared to <strong>go test</strong> command. It builds all package sources to a single main package file
+and replaces <strong>main</strong> func with it's own and runs the build to test described application behavior in feature files.
+Production builds remain clean without any test related source code.</p>
+
+<h3>
+<a id="install" class="anchor" href="#install" aria-hidden="true"><span class="octicon octicon-link"></span></a>Install</h3>
+
+<pre><code>go get github.com/DATA-DOG/godog/cmd/godog
+</code></pre>
+
+<h3>
+<a id="example" class="anchor" href="#example" aria-hidden="true"><span class="octicon octicon-link"></span></a>Example</h3>
+
+<p>The following example can be <a href="https://github.com/DATA-DOG/godog/tree/master/examples/godogs">found here</a>.</p>
+
+<h4>
+<a id="step-1" class="anchor" href="#step-1" aria-hidden="true"><span class="octicon octicon-link"></span></a>Step 1</h4>
+
+<p>Imagine we have a <strong>godog cart</strong> to serve godogs for dinner. At first, we describe our feature
+in plain text:</p>
+
+<div class="highlight highlight-gherkin"><pre><span class="pl-c"># file: examples/godogs/godog.feature</span>
+<span class="pl-k">Feature</span>:<span class="pl-s"> eat godogs</span>
+  In order to be happy
+  As a hungry gopher
+  <span class="pl-k">I </span>need to be able to eat godogs
+
+  <span class="pl-k">Scenario</span>:<span class="pl-s"> Eat 5 out of 12</span>
+    <span class="pl-k">Given </span>there are 12 godogs
+    <span class="pl-k">When </span>I eat 5
+    <span class="pl-k">Then </span>there should be 7 remaining</pre></div>
+
+<p>As a developer, your work is done as soon as you’ve made the program behave as
+described in the Scenario.</p>
+
+<h4>
+<a id="step-2" class="anchor" href="#step-2" aria-hidden="true"><span class="octicon octicon-link"></span></a>Step 2</h4>
+
+<p>If you run <code>godog godog.feature</code> inside the <strong>examples/godogs</strong> directory.
+You should see that the steps are undefined:</p>
+
+<p><img src="https://raw.github.com/DATA-DOG/godog/master/screenshots/undefined.png" alt="Screenshot"></p>
+
+<p>It gives you undefined step snippets to implement in your test context. You may copy these snippets
+into your <code>*_test.go</code> file.</p>
+
+<p>Now if you run the tests again. You should see that the definition is now pending. You may change
+<strong>ErrPending</strong> to <strong>nil</strong> and the scenario will pass successfully.</p>
+
+<p>Since we need a working implementation, we may start by implementing only what is necessary.</p>
+
+<h4>
+<a id="step-3" class="anchor" href="#step-3" aria-hidden="true"><span class="octicon octicon-link"></span></a>Step 3</h4>
+
+<p>We only need a number of <strong>godogs</strong> for now. Lets define steps.</p>
+
+<div class="highlight highlight-go"><pre><span class="pl-c">/* file: examples/godogs/godog.go */</span>
+<span class="pl-k">package</span> main
+
+<span class="pl-c">// Godogs to eat</span>
+<span class="pl-k">var</span> <span class="pl-smi">Godogs</span> <span class="pl-k">int</span>
+
+<span class="pl-k">func</span> <span class="pl-en">main</span>() { <span class="pl-c">/* usual main func */</span> }</pre></div>
+
+<h4>
+<a id="step-4" class="anchor" href="#step-4" aria-hidden="true"><span class="octicon octicon-link"></span></a>Step 4</h4>
+
+<p>Now lets finish our step implementations in order to test our feature requirements:</p>
+
+<div class="highlight highlight-go"><pre><span class="pl-c">/* file: examples/godogs/godog_test.go */</span>
+<span class="pl-k">package</span> main
+
+<span class="pl-k">import</span> (
+    <span class="pl-s"><span class="pl-pds">"</span>fmt<span class="pl-pds">"</span></span>
+
+    <span class="pl-s"><span class="pl-pds">"</span>github.com/DATA-DOG/godog<span class="pl-pds">"</span></span>
+)
+
+<span class="pl-k">func</span> <span class="pl-en">thereAreGodogs</span>(<span class="pl-v">available</span> <span class="pl-v">int</span>) <span class="pl-v">error</span> {
+    Godogs = available
+    <span class="pl-k">return</span> <span class="pl-c1">nil</span>
+}
+
+<span class="pl-k">func</span> <span class="pl-en">iEat</span>(<span class="pl-v">num</span> <span class="pl-v">int</span>) <span class="pl-v">error</span> {
+    <span class="pl-k">if</span> Godogs &lt; num {
+        <span class="pl-k">return</span> fmt.<span class="pl-c1">Errorf</span>(<span class="pl-s"><span class="pl-pds">"</span>you cannot eat <span class="pl-c1">%d</span> godogs, there are <span class="pl-c1">%d</span> available<span class="pl-pds">"</span></span>, num, Godogs)
+    }
+    Godogs -= num
+    <span class="pl-k">return</span> <span class="pl-c1">nil</span>
+}
+
+<span class="pl-k">func</span> <span class="pl-en">thereShouldBeRemaining</span>(<span class="pl-v">remaining</span> <span class="pl-v">int</span>) <span class="pl-v">error</span> {
+    <span class="pl-k">if</span> Godogs != remaining {
+        <span class="pl-k">return</span> fmt.<span class="pl-c1">Errorf</span>(<span class="pl-s"><span class="pl-pds">"</span>expected <span class="pl-c1">%d</span> godogs to be remaining, but there is <span class="pl-c1">%d</span><span class="pl-pds">"</span></span>, remaining, Godogs)
+    }
+    <span class="pl-k">return</span> <span class="pl-c1">nil</span>
+}
+
+<span class="pl-k">func</span> <span class="pl-en">featureContext</span>(<span class="pl-v">s</span> *<span class="pl-v">godog</span>.<span class="pl-v">Suite</span>) {
+    s.<span class="pl-c1">Step</span>(<span class="pl-s"><span class="pl-pds">`</span>^there are (\d+) godogs$<span class="pl-pds">`</span></span>, thereAreGodogs)
+    s.<span class="pl-c1">Step</span>(<span class="pl-s"><span class="pl-pds">`</span>^I eat (\d+)$<span class="pl-pds">`</span></span>, iEat)
+    s.<span class="pl-c1">Step</span>(<span class="pl-s"><span class="pl-pds">`</span>^there should be (\d+) remaining$<span class="pl-pds">`</span></span>, thereShouldBeRemaining)
+
+    s.<span class="pl-c1">BeforeScenario</span>(<span class="pl-k">func</span>(<span class="pl-k">interface</span>{}) {
+        Godogs = <span class="pl-c1">0</span> <span class="pl-c">// clean the state before every scenario</span>
+    })
+}</pre></div>
+
+<p>Now when you run the <code>godog godog.feature</code> again, you should see:</p>
+
+<p><img src="https://raw.github.com/DATA-DOG/godog/master/screenshots/passed.png" alt="Screenshot"></p>
+
+<p><strong>Note:</strong> we have hooked to <strong>BeforeScenario</strong> event in order to reset state. You may hook into
+more events, like <strong>AfterStep</strong> to test against an error and print more details about the error
+or state before failure. Or <strong>BeforeSuite</strong> to prepare a database.</p>
+
+<h3>
+<a id="documentation" class="anchor" href="#documentation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Documentation</h3>
+
+<p>See <a href="http://godoc.org/github.com/DATA-DOG/godog" title="Documentation on godoc">godoc</a> for general API details.
+See <strong>.travis.yml</strong> for supported <strong>go</strong> versions.
+See <code>godog -h</code> for general command options.</p>
+
+<p>See implementation examples:</p>
+
+<ul>
+<li><a href="https://github.com/DATA-DOG/godog/tree/master/examples/api">rest API server</a></li>
+<li><a href="https://github.com/DATA-DOG/godog/tree/master/examples/godogs">godogs</a></li>
+</ul>
+
+<h3>
+<a id="changes" class="anchor" href="#changes" aria-hidden="true"><span class="octicon octicon-link"></span></a>Changes</h3>
+
+<p><strong>2015-07-03</strong></p>
+
+<ul>
+<li>changed <strong>godog.Suite</strong> from interface to struct. Context registration should be updated accordingly. The reason
+for change: since it exports the same methods and there is no need to mock a function in tests, there is no
+obvious reason to keep an interface.</li>
+<li>in order to support running suite concurrently, needed to refactor an entry point of application. The <strong>Run</strong> method
+now is a func of godog package which initializes and run the suite (or more suites). Method <strong>New</strong> is removed. This
+change made godog a little cleaner.</li>
+<li>renamed <strong>RegisterFormatter</strong> func to <strong>Format</strong> to be more consistent.</li>
+</ul>
+
+<h3>
+<a id="faq" class="anchor" href="#faq" aria-hidden="true"><span class="octicon octicon-link"></span></a>FAQ</h3>
+
+<p><strong>Q:</strong> Where can I configure common options globally?
+<strong>A:</strong> You can't. Alias your common or project based commands: <code>alias godog-wip="godog --format=progress --tags=@wip"</code></p>
+
+<h3>
+<a id="contributions" class="anchor" href="#contributions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Contributions</h3>
+
+<p>Feel free to open a pull request. Note, if you wish to contribute an extension to public (exported methods or types) -
+please open an issue before to discuss whether these changes can be accepted. All backward incompatible changes are
+and will be treated cautiously.</p>
+
+<h3>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h3>
+
+<p>All package dependencies are <strong>MIT</strong> or <strong>BSD</strong> licensed.</p>
+
+<p><strong>Godog</strong> is licensed under the <a href="http://en.wikipedia.org/wiki/BSD_licenses" title="The three clause BSD license">three clause BSD license</a></p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Godog maintained by <a href="https://github.com/DATA-DOG">DATA-DOG</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
