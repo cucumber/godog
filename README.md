@@ -66,7 +66,7 @@ Since we need a working implementation, we may start by implementing only what i
 
 #### Step 3
 
-We only need a number of **godogs** for now. Lets define steps.
+We only need a number of **godogs** for now. Let's define steps.
 
 ``` go
 /* file: examples/godogs/godog.go */
@@ -80,7 +80,7 @@ func main() { /* usual main func */ }
 
 #### Step 4
 
-Now lets finish our step implementations in order to test our feature requirements:
+Now let's finish our step implementations in order to test our feature requirements:
 
 ``` go
 /* file: examples/godogs/godog_test.go */
