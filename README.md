@@ -59,7 +59,7 @@ You should see that the steps are undefined:
 It gives you undefined step snippets to implement in your test context. You may copy these snippets
 into your `*_test.go` file.
 
-Now if you run the tests again. You should see that the definition is now pending. You may change
+Now if you run the tests again you should see that the definition is now pending. You may change
 **ErrPending** to **nil** and the scenario will pass successfully.
 
 Since we need a working implementation, we may start by implementing only what is necessary.
