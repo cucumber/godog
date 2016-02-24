@@ -13,11 +13,11 @@ describe a feature of your application and how it should work, and only then imp
 
 The project is inspired by [behat][behat] and [cucumber][cucumber] and is based on cucumber [gherkin3 parser][gherkin].
 
-**Godog** does not intervene with the standard **go test** command and it's behavior. You can leverage both frameworks
+**Godog** does not intervene with the standard **go test** command and its behavior. You can leverage both frameworks
 to functionally test your application while maintaining all test related source code in **_test.go** files.
 
 **Godog** acts similar compared to **go test** command. It builds all package sources to a single main package file
-and replaces **main** func with it's own and runs the build to test described application behavior in feature files.
+and replaces **main** func with its own and runs the build to test described application behavior in feature files.
 Production builds remain clean without any test related source code.
 
 ### Install
@@ -59,14 +59,14 @@ You should see that the steps are undefined:
 It gives you undefined step snippets to implement in your test context. You may copy these snippets
 into your `*_test.go` file.
 
-Now if you run the tests again. You should see that the definition is now pending. You may change
+Now if you run the tests again you should see that the definition is now pending. You may change
 **ErrPending** to **nil** and the scenario will pass successfully.
 
 Since we need a working implementation, we may start by implementing only what is necessary.
 
 #### Step 3
 
-We only need a number of **godogs** for now. Lets define steps.
+We only need a number of **godogs** for now. Let's define steps.
 
 ``` go
 /* file: examples/godogs/godog.go */
@@ -80,7 +80,7 @@ func main() { /* usual main func */ }
 
 #### Step 4
 
-Now lets finish our step implementations in order to test our feature requirements:
+Now let's finish our step implementations in order to test our feature requirements:
 
 ``` go
 /* file: examples/godogs/godog_test.go */
