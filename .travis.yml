@@ -13,7 +13,7 @@ script:
   - (go version | grep "go1.1") || go get github.com/golang/lint/golint
 
   # pull all external dependencies
-  - go get github.com/cucumber/gherkin-go
+  # - go get github.com/cucumber/gherkin-go
   - go get github.com/shiena/ansicolor
 
   # run standard go tests
