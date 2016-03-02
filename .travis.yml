@@ -7,6 +7,12 @@ go:
   - release
   - tip
 
+before_install:
+  - go get github.com/tools/godep
+
+install:
+  - godep restore
+
 script:
   # linters and vet
   - (go version | grep "go1.1") || go get golang.org/x/tools/cmd/vet
