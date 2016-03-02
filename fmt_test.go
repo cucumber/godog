@@ -1,6 +1,6 @@
 package godog
 
-import "github.com/cucumber/gherkin-go"
+import "gopkg.in/cucumber/gherkin-go.v3"
 
 type testFormatter struct {
 	basefmt

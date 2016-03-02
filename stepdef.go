@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"strconv"
 
-	"github.com/cucumber/gherkin-go"
+	"gopkg.in/cucumber/gherkin-go.v3"
 )
 
 // StepDef is a registered step definition

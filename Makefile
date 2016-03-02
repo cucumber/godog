@@ -10,6 +10,6 @@ test:
 
 deps:
 	@echo "updating all dependencies"
-	go get -u github.com/cucumber/gherkin-go
+	go get -u gopkg.in/cucumber/gherkin-go.v3
 	go get -u github.com/shiena/ansicolor
 

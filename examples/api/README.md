@@ -57,7 +57,7 @@ package main
 
 import (
 	"github.com/DATA-DOG/godog"
-	"github.com/cucumber/gherkin-go"
+	"gopkg.in/cucumber/gherkin-go.v3"
 )
 
 type apiFeature struct {
@@ -99,7 +99,7 @@ import (
 	"net/http/httptest"
 
 	"github.com/DATA-DOG/godog"
-	"github.com/cucumber/gherkin-go"
+	"gopkg.in/cucumber/gherkin-go.v3"
 )
 
 type apiFeature struct {

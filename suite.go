@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cucumber/gherkin-go"
+	"gopkg.in/cucumber/gherkin-go.v3"
 )
 
 var errorInterface = reflect.TypeOf((*error)(nil)).Elem()

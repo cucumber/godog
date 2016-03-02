@@ -4,7 +4,8 @@ go:
   - 1.2
   - 1.3
   - 1.4
-  - release
+  - 1.5
+  - 1.6
   - tip
 
 script:
@@ -13,7 +14,7 @@ script:
   - (go version | grep "go1.1") || go get github.com/golang/lint/golint
 
   # pull all external dependencies
-  - go get github.com/cucumber/gherkin-go
+  - go get gopkg.in/cucumber/gherkin-go.v3
   - go get github.com/shiena/ansicolor
 
   # run standard go tests
