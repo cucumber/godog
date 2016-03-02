@@ -7,13 +7,19 @@ go:
   - release
   - tip
 
+before_install:
+  - go get github.com/tools/godep
+
+install:
+  - godep restore
+
 script:
   # linters and vet
   - (go version | grep "go1.1") || go get golang.org/x/tools/cmd/vet
   - (go version | grep "go1.1") || go get github.com/golang/lint/golint
 
   # pull all external dependencies
-  - go get github.com/cucumber/gherkin-go
+  # - go get github.com/cucumber/gherkin-go
   - go get github.com/shiena/ansicolor
 
   # run standard go tests

@@ -1,0 +1,11 @@
+{
+	"ImportPath": "github.com/odacremolbap/godog",
+	"GoVersion": "go1.6",
+	"Deps": [
+		{
+			"ImportPath": "github.com/cucumber/gherkin-go",
+			"Comment": "v3.2.0-4-g64f5ebc",
+			"Rev": "0c0f2d933220a0ebc0dd5e35d7c73dd5b4968d85"
+		}
+	]
+}
