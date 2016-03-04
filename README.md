@@ -144,6 +144,12 @@ See implementation examples:
 
 ### Changes
 
+**2016-03-04**
+- added **junit** compatible output formatter, which prints **xml**
+  results to **os.Stdout**
+- fixed #14 which skipped printing background steps when there was
+  scenario outline in feature.
+
 **2015-07-03**
 - changed **godog.Suite** from interface to struct. Context registration should be updated accordingly. The reason
 for change: since it exports the same methods and there is no need to mock a function in tests, there is no

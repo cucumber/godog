@@ -24,32 +24,21 @@ var outlinePlaceholderRegexp = regexp.MustCompile("<[^>]+>")
 // a built in default pretty formatter
 type pretty struct {
 	basefmt
-	commentPos      int
-	backgroundSteps int
+
+	// currently processed
+	feature  *gherkin.Feature
+	scenario *gherkin.Scenario
+	outline  *gherkin.ScenarioOutline
+
+	// state
+	bgSteps    int
+	steps      int
+	commentPos int
 
 	// outline
 	outlineSteps       []*stepResult
 	outlineNumExample  int
 	outlineNumExamples int
-}
-
-// a line number representation in feature file
-func (f *pretty) line(loc *gherkin.Location) string {
-	return cl(fmt.Sprintf("# %s:%d", f.features[len(f.features)-1].Path, loc.Line), black)
-}
-
-func (f *pretty) length(node interface{}) int {
-	switch t := node.(type) {
-	case *gherkin.Background:
-		return f.indent + len(strings.TrimSpace(t.Keyword)+": "+t.Name)
-	case *gherkin.Step:
-		return f.indent*2 + len(strings.TrimSpace(t.Keyword)+" "+t.Text)
-	case *gherkin.Scenario:
-		return f.indent + len(strings.TrimSpace(t.Keyword)+": "+t.Name)
-	case *gherkin.ScenarioOutline:
-		return f.indent + len(strings.TrimSpace(t.Keyword)+": "+t.Name)
-	}
-	panic(fmt.Sprintf("unexpected node %T to determine length", node))
 }
 
 func (f *pretty) Feature(ft *gherkin.Feature, p string) {
@@ -64,10 +53,13 @@ func (f *pretty) Feature(ft *gherkin.Feature, p string) {
 			fmt.Println(s(f.indent) + strings.TrimSpace(line))
 		}
 	}
+
+	f.feature = ft
+	f.scenario = nil
+	f.outline = nil
+	f.bgSteps = 0
 	if ft.Background != nil {
-		f.commentPos = f.longestStep(ft.Background.Steps, f.length(ft.Background))
-		f.backgroundSteps = len(ft.Background.Steps)
-		fmt.Println("\n" + s(f.indent) + bcl(ft.Background.Keyword+": "+ft.Background.Name, white))
+		f.bgSteps = len(ft.Background.Steps)
 	}
 }
 
@@ -80,15 +72,13 @@ func (f *pretty) Node(node interface{}) {
 		f.outlineNumExamples = len(t.TableBody)
 		f.outlineNumExample++
 	case *gherkin.Scenario:
-		f.commentPos = f.longestStep(t.Steps, f.length(t))
-		text := s(f.indent) + bcl(t.Keyword+": ", white) + t.Name
-		text += s(f.commentPos-f.length(t)+1) + f.line(t.Location)
-		fmt.Println("\n" + text)
+		f.scenario = t
+		f.outline = nil
+		f.steps = len(t.Steps)
 	case *gherkin.ScenarioOutline:
-		f.commentPos = f.longestStep(t.Steps, f.length(t))
-		text := s(f.indent) + bcl(t.Keyword+": ", white) + t.Name
-		text += s(f.commentPos-f.length(t)+1) + f.line(t.Location)
-		fmt.Println("\n" + text)
+		f.outline = t
+		f.scenario = nil
+		f.steps = len(t.Steps)
 		f.outlineNumExample = -1
 	}
 }
@@ -240,21 +230,54 @@ func (f *pretty) printStep(step *gherkin.Step, def *StepDef, c color) {
 }
 
 func (f *pretty) printStepKind(res *stepResult) {
-	// do not print background more than once
-	if _, ok := res.owner.(*gherkin.Background); ok {
-		switch {
-		case f.backgroundSteps == 0:
-			return
-		case f.backgroundSteps > 0:
-			f.backgroundSteps--
-		}
-	}
+	_, isBgStep := res.owner.(*gherkin.Background)
 
-	if outline, ok := res.owner.(*gherkin.ScenarioOutline); ok {
+	// if has not printed background yet
+	switch {
+	// first background step
+	case f.bgSteps > 0 && f.bgSteps == len(f.feature.Background.Steps):
+		f.commentPos = f.longestStep(f.feature.Background.Steps, f.length(f.feature.Background))
+		fmt.Println("\n" + s(f.indent) + bcl(f.feature.Background.Keyword+": "+f.feature.Background.Name, white))
+		f.bgSteps--
+	// subsequent background steps
+	case f.bgSteps > 0:
+		f.bgSteps--
+	// a background step for another scenario, but all bg steps are
+	// already printed. so just skip it
+	case isBgStep:
+		return
+	// first step of scenario, print header and calculate comment position
+	case f.scenario != nil && f.steps == len(f.scenario.Steps):
+		f.commentPos = f.longestStep(f.scenario.Steps, f.length(f.scenario))
+		text := s(f.indent) + bcl(f.scenario.Keyword+": ", white) + f.scenario.Name
+		text += s(f.commentPos-f.length(f.scenario)+1) + f.line(f.scenario.Location)
+		fmt.Println("\n" + text)
+		f.steps--
+	// all subsequent scenario steps
+	case f.scenario != nil:
+		f.steps--
+	// first step of outline scenario, print header and calculate comment position
+	case f.outline != nil && f.steps == len(f.outline.Steps):
+		f.commentPos = f.longestStep(f.outline.Steps, f.length(f.outline))
+		text := s(f.indent) + bcl(f.outline.Keyword+": ", white) + f.outline.Name
+		text += s(f.commentPos-f.length(f.outline)+1) + f.line(f.outline.Location)
+		fmt.Println("\n" + text)
 		f.outlineSteps = append(f.outlineSteps, res)
-		if len(f.outlineSteps) == len(outline.Steps) {
+		f.steps--
+		if len(f.outlineSteps) == len(f.outline.Steps) {
 			// an outline example steps has went through
-			f.printOutlineExample(outline)
+			f.printOutlineExample(f.outline)
+			f.outlineSteps = []*stepResult{}
+			f.outlineNumExamples--
+		}
+		return
+	// all subsequent outline steps
+	case f.outline != nil:
+		f.outlineSteps = append(f.outlineSteps, res)
+		f.steps--
+		if len(f.outlineSteps) == len(f.outline.Steps) {
+			// an outline example steps has went through
+			f.printOutlineExample(f.outline)
 			f.outlineSteps = []*stepResult{}
 			f.outlineNumExamples--
 		}
@@ -338,4 +361,23 @@ func (f *pretty) longestStep(steps []*gherkin.Step, base int) int {
 		}
 	}
 	return ret
+}
+
+// a line number representation in feature file
+func (f *pretty) line(loc *gherkin.Location) string {
+	return cl(fmt.Sprintf("# %s:%d", f.features[len(f.features)-1].Path, loc.Line), black)
+}
+
+func (f *pretty) length(node interface{}) int {
+	switch t := node.(type) {
+	case *gherkin.Background:
+		return f.indent + len(strings.TrimSpace(t.Keyword)+": "+t.Name)
+	case *gherkin.Step:
+		return f.indent*2 + len(strings.TrimSpace(t.Keyword)+" "+t.Text)
+	case *gherkin.Scenario:
+		return f.indent + len(strings.TrimSpace(t.Keyword)+": "+t.Name)
+	case *gherkin.ScenarioOutline:
+		return f.indent + len(strings.TrimSpace(t.Keyword)+": "+t.Name)
+	}
+	panic(fmt.Sprintf("unexpected node %T to determine length", node))
 }

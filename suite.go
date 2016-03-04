@@ -290,6 +290,10 @@ func (s *Suite) runOutline(outline *gherkin.ScenarioOutline, b *gherkin.Backgrou
 				}
 				steps = append(steps, step)
 			}
+
+			// run example table row
+			s.fmt.Node(group)
+
 			// run background
 			var err error
 			if b != nil {
@@ -340,13 +344,14 @@ func (s *Suite) runScenario(scenario *gherkin.Scenario, b *gherkin.Background) (
 		f(scenario)
 	}
 
+	s.fmt.Node(scenario)
+
 	// background
 	if b != nil {
 		err = s.runSteps(b.Steps, err)
 	}
 
 	// scenario
-	s.fmt.Node(scenario)
 	err = s.runSteps(scenario.Steps, err)
 
 	// run after scenario handlers

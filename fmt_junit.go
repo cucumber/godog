@@ -3,6 +3,7 @@ package godog
 import (
 	"encoding/xml"
 	"fmt"
+	"io"
 	"os"
 	"time"
 
@@ -10,198 +11,175 @@ import (
 )
 
 func init() {
-	Format("junit", "Prints out in junit compatible xml format", &junitFormatter{
-		suites: make([]*junitTestSuites, 0),
+	Format("junit", "Prints junit compatible xml to stdout", &junitFormatter{
+		suite: &junitPackageSuite{
+			Name:       "main", // @TODO: it should extract package name
+			TestSuites: make([]*junitTestSuite, 0),
+		},
+		started: time.Now(),
 	})
 }
 
 type junitFormatter struct {
-	suites []*junitTestSuites
+	suite *junitPackageSuite
+
+	// timing
+	started     time.Time
+	caseStarted time.Time
+	featStarted time.Time
+
+	outline        *gherkin.ScenarioOutline
+	outlineExample int
 }
 
 func (j *junitFormatter) Feature(feature *gherkin.Feature, path string) {
-	testSuites := &junitTestSuites{
-		Name:       feature.Name,
-		TestSuites: make([]*junitTestSuite, 0),
+	testSuite := &junitTestSuite{
+		TestCases: make([]*TestCase, 0),
+		Name:      feature.Name,
 	}
 
-	j.suites = append(j.suites, testSuites)
+	if len(j.suite.TestSuites) > 0 {
+		j.current().Time = time.Since(j.featStarted).String()
+	}
+	j.featStarted = time.Now()
+	j.suite.TestSuites = append(j.suite.TestSuites, testSuite)
 }
 
 func (j *junitFormatter) Node(node interface{}) {
-	testSuite := &junitTestSuite{
-		TestCases: make([]*TestCase, 0),
-		Timestamp: time.Now(),
-	}
+	suite := j.current()
+	tcase := &TestCase{}
 
 	switch t := node.(type) {
 	case *gherkin.ScenarioOutline:
-		testSuite.Name = t.Name
+		j.outline = t
+		return
 	case *gherkin.Scenario:
-		testSuite.Name = t.Name
-	case *gherkin.Background:
-		testSuite.Name = "Background"
+		tcase.Name = t.Name
+		suite.Tests++
+		j.suite.Tests++
+	case *gherkin.Examples:
+		j.outlineExample = 0
+		return
+	case *gherkin.TableRow:
+		j.outlineExample++
+		tcase.Name = fmt.Sprintf("%s #%d", j.outline.Name, j.outlineExample)
+		suite.Tests++
+		j.suite.Tests++
+	default:
+		return
 	}
-
-	currentSuites := j.currentSuites()
-	currentSuites.TestSuites = append(currentSuites.TestSuites, testSuite)
+	if len(suite.TestCases) > 0 {
+		suite.current().Time = time.Since(j.caseStarted).String()
+	}
+	j.caseStarted = time.Now()
+	suite.TestCases = append(suite.TestCases, tcase)
 }
 
 func (j *junitFormatter) Failed(step *gherkin.Step, match *StepDef, err error) {
-	testCase := &TestCase{
-		Name: step.Text,
-	}
+	suite := j.current()
+	suite.Failures++
+	j.suite.Failures++
 
-	testCase.Failure = &junitFailure{
-		Contents: err.Error(),
+	tcase := suite.current()
+	tcase.Status = "failed"
+	tcase.Failure = &junitFailure{
+		Message: fmt.Sprintf("%s %s: %s", step.Type, step.Text, err.Error()),
 	}
-
-	currentSuites := j.currentSuites()
-	currentSuites.Failures++
-	currentSuite := currentSuites.currentSuite()
-	currentSuite.Failures++
-	currentSuite.TestCases = append(currentSuite.TestCases, testCase)
 }
 
 func (j *junitFormatter) Passed(step *gherkin.Step, match *StepDef) {
-	testCase := &TestCase{
-		Name: step.Text,
-	}
+	suite := j.current()
 
-	currentSuites := j.currentSuites()
-	currentSuites.Tests++
-	currentSuite := currentSuites.currentSuite()
-	currentSuite.Tests++
-	currentSuite.TestCases = append(currentSuite.TestCases, testCase)
+	tcase := suite.current()
+	tcase.Status = "passed"
 }
 
 func (j *junitFormatter) Skipped(step *gherkin.Step) {
-	testCase := &TestCase{
-		Name: step.Text,
-	}
-
-	currentSuites := j.currentSuites()
-	currentSuite := currentSuites.currentSuite()
-	currentSuite.Skipped++
-	currentSuite.TestCases = append(currentSuite.TestCases, testCase)
 }
 
 func (j *junitFormatter) Undefined(step *gherkin.Step) {
-	testCase := &TestCase{
-		Name: step.Text,
-	}
+	suite := j.current()
+	suite.Errors++
+	j.suite.Errors++
 
-	currentSuites := j.currentSuites()
-	currentSuites.Disabled++
-	currentSuite := currentSuites.currentSuite()
-	currentSuite.Disabled++
-	currentSuite.TestCases = append(currentSuite.TestCases, testCase)
+	tcase := suite.current()
+	tcase.Status = "undefined"
+	tcase.Error = append(tcase.Error, &junitError{
+		Type:    "undefined",
+		Message: fmt.Sprintf("%s %s", step.Type, step.Text),
+	})
 }
 
 func (j *junitFormatter) Pending(step *gherkin.Step, match *StepDef) {
-	testCase := &TestCase{
-		Name: step.Text,
-	}
+	suite := j.current()
+	suite.Errors++
+	j.suite.Errors++
 
-	testCase.Skipped = &junitSkipped{
-		Contents: step.Text,
-	}
-
-	currentSuites := j.currentSuites()
-	currentSuite := currentSuites.currentSuite()
-	currentSuite.Skipped++
-	currentSuite.TestCases = append(currentSuite.TestCases, testCase)
+	tcase := suite.current()
+	tcase.Status = "pending"
+	tcase.Error = append(tcase.Error, &junitError{
+		Type:    "pending",
+		Message: fmt.Sprintf("%s %s: TODO: write pending definition", step.Type, step.Text),
+	})
 }
 
 func (j *junitFormatter) Summary() {
+	j.suite.Time = time.Since(j.started).String()
+	io.WriteString(os.Stdout, xml.Header)
+
 	enc := xml.NewEncoder(os.Stdout)
-	enc.Indent("  ", "    ")
-	if err := enc.Encode(j.suites); err != nil {
-		fmt.Printf("error: %v\n", err)
+	enc.Indent("", s(2))
+	if err := enc.Encode(j.suite); err != nil {
+		fmt.Println("failed to write junit xml:", err)
 	}
 }
 
 type junitFailure struct {
-	Message  string `xml:"message,attr"`
-	Type     string `xml:"type,attr"`
-	Contents string `xml:",chardata"`
+	Message string `xml:"message,attr"`
+	Type    string `xml:"type,attr,omitempty"`
 }
 
 type junitError struct {
-	Message  string `xml:"message,attr"`
-	Type     string `xml:"type,attr"`
-	Contents string `xml:",chardata"`
-}
-
-type junitProperty struct {
-	Name  string `xml:"name,attr"`
-	Value string `xml:"value,attr"`
-}
-
-type junitSkipped struct {
-	Contents string `xml:",chardata"`
-}
-
-type SystemErr struct {
-	Contents string `xml:",chardata"`
-}
-
-type SystemOut struct {
-	Contents string `xml:",chardata"`
+	XMLName xml.Name `xml:"error,omitempty"`
+	Message string   `xml:"message,attr"`
+	Type    string   `xml:"type,attr"`
 }
 
 type TestCase struct {
-	XMLName    xml.Name      `xml:"testcase"`
-	Name       string        `xml:"name,attr"`
-	Classname  string        `xml:"classname,attr"`
-	Assertions string        `xml:"assertions,attr"`
-	Status     string        `xml:"status,attr"`
-	Time       string        `xml:"time,attr"`
-	Skipped    *junitSkipped `xml:"skipped,omitempty"`
-	Failure    *junitFailure `xml:"failure,omitempty"`
-	Error      *junitError   `xml:"error,omitempty"`
-	SystemOut  *SystemOut    `xml:"system-out,omitempty"`
-	SystemErr  *SystemErr    `xml:"system-err,omitempty"`
+	XMLName xml.Name      `xml:"testcase"`
+	Name    string        `xml:"name,attr"`
+	Status  string        `xml:"status,attr"`
+	Time    string        `xml:"time,attr"`
+	Failure *junitFailure `xml:"failure,omitempty"`
+	Error   []*junitError
 }
 
 type junitTestSuite struct {
-	XMLName    xml.Name         `xml:"testsuite"`
-	Name       string           `xml:"name,attr"`
-	Tests      int              `xml:"tests,attr"`
-	Failures   int              `xml:"failures,attr"`
-	Errors     int              `xml:"errors,attr"`
-	Disabled   int              `xml:"disabled,attr"`
-	Skipped    int              `xml:"skipped,attr"`
-	Time       string           `xml:"time,attr"`
-	Hostname   string           `xml:"hostname,attr"`
-	ID         string           `xml:"id,attr"`
-	Package    string           `xml:"package,attr"`
-	Timestamp  time.Time        `xml:"timestamp,attr"`
-	SystemOut  *SystemOut       `xml:"system-out,omitempty"`
-	SystemErr  *SystemErr       `xml:"system-err,omitempty"`
-	Properties []*junitProperty `xml:"properties>property,omitempty"`
-	TestCases  []*TestCase
+	XMLName   xml.Name `xml:"testsuite"`
+	Name      string   `xml:"name,attr"`
+	Tests     int      `xml:"tests,attr"`
+	Skipped   int      `xml:"skipped,attr"`
+	Failures  int      `xml:"failures,attr"`
+	Errors    int      `xml:"errors,attr"`
+	Time      string   `xml:"time,attr"`
+	TestCases []*TestCase
 }
 
-func (ts *junitTestSuite) currentCase() *TestCase {
+func (ts *junitTestSuite) current() *TestCase {
 	return ts.TestCases[len(ts.TestCases)-1]
 }
 
-type junitTestSuites struct {
+type junitPackageSuite struct {
 	XMLName    xml.Name `xml:"testsuites"`
 	Name       string   `xml:"name,attr"`
 	Tests      int      `xml:"tests,attr"`
+	Skipped    int      `xml:"skipped,attr"`
 	Failures   int      `xml:"failures,attr"`
 	Errors     int      `xml:"errors,attr"`
-	Disabled   int      `xml:"disabled,attr"`
 	Time       string   `xml:"time,attr"`
 	TestSuites []*junitTestSuite
 }
 
-func (ts *junitTestSuites) currentSuite() *junitTestSuite {
-	return ts.TestSuites[len(ts.TestSuites)-1]
-}
-
-func (j *junitFormatter) currentSuites() *junitTestSuites {
-	return j.suites[len(j.suites)-1]
+func (j *junitFormatter) current() *junitTestSuite {
+	return j.suite.TestSuites[len(j.suite.TestSuites)-1]
 }
