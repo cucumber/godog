@@ -265,9 +265,16 @@ func (s *Suite) skipSteps(steps []*gherkin.Step) {
 func (s *Suite) runOutline(outline *gherkin.ScenarioOutline, b *gherkin.Background) (failErr error) {
 	s.fmt.Node(outline)
 
-	for _, example := range outline.Examples {
-		s.fmt.Node(example)
+	for _, ex := range outline.Examples {
+		example, hasExamples := examples(ex)
+		if !hasExamples {
+			// @TODO: may need to print empty example node, but
+			// for backward compatibility, cannot cast to *gherkin.ExamplesBase
+			// at the moment
+			continue
+		}
 
+		s.fmt.Node(example)
 		placeholders := example.TableHeader.Cells
 		groups := example.TableBody
 

@@ -122,7 +122,13 @@ func (f *pretty) printOutlineExample(outline *gherkin.ScenarioOutline) {
 	var msg string
 	clr := green
 
-	example := outline.Examples[f.outlineNumExample]
+	ex := outline.Examples[f.outlineNumExample]
+	example, hasExamples := examples(ex)
+	if !hasExamples {
+		// do not print empty examples
+		return
+	}
+
 	firstExample := f.outlineNumExamples == len(example.TableBody)
 	printSteps := firstExample && f.outlineNumExample == 0
 

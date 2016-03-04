@@ -221,7 +221,9 @@ func (f *basefmt) Summary() {
 				total++
 			case *gherkin.ScenarioOutline:
 				for _, ex := range t.Examples {
-					total += len(ex.TableBody)
+					if examples, hasExamples := examples(ex); hasExamples {
+						total += len(examples.TableBody)
+					}
 				}
 			}
 		}
