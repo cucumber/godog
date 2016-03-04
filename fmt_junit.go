@@ -34,7 +34,7 @@ type junitFormatter struct {
 
 func (j *junitFormatter) Feature(feature *gherkin.Feature, path string) {
 	testSuite := &junitTestSuite{
-		TestCases: make([]*TestCase, 0),
+		TestCases: make([]*junitTestCase, 0),
 		Name:      feature.Name,
 	}
 
@@ -47,7 +47,7 @@ func (j *junitFormatter) Feature(feature *gherkin.Feature, path string) {
 
 func (j *junitFormatter) Node(node interface{}) {
 	suite := j.current()
-	tcase := &TestCase{}
+	tcase := &junitTestCase{}
 
 	switch t := node.(type) {
 	case *gherkin.ScenarioOutline:
@@ -145,7 +145,7 @@ type junitError struct {
 	Type    string   `xml:"type,attr"`
 }
 
-type TestCase struct {
+type junitTestCase struct {
 	XMLName xml.Name      `xml:"testcase"`
 	Name    string        `xml:"name,attr"`
 	Status  string        `xml:"status,attr"`
@@ -162,10 +162,10 @@ type junitTestSuite struct {
 	Failures  int      `xml:"failures,attr"`
 	Errors    int      `xml:"errors,attr"`
 	Time      string   `xml:"time,attr"`
-	TestCases []*TestCase
+	TestCases []*junitTestCase
 }
 
-func (ts *junitTestSuite) current() *TestCase {
+func (ts *junitTestSuite) current() *junitTestCase {
 	return ts.TestCases[len(ts.TestCases)-1]
 }
 
