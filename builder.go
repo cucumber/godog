@@ -220,7 +220,7 @@ func (b *builder) merge() ([]byte, error) {
 				return true
 			}
 		}
-		return false
+		return p == "_"
 	}
 	for _, spec := range b.imports {
 		var name string
@@ -397,11 +397,7 @@ func matchLen(x, y string) int {
 }
 
 func importPath(s *ast.ImportSpec) string {
-	t, err := strconv.Unquote(s.Path.Value)
-	if err == nil {
-		return t
-	}
-	return ""
+	return strings.Trim(s.Path.Value, `\"`)
 }
 
 var importPathToName = importPathToNameGoPath
@@ -416,7 +412,6 @@ func importPathToNameBasic(importPath string) (packageName string) {
 func importPathToNameGoPath(importPath string) (packageName string) {
 	if buildPkg, err := build.Import(importPath, "", 0); err == nil {
 		return buildPkg.Name
-	} else {
-		return importPathToNameBasic(importPath)
 	}
+	return importPathToNameBasic(importPath)
 }

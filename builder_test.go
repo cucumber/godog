@@ -102,7 +102,6 @@ func TestUsualSourceFileMerge(t *testing.T) {
 	expected := `package main
 
 import (
-	"fmt"
 	a "fmt"
 	b "fmt"
 	"github.com/DATA-DOG/godog"
@@ -139,10 +138,8 @@ func TestShouldCallContextOnMerged(t *testing.T) {
 		t.Fatalf("unexpected error: %s", err)
 	}
 	expected := `package main
-import (
-	"fmt"
-	"github.com/DATA-DOG/godog"
-)
+
+import "github.com/DATA-DOG/godog"
 
 func main() {
 	godog.Run(func(suite *godog.Suite) {
@@ -154,6 +151,8 @@ func myContext(s *godog.Suite) {
 }`
 
 	actual := string(data)
+	// log.Println("actual:", actual)
+	// log.Println("expected:", expected)
 	if b.cleanSpacing(expected) != b.cleanSpacing(actual) {
 		t.Fatalf("expected output does not match: %s", actual)
 	}
