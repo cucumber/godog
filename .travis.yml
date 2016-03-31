@@ -9,10 +9,6 @@ go:
   - tip
 
 script:
-  # linters and vet
-  - (go version | grep "go1.1") || go get golang.org/x/tools/cmd/vet
-  - (go version | grep "go1.1") || go get github.com/golang/lint/golint
-
   # pull all external dependencies
   - go get gopkg.in/cucumber/gherkin-go.v3
   - go get github.com/shiena/ansicolor
@@ -23,8 +19,3 @@ script:
 
   # run features
   - go run cmd/godog/main.go --format=progress --concurrency=4
-
-  # code correctness, 1.2 version has different fmt version, skip it
-  - (go version | grep -e "go1.[1-2]") || sh -c 'RES="$(go fmt ./...)"; if [ ! -z "$RES" ]; then echo $RES; exit 1; fi'
-  - (go version | grep "go1.1") || sh -c 'RES="$(golint ./...)"; if [ ! -z "$RES" ]; then echo $RES; exit 1; fi'
-  - go vet ./...
