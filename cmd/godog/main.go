@@ -1,44 +1,44 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
-	"strings"
+	"syscall"
 	"time"
 
 	"github.com/DATA-DOG/godog"
 	"github.com/shiena/ansicolor"
 )
 
-var statusMatch = regexp.MustCompile("^exit status (\\d+)$")
+var statusMatch = regexp.MustCompile("^exit status (\\d+)")
+var parsedStatus int
 
-func buildAndRun() (status int, err error) {
+func buildAndRun() (int, error) {
+	var status int
 	// will support Ansi colors for windows
 	stdout := ansicolor.NewAnsiColorWriter(os.Stdout)
-	buffer := bytes.NewBuffer([]byte(""))
-	stderr := ansicolor.NewAnsiColorWriter(buffer)
+	stderr := ansicolor.NewAnsiColorWriter(statusOutputFilter(os.Stderr))
 
 	builtFile := fmt.Sprintf("%s/%dgodog.go", os.TempDir(), time.Now().UnixNano())
 
 	buf, err := godog.Build()
 	if err != nil {
-		return
+		return status, err
 	}
 
 	w, err := os.Create(builtFile)
 	if err != nil {
-		return
+		return status, err
 	}
 	defer os.Remove(builtFile)
 
 	if _, err = w.Write(buf); err != nil {
 		w.Close()
-		return
+		return status, err
 	}
 	w.Close()
 
@@ -46,27 +46,55 @@ func buildAndRun() (status int, err error) {
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 
-	defer func() {
-		s := strings.TrimSpace(buffer.String())
-		if s == "" {
-			status = 0
-		} else if m := statusMatch.FindStringSubmatch(s); len(m) > 1 {
-			status, _ = strconv.Atoi(m[1])
-		} else {
-			io.Copy(stdout, buffer)
-		}
-	}()
+	if err = cmd.Start(); err != nil {
+		return status, err
+	}
 
-	return status, cmd.Run()
+	if err = cmd.Wait(); err != nil {
+		if exiterr, ok := err.(*exec.ExitError); ok {
+			// The program has exited with an exit code != 0
+			status = 1
+
+			// This works on both Unix and Windows. Although package
+			// syscall is generally platform dependent, WaitStatus is
+			// defined for both Unix and Windows and in both cases has
+			// an ExitStatus() method with the same signature.
+			if st, ok := exiterr.Sys().(syscall.WaitStatus); ok {
+				status = st.ExitStatus()
+			}
+			return status, nil
+		}
+		return status, err
+	}
+	return status, nil
 }
 
 func main() {
 	status, err := buildAndRun()
-	switch e := err.(type) {
-	case nil:
-	case *exec.ExitError:
-		os.Exit(status)
-	default:
-		panic(e)
+	if err != nil {
+		panic(err)
 	}
+	// it might be a case, that status might not be resolved
+	// in some OSes. this is attempt to parse it from stderr
+	if parsedStatus > status {
+		status = parsedStatus
+	}
+	os.Exit(status)
+}
+
+func statusOutputFilter(w io.Writer) io.Writer {
+	return writerFunc(func(b []byte) (int, error) {
+		if m := statusMatch.FindStringSubmatch(string(b)); len(m) > 1 {
+			parsedStatus, _ = strconv.Atoi(m[1])
+			// skip status stderr output
+			return len(b), nil
+		}
+		return w.Write(b)
+	})
+}
+
+type writerFunc func([]byte) (int, error)
+
+func (w writerFunc) Write(b []byte) (int, error) {
+	return w(b)
 }
