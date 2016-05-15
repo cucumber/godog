@@ -334,7 +334,7 @@ func (s *undefinedSnippet) Args() (ret string) {
 		}
 		last = arg
 	}
-	return strings.TrimRight(ret, ", ") + " " + last
+	return strings.TrimSpace(strings.TrimRight(ret, ", ") + " " + last)
 }
 
 func (f *basefmt) snippets() string {
@@ -346,13 +346,13 @@ func (f *basefmt) snippets() string {
 	var snips []*undefinedSnippet
 	// build snippets
 	for _, u := range f.undefined {
-		expr := snippetExprCleanup.ReplaceAllString(u.step.Text, "\\\\$1")
+		expr := snippetExprCleanup.ReplaceAllString(u.step.Text, "\\$1")
 		expr = snippetNumbers.ReplaceAllString(expr, "(\\d+)")
 		expr = snippetExprQuoted.ReplaceAllString(expr, " \"([^\"]*)\" ")
 		expr = "^" + strings.TrimSpace(expr) + "$"
 
-		name := snippetNumbers.ReplaceAllString(u.step.Text, "")
-		name = snippetExprQuoted.ReplaceAllString(name, "")
+		name := snippetNumbers.ReplaceAllString(u.step.Text, " ")
+		name = snippetExprQuoted.ReplaceAllString(name, " ")
 		name = snippetMethodName.ReplaceAllString(name, "")
 		var words []string
 		for i, w := range strings.Split(name, " ") {
