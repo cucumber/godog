@@ -20,7 +20,7 @@ Feature: undefined step snippets
       """
     And the undefined step snippets should be:
       """
-      func iSendrequestTo(arg1, arg2 string) error {
+      func iSendRequestTo(arg1, arg2 string) error {
               return godog.ErrPending
       }
 
@@ -29,7 +29,7 @@ Feature: undefined step snippets
       }
 
       func featureContext(s *godog.Suite) {
-              s.Step(`^I send "([^"]*)" request to "([^"]*)"$`, iSendrequestTo)
+              s.Step(`^I send "([^"]*)" request to "([^"]*)"$`, iSendRequestTo)
               s.Step(`^the response code should be (\d+)$`, theResponseCodeShouldBe)
       }
       """
@@ -48,17 +48,47 @@ Feature: undefined step snippets
     When I run feature suite
     Then the undefined step snippets should be:
       """
-      func iSendrequestTowith(arg1, arg2 string, arg3 *gherkin.DataTable) error {
+      func iSendRequestToWith(arg1, arg2 string, arg3 *gherkin.DataTable) error {
               return godog.ErrPending
       }
 
-      func theResponseCodeShouldBeAndHeadershouldBe(arg1 int, arg2, arg3 string) error {
+      func theResponseCodeShouldBeAndHeaderShouldBe(arg1 int, arg2, arg3 string) error {
               return godog.ErrPending
       }
 
       func featureContext(s *godog.Suite) {
-              s.Step(`^I send "([^"]*)" request to "([^"]*)" with:$`, iSendrequestTowith)
-              s.Step(`^the response code should be (\d+) and header "([^"]*)" should be "([^"]*)"$`, theResponseCodeShouldBeAndHeadershouldBe)
+              s.Step(`^I send "([^"]*)" request to "([^"]*)" with:$`, iSendRequestToWith)
+              s.Step(`^the response code should be (\d+) and header "([^"]*)" should be "([^"]*)"$`, theResponseCodeShouldBeAndHeaderShouldBe)
       }
       """
 
+  Scenario: should handle escaped symbols
+    Given a feature "undefined.feature" file:
+      """
+      Feature: undefined steps
+
+        Scenario: get version number from api
+          When I pull from github.com
+          Then the project should be there
+      """
+    When I run feature suite
+    Then the following steps should be undefined:
+      """
+      I pull from github.com
+      the project should be there
+      """
+    And the undefined step snippets should be:
+      """
+      func iPullFromGithubcom() error {
+              return godog.ErrPending
+      }
+
+      func theProjectShouldBeThere() error {
+              return godog.ErrPending
+      }
+
+      func featureContext(s *godog.Suite) {
+              s.Step(`^I pull from github\.com$`, iPullFromGithubcom)
+              s.Step(`^the project should be there$`, theProjectShouldBeThere)
+      }
+      """
