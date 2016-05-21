@@ -51,6 +51,7 @@ type events struct {
 	// it restricts this formatter to run only in synchronous single
 	// threaded execution. Unless running a copy of formatter for each feature
 	path string
+	stat stepType // last step status, before skipped
 }
 
 func (f *events) event(ev interface{}) {
@@ -128,7 +129,7 @@ func (f *events) Feature(ft *gherkin.Feature, p string, c []byte) {
 }
 
 func (f *events) Summary() {
-	// determine status
+	// @TODO: determine status
 	status := passed
 	if len(f.failed) > 0 {
 		status = failed
@@ -175,14 +176,37 @@ func (f *events) step(res *stepResult) {
 		errMsg,
 	})
 
+	// determine if test case has finished
+	var finished bool
+	var line int
 	switch t := f.owner.(type) {
 	case *gherkin.ScenarioOutline:
-	case *gherkin.Scenario:
-		for i, s := range t.Steps {
-			if s.Location.Line == res.step.Location.Line && i == len(t.Steps)-1 {
-				// what if scenario is empty
-			}
+		if t.Steps[len(t.Steps)-1].Location.Line == res.step.Location.Line {
+			finished = true
+			last := t.Examples[len(t.Examples)-1]
+			line = last.TableBody[len(last.TableBody)-1].Location.Line
 		}
+	case *gherkin.Scenario:
+		line = t.Steps[len(t.Steps)-1].Location.Line
+		finished = line == res.step.Location.Line
+	}
+
+	if finished {
+		f.event(&struct {
+			Event     string `json:"event"`
+			RunID     string `json:"run_id"`
+			Suite     string `json:"suite"`
+			Location  string `json:"location"`
+			Timestamp int64  `json:"timestamp"`
+			Status    string `json:"status"`
+		}{
+			"TestCaseFinished",
+			f.runID,
+			"main",
+			fmt.Sprintf("%s:%d", f.path, line),
+			time.Now().UnixNano() / nanoSec,
+			f.stat.String(),
+		})
 	}
 }
 
@@ -233,6 +257,7 @@ func (f *events) Defined(step *gherkin.Step, def *StepDef) {
 func (f *events) Passed(step *gherkin.Step, match *StepDef) {
 	f.basefmt.Passed(step, match)
 	f.step(f.passed[len(f.passed)-1])
+	f.stat = passed
 }
 
 func (f *events) Skipped(step *gherkin.Step) {
@@ -243,14 +268,17 @@ func (f *events) Skipped(step *gherkin.Step) {
 func (f *events) Undefined(step *gherkin.Step) {
 	f.basefmt.Undefined(step)
 	f.step(f.undefined[len(f.undefined)-1])
+	f.stat = undefined
 }
 
 func (f *events) Failed(step *gherkin.Step, match *StepDef, err error) {
 	f.basefmt.Failed(step, match, err)
 	f.step(f.failed[len(f.failed)-1])
+	f.stat = failed
 }
 
 func (f *events) Pending(step *gherkin.Step, match *StepDef) {
 	f.basefmt.Pending(step, match)
 	f.step(f.pending[len(f.pending)-1])
+	f.stat = pending
 }
