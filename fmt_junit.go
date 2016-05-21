@@ -32,7 +32,7 @@ type junitFormatter struct {
 	outlineExample int
 }
 
-func (j *junitFormatter) Feature(feature *gherkin.Feature, path string) {
+func (j *junitFormatter) Feature(feature *gherkin.Feature, path string, c []byte) {
 	testSuite := &junitTestSuite{
 		TestCases: make([]*junitTestCase, 0),
 		Name:      feature.Name,
@@ -43,6 +43,10 @@ func (j *junitFormatter) Feature(feature *gherkin.Feature, path string) {
 	}
 	j.featStarted = time.Now()
 	j.suite.TestSuites = append(j.suite.TestSuites, testSuite)
+}
+
+func (f *junitFormatter) Defined(*gherkin.Step, *StepDef) {
+
 }
 
 func (j *junitFormatter) Node(node interface{}) {

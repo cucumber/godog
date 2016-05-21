@@ -84,8 +84,9 @@ func Format(name, description string, f Formatter) {
 // formatters needs to be registered with a
 // godog.Format function call
 type Formatter interface {
-	Feature(*gherkin.Feature, string)
+	Feature(*gherkin.Feature, string, []byte)
 	Node(interface{})
+	Defined(*gherkin.Step, *StepDef)
 	Failed(*gherkin.Step, *StepDef, error)
 	Passed(*gherkin.Step, *StepDef)
 	Skipped(*gherkin.Step)
@@ -114,6 +115,23 @@ func (st stepType) clr() color {
 		return cyan
 	default:
 		return yellow
+	}
+}
+
+func (st stepType) String() string {
+	switch st {
+	case passed:
+		return "passed"
+	case failed:
+		return "failed"
+	case skipped:
+		return "skipped"
+	case undefined:
+		return "undefined"
+	case pending:
+		return "pending"
+	default:
+		return "unknown"
 	}
 }
 
@@ -152,7 +170,11 @@ func (f *basefmt) Node(n interface{}) {
 	}
 }
 
-func (f *basefmt) Feature(ft *gherkin.Feature, p string) {
+func (f *basefmt) Defined(*gherkin.Step, *StepDef) {
+
+}
+
+func (f *basefmt) Feature(ft *gherkin.Feature, p string, c []byte) {
 	f.features = append(f.features, &feature{Path: p, Feature: ft})
 }
 
