@@ -45,7 +45,7 @@ type pretty struct {
 	outlineNumExamples int
 }
 
-func (f *pretty) Feature(ft *gherkin.Feature, p string) {
+func (f *pretty) Feature(ft *gherkin.Feature, p string, c []byte) {
 	if len(f.features) != 0 {
 		// not a first feature, add a newline
 		fmt.Println("")
@@ -168,7 +168,7 @@ func (f *pretty) printOutlineExample(outline *gherkin.ScenarioOutline) {
 				} else {
 					text = cl(ostep.Text, cyan)
 				}
-				text += s(f.commentPos-f.length(ostep)+1) + cl(fmt.Sprintf("# %s", res.def.funcName()), black)
+				text += s(f.commentPos-f.length(ostep)+1) + cl(fmt.Sprintf("# %s", res.def.definitionID()), black)
 			} else {
 				text = cl(ostep.Text, cyan)
 			}
@@ -207,7 +207,7 @@ func (f *pretty) printStep(step *gherkin.Step, def *StepDef, c color) {
 	text := s(f.indent*2) + cl(strings.TrimSpace(step.Keyword), c) + " "
 	switch {
 	case def != nil:
-		if m := (def.Expr.FindStringSubmatchIndex(step.Text))[2:]; len(m) > 0 {
+		if m := def.Expr.FindStringSubmatchIndex(step.Text)[2:]; len(m) > 0 {
 			var pos, i int
 			for pos, i = 0, 0; i < len(m); i++ {
 				if math.Mod(float64(i), 2) == 0 {
@@ -221,7 +221,7 @@ func (f *pretty) printStep(step *gherkin.Step, def *StepDef, c color) {
 		} else {
 			text += cl(step.Text, c)
 		}
-		text += s(f.commentPos-f.length(step)+1) + cl(fmt.Sprintf("# %s", def.funcName()), black)
+		text += s(f.commentPos-f.length(step)+1) + cl(fmt.Sprintf("# %s", def.definitionID()), black)
 	default:
 		text += cl(step.Text, c)
 	}

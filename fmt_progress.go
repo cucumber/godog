@@ -32,10 +32,10 @@ func (f *progress) Node(n interface{}) {
 	f.basefmt.Node(n)
 }
 
-func (f *progress) Feature(ft *gherkin.Feature, p string) {
+func (f *progress) Feature(ft *gherkin.Feature, p string, c []byte) {
 	f.Lock()
 	defer f.Unlock()
-	f.basefmt.Feature(ft, p)
+	f.basefmt.Feature(ft, p, c)
 }
 
 func (f *progress) Summary() {
