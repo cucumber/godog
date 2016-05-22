@@ -214,28 +214,28 @@ func (s *Suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
 
 	defer func() {
 		if e := recover(); e != nil {
-			err, ok := e.(error)
+			var ok bool
+			err, ok = e.(error)
 			if !ok {
-				err = fmt.Errorf(e.(string))
+				err = fmt.Errorf("%v", e)
 			}
+		}
+		switch err {
+		case nil:
+			s.fmt.Passed(step, match)
+		case ErrPending:
+			s.fmt.Pending(step, match)
+		default:
 			s.fmt.Failed(step, match, err)
+		}
+
+		// run after step handlers
+		for _, f := range s.afterStepHandlers {
+			f(step, err)
 		}
 	}()
 
 	err = match.run()
-	switch err {
-	case nil:
-		s.fmt.Passed(step, match)
-	case ErrPending:
-		s.fmt.Pending(step, match)
-	default:
-		s.fmt.Failed(step, match, err)
-	}
-
-	// run after step handlers
-	for _, f := range s.afterStepHandlers {
-		f(step, err)
-	}
 	return
 }
 
