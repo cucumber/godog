@@ -3,6 +3,7 @@ package godog
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"reflect"
 	"regexp"
 	"strings"
@@ -43,13 +44,13 @@ type undefinedSnippet struct {
 
 type registeredFormatter struct {
 	name        string
-	fmt         Formatter
+	fmt         FormatterFunc
 	description string
 }
 
 var formatters []*registeredFormatter
 
-func findFmt(format string) (f Formatter, err error) {
+func findFmt(format string) (f FormatterFunc, err error) {
 	var names []string
 	for _, el := range formatters {
 		if el.name == format {
@@ -66,9 +67,10 @@ func findFmt(format string) (f Formatter, err error) {
 }
 
 // Format registers a feature suite output
-// Formatter as the name and descriptiongiven.
-// Formatter is used to represent suite output
-func Format(name, description string, f Formatter) {
+// formatter by given name, description and
+// FormatterFunc constructor function, to initialize
+// formatter with the output recorder.
+func Format(name, description string, f FormatterFunc) {
 	formatters = append(formatters, &registeredFormatter{
 		name:        name,
 		fmt:         f,
@@ -94,6 +96,10 @@ type Formatter interface {
 	Pending(*gherkin.Step, *StepDef)
 	Summary()
 }
+
+// FormatterFunc builds a formatter with given
+// io.Writer to record output.
+type FormatterFunc func(io.Writer) Formatter
 
 type stepType int
 
@@ -149,6 +155,7 @@ func (f stepResult) line() string {
 }
 
 type basefmt struct {
+	out    io.Writer
 	owner  interface{}
 	indent int
 
@@ -286,23 +293,23 @@ func (f *basefmt) Summary() {
 	scenarios = append(scenarios, parts...)
 	elapsed := time.Since(f.started)
 
-	fmt.Println("")
+	fmt.Fprintln(f.out, "")
 	if total == 0 {
-		fmt.Println("No scenarios")
+		fmt.Fprintln(f.out, "No scenarios")
 	} else {
-		fmt.Println(fmt.Sprintf("%d scenarios (%s)", total, strings.Join(scenarios, ", ")))
+		fmt.Fprintln(f.out, fmt.Sprintf("%d scenarios (%s)", total, strings.Join(scenarios, ", ")))
 	}
 
 	if nsteps == 0 {
-		fmt.Println("No steps")
+		fmt.Fprintln(f.out, "No steps")
 	} else {
-		fmt.Println(fmt.Sprintf("%d steps (%s)", nsteps, strings.Join(steps, ", ")))
+		fmt.Fprintln(f.out, fmt.Sprintf("%d steps (%s)", nsteps, strings.Join(steps, ", ")))
 	}
-	fmt.Println(elapsed)
+	fmt.Fprintln(f.out, elapsed)
 
 	if text := f.snippets(); text != "" {
-		fmt.Println(cl("\nYou can implement step definitions for undefined steps with these snippets:", yellow))
-		fmt.Println(cl(text, yellow))
+		fmt.Fprintln(f.out, cl("\nYou can implement step definitions for undefined steps with these snippets:", yellow))
+		fmt.Fprintln(f.out, cl(text, yellow))
 	}
 }
 

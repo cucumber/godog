@@ -11,17 +11,23 @@ import (
 )
 
 func init() {
-	Format("junit", "Prints junit compatible xml to stdout", &junitFormatter{
+	Format("junit", "Prints junit compatible xml to stdout", junitFunc)
+}
+
+func junitFunc(out io.Writer) Formatter {
+	return &junitFormatter{
 		suite: &junitPackageSuite{
 			Name:       "main", // @TODO: it should extract package name
 			TestSuites: make([]*junitTestSuite, 0),
 		},
+		out:     out,
 		started: time.Now(),
-	})
+	}
 }
 
 type junitFormatter struct {
 	suite *junitPackageSuite
+	out   io.Writer
 
 	// timing
 	started     time.Time
@@ -45,7 +51,7 @@ func (j *junitFormatter) Feature(feature *gherkin.Feature, path string, c []byte
 	j.suite.TestSuites = append(j.suite.TestSuites, testSuite)
 }
 
-func (f *junitFormatter) Defined(*gherkin.Step, *StepDef) {
+func (j *junitFormatter) Defined(*gherkin.Step, *StepDef) {
 
 }
 
@@ -129,12 +135,12 @@ func (j *junitFormatter) Pending(step *gherkin.Step, match *StepDef) {
 
 func (j *junitFormatter) Summary() {
 	j.suite.Time = time.Since(j.started).String()
-	io.WriteString(os.Stdout, xml.Header)
+	io.WriteString(j.out, xml.Header)
 
 	enc := xml.NewEncoder(os.Stdout)
 	enc.Indent("", s(2))
 	if err := enc.Encode(j.suite); err != nil {
-		fmt.Println("failed to write junit xml:", err)
+		fmt.Fprintln(os.Stderr, "failed to write junit xml:", err)
 	}
 }
 
