@@ -5,26 +5,20 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"sync"
+	"io"
 	"time"
 
 	"gopkg.in/cucumber/gherkin-go.v3"
 )
 
 const nanoSec = 1000000
+const spec = "0.1.0"
 
 func init() {
-	Format("events", "Produces a JSON event stream.", &events{
-		basefmt: basefmt{
-			started: time.Now(),
-			indent:  2,
-		},
-		runID: sha1RunID(),
-		suite: "main",
-	})
+	Format("events", fmt.Sprintf("Produces JSON event stream, based on spec: %s.", spec), eventsFunc)
 }
 
-func sha1RunID() string {
+func eventsFunc(out io.Writer) Formatter {
 	data, err := json.Marshal(&struct {
 		Time   int64
 		Runner string
@@ -36,11 +30,33 @@ func sha1RunID() string {
 
 	hasher := sha1.New()
 	hasher.Write(data)
-	return hex.EncodeToString(hasher.Sum(nil))
+
+	formatter := &events{
+		basefmt: basefmt{
+			started: time.Now(),
+			indent:  2,
+			out:     out,
+		},
+		runID: hex.EncodeToString(hasher.Sum(nil)),
+		suite: "main",
+	}
+
+	formatter.event(&struct {
+		Event     string `json:"event"`
+		RunID     string `json:"run_id"`
+		Version   string `json:"version"`
+		Timestamp int64  `json:"timestamp"`
+	}{
+		"TestRunStarted",
+		formatter.runID,
+		spec,
+		time.Now().UnixNano() / nanoSec,
+	})
+
+	return formatter
 }
 
 type events struct {
-	sync.Once
 	basefmt
 
 	runID string
@@ -59,26 +75,11 @@ func (f *events) event(ev interface{}) {
 	if err != nil {
 		panic(fmt.Sprintf("failed to marshal stream event: %+v - %v", ev, err))
 	}
-	fmt.Println(string(data))
-}
-
-func (f *events) started() {
-	f.event(&struct {
-		Event     string `json:"event"`
-		RunID     string `json:"run_id"`
-		Version   string `json:"version"`
-		Timestamp int64  `json:"timestamp"`
-	}{
-		"TestRunStarted",
-		f.runID,
-		"0.1.0",
-		time.Now().UnixNano() / nanoSec,
-	})
+	fmt.Fprintln(f.out, string(data))
 }
 
 func (f *events) Node(n interface{}) {
 	f.basefmt.Node(n)
-	f.Do(f.started)
 
 	switch t := n.(type) {
 	case *gherkin.Scenario:
@@ -187,8 +188,8 @@ func (f *events) step(res *stepResult) {
 			line = last.TableBody[len(last.TableBody)-1].Location.Line
 		}
 	case *gherkin.Scenario:
-		line = t.Steps[len(t.Steps)-1].Location.Line
-		finished = line == res.step.Location.Line
+		line = t.Location.Line
+		finished = t.Steps[len(t.Steps)-1].Location.Line == res.step.Location.Line
 	}
 
 	if finished {
@@ -213,13 +214,17 @@ func (f *events) step(res *stepResult) {
 func (f *events) Defined(step *gherkin.Step, def *StepDef) {
 	if def != nil {
 		m := def.Expr.FindStringSubmatchIndex(step.Text)[2:]
-		args := make([][2]int, 0)
+		var args [][2]int
 		for i := 0; i < len(m)/2; i++ {
 			pair := m[i : i*2+2]
 			var idxs [2]int
 			idxs[0] = pair[0]
 			idxs[1] = pair[1]
 			args = append(args, idxs)
+		}
+
+		if len(args) == 0 {
+			args = make([][2]int, 0)
 		}
 
 		f.event(&struct {

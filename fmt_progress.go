@@ -2,6 +2,7 @@ package godog
 
 import (
 	"fmt"
+	"io"
 	"math"
 	"sync"
 	"time"
@@ -10,13 +11,18 @@ import (
 )
 
 func init() {
-	Format("progress", "Prints a character per step.", &progress{
+	Format("progress", "Prints a character per step.", progressFunc)
+}
+
+func progressFunc(out io.Writer) Formatter {
+	return &progress{
 		basefmt: basefmt{
 			started: time.Now(),
 			indent:  2,
+			out:     out,
 		},
 		stepsPerRow: 70,
-	})
+	}
 }
 
 type progress struct {
@@ -47,13 +53,13 @@ func (f *progress) Summary() {
 			fmt.Printf(" %d\n", f.steps)
 		}
 	}
-	fmt.Println("")
+	fmt.Fprintln(f.out, "")
 
 	if len(f.failed) > 0 {
-		fmt.Println("\n--- " + cl("Failed steps:", red) + "\n")
+		fmt.Fprintln(f.out, "\n--- "+cl("Failed steps:", red)+"\n")
 		for _, fail := range f.failed {
-			fmt.Println(s(4) + cl(fail.step.Keyword+" "+fail.step.Text, red) + cl(" # "+fail.line(), black))
-			fmt.Println(s(6) + cl("Error: ", red) + bcl(fail.err, red) + "\n")
+			fmt.Fprintln(f.out, s(4)+cl(fail.step.Keyword+" "+fail.step.Text, red)+cl(" # "+fail.line(), black))
+			fmt.Fprintln(f.out, s(6)+cl("Error: ", red)+bcl(fail.err, red)+"\n")
 		}
 	}
 	f.basefmt.Summary()
@@ -74,7 +80,7 @@ func (f *progress) step(res *stepResult) {
 	}
 	f.steps++
 	if math.Mod(float64(f.steps), float64(f.stepsPerRow)) == 0 {
-		fmt.Printf(" %d\n", f.steps)
+		fmt.Fprintf(f.out, " %d\n", f.steps)
 	}
 }
 

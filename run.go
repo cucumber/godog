@@ -93,7 +93,7 @@ func RunWithOptions(contextInitializer func(suite *Suite), opt Options) int {
 	fatal(err)
 
 	r := runner{
-		fmt:           formatter,
+		fmt:           formatter(os.Stdout),
 		initializer:   contextInitializer,
 		features:      features,
 		stopOnFailure: opt.StopOnFailure,
