@@ -84,7 +84,7 @@ func astProcess(src string, t *testing.T) string {
 		t.Fatalf("unexpected error while parsing ast: %v", err)
 	}
 
-	deleteTestMainFunc(f)
+	astDeleteTestMainFunc(f)
 
 	var buf bytes.Buffer
 	if err := format.Node(&buf, fset, f); err != nil {

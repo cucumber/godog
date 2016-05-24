@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -25,7 +24,7 @@ func buildAndRun() (int, error) {
 	stdout := ansicolor.NewAnsiColorWriter(os.Stdout)
 	stderr := ansicolor.NewAnsiColorWriter(statusOutputFilter(os.Stderr))
 
-	dir := fmt.Sprintf(filepath.Join("%s", "%dgodogs"), os.TempDir(), time.Now().UnixNano())
+	dir := fmt.Sprintf(filepath.Join("%s", "godog-%d"), os.TempDir(), time.Now().UnixNano())
 	err := godog.Build(dir)
 	if err != nil {
 		return 1, err
@@ -41,15 +40,17 @@ func buildAndRun() (int, error) {
 
 	cmdb := exec.Command("go", "test", "-c", "-o", bin)
 	cmdb.Dir = dir
+	cmdb.Env = os.Environ()
 	if dat, err := cmdb.CombinedOutput(); err != nil {
-		log.Println(string(dat))
-		return 1, err
+		fmt.Println(string(dat))
+		return 1, nil
 	}
 	defer os.Remove(bin)
 
 	cmd := exec.Command(bin, os.Args[1:]...)
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
+	cmd.Env = os.Environ()
 
 	if err = cmd.Start(); err != nil {
 		return status, err

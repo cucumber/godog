@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func contexts(f *ast.File) []string {
+func astContexts(f *ast.File) []string {
 	var contexts []string
 	for _, d := range f.Decls {
 		switch fun := d.(type) {
@@ -36,8 +36,8 @@ func contexts(f *ast.File) []string {
 	return contexts
 }
 
-func removeUnusedImports(f *ast.File) {
-	used := usedPackages(f)
+func astRemoveUnusedImports(f *ast.File) {
+	used := astUsedPackages(f)
 	isUsed := func(p string) bool {
 		for _, ref := range used {
 			if p == ref {
@@ -54,7 +54,7 @@ func removeUnusedImports(f *ast.File) {
 			for _, spec := range gen.Specs {
 				impspec := spec.(*ast.ImportSpec)
 				ipath := strings.Trim(impspec.Path.Value, `\"`)
-				check := importPathToName(ipath)
+				check := astImportPathToName(ipath)
 				if impspec.Name != nil {
 					check = impspec.Name.Name
 				}
@@ -74,7 +74,7 @@ func removeUnusedImports(f *ast.File) {
 	f.Decls = decls
 }
 
-func deleteTestMainFunc(f *ast.File) {
+func astDeleteTestMainFunc(f *ast.File) {
 	var decls []ast.Decl
 	var hadTestMain bool
 	for _, d := range f.Decls {
@@ -92,7 +92,7 @@ func deleteTestMainFunc(f *ast.File) {
 	f.Decls = decls
 
 	if hadTestMain {
-		removeUnusedImports(f)
+		astRemoveUnusedImports(f)
 	}
 }
 
@@ -102,7 +102,7 @@ func (fn visitFn) Visit(node ast.Node) ast.Visitor {
 	return fn(node)
 }
 
-func usedPackages(f *ast.File) []string {
+func astUsedPackages(f *ast.File) []string {
 	var refs []string
 	var visitor visitFn
 	visitor = visitFn(func(node ast.Node) ast.Visitor {
@@ -129,7 +129,7 @@ func usedPackages(f *ast.File) []string {
 
 // importPathToName finds out the actual package name, as declared in its .go files.
 // If there's a problem, it falls back to using importPathToNameBasic.
-func importPathToName(importPath string) (packageName string) {
+func astImportPathToName(importPath string) (packageName string) {
 	if buildPkg, err := build.Import(importPath, "", 0); err == nil {
 		return buildPkg.Name
 	}

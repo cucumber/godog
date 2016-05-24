@@ -27,18 +27,18 @@ func apiContext(s *godog.Suite) {
 func dbContext(s *godog.Suite) {
 }`
 
-func astContexts(src string, t *testing.T) []string {
+func astContextParse(src string, t *testing.T) []string {
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, "", []byte(src), 0)
 	if err != nil {
 		t.Fatalf("unexpected error while parsing ast: %v", err)
 	}
 
-	return contexts(f)
+	return astContexts(f)
 }
 
 func TestShouldGetSingleContextFromSource(t *testing.T) {
-	actual := astContexts(astContextSrc, t)
+	actual := astContextParse(astContextSrc, t)
 	expect := []string{"myContext"}
 
 	if len(actual) != len(expect) {
@@ -53,7 +53,7 @@ func TestShouldGetSingleContextFromSource(t *testing.T) {
 }
 
 func TestShouldGetTwoContextsFromSource(t *testing.T) {
-	actual := astContexts(astTwoContextSrc, t)
+	actual := astContextParse(astTwoContextSrc, t)
 	expect := []string{"apiContext", "dbContext"}
 
 	if len(actual) != len(expect) {
@@ -68,7 +68,7 @@ func TestShouldGetTwoContextsFromSource(t *testing.T) {
 }
 
 func TestShouldNotFindAnyContextsInEmptyFile(t *testing.T) {
-	actual := astContexts(`package main`, t)
+	actual := astContextParse(`package main`, t)
 
 	if len(actual) != 0 {
 		t.Fatalf("expected no contexts to be found, but there was some: %v", actual)
