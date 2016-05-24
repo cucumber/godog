@@ -8,6 +8,34 @@ import (
 	"strings"
 )
 
+func contexts(f *ast.File) []string {
+	var contexts []string
+	for _, d := range f.Decls {
+		switch fun := d.(type) {
+		case *ast.FuncDecl:
+			for _, param := range fun.Type.Params.List {
+				switch expr := param.Type.(type) {
+				case *ast.StarExpr:
+					switch x := expr.X.(type) {
+					case *ast.Ident:
+						if x.Name == "Suite" {
+							contexts = append(contexts, fun.Name.Name)
+						}
+					case *ast.SelectorExpr:
+						switch t := x.X.(type) {
+						case *ast.Ident:
+							if t.Name == "godog" && x.Sel.Name == "Suite" {
+								contexts = append(contexts, fun.Name.Name)
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return contexts
+}
+
 func removeUnusedImports(f *ast.File) {
 	used := usedPackages(f)
 	isUsed := func(p string) bool {
@@ -48,7 +76,7 @@ func removeUnusedImports(f *ast.File) {
 
 func deleteTestMainFunc(f *ast.File) {
 	var decls []ast.Decl
-	var hadMain bool
+	var hadTestMain bool
 	for _, d := range f.Decls {
 		fun, ok := d.(*ast.FuncDecl)
 		if !ok {
@@ -58,12 +86,12 @@ func deleteTestMainFunc(f *ast.File) {
 		if fun.Name.Name != "TestMain" {
 			decls = append(decls, fun)
 		} else {
-			hadMain = true
+			hadTestMain = true
 		}
 	}
 	f.Decls = decls
 
-	if hadMain {
+	if hadTestMain {
 		removeUnusedImports(f)
 	}
 }

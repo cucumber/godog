@@ -12,17 +12,17 @@ import (
 	"text/template"
 )
 
-var runnerTemplate = template.Must(template.New("main").Parse(`package main
+var runnerTemplate = template.Must(template.New("main").Parse(`package {{ .PackageName }}
 import (
-{{ if not .Internal }}	"github.com/DATA-DOG/godog"{{ end }}
+{{ if ne .PackageName "godog" }}	"github.com/DATA-DOG/godog"{{ end }}
 	"os"
 	"testing"
 )
 
-const GodogSuiteName = "{{ .SuiteName }}"
+const GodogSuiteName = "{{ .PackageName }}"
 
 func TestMain(m *testing.M) {
-	status := {{ if not .Internal }}godog.{{ end }}Run(func (suite *{{ if not .Internal }}godog.{{ end }}Suite) {
+	status := {{ if ne .PackageName "godog" }}godog.{{ end }}Run(func (suite *{{ if ne .PackageName "godog" }}godog.{{ end }}Suite) {
 		{{range .Contexts}}
 			{{ . }}(suite)
 		{{end}}
@@ -31,48 +31,17 @@ func TestMain(m *testing.M) {
 }`))
 
 type builder struct {
-	files     map[string]*ast.File
-	Contexts  []string
-	Internal  bool
-	SuiteName string
+	files       map[string]*ast.File
+	Contexts    []string
+	PackageName string
 }
 
 func (b *builder) register(f *ast.File, name string) {
-	// mark godog package as internal
-	if f.Name.Name == "godog" && !b.Internal {
-		b.Internal = true
-	}
-	b.SuiteName = f.Name.Name
+	b.PackageName = f.Name.Name
 	deleteTestMainFunc(f)
-	f.Name.Name = "main"
-	b.registerContexts(f)
+	// f.Name.Name = "main"
+	b.Contexts = append(b.Contexts, contexts(f)...)
 	b.files[name] = f
-}
-
-func (b *builder) registerContexts(f *ast.File) {
-	for _, d := range f.Decls {
-		switch fun := d.(type) {
-		case *ast.FuncDecl:
-			for _, param := range fun.Type.Params.List {
-				switch expr := param.Type.(type) {
-				case *ast.StarExpr:
-					switch x := expr.X.(type) {
-					case *ast.Ident:
-						if x.Name == "Suite" {
-							b.Contexts = append(b.Contexts, fun.Name.Name)
-						}
-					case *ast.SelectorExpr:
-						switch t := x.X.(type) {
-						case *ast.Ident:
-							if t.Name == "godog" && x.Sel.Name == "Suite" {
-								b.Contexts = append(b.Contexts, fun.Name.Name)
-							}
-						}
-					}
-				}
-			}
-		}
-	}
 }
 
 // Build scans all go files in current directory,
@@ -94,6 +63,8 @@ func Build(dir string) error {
 		if file.IsDir() && file.Name() != "." {
 			return filepath.SkipDir
 		}
+		// @TODO: maybe should copy all files in root dir (may contain CGO)
+		// or use build.Import go tool, to manage package details
 		if err == nil && strings.HasSuffix(path, ".go") {
 			f, err := parser.ParseFile(fset, path, nil, 0)
 			if err != nil {
