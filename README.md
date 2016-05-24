@@ -7,18 +7,27 @@
 
 **The API is likely to change a few times before we reach 1.0.0**
 
-**Godog** is an open source behavior-driven development framework for [go][golang] programming language.
-What is behavior-driven development, you ask? It’s the idea that you start by writing human-readable sentences that
-describe a feature of your application and how it should work, and only then implement this behavior in software.
+**Godog** is an open source behavior-driven development framework for
+[go][golang] programming language. What is behavior-driven development,
+you ask? It’s the idea that you start by writing human-readable sentences
+that describe a feature of your application and how it should work, and
+only then implement this behavior in software.
 
-The project is inspired by [behat][behat] and [cucumber][cucumber] and is based on cucumber [gherkin3 parser][gherkin].
+The project is inspired by [behat][behat] and [cucumber][cucumber] and is
+based on cucumber [gherkin3 parser][gherkin].
 
-**Godog** does not intervene with the standard **go test** command and its behavior. You can leverage both frameworks
-to functionally test your application while maintaining all test related source code in **_test.go** files.
+**Godog** does not intervene with the standard **go test** command and its
+behavior. You can leverage both frameworks to functionally test your
+application while maintaining all test related source code in **_test.go**
+files.
 
-**Godog** acts similar compared to **go test** command. It builds all package sources to a single main package file
-and replaces **main** func with its own and runs the build to test described application behavior in feature files.
-Production builds remain clean without any test related source code.
+**Godog** acts similar compared to **go test** command. It uses
+a **TestMain** hook introduced in `go1.4` and clones the package sources
+to a temporary build directory. The only change it does is adding a runner
+test.go file additionally and ensures to cleanup TestMain func if it was
+used in tests. **Godog** uses standard **go** ast and build utils to
+generate test suite package and even builds it with **go test -c**
+command. It even passes all your environment exported vars.
 
 ### Install
 
@@ -143,6 +152,13 @@ See implementation examples:
 - [godogs](https://github.com/DATA-DOG/godog/tree/master/examples/godogs)
 
 ### Changes
+
+**2016-05-25**
+- refactored test suite build tooling in order to use standard **go test**
+  tool. Which allows to compile package with godog runner script in **go**
+  idiomatic way. It also supports all build environment options as usual.
+- **godog.Run** now returns an **int** exit status. It was not returning
+  anything before, so there is no compatibility breaks.
 
 **2016-03-04**
 - added **junit** compatible output formatter, which prints **xml**
