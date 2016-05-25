@@ -41,9 +41,9 @@ func buildAndRun() (int, error) {
 	cmdb := exec.Command("go", "test", "-c", "-o", bin)
 	cmdb.Dir = dir
 	cmdb.Env = os.Environ()
-	if dat, err := cmdb.CombinedOutput(); err != nil {
-		fmt.Println(string(dat))
-		return 1, nil
+	if details, err := cmdb.CombinedOutput(); err != nil {
+		fmt.Println(string(details))
+		return 1, err
 	}
 	defer os.Remove(bin)
 
@@ -78,7 +78,8 @@ func buildAndRun() (int, error) {
 func main() {
 	status, err := buildAndRun()
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 	// it might be a case, that status might not be resolved
 	// in some OSes. this is attempt to parse it from stderr
