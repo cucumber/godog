@@ -8,7 +8,7 @@ import (
 	"io"
 	"time"
 
-	"gopkg.in/cucumber/gherkin-go.v3"
+	"github.com/DATA-DOG/godog/gherkin"
 )
 
 const nanoSec = 1000000
@@ -18,7 +18,7 @@ func init() {
 	Format("events", fmt.Sprintf("Produces JSON event stream, based on spec: %s.", spec), eventsFunc)
 }
 
-func eventsFunc(out io.Writer) Formatter {
+func eventsFunc(suite string, out io.Writer) Formatter {
 	data, err := json.Marshal(&struct {
 		Time   int64
 		Runner string
@@ -38,7 +38,7 @@ func eventsFunc(out io.Writer) Formatter {
 			out:     out,
 		},
 		runID: hex.EncodeToString(hasher.Sum(nil)),
-		suite: "main",
+		suite: suite,
 	}
 
 	formatter.event(&struct {
@@ -92,7 +92,7 @@ func (f *events) Node(n interface{}) {
 		}{
 			"TestCaseStarted",
 			f.runID,
-			"main",
+			f.suite,
 			fmt.Sprintf("%s:%d", f.path, t.Location.Line),
 			time.Now().UnixNano() / nanoSec,
 		})
@@ -106,7 +106,7 @@ func (f *events) Node(n interface{}) {
 		}{
 			"TestCaseStarted",
 			f.runID,
-			"main",
+			f.suite,
 			fmt.Sprintf("%s:%d", f.path, t.Location.Line),
 			time.Now().UnixNano() / nanoSec,
 		})
@@ -170,7 +170,7 @@ func (f *events) step(res *stepResult) {
 	}{
 		"TestStepFinished",
 		f.runID,
-		"main",
+		f.suite,
 		fmt.Sprintf("%s:%d", f.path, res.step.Location.Line),
 		time.Now().UnixNano() / nanoSec,
 		res.typ.String(),
@@ -203,7 +203,7 @@ func (f *events) step(res *stepResult) {
 		}{
 			"TestCaseFinished",
 			f.runID,
-			"main",
+			f.suite,
 			fmt.Sprintf("%s:%d", f.path, line),
 			time.Now().UnixNano() / nanoSec,
 			f.stat.String(),
@@ -237,7 +237,7 @@ func (f *events) Defined(step *gherkin.Step, def *StepDef) {
 		}{
 			"StepDefinitionFound",
 			f.runID,
-			"main",
+			f.suite,
 			fmt.Sprintf("%s:%d", f.path, step.Location.Line),
 			def.definitionID(),
 			args,
@@ -253,7 +253,7 @@ func (f *events) Defined(step *gherkin.Step, def *StepDef) {
 	}{
 		"TestStepStarted",
 		f.runID,
-		"main",
+		f.suite,
 		fmt.Sprintf("%s:%d", f.path, step.Location.Line),
 		time.Now().UnixNano() / nanoSec,
 	})

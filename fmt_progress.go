@@ -14,7 +14,7 @@ func init() {
 	Format("progress", "Prints a character per step.", progressFunc)
 }
 
-func progressFunc(out io.Writer) Formatter {
+func progressFunc(suite string, out io.Writer) Formatter {
 	return &progress{
 		basefmt: basefmt{
 			started: time.Now(),

@@ -98,8 +98,8 @@ type Formatter interface {
 }
 
 // FormatterFunc builds a formatter with given
-// io.Writer to record output.
-type FormatterFunc func(io.Writer) Formatter
+// suite name and io.Writer to record output
+type FormatterFunc func(string, io.Writer) Formatter
 
 type stepType int
 

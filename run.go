@@ -68,7 +68,7 @@ func (r *runner) run() (failed bool) {
 // This method is useful in case if you run
 // godog in for example TestMain function together
 // with go tests
-func RunWithOptions(contextInitializer func(suite *Suite), opt Options) int {
+func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Options) int {
 	if opt.ShowStepDefinitions {
 		s := &Suite{}
 		contextInitializer(s)
@@ -93,7 +93,7 @@ func RunWithOptions(contextInitializer func(suite *Suite), opt Options) int {
 	fatal(err)
 
 	r := runner{
-		fmt:           formatter(os.Stdout),
+		fmt:           formatter(suite, os.Stdout),
 		initializer:   contextInitializer,
 		features:      features,
 		stopOnFailure: opt.StopOnFailure,
@@ -123,7 +123,7 @@ func RunWithOptions(contextInitializer func(suite *Suite), opt Options) int {
 //
 // contextInitializer must be able to register
 // the step definitions and event handlers.
-func Run(contextInitializer func(suite *Suite)) int {
+func Run(suite string, contextInitializer func(suite *Suite)) int {
 	var opt Options
 	flagSet := FlagSet(
 		&opt.Format,
@@ -137,5 +137,5 @@ func Run(contextInitializer func(suite *Suite)) int {
 	fatal(err)
 	opt.Paths = flagSet.Args()
 
-	return RunWithOptions(contextInitializer, opt)
+	return RunWithOptions(suite, contextInitializer, opt)
 }

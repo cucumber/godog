@@ -16,7 +16,7 @@ func init() {
 	Format("pretty", "Prints every feature with runtime statuses.", prettyFunc)
 }
 
-func prettyFunc(out io.Writer) Formatter {
+func prettyFunc(suite string, out io.Writer) Formatter {
 	return &pretty{
 		basefmt: basefmt{
 			started: time.Now(),

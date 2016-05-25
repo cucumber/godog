@@ -33,7 +33,7 @@ import (
 )
 
 func main() {
-	status := godog.Run(func (suite *godog.Suite) {
+	status := godog.Run("{{ .Name }}", func (suite *godog.Suite) {
 		{{range .Contexts}}
 			_test.{{ . }}(suite)
 		{{end}}

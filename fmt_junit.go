@@ -14,10 +14,10 @@ func init() {
 	Format("junit", "Prints junit compatible xml to stdout", junitFunc)
 }
 
-func junitFunc(out io.Writer) Formatter {
+func junitFunc(suite string, out io.Writer) Formatter {
 	return &junitFormatter{
 		suite: &junitPackageSuite{
-			Name:       "main", // @TODO: it should extract package name
+			Name:       suite,
 			TestSuites: make([]*junitTestSuite, 0),
 		},
 		out:     out,
