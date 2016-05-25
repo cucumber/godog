@@ -1,12 +1,20 @@
 package godog
 
 import (
+	"flag"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
+	"testing"
 
 	"gopkg.in/cucumber/gherkin-go.v3"
 )
+
+func TestMain(m *testing.M) {
+	flag.Parse()
+	os.Exit(m.Run())
+}
 
 func SuiteContext(s *Suite) {
 	c := &suiteContext{}

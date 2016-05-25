@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"syscall"
@@ -23,28 +24,33 @@ func buildAndRun() (int, error) {
 	stdout := ansicolor.NewAnsiColorWriter(os.Stdout)
 	stderr := ansicolor.NewAnsiColorWriter(statusOutputFilter(os.Stderr))
 
-	builtFile := fmt.Sprintf("%s/%dgodog.go", os.TempDir(), time.Now().UnixNano())
-
-	buf, err := godog.Build()
+	dir := fmt.Sprintf(filepath.Join("%s", "godog-%d"), os.TempDir(), time.Now().UnixNano())
+	err := godog.Build(dir)
 	if err != nil {
-		return status, err
+		return 1, err
 	}
 
-	w, err := os.Create(builtFile)
+	defer os.RemoveAll(dir)
+
+	wd, err := os.Getwd()
 	if err != nil {
-		return status, err
+		return 1, err
 	}
-	defer os.Remove(builtFile)
+	bin := filepath.Join(wd, "godog.test")
 
-	if _, err = w.Write(buf); err != nil {
-		w.Close()
-		return status, err
+	cmdb := exec.Command("go", "test", "-c", "-o", bin)
+	cmdb.Dir = dir
+	cmdb.Env = os.Environ()
+	if details, err := cmdb.CombinedOutput(); err != nil {
+		fmt.Println(string(details))
+		return 1, err
 	}
-	w.Close()
+	defer os.Remove(bin)
 
-	cmd := exec.Command("go", append([]string{"run", builtFile}, os.Args[1:]...)...)
+	cmd := exec.Command(bin, os.Args[1:]...)
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
+	cmd.Env = os.Environ()
 
 	if err = cmd.Start(); err != nil {
 		return status, err
@@ -72,7 +78,8 @@ func buildAndRun() (int, error) {
 func main() {
 	status, err := buildAndRun()
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 	// it might be a case, that status might not be resolved
 	// in some OSes. this is attempt to parse it from stderr
