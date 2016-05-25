@@ -32,16 +32,16 @@ func usage() {
 
 	// --- GENERAL ---
 	fmt.Println(cl("Usage:", yellow))
-	fmt.Println(s(2) + "godog [options] [<paths>]\n")
+	fmt.Println(s(2) + "godog [options] [<features>]\n")
 
 	// --- ARGUMENTS ---
 	fmt.Println(cl("Arguments:", yellow))
 	// --> paths
-	fmt.Println(opt("paths", "Optional path(s) to execute. Can be:"))
+	fmt.Println(opt("features", "Optional feature(s) to run. Can be:"))
 	fmt.Println(opt("", s(4)+"- dir "+cl("(features/)", yellow)))
 	fmt.Println(opt("", s(4)+"- feature "+cl("(*.feature)", yellow)))
 	fmt.Println(opt("", s(4)+"- scenario at specific line "+cl("(*.feature:10)", yellow)))
-	fmt.Println(opt("", "If no paths are listed, suite tries "+cl("features", yellow)+" path by default."))
+	fmt.Println(opt("", "If no feature paths are listed, suite tries "+cl("features", yellow)+" path by default."))
 	fmt.Println("")
 
 	// --- OPTIONS ---

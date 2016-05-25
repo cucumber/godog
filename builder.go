@@ -12,8 +12,9 @@ import (
 )
 
 var runnerTemplate = template.Must(template.New("main").Parse(`package {{ .Name }}
+
 import (
-{{ if ne .Name "godog" }}	"github.com/DATA-DOG/godog"{{ end }}
+	{{ if ne .Name "godog" }}"github.com/DATA-DOG/godog"{{ end }}
 	"os"
 	"testing"
 )
@@ -22,9 +23,7 @@ const GodogSuiteName = "{{ .Name }}"
 
 func TestMain(m *testing.M) {
 	status := {{ if ne .Name "godog" }}godog.{{ end }}Run(func (suite *{{ if ne .Name "godog" }}godog.{{ end }}Suite) {
-		{{range .Contexts}}
-			{{ . }}(suite)
-		{{end}}
+		{{range .Contexts}}{{ . }}(suite){{end}}
 	})
 	os.Exit(status)
 }`))
@@ -71,7 +70,11 @@ func buildTestPackage(pkg *build.Package, dir string) error {
 		return err
 	}
 
-	contexts, err := processPackageTestFiles(dir, pkg.TestGoFiles, pkg.XTestGoFiles)
+	contexts, err := processPackageTestFiles(
+		dir,
+		pkg.TestGoFiles,
+		pkg.XTestGoFiles,
+	)
 	if err != nil {
 		return err
 	}
