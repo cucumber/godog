@@ -12,7 +12,7 @@ type testFormatter struct {
 	scenarios []interface{}
 }
 
-func testFormatterFunc(out io.Writer) Formatter {
+func testFormatterFunc(suite string, out io.Writer) Formatter {
 	return &testFormatter{
 		basefmt: basefmt{
 			started: time.Now(),

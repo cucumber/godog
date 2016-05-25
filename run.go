@@ -72,7 +72,7 @@ func (r *runner) run() (failed bool) {
 //
 // contextInitializer must be able to register
 // the step definitions and event handlers.
-func Run(contextInitializer func(suite *Suite)) int {
+func Run(suite string, contextInitializer func(suite *Suite)) int {
 	var defs, sof, noclr bool
 	var tags, format string
 	var concurrency int
@@ -105,7 +105,7 @@ func Run(contextInitializer func(suite *Suite)) int {
 	fatal(err)
 
 	r := runner{
-		fmt:           formatter(os.Stdout),
+		fmt:           formatter(suite, os.Stdout),
 		initializer:   contextInitializer,
 		features:      features,
 		stopOnFailure: sof,

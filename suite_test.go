@@ -79,7 +79,7 @@ func (s *suiteContext) iRunFeatureSuiteWithFormatter(name string) error {
 	if err != nil {
 		return err
 	}
-	s.testedSuite.fmt = f(&s.out)
+	s.testedSuite.fmt = f("godog", &s.out)
 	if err := s.parseFeatures(); err != nil {
 		return err
 	}
@@ -284,7 +284,7 @@ func (s *suiteContext) iRunFeatureSuite() error {
 	if err := s.parseFeatures(); err != nil {
 		return err
 	}
-	s.testedSuite.fmt = testFormatterFunc(&s.out)
+	s.testedSuite.fmt = testFormatterFunc("godog", &s.out)
 	s.testedSuite.run()
 	s.testedSuite.fmt.Summary()
 	return nil
