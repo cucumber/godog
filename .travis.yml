@@ -5,11 +5,9 @@ go:
   - 1.6
   - tip
 
-script:
-  # pull all external dependencies
-  - go get gopkg.in/cucumber/gherkin-go.v3
-  - go get github.com/shiena/ansicolor
+install: go install github.com/DATA-DOG/godog/cmd/godog
 
+script:
   # run standard go tests
   - go vet ./...
   - go fmt ./...
@@ -17,4 +15,4 @@ script:
   - go test -race
 
   # run features
-  - go run cmd/godog/main.go --format=progress --concurrency=4
+  - godog --format=progress --concurrency=4

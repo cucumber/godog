@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"gopkg.in/cucumber/gherkin-go.v3"
+	"github.com/DATA-DOG/godog/gherkin"
 )
 
 func init() {

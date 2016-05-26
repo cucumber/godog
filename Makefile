@@ -1,15 +1,18 @@
-.PHONY: test deps
+.PHONY: test gherkin
 
 test:
 	@echo "running all tests"
+	@go install ./...
 	@go fmt ./...
-	@golint ./...
+	@golint github.com/DATA-DOG/godog
+	@golint github.com/DATA-DOG/godog/cmd/godog
 	go vet ./...
 	go test
-	go run cmd/godog/main.go -f progress -c 4
+	godog -f progress -c 4
 
-deps:
-	@echo "updating all dependencies"
-	go get -u gopkg.in/cucumber/gherkin-go.v3
-	go get -u github.com/shiena/ansicolor
-
+gherkin:
+	@if [ -z "$(VERS)" ]; then echo "Provide gherkin version like: 'VERS=commit-hash'"; exit 1; fi
+	@rm -rf gherkin
+	@mkdir gherkin
+	@curl -s -L https://github.com/cucumber/gherkin-go/tarball/$(VERS) | tar -C gherkin -zx --strip-components 1
+	@rm -rf gherkin/{.travis.yml,.gitignore,*_test.go,gherkin-generate*,*.razor,*.jq,Makefile,CONTRIBUTING.md}

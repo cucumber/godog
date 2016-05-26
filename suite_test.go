@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"gopkg.in/cucumber/gherkin-go.v3"
+	"github.com/DATA-DOG/godog/gherkin"
 )
 
 func TestMain(m *testing.M) {

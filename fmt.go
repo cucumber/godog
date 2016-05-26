@@ -10,7 +10,7 @@ import (
 	"time"
 	"unicode"
 
-	"gopkg.in/cucumber/gherkin-go.v3"
+	"github.com/DATA-DOG/godog/gherkin"
 )
 
 // some snippet formatting regexps

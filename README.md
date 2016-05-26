@@ -29,6 +29,10 @@ used in tests. **Godog** uses standard **go** ast and build utils to
 generate test suite package and even builds it with **go test -c**
 command. It even passes all your environment exported vars.
 
+**Godog** ships gherkin parser dependency as a subpackage. This will
+ensure that it is always compatible with the installed version of godog.
+So in general there are no vendor dependencies needed for installation.
+
 ### Install
 
     go get github.com/DATA-DOG/godog/cmd/godog
@@ -152,6 +156,10 @@ See implementation examples:
 - [godogs](https://github.com/DATA-DOG/godog/tree/master/examples/godogs)
 
 ### Changes
+
+**2016-05-26**
+- pack gherkin dependency in a subpackage to prevent compatibility
+  conflicts.
 
 **2016-05-25**
 - refactored test suite build tooling in order to use standard **go test**

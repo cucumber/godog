@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/godog"
-	"github.com/shiena/ansicolor"
 )
 
 var statusMatch = regexp.MustCompile("^exit status (\\d+)")
@@ -21,8 +20,8 @@ var parsedStatus int
 func buildAndRun() (int, error) {
 	var status int
 	// will support Ansi colors for windows
-	stdout := ansicolor.NewAnsiColorWriter(os.Stdout)
-	stderr := ansicolor.NewAnsiColorWriter(statusOutputFilter(os.Stderr))
+	stdout := createAnsiColorWriter(os.Stdout)
+	stderr := createAnsiColorWriter(statusOutputFilter(os.Stderr))
 
 	dir := fmt.Sprintf(filepath.Join("%s", "godog-%d"), os.TempDir(), time.Now().UnixNano())
 	err := godog.Build(dir)
