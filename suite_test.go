@@ -1,20 +1,12 @@
 package godog
 
 import (
-	"flag"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
-	"testing"
 
 	"github.com/DATA-DOG/godog/gherkin"
 )
-
-func TestMain(m *testing.M) {
-	flag.Parse()
-	os.Exit(m.Run())
-}
 
 func SuiteContext(s *Suite) {
 	c := &suiteContext{}

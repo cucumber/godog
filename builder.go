@@ -23,7 +23,9 @@ const GodogSuiteName = "{{ .Name }}"
 
 func TestMain(m *testing.M) {
 	status := {{ if ne .Name "godog" }}godog.{{ end }}Run(func (suite *{{ if ne .Name "godog" }}godog.{{ end }}Suite) {
-		{{range .Contexts}}{{ . }}(suite){{end}}
+		{{range .Contexts}}
+			{{ . }}(suite)
+		{{end}}
 	})
 	os.Exit(status)
 }`))

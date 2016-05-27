@@ -41,7 +41,7 @@ func buildAndRun() (int, error) {
 	cmdb.Dir = dir
 	cmdb.Env = os.Environ()
 	if details, err := cmdb.CombinedOutput(); err != nil {
-		fmt.Println(string(details))
+		fmt.Fprintln(stderr, string(details))
 		return 1, err
 	}
 	defer os.Remove(bin)
@@ -77,7 +77,7 @@ func buildAndRun() (int, error) {
 func main() {
 	status, err := buildAndRun()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 	// it might be a case, that status might not be resolved
