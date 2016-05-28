@@ -157,9 +157,13 @@ See implementation examples:
 
 ### Changes
 
+**2016-05-28**
+- show nicely formatted called step func name and file path
+
 **2016-05-26**
 - pack gherkin dependency in a subpackage to prevent compatibility
-  conflicts.
+  conflicts in the future. If recently upgraded, probably you will need to
+  reference gherkin as `github.com/DATA-DOG/godog/gherkin` instead.
 
 **2016-05-25**
 - refactored test suite build tooling in order to use standard **go test**

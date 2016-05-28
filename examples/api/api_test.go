@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 
 	"github.com/DATA-DOG/godog"
-	"gopkg.in/cucumber/gherkin-go.v3"
+	"github.com/DATA-DOG/godog/gherkin"
 )
 
 type apiFeature struct {

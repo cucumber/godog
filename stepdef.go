@@ -2,13 +2,17 @@ package godog
 
 import (
 	"fmt"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"runtime"
 	"strconv"
+	"strings"
 
 	"github.com/DATA-DOG/godog/gherkin"
 )
+
+var matchFuncDefRef = regexp.MustCompile(`\(([^\)]+)\)`)
 
 // StepDef is a registered step definition
 // contains a StepHandler and regexp which
@@ -26,7 +30,25 @@ type StepDef struct {
 }
 
 func (sd *StepDef) funcName() string {
-	return runtime.FuncForPC(sd.hv.Pointer()).Name()
+	ptr := sd.hv.Pointer()
+	f := runtime.FuncForPC(ptr)
+	file, line := f.FileLine(ptr)
+	dir := filepath.Dir(file)
+
+	fn := strings.Replace(f.Name(), dir, "", -1)
+	var parts []string
+	for _, gr := range matchFuncDefRef.FindAllStringSubmatch(fn, -1) {
+		parts = append(parts, strings.Trim(gr[1], "_."))
+	}
+	if len(parts) > 0 {
+		// case when suite is a structure with methods
+		fn = strings.Join(parts, ".")
+	} else {
+		// case when steps are just plain funcs
+		fn = strings.Trim(fn, "_.")
+	}
+
+	return fmt.Sprintf("%s:%d -> %s", filepath.Base(file), line, fn)
 }
 
 // run a step with the matched arguments using
@@ -153,6 +175,7 @@ func (sd *StepDef) run() error {
 	if nil == ret {
 		return nil
 	}
+
 	return ret.(error)
 }
 

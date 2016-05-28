@@ -1,4 +1,6 @@
-.PHONY: test gherkin
+.PHONY: test gherkin bump
+
+VERS := $(shell grep 'const Version' -m 1 godog.go | awk -F\" '{print $$2}')
 
 test:
 	@echo "running all tests"
@@ -16,3 +18,10 @@ gherkin:
 	@mkdir gherkin
 	@curl -s -L https://github.com/cucumber/gherkin-go/tarball/$(VERS) | tar -C gherkin -zx --strip-components 1
 	@rm -rf gherkin/{.travis.yml,.gitignore,*_test.go,gherkin-generate*,*.razor,*.jq,Makefile,CONTRIBUTING.md}
+
+bump:
+	@if [ -z "$(VERSION)" ]; then echo "Provide version like: 'VERSION=$(VERS) make bump'"; exit 1; fi
+	@echo "bumping version from: $(VERS) to $(VERSION)"
+	@sed -i.bak 's/$(VERS)/$(VERSION)/g' godog.go
+	@sed -i.bak 's/$(VERS)/$(VERSION)/g' examples/api/version.feature
+	@find . -name '*.bak' | xargs rm
