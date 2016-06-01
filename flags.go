@@ -5,7 +5,8 @@ import (
 	"fmt"
 )
 
-func flags(format, tags *string, defs, sof, vers *bool, cl *int) *flag.FlagSet {
+// FlagSet allows to manage flags by external suite runner
+func FlagSet(format, tags *string, defs, sof, vers *bool, cl *int) *flag.FlagSet {
 	set := flag.NewFlagSet("godog", flag.ExitOnError)
 	set.StringVar(format, "format", "pretty", "")
 	set.StringVar(format, "f", "pretty", "")
@@ -32,7 +33,10 @@ func usage() {
 
 	// --- GENERAL ---
 	fmt.Println(cl("Usage:", yellow))
-	fmt.Println(s(2) + "godog [options] [<features>]\n")
+	fmt.Printf(s(2) + "godog [options] [<features>]\n\n")
+	// description
+	fmt.Println("Builds a test package and runs given feature files.")
+	fmt.Printf("Command should be run from the directory of tested package and contain buildable go source.\n\n")
 
 	// --- ARGUMENTS ---
 	fmt.Println(cl("Arguments:", yellow))

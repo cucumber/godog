@@ -17,11 +17,11 @@ import (
 var statusMatch = regexp.MustCompile("^exit status (\\d+)")
 var parsedStatus int
 
+var stdout = createAnsiColorWriter(os.Stdout)
+var stderr = createAnsiColorWriter(statusOutputFilter(os.Stderr))
+
 func buildAndRun() (int, error) {
 	var status int
-	// will support Ansi colors for windows
-	stdout := createAnsiColorWriter(os.Stdout)
-	stderr := createAnsiColorWriter(statusOutputFilter(os.Stderr))
 
 	dir := fmt.Sprintf(filepath.Join("%s", "godog-%d"), os.TempDir(), time.Now().UnixNano())
 	err := godog.Build(dir)
@@ -75,9 +75,25 @@ func buildAndRun() (int, error) {
 }
 
 func main() {
+	var vers, defs, sof bool
+	var tags, format string
+	var concurrency int
+
+	flagSet := godog.FlagSet(&format, &tags, &defs, &sof, &vers, &concurrency)
+	err := flagSet.Parse(os.Args[1:])
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		os.Exit(1)
+	}
+
+	if vers {
+		fmt.Fprintln(stdout, "Godog version is", godog.Version)
+		os.Exit(0) // should it be 0?
+	}
+
 	status, err := buildAndRun()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintln(stderr, err)
 		os.Exit(1)
 	}
 	// it might be a case, that status might not be resolved

@@ -157,6 +157,10 @@ See implementation examples:
 
 ### Changes
 
+**2016-06-01**
+- parse flags in main command, to show version and help without needing
+  to compile test package and buildable go sources.
+
 **2016-05-28**
 - show nicely formatted called step func name and file path
 

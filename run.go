@@ -56,7 +56,7 @@ func Run(contextInitializer func(suite *Suite)) int {
 	var vers, defs, sof bool
 	var tags, format string
 	var concurrency int
-	flagSet := flags(&format, &tags, &defs, &sof, &vers, &concurrency)
+	flagSet := FlagSet(&format, &tags, &defs, &sof, &vers, &concurrency)
 	err := flagSet.Parse(os.Args[1:])
 	fatal(err)
 

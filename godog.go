@@ -44,4 +44,4 @@ Godog was inspired by Behat and the above description is taken from it's documen
 package godog
 
 // Version of package - based on Semantic Versioning 2.0.0 http://semver.org/
-const Version = "v0.4.2"
+const Version = "v0.4.3"
