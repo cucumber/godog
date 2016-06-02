@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
-	"runtime"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/DATA-DOG/godog/gherkin"
 )
@@ -372,13 +372,15 @@ func (s *Suite) runScenario(scenario *gherkin.Scenario, b *gherkin.Background) (
 func (s *Suite) printStepDefinitions() {
 	var longest int
 	for _, def := range s.steps {
-		if longest < len(def.Expr.String()) {
-			longest = len(def.Expr.String())
+		n := utf8.RuneCountInString(def.Expr.String())
+		if longest < n {
+			longest = n
 		}
 	}
 	for _, def := range s.steps {
-		location := runtime.FuncForPC(def.hv.Pointer()).Name()
-		spaces := strings.Repeat(" ", longest-len(def.Expr.String()))
+		n := utf8.RuneCountInString(def.Expr.String())
+		location := def.funcName()
+		spaces := strings.Repeat(" ", longest-n)
 		fmt.Println(cl(def.Expr.String(), yellow)+spaces, cl("# "+location, black))
 	}
 	if len(s.steps) == 0 {

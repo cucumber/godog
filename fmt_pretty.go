@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/DATA-DOG/godog/gherkin"
 )
@@ -377,13 +378,13 @@ func (f *pretty) line(loc *gherkin.Location) string {
 func (f *pretty) length(node interface{}) int {
 	switch t := node.(type) {
 	case *gherkin.Background:
-		return f.indent + len(strings.TrimSpace(t.Keyword)+": "+t.Name)
+		return f.indent + utf8.RuneCountInString(strings.TrimSpace(t.Keyword)+": "+t.Name)
 	case *gherkin.Step:
-		return f.indent*2 + len(strings.TrimSpace(t.Keyword)+" "+t.Text)
+		return f.indent*2 + utf8.RuneCountInString(strings.TrimSpace(t.Keyword)+" "+t.Text)
 	case *gherkin.Scenario:
-		return f.indent + len(strings.TrimSpace(t.Keyword)+": "+t.Name)
+		return f.indent + utf8.RuneCountInString(strings.TrimSpace(t.Keyword)+": "+t.Name)
 	case *gherkin.ScenarioOutline:
-		return f.indent + len(strings.TrimSpace(t.Keyword)+": "+t.Name)
+		return f.indent + utf8.RuneCountInString(strings.TrimSpace(t.Keyword)+": "+t.Name)
 	}
 	panic(fmt.Sprintf("unexpected node %T to determine length", node))
 }
