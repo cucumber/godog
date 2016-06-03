@@ -1,16 +1,18 @@
 /*
-Package godog is a behavior-driven development framework, a tool to describe your
-application based on the behavior and run these specifications. The features are
-described by a human-readable gherkin language.
+Package godog is the official Cucumber BDD framework for Golang, it merges specification
+and test documentation into one cohesive whole.
 
 Godog does not intervene with the standard "go test" command and it's behavior.
 You can leverage both frameworks to functionally test your application while
 maintaining all test related source code in *_test.go files.
 
-Godog acts similar compared to "go test" command. It builds all package sources
-to a single main package file and replaces main func with it's own and runs the
-build to test described application behavior in feature files.
-Production builds remains clean without any overhead.
+Godog acts similar compared to go test command. It leverages
+a TestMain function introduced in go1.4 and clones the package sources
+to a temporary build directory. The only change it does is adding a runner
+test.go file and replaces TestMain func if it was used in tests.
+Godog uses standard go ast and build utils to generate test suite package,
+compiles it with go test -c command. It accepts all your environment exported
+build related vars.
 
 For example, imagine you’re about to create the famous UNIX ls command.
 Before you begin, you describe how the feature should work, see the example below..
@@ -39,7 +41,7 @@ Now, wouldn’t it be cool if something could read this sentence and use it to a
 run a test against the ls command? Hey, that’s exactly what this package does!
 As you’ll see, Godog is easy to learn, quick to use, and will put the fun back into tests.
 
-Godog was inspired by Behat and the above description is taken from it's documentation.
+Godog was inspired by Behat and Cucumber the above description is taken from it's documentation.
 */
 package godog
 

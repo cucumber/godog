@@ -7,11 +7,14 @@
 
 **The API is likely to change a few times before we reach 1.0.0**
 
-**Godog** is an open source behavior-driven development framework for
-[go][golang] programming language. What is behavior-driven development,
-you ask? It’s the idea that you start by writing human-readable sentences
-that describe a feature of your application and how it should work, and
-only then implement this behavior in software.
+Package godog is the official Cucumber BDD framework for Golang, it merges
+specification and test documentation into one cohesive whole. The author
+is a core member of [cucumber team](https://github.com/cucumber).
+
+What is behavior-driven development, you ask? It’s the idea that you start
+by writing human-readable sentences that describe a feature of your
+application and how it should work, and only then implement this behavior
+in software.
 
 The project is inspired by [behat][behat] and [cucumber][cucumber] and is
 based on cucumber [gherkin3 parser][gherkin].
@@ -32,6 +35,31 @@ command. It even passes all your environment exported vars.
 **Godog** ships gherkin parser dependency as a subpackage. This will
 ensure that it is always compatible with the installed version of godog.
 So in general there are no vendor dependencies needed for installation.
+
+The following about section was taken from
+[cucumber](https://cucumber.io/) homepage.
+
+## About
+
+#### A single source of truth
+
+Cucumber merges specification and test documentation into one cohesive whole.
+
+#### Living documentation
+
+Because they're automatically tested by Cucumber, your specifications are
+always bang up-to-date.
+
+#### Focus on the customer
+
+Business and IT don't always understand each other. Cucumber's executable
+specifications encourage closer collaboration, helping teams keep the
+business goal in mind at all times.
+
+#### Less rework
+
+When automated testing is this much fun, teams can easily protect
+themselves from costly regressions.
 
 ### Install
 
