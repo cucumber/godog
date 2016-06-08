@@ -17,8 +17,8 @@ import (
 var statusMatch = regexp.MustCompile("^exit status (\\d+)")
 var parsedStatus int
 
-var stdout = createAnsiColorWriter(os.Stdout)
-var stderr = createAnsiColorWriter(statusOutputFilter(os.Stderr))
+var stdout = io.Writer(os.Stdout)
+var stderr = statusOutputFilter(os.Stderr)
 
 func buildAndRun() (int, error) {
 	var status int
@@ -75,19 +75,29 @@ func buildAndRun() (int, error) {
 }
 
 func main() {
-	var vers, defs, sof bool
+	var vers, defs, sof, noclr bool
 	var tags, format string
 	var concurrency int
 
-	flagSet := godog.FlagSet(&format, &tags, &defs, &sof, &vers, &concurrency)
+	flagSet := godog.FlagSet(&format, &tags, &defs, &sof, &noclr, &concurrency)
+	flagSet.BoolVar(&vers, "version", false, "Show current version.")
+
 	err := flagSet.Parse(os.Args[1:])
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		os.Exit(1)
 	}
 
+	if noclr {
+		stdout = noColorsWriter(stdout)
+		stderr = noColorsWriter(stderr)
+	} else {
+		stdout = createAnsiColorWriter(stdout)
+		stderr = createAnsiColorWriter(stderr)
+	}
+
 	if vers {
-		fmt.Fprintln(stdout, "Godog version is", godog.Version)
+		fmt.Fprintln(stdout, "Godog version is:", godog.Version)
 		os.Exit(0) // should it be 0?
 	}
 

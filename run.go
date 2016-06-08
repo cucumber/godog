@@ -53,18 +53,14 @@ func (r *runner) run() (failed bool) {
 // contextInitializer must be able to register
 // the step definitions and event handlers.
 func Run(contextInitializer func(suite *Suite)) int {
-	var vers, defs, sof bool
+	var defs, sof, noclr bool
 	var tags, format string
 	var concurrency int
-	flagSet := FlagSet(&format, &tags, &defs, &sof, &vers, &concurrency)
+	flagSet := FlagSet(&format, &tags, &defs, &sof, &noclr, &concurrency)
 	err := flagSet.Parse(os.Args[1:])
 	fatal(err)
 
-	switch {
-	case vers:
-		fmt.Println(cl("Godog", green) + " version is " + cl(Version, yellow))
-		return 0
-	case defs:
+	if defs {
 		s := &Suite{}
 		contextInitializer(s)
 		s.printStepDefinitions()
