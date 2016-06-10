@@ -65,9 +65,13 @@ themselves from costly regressions.
 
     go get github.com/DATA-DOG/godog/cmd/godog
 
+**Note:** currently godog cannot manage **vendor** directory dependencies,
+[#35](https://github.com/DATA-DOG/godog/issues/35).
+
 ### Example
 
-The following example can be [found here](https://github.com/DATA-DOG/godog/tree/master/examples/godogs).
+The following example can be [found
+here](https://github.com/DATA-DOG/godog/tree/master/examples/godogs).
 
 #### Step 1
 
@@ -171,6 +175,10 @@ Now when you run the `godog godog.feature` again, you should see:
 **Note:** we have hooked to **BeforeScenario** event in order to reset state. You may hook into
 more events, like **AfterStep** to test against an error and print more details about the error
 or state before failure. Or **BeforeSuite** to prepare a database.
+
+### References and Tutorials
+
+- [how to use godog by semaphoreci](https://semaphoreci.com/community/tutorials/how-to-use-godog-for-behavior-driven-development-in-go)
 
 ### Documentation
 
