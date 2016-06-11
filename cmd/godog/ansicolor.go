@@ -15,8 +15,8 @@ type outputMode int
 // color escape sequence.
 const (
 	_ outputMode = iota
-	discardNonColorEscSeq
-	outputNonColorEscSeq
+	DiscardNonColorEscSeq
+	OutputNonColorEscSeq
 )
 
 // NewAnsiColorWriter creates and initializes a new ansiColorWriter
@@ -25,7 +25,7 @@ const (
 // colors of the text by the escape sequence.
 // In the console of other systems, which writes to w all text.
 func createAnsiColorWriter(w io.Writer) io.Writer {
-	return createModeAnsiColorWriter(w, discardNonColorEscSeq)
+	return createModeAnsiColorWriter(w, DiscardNonColorEscSeq)
 }
 
 // NewModeAnsiColorWriter create and initializes a new ansiColorWriter
