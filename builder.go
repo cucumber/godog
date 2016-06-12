@@ -1,30 +1,34 @@
 package godog
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"go/build"
-	"go/format"
 	"go/parser"
 	"go/token"
-	"io"
+	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
+	"strings"
 	"text/template"
 )
 
-var runnerTemplate = template.Must(template.New("main").Parse(`package {{ .Name }}
+var godogImportPath = "github.com/DATA-DOG/godog"
+var runnerTemplate = template.Must(template.New("testmain").Parse(`package main
 
 import (
-	{{ if ne .Name "godog" }}"github.com/DATA-DOG/godog"{{ end }}
+	"github.com/DATA-DOG/godog"
+	_test "{{ .ImportPath }}"
 	"os"
-	"testing"
 )
 
-const GodogSuiteName = "{{ .Name }}"
-
-func TestMain(m *testing.M) {
-	status := {{ if ne .Name "godog" }}godog.{{ end }}Run(func (suite *{{ if ne .Name "godog" }}godog.{{ end }}Suite) {
+func main() {
+	status := godog.Run(func (suite *godog.Suite) {
 		{{range .Contexts}}
-			{{ . }}(suite)
+			_test.{{ . }}(suite)
 		{{end}}
 	})
 	os.Exit(status)
@@ -42,77 +46,159 @@ func TestMain(m *testing.M) {
 //
 // The test entry point which uses go1.4 TestMain func
 // is generated from the template above.
-func Build(dir string) error {
-	pkg, err := build.ImportDir(".", 0)
+func Build() error {
+	abs, err := filepath.Abs(".")
+	if err != nil {
+		return err
+	}
+	pkg, err := build.ImportDir(abs, 0)
 	if err != nil {
 		return err
 	}
 
-	return buildTestPackage(pkg, dir)
+	src, err := buildTestMain(pkg)
+	if err != nil {
+		return err
+	}
+
+	// first of all compile test package dependencies
+	out, err := exec.Command("go", "test", "-i").CombinedOutput()
+	if err != nil {
+		if len(out) > 0 {
+			return fmt.Errorf("failed to compile package %s deps - %v, output - %s", pkg.Name, err, string(out))
+		}
+		return fmt.Errorf("failed to compile package %s deps - %v", pkg.Name, err)
+	}
+
+	// next build and compile the tested package
+	// test executable will be piped to /dev/null
+	// since we do not need it for godog suite
+	// we also print back the temp WORK directory
+	// go has build to test this package. We will
+	// reuse it for our suite
+	out, err = exec.Command("go", "test", "-c", "-work", "-o", os.DevNull).CombinedOutput()
+	if err != nil {
+		if len(out) > 0 {
+			return fmt.Errorf("failed to compile tested package %s - %v, output - %s", pkg.Name, err, string(out))
+		}
+		return fmt.Errorf("failed to compile tested package %s - %v", pkg.Name, err)
+	}
+	workdir := strings.TrimSpace(string(out))
+	if !strings.HasPrefix(workdir, "WORK=") {
+		return fmt.Errorf("expected WORK dir path, but got: %s", workdir)
+	}
+	workdir = strings.Replace(workdir, "WORK=", "", 1)
+	testdir := filepath.Join(workdir, pkg.ImportPath, "_test")
+
+	// replace testmain.go file with our own
+	testmain := filepath.Join(testdir, "_testmain.go")
+	err = ioutil.WriteFile(testmain, src, 0644)
+	if err != nil {
+		return err
+	}
+
+	// now we need to ensure godod library can be linked
+	// need to check for it and compile
+	// first try vendor directory and then all go src dirs
+	try := []string{filepath.Join(pkg.Dir, "vendor", godogImportPath)}
+	for _, d := range build.Default.SrcDirs() {
+		try = append(try, filepath.Join(d, godogImportPath))
+	}
+	godogPkg, err := locatePackage(try)
+	if err != nil {
+		return err
+	}
+
+	var buf bytes.Buffer
+	pkgDirs := []string{testdir, workdir, filepath.Join(godogPkg.PkgRoot, runtime.GOOS+"_"+runtime.GOARCH)}
+	// build godog testmain package archive
+	testMainPkgOut := filepath.Join(testdir, "main.a")
+	args := []string{
+		"tool", "compile",
+		"-o", testMainPkgOut,
+		"-trimpath", workdir,
+		"-p", "main",
+		"-complete",
+	}
+	if i := strings.LastIndex(godogPkg.ImportPath, "vendor/"); i != -1 {
+		args = append(args, "-importmap", godogImportPath+"="+godogPkg.ImportPath)
+	}
+	for _, inc := range pkgDirs {
+		args = append(args, "-I", inc)
+	}
+	args = append(args, "-pack", testmain)
+	cmd := exec.Command("go", args...)
+	cmd.Env = os.Environ()
+	cmd.Dir = testdir
+	cmd.Stdout = &buf
+	cmd.Stderr = &buf
+	err = cmd.Run()
+	if err != nil {
+		fmt.Println("command:", cmd.Path, cmd.Args)
+		return fmt.Errorf("failed to compile testmain package %v, output - %s", err, buf.String())
+	}
+
+	// build test suite executable
+	bin := filepath.Join(pkg.Dir, "godog.test")
+	cmd = exec.Command(filepath.Join(build.ToolDir, "link"), "-o", bin)
+	for _, link := range pkgDirs {
+		cmd.Args = append(cmd.Args, "-L", link)
+	}
+	cmd.Args = append(cmd.Args, "-buildmode=exe", "-extld", build.Default.Compiler, testMainPkgOut)
+	cmd.Env = os.Environ()
+	cmd.Dir = testdir
+	out, err = cmd.CombinedOutput()
+	if err != nil {
+		if len(out) > 0 {
+			return fmt.Errorf("failed to compile testmain package %v, output - %s", err, string(out))
+		}
+		return fmt.Errorf("failed to compile testmain package %v", err)
+	}
+
+	return nil
+}
+
+func locatePackage(try []string) (*build.Package, error) {
+	for _, path := range try {
+		abs, err := filepath.Abs(path)
+		if err != nil {
+			continue
+		}
+		return build.ImportDir(abs, 0)
+	}
+	return nil, fmt.Errorf("failed to find godog package in any of:\n%s", strings.Join(try, "\n"))
 }
 
 // buildTestPackage clones a package and adds a godog
 // entry point with TestMain func in order to
 // run the test suite. If TestMain func is found in tested
 // source, it will be removed so it can be replaced
-func buildTestPackage(pkg *build.Package, dir string) error {
-	// these file packs may be adjusted in the future, if there are complaints
-	// in general, most important aspect is to replicate go test behavior
-	err := copyNonTestPackageFiles(
-		dir,
-		pkg.CFiles,
-		pkg.CgoFiles,
-		pkg.CXXFiles,
-		pkg.HFiles,
-		pkg.GoFiles,
-		pkg.IgnoredGoFiles,
-	)
-
-	if err != nil {
-		return err
-	}
-
+func buildTestMain(pkg *build.Package) ([]byte, error) {
 	contexts, err := processPackageTestFiles(
-		dir,
 		pkg.TestGoFiles,
 		pkg.XTestGoFiles,
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	// build godog runner test file
-	out, err := os.Create(filepath.Join(dir, "godog_runner_test.go"))
-	if err != nil {
-		return err
-	}
-	defer out.Close()
 
 	data := struct {
-		Name     string
-		Contexts []string
-	}{pkg.Name, contexts}
+		Name       string
+		Contexts   []string
+		ImportPath string
+	}{pkg.Name, contexts, pkg.ImportPath}
 
-	return runnerTemplate.Execute(out, data)
-}
-
-// copyNonTestPackageFiles simply copies all given file packs
-// to the destDir.
-func copyNonTestPackageFiles(destDir string, packs ...[]string) error {
-	for _, pack := range packs {
-		for _, file := range pack {
-			if err := copyPackageFile(file, filepath.Join(destDir, file)); err != nil {
-				return err
-			}
-		}
+	var buf bytes.Buffer
+	if err = runnerTemplate.Execute(&buf, data); err != nil {
+		return nil, err
 	}
-	return nil
+	return buf.Bytes(), nil
 }
 
 // processPackageTestFiles runs through ast of each test
 // file pack and removes TestMain func if found. it also
 // looks for godog suite contexts to register on run
-func processPackageTestFiles(destDir string, packs ...[]string) ([]string, error) {
+func processPackageTestFiles(packs ...[]string) ([]string, error) {
 	var ctxs []string
 	fset := token.NewFileSet()
 	for _, pack := range packs {
@@ -122,52 +208,16 @@ func processPackageTestFiles(destDir string, packs ...[]string) ([]string, error
 				return ctxs, err
 			}
 
-			astDeleteTestMainFunc(node)
 			ctxs = append(ctxs, astContexts(node)...)
-
-			destFile := filepath.Join(destDir, testFile)
-			if err = os.MkdirAll(filepath.Dir(destFile), 0755); err != nil {
-				return ctxs, err
-			}
-
-			out, err := os.Create(destFile)
-			if err != nil {
-				return ctxs, err
-			}
-			defer out.Close()
-
-			if err := format.Node(out, fset, node); err != nil {
-				return ctxs, err
-			}
 		}
 	}
 	return ctxs, nil
 }
 
-// copyPackageFile simply copies the file, if dest file dir does
-// not exist it creates it
-func copyPackageFile(src, dst string) (err error) {
-	in, err := os.Open(src)
+func debug(i interface{}) {
+	dat, err := json.MarshalIndent(i, "", "  ")
 	if err != nil {
-		return
+		panic(err)
 	}
-	defer in.Close()
-	if err = os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
-		return
-	}
-	out, err := os.Create(dst)
-	if err != nil {
-		return
-	}
-	defer func() {
-		cerr := out.Close()
-		if err == nil {
-			err = cerr
-		}
-	}()
-	if _, err = io.Copy(out, in); err != nil {
-		return
-	}
-	err = out.Sync()
-	return
+	fmt.Fprintln(os.Stdout, string(dat))
 }
