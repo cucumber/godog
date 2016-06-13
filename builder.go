@@ -2,7 +2,6 @@ package godog
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"go/build"
 	"go/parser"
@@ -165,7 +164,11 @@ func locatePackage(try []string) (*build.Package, error) {
 		if err != nil {
 			continue
 		}
-		return build.ImportDir(abs, 0)
+		pkg, err := build.ImportDir(abs, 0)
+		if err != nil {
+			continue
+		}
+		return pkg, nil
 	}
 	return nil, fmt.Errorf("failed to find godog package in any of:\n%s", strings.Join(try, "\n"))
 }
@@ -213,12 +216,4 @@ func processPackageTestFiles(packs ...[]string) ([]string, error) {
 		}
 	}
 	return ctxs, nil
-}
-
-func debug(i interface{}) {
-	dat, err := json.MarshalIndent(i, "", "  ")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Fprintln(os.Stdout, string(dat))
 }
