@@ -21,13 +21,13 @@ var stderr = statusOutputFilter(os.Stderr)
 func buildAndRun() (int, error) {
 	var status int
 
-	err := godog.Build()
+	bin, err := godog.Build()
 	if err != nil {
 		return 1, err
 	}
-	panic("done")
+	defer os.Remove(bin)
 
-	cmd := exec.Command("godog.test", os.Args[1:]...)
+	cmd := exec.Command(bin, os.Args[1:]...)
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	cmd.Env = os.Environ()

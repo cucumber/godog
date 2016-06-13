@@ -11,7 +11,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"text/template"
 )
@@ -46,55 +45,54 @@ func main() {
 //
 // The test entry point which uses go1.4 TestMain func
 // is generated from the template above.
-func Build() error {
+func Build() (string, error) {
 	abs, err := filepath.Abs(".")
 	if err != nil {
-		return err
+		return "", err
 	}
 	pkg, err := build.ImportDir(abs, 0)
 	if err != nil {
-		return err
+		return "", err
 	}
 
+	bin := filepath.Join(pkg.Dir, "godog.test")
 	src, err := buildTestMain(pkg)
 	if err != nil {
-		return err
+		return bin, err
 	}
 
 	// first of all compile test package dependencies
+	// that will save was many compilations for dependencies
+	// go does it better
 	out, err := exec.Command("go", "test", "-i").CombinedOutput()
 	if err != nil {
-		if len(out) > 0 {
-			return fmt.Errorf("failed to compile package %s deps - %v, output - %s", pkg.Name, err, string(out))
-		}
-		return fmt.Errorf("failed to compile package %s deps - %v", pkg.Name, err)
+		return bin, fmt.Errorf("failed to compile package %s deps - %v, output - %s", pkg.Name, err, string(out))
 	}
 
-	// next build and compile the tested package
+	// let go do the dirty work and compile it.
+	// builds and compile the tested package.
 	// test executable will be piped to /dev/null
 	// since we do not need it for godog suite
 	// we also print back the temp WORK directory
 	// go has build to test this package. We will
-	// reuse it for our suite
+	// reuse it for our suite.
 	out, err = exec.Command("go", "test", "-c", "-work", "-o", os.DevNull).CombinedOutput()
 	if err != nil {
-		if len(out) > 0 {
-			return fmt.Errorf("failed to compile tested package %s - %v, output - %s", pkg.Name, err, string(out))
-		}
-		return fmt.Errorf("failed to compile tested package %s - %v", pkg.Name, err)
+		return bin, fmt.Errorf("failed to compile tested package %s - %v, output - %s", pkg.Name, err, string(out))
 	}
 	workdir := strings.TrimSpace(string(out))
 	if !strings.HasPrefix(workdir, "WORK=") {
-		return fmt.Errorf("expected WORK dir path, but got: %s", workdir)
+		return bin, fmt.Errorf("expected WORK dir path, but got: %s", workdir)
 	}
 	workdir = strings.Replace(workdir, "WORK=", "", 1)
 	testdir := filepath.Join(workdir, pkg.ImportPath, "_test")
+	defer os.RemoveAll(workdir)
 
 	// replace testmain.go file with our own
 	testmain := filepath.Join(testdir, "_testmain.go")
 	err = ioutil.WriteFile(testmain, src, 0644)
 	if err != nil {
-		return err
+		return bin, err
 	}
 
 	// now we need to ensure godod library can be linked
@@ -106,11 +104,12 @@ func Build() error {
 	}
 	godogPkg, err := locatePackage(try)
 	if err != nil {
-		return err
+		return bin, err
 	}
 
 	var buf bytes.Buffer
-	pkgDirs := []string{testdir, workdir, filepath.Join(godogPkg.PkgRoot, runtime.GOOS+"_"+runtime.GOARCH)}
+	pkgDir := filepath.Join(godogPkg.PkgRoot, build.Default.GOOS+"_"+build.Default.GOARCH)
+	pkgDirs := []string{testdir, workdir, pkgDir}
 	// build godog testmain package archive
 	testMainPkgOut := filepath.Join(testdir, "main.a")
 	args := []string{
@@ -129,33 +128,35 @@ func Build() error {
 	args = append(args, "-pack", testmain)
 	cmd := exec.Command("go", args...)
 	cmd.Env = os.Environ()
-	cmd.Dir = testdir
+	// cmd.Dir = testdir
 	cmd.Stdout = &buf
 	cmd.Stderr = &buf
 	err = cmd.Run()
 	if err != nil {
 		fmt.Println("command:", cmd.Path, cmd.Args)
-		return fmt.Errorf("failed to compile testmain package %v, output - %s", err, buf.String())
+		return bin, fmt.Errorf("failed to compile testmain package %v, output - %s", err, buf.String())
 	}
 
 	// build test suite executable
-	bin := filepath.Join(pkg.Dir, "godog.test")
-	cmd = exec.Command(filepath.Join(build.ToolDir, "link"), "-o", bin)
-	for _, link := range pkgDirs {
-		cmd.Args = append(cmd.Args, "-L", link)
+	args = []string{
+		"tool", "link",
+		"-o", bin,
+		"-extld", build.Default.Compiler,
+		// "-buildmode=exe", // default, omit
 	}
-	cmd.Args = append(cmd.Args, "-buildmode=exe", "-extld", build.Default.Compiler, testMainPkgOut)
+	for _, link := range pkgDirs {
+		args = append(args, "-L", link)
+	}
+	args = append(args, testMainPkgOut)
+	cmd = exec.Command("go", args...)
 	cmd.Env = os.Environ()
-	cmd.Dir = testdir
+	// cmd.Dir = testdir
 	out, err = cmd.CombinedOutput()
 	if err != nil {
-		if len(out) > 0 {
-			return fmt.Errorf("failed to compile testmain package %v, output - %s", err, string(out))
-		}
-		return fmt.Errorf("failed to compile testmain package %v", err)
+		return bin, fmt.Errorf("failed to compile testmain package %v, output - %s", err, string(out))
 	}
 
-	return nil
+	return bin, nil
 }
 
 func locatePackage(try []string) (*build.Package, error) {
