@@ -11,10 +11,11 @@ type initializer func(*Suite)
 type runner struct {
 	sync.WaitGroup
 
-	semaphore   chan int
-	features    []*feature
-	fmt         Formatter // needs to support concurrency
-	initializer initializer
+	semaphore     chan int
+	stopOnFailure bool
+	features      []*feature
+	fmt           Formatter // needs to support concurrency
+	initializer   initializer
 }
 
 func (r *runner) run() (failed bool) {
@@ -22,17 +23,23 @@ func (r *runner) run() (failed bool) {
 	for _, ft := range r.features {
 		go func(fail *bool, feat *feature) {
 			r.semaphore <- 1
+			defer func() {
+				r.Done()
+				<-r.semaphore
+			}()
+			if r.stopOnFailure && *fail {
+				return
+			}
 			suite := &Suite{
-				fmt:      r.fmt,
-				features: []*feature{feat},
+				fmt:           r.fmt,
+				stopOnFailure: r.stopOnFailure,
+				features:      []*feature{feat},
 			}
 			r.initializer(suite)
 			suite.run()
 			if suite.failed {
 				*fail = true
 			}
-			<-r.semaphore
-			r.Done()
 		}(&failed, ft)
 	}
 	r.Wait()
@@ -78,9 +85,6 @@ func Run(contextInitializer func(suite *Suite)) int {
 	if concurrency > 1 && format != "progress" {
 		fatal(fmt.Errorf("when concurrency level is higher than 1, only progress format is supported"))
 	}
-	if concurrency > 1 && sof {
-		fatal(fmt.Errorf("when concurrency level is higher than 1, cannot stop on first failure for now"))
-	}
 	formatter, err := findFmt(format)
 	fatal(err)
 
@@ -88,10 +92,11 @@ func Run(contextInitializer func(suite *Suite)) int {
 	fatal(err)
 
 	r := runner{
-		fmt:         formatter,
-		initializer: contextInitializer,
-		semaphore:   make(chan int, concurrency),
-		features:    features,
+		fmt:           formatter,
+		initializer:   contextInitializer,
+		semaphore:     make(chan int, concurrency),
+		features:      features,
+		stopOnFailure: sof,
 	}
 
 	if failed := r.run(); failed {
