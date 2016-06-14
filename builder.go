@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+	"time"
 	"unicode"
 )
 
@@ -69,17 +70,25 @@ func Build() (string, error) {
 		return bin, fmt.Errorf("failed to compile package %s deps - %v, output - %s", pkg.Name, err, string(out))
 	}
 
-	// let go do the dirty work and compile it.
+	// let go do the dirty work and compile test
+	// package with it's dependencies. Older go
+	// versions does not accept existing file output
+	// so we create a temporary executable which will
+	// removed.
+	temp := fmt.Sprintf(filepath.Join("%s", "temp-%d.test"), os.TempDir(), time.Now().UnixNano())
+
 	// builds and compile the tested package.
-	// test executable will be piped to /dev/null
-	// since we do not need it for godog suite
+	// generated test executable will be removed
+	// since we do not need it for godog suite.
 	// we also print back the temp WORK directory
-	// go has build to test this package. We will
-	// reuse it for our suite.
-	out, err = exec.Command("go", "test", "-c", "-work", "-o", os.DevNull).CombinedOutput()
+	// go has built. We will reuse it for our suite workdir.
+	out, err = exec.Command("go", "test", "-c", "-work", "-o", temp).CombinedOutput()
 	if err != nil {
 		return bin, fmt.Errorf("failed to compile tested package %s - %v, output - %s", pkg.Name, err, string(out))
 	}
+	defer os.Remove(temp)
+
+	// extract go-build temporary directory as our workdir
 	workdir := strings.TrimSpace(string(out))
 	if !strings.HasPrefix(workdir, "WORK=") {
 		return bin, fmt.Errorf("expected WORK dir path, but got: %s", workdir)
@@ -88,7 +97,7 @@ func Build() (string, error) {
 	testdir := filepath.Join(workdir, pkg.ImportPath, "_test")
 	defer os.RemoveAll(workdir)
 
-	// replace testmain.go file with our own
+	// replace _testmain.go file with our own
 	testmain := filepath.Join(testdir, "_testmain.go")
 	err = ioutil.WriteFile(testmain, src, 0644)
 	if err != nil {
@@ -107,15 +116,16 @@ func Build() (string, error) {
 		return bin, err
 	}
 
-	var buf bytes.Buffer
 	pkgDir := filepath.Join(godogPkg.PkgRoot, build.Default.GOOS+"_"+build.Default.GOARCH)
 	pkgDirs := []string{testdir, workdir, pkgDir}
-	// build godog testmain package archive
+
+	// compile godog testmain package archive
+	var buf bytes.Buffer
 	testMainPkgOut := filepath.Join(testdir, "main.a")
 	args := []string{
 		"tool", "compile",
 		"-o", testMainPkgOut,
-		"-trimpath", workdir,
+		// "-trimpath", workdir,
 		"-p", "main",
 		"-complete",
 	}
@@ -128,7 +138,6 @@ func Build() (string, error) {
 	args = append(args, "-pack", testmain)
 	cmd := exec.Command("go", args...)
 	cmd.Env = os.Environ()
-	// cmd.Dir = testdir
 	cmd.Stdout = &buf
 	cmd.Stderr = &buf
 	err = cmd.Run()
@@ -137,7 +146,7 @@ func Build() (string, error) {
 		return bin, fmt.Errorf("failed to compile testmain package %v, output - %s", err, buf.String())
 	}
 
-	// build test suite executable
+	// link test suite executable
 	args = []string{
 		"tool", "link",
 		"-o", bin,
@@ -150,7 +159,6 @@ func Build() (string, error) {
 	args = append(args, testMainPkgOut)
 	cmd = exec.Command("go", args...)
 	cmd.Env = os.Environ()
-	// cmd.Dir = testdir
 	out, err = cmd.CombinedOutput()
 	if err != nil {
 		return bin, fmt.Errorf("failed to compile testmain package %v, output - %s", err, string(out))
