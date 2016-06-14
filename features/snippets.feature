@@ -28,7 +28,7 @@ Feature: undefined step snippets
               return godog.ErrPending
       }
 
-      func featureContext(s *godog.Suite) {
+      func FeatureContext(s *godog.Suite) {
               s.Step(`^I send "([^"]*)" request to "([^"]*)"$`, iSendRequestTo)
               s.Step(`^the response code should be (\d+)$`, theResponseCodeShouldBe)
       }
@@ -56,7 +56,7 @@ Feature: undefined step snippets
               return godog.ErrPending
       }
 
-      func featureContext(s *godog.Suite) {
+      func FeatureContext(s *godog.Suite) {
               s.Step(`^I send "([^"]*)" request to "([^"]*)" with:$`, iSendRequestToWith)
               s.Step(`^the response code should be (\d+) and header "([^"]*)" should be "([^"]*)"$`, theResponseCodeShouldBeAndHeaderShouldBe)
       }
@@ -87,7 +87,7 @@ Feature: undefined step snippets
               return godog.ErrPending
       }
 
-      func featureContext(s *godog.Suite) {
+      func FeatureContext(s *godog.Suite) {
               s.Step(`^I pull from github\.com$`, iPullFromGithubcom)
               s.Step(`^the project should be there$`, theProjectShouldBeThere)
       }

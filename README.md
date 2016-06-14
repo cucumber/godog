@@ -157,7 +157,7 @@ func thereShouldBeRemaining(remaining int) error {
 	return nil
 }
 
-func featureContext(s *godog.Suite) {
+func FeatureContext(s *godog.Suite) {
 	s.Step(`^there are (\d+) godogs$`, thereAreGodogs)
 	s.Step(`^I eat (\d+)$`, iEat)
 	s.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)

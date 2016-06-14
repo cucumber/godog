@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+	"unicode"
 )
 
 var godogImportPath = "github.com/DATA-DOG/godog"
@@ -214,6 +215,17 @@ func processPackageTestFiles(packs ...[]string) ([]string, error) {
 
 			ctxs = append(ctxs, astContexts(node)...)
 		}
+	}
+	var failed []string
+	for _, ctx := range ctxs {
+		runes := []rune(ctx)
+		if unicode.IsLower(runes[0]) {
+			expected := append([]rune{unicode.ToUpper(runes[0])}, runes[1:]...)
+			failed = append(failed, fmt.Sprintf("%s - should be: %s", ctx, string(expected)))
+		}
+	}
+	if len(failed) > 0 {
+		return ctxs, fmt.Errorf("godog contexts must be exported:\n\t%s", strings.Join(failed, "\n\t"))
 	}
 	return ctxs, nil
 }

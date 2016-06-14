@@ -67,7 +67,7 @@ func (a *apiFeature) theResponseShouldMatchJSON(body *gherkin.DocString) (err er
 	return
 }
 
-func featureContext(s *godog.Suite) {
+func FeatureContext(s *godog.Suite) {
 	api := &apiFeature{}
 
 	s.BeforeScenario(api.resetResponse)
