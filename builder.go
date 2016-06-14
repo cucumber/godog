@@ -116,7 +116,14 @@ func Build() (string, error) {
 		return bin, err
 	}
 
-	// @TODO: may be a case that godog dependency is not installed. may need to install it
+	// make sure godog package archive is installed, gherkin is not necessary at this point
+	cmd := exec.Command("go", "install", godogPkg.ImportPath)
+	cmd.Env = os.Environ()
+	out, err = cmd.CombinedOutput()
+	if err != nil {
+		return bin, fmt.Errorf("failed to install godog package:\n%s", string(out))
+	}
+
 	pkgDir := filepath.Join(godogPkg.PkgRoot, build.Default.GOOS+"_"+build.Default.GOARCH)
 	pkgDirs := []string{testdir, workdir, pkgDir}
 
@@ -138,7 +145,7 @@ func Build() (string, error) {
 		args = append(args, "-I", inc)
 	}
 	args = append(args, "-pack", testmain)
-	cmd := exec.Command("go", args...)
+	cmd = exec.Command("go", args...)
 	cmd.Env = os.Environ()
 	out, err = cmd.CombinedOutput()
 	if err != nil {
