@@ -67,7 +67,7 @@ func Build() (string, error) {
 	// go does it better
 	out, err := exec.Command("go", "test", "-i").CombinedOutput()
 	if err != nil {
-		return bin, fmt.Errorf("failed to compile package %s deps - %v, output - %s", pkg.Name, err, string(out))
+		return bin, fmt.Errorf("failed to compile package %s:\n%s", pkg.Name, string(out))
 	}
 
 	// let go do the dirty work and compile test
@@ -84,7 +84,7 @@ func Build() (string, error) {
 	// go has built. We will reuse it for our suite workdir.
 	out, err = exec.Command("go", "test", "-c", "-work", "-o", temp).CombinedOutput()
 	if err != nil {
-		return bin, fmt.Errorf("failed to compile tested package %s - %v, output - %s", pkg.Name, err, string(out))
+		return bin, fmt.Errorf("failed to compile tested package %s:\n%s", pkg.Name, string(out))
 	}
 	defer os.Remove(temp)
 
@@ -116,11 +116,11 @@ func Build() (string, error) {
 		return bin, err
 	}
 
+	// @TODO: may be a case that godog dependency is not installed. may need to install it
 	pkgDir := filepath.Join(godogPkg.PkgRoot, build.Default.GOOS+"_"+build.Default.GOARCH)
 	pkgDirs := []string{testdir, workdir, pkgDir}
 
 	// compile godog testmain package archive
-	var buf bytes.Buffer
 	testMainPkgOut := filepath.Join(testdir, "main.a")
 	args := []string{
 		"tool", "compile",
@@ -129,6 +129,8 @@ func Build() (string, error) {
 		"-p", "main",
 		"-complete",
 	}
+	// if godog library is in vendor directory
+	// link it with import map
 	if i := strings.LastIndex(godogPkg.ImportPath, "vendor/"); i != -1 {
 		args = append(args, "-importmap", godogImportPath+"="+godogPkg.ImportPath)
 	}
@@ -138,12 +140,9 @@ func Build() (string, error) {
 	args = append(args, "-pack", testmain)
 	cmd := exec.Command("go", args...)
 	cmd.Env = os.Environ()
-	cmd.Stdout = &buf
-	cmd.Stderr = &buf
-	err = cmd.Run()
+	out, err = cmd.CombinedOutput()
 	if err != nil {
-		fmt.Println("command:", cmd.Path, cmd.Args)
-		return bin, fmt.Errorf("failed to compile testmain package %v, output - %s", err, buf.String())
+		return bin, fmt.Errorf("failed to compile testmain package:\n%s", string(out))
 	}
 
 	// link test suite executable
@@ -161,7 +160,7 @@ func Build() (string, error) {
 	cmd.Env = os.Environ()
 	out, err = cmd.CombinedOutput()
 	if err != nil {
-		return bin, fmt.Errorf("failed to compile testmain package %v, output - %s", err, string(out))
+		return bin, fmt.Errorf("failed to link test executable:\n%s", string(out))
 	}
 
 	return bin, nil

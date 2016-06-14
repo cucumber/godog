@@ -6,13 +6,9 @@ Godog does not intervene with the standard "go test" command and it's behavior.
 You can leverage both frameworks to functionally test your application while
 maintaining all test related source code in *_test.go files.
 
-Godog acts similar compared to go test command. It leverages
-a TestMain function introduced in go1.4 and clones the package sources
-to a temporary build directory. The only change it does is adding a runner
-test.go file and replaces TestMain func if it was used in tests.
-Godog uses standard go ast and build utils to generate test suite package,
-compiles it with go test -c command. It accepts all your environment exported
-build related vars.
+Godog acts similar compared to go test command. It uses go
+compiler and linker tool in order to produce test executable. Godog
+contexts needs to be exported same as Test functions for go test.
 
 For example, imagine you’re about to create the famous UNIX ls command.
 Before you begin, you describe how the feature should work, see the example below..
