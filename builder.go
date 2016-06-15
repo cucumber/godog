@@ -16,6 +16,12 @@ import (
 	"unicode"
 )
 
+var compiler = filepath.Join(build.ToolDir, "compile")
+var linker = filepath.Join(build.ToolDir, "link")
+var gopaths = filepath.SplitList(build.Default.GOPATH)
+var goarch = build.Default.GOARCH
+var goos = build.Default.GOOS
+
 var godogImportPath = "github.com/DATA-DOG/godog"
 var runnerTemplate = template.Must(template.New("testmain").Parse(`package main
 
@@ -57,6 +63,10 @@ func Build() (string, error) {
 	}
 
 	bin := filepath.Join(pkg.Dir, "godog.test")
+	// suffix with .exe for windows
+	if goos == "windows" {
+		bin += ".exe"
+	}
 	src, err := buildTestMain(pkg)
 	if err != nil {
 		return bin, err
@@ -124,13 +134,14 @@ func Build() (string, error) {
 		return bin, fmt.Errorf("failed to install godog package:\n%s", string(out))
 	}
 
-	pkgDir := filepath.Join(godogPkg.PkgRoot, build.Default.GOOS+"_"+build.Default.GOARCH)
-	pkgDirs := []string{testdir, workdir, pkgDir}
+	pkgDirs := []string{testdir, workdir}
+	for _, gopath := range gopaths {
+		pkgDirs = append(pkgDirs, filepath.Join(gopath, "pkg", goos+"_"+goarch))
+	}
 
 	// compile godog testmain package archive
 	testMainPkgOut := filepath.Join(testdir, "main.a")
 	args := []string{
-		"tool", "compile",
 		"-o", testMainPkgOut,
 		// "-trimpath", workdir,
 		"-p", "main",
@@ -145,7 +156,7 @@ func Build() (string, error) {
 		args = append(args, "-I", inc)
 	}
 	args = append(args, "-pack", testmain)
-	cmd = exec.Command("go", args...)
+	cmd = exec.Command(compiler, args...)
 	cmd.Env = os.Environ()
 	out, err = cmd.CombinedOutput()
 	if err != nil {
@@ -154,16 +165,15 @@ func Build() (string, error) {
 
 	// link test suite executable
 	args = []string{
-		"tool", "link",
 		"-o", bin,
 		"-extld", build.Default.Compiler,
-		// "-buildmode=exe", // default, omit
+		"-buildmode=exe",
 	}
 	for _, link := range pkgDirs {
 		args = append(args, "-L", link)
 	}
 	args = append(args, testMainPkgOut)
-	cmd = exec.Command("go", args...)
+	cmd = exec.Command(linker, args...)
 	cmd.Env = os.Environ()
 	out, err = cmd.CombinedOutput()
 	if err != nil {
