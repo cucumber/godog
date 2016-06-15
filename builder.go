@@ -57,27 +57,19 @@ func Build() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	pkg, err := build.ImportDir(abs, 0)
-	if err != nil {
-		return "", err
-	}
 
-	bin := filepath.Join(pkg.Dir, "godog.test")
+	bin := filepath.Join(abs, "godog.test")
 	// suffix with .exe for windows
 	if goos == "windows" {
 		bin += ".exe"
 	}
+
+	// we allow package to be nil, if godog is run only when
+	// there is a feature file in empty directory
+	pkg, _ := build.ImportDir(abs, 0)
 	src, anyContexts, err := buildTestMain(pkg)
 	if err != nil {
 		return bin, err
-	}
-
-	// first of all compile test package dependencies
-	// that will save was many compilations for dependencies
-	// go does it better
-	out, err := exec.Command("go", "test", "-i").CombinedOutput()
-	if err != nil {
-		return bin, fmt.Errorf("failed to compile package %s:\n%s", pkg.Name, string(out))
 	}
 
 	workdir := fmt.Sprintf(filepath.Join("%s", "godog-%d"), os.TempDir(), time.Now().UnixNano())
@@ -86,6 +78,14 @@ func Build() (string, error) {
 	// if none of test files exist, or there are no contexts found
 	// we will skip test package compilation, since it is useless
 	if anyContexts {
+		// first of all compile test package dependencies
+		// that will save was many compilations for dependencies
+		// go does it better
+		out, err := exec.Command("go", "test", "-i").CombinedOutput()
+		if err != nil {
+			return bin, fmt.Errorf("failed to compile package %s:\n%s", pkg.Name, string(out))
+		}
+
 		// let go do the dirty work and compile test
 		// package with it's dependencies. Older go
 		// versions does not accept existing file output
@@ -130,7 +130,7 @@ func Build() (string, error) {
 	// but we need it for our testmain package.
 	// So we look it up in available source paths
 	// including vendor directory, supported since 1.5.
-	try := []string{filepath.Join(pkg.Dir, "vendor", godogImportPath)}
+	try := []string{filepath.Join(abs, "vendor", godogImportPath)}
 	for _, d := range build.Default.SrcDirs() {
 		try = append(try, filepath.Join(d, godogImportPath))
 	}
@@ -143,7 +143,7 @@ func Build() (string, error) {
 	// will be installed as dependency of godog
 	cmd := exec.Command("go", "install", godogPkg.ImportPath)
 	cmd.Env = os.Environ()
-	out, err = cmd.CombinedOutput()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return bin, fmt.Errorf("failed to install godog package:\n%s", string(out))
 	}
@@ -193,6 +193,7 @@ func Build() (string, error) {
 	args = append(args, testMainPkgOut)
 	cmd = exec.Command(linker, args...)
 	cmd.Env = os.Environ()
+
 	out, err = cmd.CombinedOutput()
 	if err != nil {
 		return bin, fmt.Errorf("failed to link test executable:\n%s", string(out))
@@ -232,22 +233,28 @@ func uniqStringList(strs []string) (unique []string) {
 // run the test suite. If TestMain func is found in tested
 // source, it will be removed so it can be replaced
 func buildTestMain(pkg *build.Package) ([]byte, bool, error) {
-	contexts, err := processPackageTestFiles(
-		pkg.TestGoFiles,
-		pkg.XTestGoFiles,
-	)
-	if err != nil {
-		return nil, false, err
+	var contexts []string
+	var importPath string
+	if nil != pkg {
+		ctxs, err := processPackageTestFiles(
+			pkg.TestGoFiles,
+			pkg.XTestGoFiles,
+		)
+		if err != nil {
+			return nil, false, err
+		}
+		contexts = ctxs
+		importPath = pkg.ImportPath
 	}
 
 	data := struct {
 		Name       string
 		Contexts   []string
 		ImportPath string
-	}{pkg.Name, contexts, pkg.ImportPath}
+	}{pkg.Name, contexts, importPath}
 
 	var buf bytes.Buffer
-	if err = runnerTemplate.Execute(&buf, data); err != nil {
+	if err := runnerTemplate.Execute(&buf, data); err != nil {
 		return nil, len(contexts) > 0, err
 	}
 	return buf.Bytes(), len(contexts) > 0, nil
