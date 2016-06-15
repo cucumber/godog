@@ -21,6 +21,7 @@ var linker = filepath.Join(build.ToolDir, "link")
 var gopaths = filepath.SplitList(build.Default.GOPATH)
 var goarch = build.Default.GOARCH
 var goos = build.Default.GOOS
+var supportVendor = os.Getenv("GO15VENDOREXPERIMENT") != "0"
 
 var godogImportPath = "github.com/DATA-DOG/godog"
 var runnerTemplate = template.Must(template.New("testmain").Parse(`package main
@@ -114,9 +115,10 @@ func Build() (string, error) {
 		return bin, err
 	}
 
-	// now we need to ensure godod library can be linked
-	// need to check for it and compile
-	// first try vendor directory and then all go src dirs
+	// godog library may not be imported in tested package
+	// but we need it for our testmain package.
+	// So we look it up in available source paths
+	// including vendor directory, supported since 1.5.
 	try := []string{filepath.Join(pkg.Dir, "vendor", godogImportPath)}
 	for _, d := range build.Default.SrcDirs() {
 		try = append(try, filepath.Join(d, godogImportPath))
@@ -126,7 +128,8 @@ func Build() (string, error) {
 		return bin, err
 	}
 
-	// make sure godog package archive is installed, gherkin is not necessary at this point
+	// make sure godog package archive is installed, gherkin
+	// will be installed as dependency of godog
 	cmd := exec.Command("go", "install", godogPkg.ImportPath)
 	cmd.Env = os.Environ()
 	out, err = cmd.CombinedOutput()
@@ -134,12 +137,15 @@ func Build() (string, error) {
 		return bin, fmt.Errorf("failed to install godog package:\n%s", string(out))
 	}
 
+	// collect all possible package dirs, will be
+	// used for includes and linker
 	pkgDirs := []string{testdir, workdir}
 	for _, gopath := range gopaths {
 		pkgDirs = append(pkgDirs, filepath.Join(gopath, "pkg", goos+"_"+goarch))
 	}
 
 	// compile godog testmain package archive
+	// we do not depend on CGO so a lot of checks are not necessary
 	testMainPkgOut := filepath.Join(testdir, "main.a")
 	args := []string{
 		"-o", testMainPkgOut,
@@ -149,7 +155,7 @@ func Build() (string, error) {
 	}
 	// if godog library is in vendor directory
 	// link it with import map
-	if i := strings.LastIndex(godogPkg.ImportPath, "vendor/"); i != -1 {
+	if i := strings.LastIndex(godogPkg.ImportPath, "vendor/"); i != -1 && supportVendor {
 		args = append(args, "-importmap", godogImportPath+"="+godogPkg.ImportPath)
 	}
 	for _, inc := range pkgDirs {
@@ -160,7 +166,7 @@ func Build() (string, error) {
 	cmd.Env = os.Environ()
 	out, err = cmd.CombinedOutput()
 	if err != nil {
-		return bin, fmt.Errorf("failed to compile testmain package:\n%s", string(out))
+		return bin, fmt.Errorf("failed to compile testmain package - %v:\n%s", err, string(out))
 	}
 
 	// link test suite executable
