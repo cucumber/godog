@@ -6,6 +6,9 @@ import (
 	"strings"
 )
 
+// empty struct value takes no space allocation
+type void struct{}
+
 // a color code type
 type color int
 

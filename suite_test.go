@@ -2,6 +2,7 @@ package godog
 
 import (
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -215,8 +216,12 @@ func (s *suiteContext) iShouldHaveNumFeatureFiles(num int, files *gherkin.DocStr
 		return fmt.Errorf("expected %d feature paths to be parsed, but have %d", len(expected), len(actual))
 	}
 	for i := 0; i < len(expected); i++ {
-		if expected[i] != actual[i] {
-			return fmt.Errorf(`expected feature path "%s" at position: %d, does not match actual "%s"`, expected[i], i, actual[i])
+		split := strings.Split(expected[i], "/")
+		exp := filepath.Join(split...)
+		split = strings.Split(actual[i], "/")
+		act := filepath.Join(split...)
+		if exp != act {
+			return fmt.Errorf(`expected feature path "%s" at position: %d, does not match actual "%s"`, exp, i, act)
 		}
 	}
 	return nil

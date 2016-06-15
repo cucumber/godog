@@ -24,13 +24,9 @@ behavior. You can leverage both frameworks to functionally test your
 application while maintaining all test related source code in **_test.go**
 files.
 
-**Godog** acts similar compared to **go test** command. It uses
-a **TestMain** hook introduced in `go1.4` and clones the package sources
-to a temporary build directory. The only change it does is adding a runner
-test.go file additionally and ensures to cleanup TestMain func if it was
-used in tests. **Godog** uses standard **go** ast and build utils to
-generate test suite package and even builds it with **go test -c**
-command. It even passes all your environment exported vars.
+**Godog** acts similar compared to **go test** command. It uses go
+compiler and linker tool in order to produce test executable. Godog
+contexts needs to be exported same as Test functions for go test.
 
 **Godog** ships gherkin parser dependency as a subpackage. This will
 ensure that it is always compatible with the installed version of godog.
@@ -111,7 +107,7 @@ Since we need a working implementation, we may start by implementing only what i
 
 #### Step 3
 
-We only need a number of **godogs** for now. Let's define steps.
+We only need a number of **godogs** for now. Lets keep it simple.
 
 ``` go
 /* file: examples/godogs/godog.go */
@@ -125,7 +121,8 @@ func main() { /* usual main func */ }
 
 #### Step 4
 
-Now let's finish our step implementations in order to test our feature requirements:
+Now lets implement our step definitions, which we can copy from generated
+console output snippets in order to test our feature requirements:
 
 ``` go
 /* file: examples/godogs/godog_test.go */
@@ -157,7 +154,7 @@ func thereShouldBeRemaining(remaining int) error {
 	return nil
 }
 
-func featureContext(s *godog.Suite) {
+func FeatureContext(s *godog.Suite) {
 	s.Step(`^there are (\d+) godogs$`, thereAreGodogs)
 	s.Step(`^I eat (\d+)$`, iEat)
 	s.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
@@ -192,6 +189,12 @@ See implementation examples:
 - [godogs](https://github.com/DATA-DOG/godog/tree/master/examples/godogs)
 
 ### Changes
+
+**2016-06-14**
+- godog now uses **go tool compile** and **go tool link** to support
+  vendor directory dependencies. It also compiles test executable the same
+  way as standard **go test** utility. With this change, only go
+  versions from **1.5** are now supported.
 
 **2016-06-01**
 - parse flags in main command, to show version and help without needing

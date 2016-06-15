@@ -8,7 +8,6 @@ import (
 	"net/http/httptest"
 	"strings"
 
-	"github.com/DATA-DOG/go-txdb"
 	"github.com/DATA-DOG/godog"
 	"github.com/DATA-DOG/godog/gherkin"
 )
@@ -118,7 +117,7 @@ func (a *apiFeature) thereAreUsers(users *gherkin.DataTable) error {
 	return nil
 }
 
-func featureContext(s *godog.Suite) {
+func FeatureContext(s *godog.Suite) {
 	api := &apiFeature{}
 
 	s.BeforeScenario(api.resetResponse)

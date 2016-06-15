@@ -1,3 +1,4 @@
+/* file: examples/godogs/godog.go */
 package main
 
 // Godogs to eat

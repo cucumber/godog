@@ -5,11 +5,9 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"syscall"
-	"time"
 
 	"github.com/DATA-DOG/godog"
 )
@@ -23,25 +21,8 @@ var stderr = statusOutputFilter(os.Stderr)
 func buildAndRun() (int, error) {
 	var status int
 
-	dir := fmt.Sprintf(filepath.Join("%s", "godog-%d"), os.TempDir(), time.Now().UnixNano())
-	err := godog.Build(dir)
+	bin, err := godog.Build()
 	if err != nil {
-		return 1, err
-	}
-
-	defer os.RemoveAll(dir)
-
-	wd, err := os.Getwd()
-	if err != nil {
-		return 1, err
-	}
-	bin := filepath.Join(wd, "godog.test")
-
-	cmdb := exec.Command("go", "test", "-c", "-o", bin)
-	cmdb.Dir = dir
-	cmdb.Env = os.Environ()
-	if details, err := cmdb.CombinedOutput(); err != nil {
-		fmt.Fprintln(stderr, string(details))
 		return 1, err
 	}
 	defer os.Remove(bin)
