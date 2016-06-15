@@ -40,18 +40,18 @@ func main() {
 	os.Exit(status)
 }`))
 
-// Build scans clones current package into a temporary
-// godog suite test package.
+// Build creates a test package like go test command.
+// If there are no go files in tested directory, then
+// it simply builds a godog executable to scan features.
 //
-// If there is a TestMain func in any of test.go files
-// it removes it and all necessary unused imports related
-// to this function.
+// If there are go test files, it first builds a test
+// package with standard go test command.
 //
-// It also looks for any godog suite contexts and registers
-// them in order to call them on execution.
+// Finally it generates godog suite executable which
+// registers exported godog contexts from the test files
+// of tested package.
 //
-// The test entry point which uses go1.4 TestMain func
-// is generated from the template above.
+// Returns the path to generated executable
 func Build() (string, error) {
 	abs, err := filepath.Abs(".")
 	if err != nil {
@@ -228,10 +228,9 @@ func uniqStringList(strs []string) (unique []string) {
 	return
 }
 
-// buildTestPackage clones a package and adds a godog
-// entry point with TestMain func in order to
-// run the test suite. If TestMain func is found in tested
-// source, it will be removed so it can be replaced
+// buildTestMain if given package is valid
+// it scans test files for contexts
+// and produces a testmain source code.
 func buildTestMain(pkg *build.Package) ([]byte, bool, error) {
 	var contexts []string
 	var importPath string
@@ -261,8 +260,8 @@ func buildTestMain(pkg *build.Package) ([]byte, bool, error) {
 }
 
 // processPackageTestFiles runs through ast of each test
-// file pack and removes TestMain func if found. it also
-// looks for godog suite contexts to register on run
+// file pack and looks for godog suite contexts to register
+// on run
 func processPackageTestFiles(packs ...[]string) ([]string, error) {
 	var ctxs []string
 	fset := token.NewFileSet()

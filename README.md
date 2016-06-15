@@ -193,7 +193,7 @@ See implementation examples:
 **2016-06-14**
 - godog now uses **go tool compile** and **go tool link** to support
   vendor directory dependencies. It also compiles test executable the same
-  way as standard **go test** utility. With this change, go only go
+  way as standard **go test** utility. With this change, only go
   versions from **1.5** are now supported.
 
 **2016-06-01**
