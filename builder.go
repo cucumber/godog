@@ -67,7 +67,7 @@ func Build() (string, error) {
 	if goos == "windows" {
 		bin += ".exe"
 	}
-	src, err := buildTestMain(pkg)
+	src, anyContexts, err := buildTestMain(pkg)
 	if err != nil {
 		return bin, err
 	}
@@ -80,31 +80,43 @@ func Build() (string, error) {
 		return bin, fmt.Errorf("failed to compile package %s:\n%s", pkg.Name, string(out))
 	}
 
-	// let go do the dirty work and compile test
-	// package with it's dependencies. Older go
-	// versions does not accept existing file output
-	// so we create a temporary executable which will
-	// removed.
-	temp := fmt.Sprintf(filepath.Join("%s", "temp-%d.test"), os.TempDir(), time.Now().UnixNano())
+	workdir := fmt.Sprintf(filepath.Join("%s", "godog-%d"), os.TempDir(), time.Now().UnixNano())
+	testdir := workdir
 
-	// builds and compile the tested package.
-	// generated test executable will be removed
-	// since we do not need it for godog suite.
-	// we also print back the temp WORK directory
-	// go has built. We will reuse it for our suite workdir.
-	out, err = exec.Command("go", "test", "-c", "-work", "-o", temp).CombinedOutput()
-	if err != nil {
-		return bin, fmt.Errorf("failed to compile tested package %s:\n%s", pkg.Name, string(out))
-	}
-	defer os.Remove(temp)
+	// if none of test files exist, or there are no contexts found
+	// we will skip test package compilation, since it is useless
+	if anyContexts {
+		// let go do the dirty work and compile test
+		// package with it's dependencies. Older go
+		// versions does not accept existing file output
+		// so we create a temporary executable which will
+		// removed.
+		temp := fmt.Sprintf(filepath.Join("%s", "temp-%d.test"), os.TempDir(), time.Now().UnixNano())
 
-	// extract go-build temporary directory as our workdir
-	workdir := strings.TrimSpace(string(out))
-	if !strings.HasPrefix(workdir, "WORK=") {
-		return bin, fmt.Errorf("expected WORK dir path, but got: %s", workdir)
+		// builds and compile the tested package.
+		// generated test executable will be removed
+		// since we do not need it for godog suite.
+		// we also print back the temp WORK directory
+		// go has built. We will reuse it for our suite workdir.
+		out, err = exec.Command("go", "test", "-c", "-work", "-o", temp).CombinedOutput()
+		if err != nil {
+			return bin, fmt.Errorf("failed to compile tested package %s:\n%s", pkg.Name, string(out))
+		}
+		defer os.Remove(temp)
+
+		// extract go-build temporary directory as our workdir
+		workdir = strings.TrimSpace(string(out))
+		if !strings.HasPrefix(workdir, "WORK=") {
+			return bin, fmt.Errorf("expected WORK dir path, but got: %s", workdir)
+		}
+		workdir = strings.Replace(workdir, "WORK=", "", 1)
+		testdir = filepath.Join(workdir, pkg.ImportPath, "_test")
+	} else {
+		// still need to create temporary workdir
+		if err = os.MkdirAll(testdir, 0755); err != nil {
+			return bin, err
+		}
 	}
-	workdir = strings.Replace(workdir, "WORK=", "", 1)
-	testdir := filepath.Join(workdir, pkg.ImportPath, "_test")
 	defer os.RemoveAll(workdir)
 
 	// replace _testmain.go file with our own
@@ -138,10 +150,11 @@ func Build() (string, error) {
 
 	// collect all possible package dirs, will be
 	// used for includes and linker
-	pkgDirs := []string{testdir, workdir}
+	pkgDirs := []string{workdir, testdir}
 	for _, gopath := range gopaths {
 		pkgDirs = append(pkgDirs, filepath.Join(gopath, "pkg", goos+"_"+goarch))
 	}
+	pkgDirs = uniqStringList(pkgDirs)
 
 	// compile godog testmain package archive
 	// we do not depend on CGO so a lot of checks are not necessary
@@ -203,17 +216,28 @@ func locatePackage(try []string) (*build.Package, error) {
 	return nil, fmt.Errorf("failed to find godog package in any of:\n%s", strings.Join(try, "\n"))
 }
 
+func uniqStringList(strs []string) (unique []string) {
+	uniq := make(map[string]void, len(strs))
+	for _, s := range strs {
+		if _, ok := uniq[s]; !ok {
+			uniq[s] = void{}
+			unique = append(unique, s)
+		}
+	}
+	return
+}
+
 // buildTestPackage clones a package and adds a godog
 // entry point with TestMain func in order to
 // run the test suite. If TestMain func is found in tested
 // source, it will be removed so it can be replaced
-func buildTestMain(pkg *build.Package) ([]byte, error) {
+func buildTestMain(pkg *build.Package) ([]byte, bool, error) {
 	contexts, err := processPackageTestFiles(
 		pkg.TestGoFiles,
 		pkg.XTestGoFiles,
 	)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	data := struct {
@@ -224,9 +248,9 @@ func buildTestMain(pkg *build.Package) ([]byte, error) {
 
 	var buf bytes.Buffer
 	if err = runnerTemplate.Execute(&buf, data); err != nil {
-		return nil, err
+		return nil, len(contexts) > 0, err
 	}
-	return buf.Bytes(), nil
+	return buf.Bytes(), len(contexts) > 0, nil
 }
 
 // processPackageTestFiles runs through ast of each test
