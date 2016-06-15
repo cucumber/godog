@@ -21,14 +21,13 @@ var linker = filepath.Join(build.ToolDir, "link")
 var gopaths = filepath.SplitList(build.Default.GOPATH)
 var goarch = build.Default.GOARCH
 var goos = build.Default.GOOS
-var supportVendor = os.Getenv("GO15VENDOREXPERIMENT") != "0"
 
 var godogImportPath = "github.com/DATA-DOG/godog"
 var runnerTemplate = template.Must(template.New("testmain").Parse(`package main
 
 import (
 	"github.com/DATA-DOG/godog"
-	_test "{{ .ImportPath }}"
+	{{if .Contexts}}_test "{{.ImportPath}}"{{end}}
 	"os"
 )
 
@@ -155,7 +154,7 @@ func Build() (string, error) {
 	}
 	// if godog library is in vendor directory
 	// link it with import map
-	if i := strings.LastIndex(godogPkg.ImportPath, "vendor/"); i != -1 && supportVendor {
+	if i := strings.LastIndex(godogPkg.ImportPath, "vendor/"); i != -1 {
 		args = append(args, "-importmap", godogImportPath+"="+godogPkg.ImportPath)
 	}
 	for _, inc := range pkgDirs {
@@ -166,7 +165,7 @@ func Build() (string, error) {
 	cmd.Env = os.Environ()
 	out, err = cmd.CombinedOutput()
 	if err != nil {
-		return bin, fmt.Errorf("failed to compile testmain package - %v:\n%s", err, string(out))
+		return bin, fmt.Errorf("failed to compile testmain package:\n%s", string(out))
 	}
 
 	// link test suite executable
