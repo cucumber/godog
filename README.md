@@ -187,7 +187,7 @@ See implementation examples:
 
 ### FAQ
 
-**Q:** Where can I configure common options globally?
+**Q:** Where can I configure common options globally?  
 **A:** You can't. Alias your common or project based commands: `alias godog-wip="godog --format=progress --tags=@wip"`
 
 ### Contributions
