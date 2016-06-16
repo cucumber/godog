@@ -234,6 +234,7 @@ func uniqStringList(strs []string) (unique []string) {
 func buildTestMain(pkg *build.Package) ([]byte, bool, error) {
 	var contexts []string
 	var importPath string
+	name := "main"
 	if nil != pkg {
 		ctxs, err := processPackageTestFiles(
 			pkg.TestGoFiles,
@@ -244,13 +245,14 @@ func buildTestMain(pkg *build.Package) ([]byte, bool, error) {
 		}
 		contexts = ctxs
 		importPath = pkg.ImportPath
+		name = pkg.Name
 	}
 
 	data := struct {
 		Name       string
 		Contexts   []string
 		ImportPath string
-	}{pkg.Name, contexts, importPath}
+	}{name, contexts, importPath}
 
 	var buf bytes.Buffer
 	if err := runnerTemplate.Execute(&buf, data); err != nil {
