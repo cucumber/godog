@@ -1,4 +1,4 @@
-/* file: examples/godogs/godog_test.go */
+/* file: $GOPATH/src/godogs/godogs_test.go */
 package main
 
 import (

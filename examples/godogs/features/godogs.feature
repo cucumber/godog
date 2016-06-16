@@ -1,3 +1,4 @@
+# file: $GOPATH/godogs/features/godogs.feature
 Feature: eat godogs
   In order to be happy
   As a hungry gopher

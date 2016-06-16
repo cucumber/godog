@@ -3,7 +3,7 @@
 
 # Godog
 
-<p align="center"><img src="https://raw.github.com/DATA-DOG/godog/master/logo.png" alt="Godog logo" style="width:250px;" /></p>
+<p align="center"><img src="/logo.png" alt="Godog logo" style="width:250px;" /></p>
 
 **The API is likely to change a few times before we reach 1.0.0**
 
@@ -64,15 +64,19 @@ themselves from costly regressions.
 ### Example
 
 The following example can be [found
-here](https://github.com/DATA-DOG/godog/tree/master/examples/godogs).
+here](/examples/godogs).
 
 #### Step 1
 
-Imagine we have a **godog cart** to serve godogs for dinner. At first, we describe our feature
-in plain text:
+Given we create a new go package **$GOPATH/src/godogs**. From now on, this
+is our work directory `cd $GOPATH/src/godogs`.
+
+Imagine we have a **godog cart** to serve godogs for lunch. First of all,
+we describe our feature in plain text - `vim
+$GOPATH/src/godogs/features/godogs.feature`:
 
 ``` gherkin
-# file: examples/godogs/godog.feature
+# file: $GOPATH/src/godogs/features/godogs.feature
 Feature: eat godogs
   In order to be happy
   As a hungry gopher
@@ -87,18 +91,37 @@ Feature: eat godogs
 As a developer, your work is done as soon as you’ve made the program behave as
 described in the Scenario.
 
+**NOTE:** same as **go test** godog respects package level isolation. All
+your step definitions should be in your tested package root directory. In
+this case - `$GOPATH/src/godogs`
+
 #### Step 2
 
-If you run `godog godog.feature` inside the **examples/godogs** directory.
-You should see that the steps are undefined:
+If godog is installed in your GOPATH. We can run `godog` inside the
+**$GOPATH/src/godogs** directory. You should see that the steps are
+undefined:
 
-![Screenshot](https://raw.github.com/DATA-DOG/godog/master/screenshots/undefined.png)
+![Undefined step snippets](/screenshots/undefined.png?raw=true)
 
-It gives you undefined step snippets to implement in your test context. You may copy these snippets
-into your `*_test.go` file.
+If we wish to vendor godog dependency, we can do it as usual, using tools
+you prefer:
 
-Now if you run the tests again you should see that the definition is now pending. You may change
-**ErrPending** to **nil** and the scenario will pass successfully.
+    git clone https://github.com/DATA-DOG/godog.git $GOPATH/src/godogs/vendor/github.com/DATA-DOG/godog
+
+It gives you undefined step snippets to implement in your test context.
+You may copy these snippets into your `godogs_test.go` file.
+
+Our directory structure should now look like:
+
+![Directory layout](/screenshots/dir-tree.png?raw=true)
+
+If you copy the snippets into our test file and run godog again. We should
+see the step definition is now pending:
+
+![Pending step definition](/screenshots/pending.png?raw=true)
+
+You may change **ErrPending** to **nil** and the scenario will
+pass successfully.
 
 Since we need a working implementation, we may start by implementing only what is necessary.
 
@@ -107,10 +130,10 @@ Since we need a working implementation, we may start by implementing only what i
 We only need a number of **godogs** for now. Lets keep it simple.
 
 ``` go
-/* file: examples/godogs/godog.go */
+/* file: $GOPATH/src/godogs/godogs.go */
 package main
 
-// Godogs to eat
+// Godogs available to eat
 var Godogs int
 
 func main() { /* usual main func */ }
@@ -122,7 +145,7 @@ Now lets implement our step definitions, which we can copy from generated
 console output snippets in order to test our feature requirements:
 
 ``` go
-/* file: examples/godogs/godog_test.go */
+/* file: $GOPATH/src/godogs/godogs_test.go */
 package main
 
 import (
@@ -162,9 +185,9 @@ func FeatureContext(s *godog.Suite) {
 }
 ```
 
-Now when you run the `godog godog.feature` again, you should see:
+Now when you run the `godog` again, you should see:
 
-![Screenshot](https://raw.github.com/DATA-DOG/godog/master/screenshots/passed.png)
+![Passed suite](/screenshots/passed.png?raw=true)
 
 **Note:** we have hooked to **BeforeScenario** event in order to reset state. You may hook into
 more events, like **AfterStep** to test against an error and print more details about the error
@@ -182,12 +205,13 @@ See `godog -h` for general command options.
 
 See implementation examples:
 
-- [rest API server](https://github.com/DATA-DOG/godog/tree/master/examples/api)
-- [godogs](https://github.com/DATA-DOG/godog/tree/master/examples/godogs)
+- [rest API server](/examples/api)
+- [rest API with Database](/examples/db)
+- [godogs](/examples/godogs)
 
 ### FAQ
 
-**Q:** Where can I configure common options globally?  
+**Q:** Where can I configure common options globally?
 **A:** You can't. Alias your common or project based commands: `alias godog-wip="godog --format=progress --tags=@wip"`
 
 ### Contributions
