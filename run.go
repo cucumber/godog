@@ -3,29 +3,24 @@ package godog
 import (
 	"fmt"
 	"os"
-	"sync"
 )
 
 type initializer func(*Suite)
 
 type runner struct {
-	sync.WaitGroup
-
-	semaphore     chan int
 	stopOnFailure bool
 	features      []*feature
 	fmt           Formatter // needs to support concurrency
 	initializer   initializer
 }
 
-func (r *runner) run() (failed bool) {
-	r.Add(len(r.features))
-	for _, ft := range r.features {
+func (r *runner) concurrent(rate int) (failed bool) {
+	queue := make(chan int, rate)
+	for i, ft := range r.features {
+		queue <- i // reserve space in queue
 		go func(fail *bool, feat *feature) {
-			r.semaphore <- 1
 			defer func() {
-				r.Done()
-				<-r.semaphore
+				<-queue // free a space in queue
 			}()
 			if r.stopOnFailure && *fail {
 				return
@@ -42,10 +37,28 @@ func (r *runner) run() (failed bool) {
 			}
 		}(&failed, ft)
 	}
-	r.Wait()
+	// wait until last are processed
+	for i := 0; i < rate; i++ {
+		queue <- i
+	}
+	close(queue)
 
+	// print summary
 	r.fmt.Summary()
 	return
+}
+
+func (r *runner) run() (failed bool) {
+	suite := &Suite{
+		fmt:           r.fmt,
+		stopOnFailure: r.stopOnFailure,
+		features:      r.features,
+	}
+	r.initializer(suite)
+	suite.run()
+
+	r.fmt.Summary()
+	return suite.failed
 }
 
 // Run creates and runs the feature suite.
@@ -94,12 +107,17 @@ func Run(contextInitializer func(suite *Suite)) int {
 	r := runner{
 		fmt:           formatter,
 		initializer:   contextInitializer,
-		semaphore:     make(chan int, concurrency),
 		features:      features,
 		stopOnFailure: sof,
 	}
 
-	if failed := r.run(); failed {
+	var failed bool
+	if concurrency > 1 {
+		failed = r.concurrent(concurrency)
+	} else {
+		failed = r.run()
+	}
+	if failed {
 		return 1
 	}
 	return 0

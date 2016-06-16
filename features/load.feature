@@ -42,6 +42,6 @@ Feature: load features
     When I parse features
     Then I should have 2 feature files:
       """
-      features/load.feature
       features/events.feature
+      features/load.feature
       """
