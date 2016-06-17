@@ -130,7 +130,7 @@ func Build() (string, error) {
 	// but we need it for our testmain package.
 	// So we look it up in available source paths
 	// including vendor directory, supported since 1.5.
-	try := []string{filepath.Join(abs, "vendor", godogImportPath)}
+	try := maybeVendorPaths(abs)
 	for _, d := range build.Default.SrcDirs() {
 		try = append(try, filepath.Join(d, godogImportPath))
 	}
@@ -259,6 +259,23 @@ func buildTestMain(pkg *build.Package) ([]byte, bool, error) {
 		return nil, len(contexts) > 0, err
 	}
 	return buf.Bytes(), len(contexts) > 0, nil
+}
+
+// maybeVendorPaths determines possible vendor paths
+// which goes levels down from given directory
+// until it reaches GOPATH source dir
+func maybeVendorPaths(dir string) []string {
+	paths := []string{filepath.Join(dir, "vendor", godogImportPath)}
+	for _, gopath := range gopaths {
+		if !strings.HasPrefix(dir, gopath) {
+			continue
+		}
+
+		for p := filepath.Dir(dir); p != filepath.Join(gopath, "src"); p = filepath.Dir(p) {
+			paths = append(paths, filepath.Join(p, "vendor", godogImportPath))
+		}
+	}
+	return paths
 }
 
 // processPackageTestFiles runs through ast of each test
