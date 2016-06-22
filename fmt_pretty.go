@@ -256,6 +256,9 @@ func (f *pretty) printStepKind(res *stepResult) {
 	// first step of scenario, print header and calculate comment position
 	case f.scenario != nil && f.steps == len(f.scenario.Steps):
 		f.commentPos = f.longestStep(f.scenario.Steps, f.length(f.scenario))
+		if bgLen := f.longestStep(f.feature.Background.Steps, f.length(f.feature.Background)); bgLen > f.commentPos {
+			f.commentPos = bgLen
+		}
 		text := s(f.indent) + bcl(f.scenario.Keyword+": ", white) + f.scenario.Name
 		text += s(f.commentPos-f.length(f.scenario)+1) + f.line(f.scenario.Location)
 		fmt.Println("\n" + text)
