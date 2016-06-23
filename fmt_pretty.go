@@ -256,6 +256,9 @@ func (f *pretty) printStepKind(res *stepResult) {
 	// first step of scenario, print header and calculate comment position
 	case f.scenario != nil && f.steps == len(f.scenario.Steps):
 		f.commentPos = f.longestStep(f.scenario.Steps, f.length(f.scenario))
+		if bgLen := f.longestStep(f.feature.Background.Steps, f.length(f.feature.Background)); bgLen > f.commentPos {
+			f.commentPos = bgLen
+		}
 		text := s(f.indent) + bcl(f.scenario.Keyword+": ", white) + f.scenario.Name
 		text += s(f.commentPos-f.length(f.scenario)+1) + f.line(f.scenario.Location)
 		fmt.Println("\n" + text)
@@ -266,6 +269,9 @@ func (f *pretty) printStepKind(res *stepResult) {
 	// first step of outline scenario, print header and calculate comment position
 	case f.outline != nil && f.steps == len(f.outline.Steps):
 		f.commentPos = f.longestStep(f.outline.Steps, f.length(f.outline))
+		if bgLen := f.longestStep(f.feature.Background.Steps, f.length(f.feature.Background)); bgLen > f.commentPos {
+			f.commentPos = bgLen
+		}
 		text := s(f.indent) + bcl(f.outline.Keyword+": ", white) + f.outline.Name
 		text += s(f.commentPos-f.length(f.outline)+1) + f.line(f.outline.Location)
 		fmt.Println("\n" + text)
