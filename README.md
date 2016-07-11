@@ -193,6 +193,49 @@ Now when you run the `godog` again, you should see:
 more events, like **AfterStep** to test against an error and print more details about the error
 or state before failure. Or **BeforeSuite** to prepare a database.
 
+#### Running Godog with go test
+
+There was a question asked whether it is possible to run **godog** from
+**go test** command. And the answer is yes. You can run it using go
+[TestMain](https://golang.org/pkg/testing/#hdr-Main) func available since
+go 1.4. In this case it is not necessary to have **godog** command
+installed. See the following example:
+
+``` go
+/* file: $GOPATH/src/godogs/godogs_test.go */
+package main
+
+import (
+	"flag"
+	"os"
+	"testing"
+
+	"github.com/DATA-DOG/godog"
+)
+
+func TestMain(m *testing.M) {
+	args := os.Args
+	// args for godog
+	os.Args = []string{
+		args[0],
+		"-f", "progress",
+		"features",
+	}
+
+	status := godog.Run(func(s *godog.Suite) {
+		FeatureContext(s)
+	})
+
+	os.Args = args
+	flag.Parse()
+
+	if st := m.Run(); st > status {
+		status = st
+	}
+	os.Exit(status)
+}
+```
+
 ### References and Tutorials
 
 - [how to use godog by semaphoreci](https://semaphoreci.com/community/tutorials/how-to-use-godog-for-behavior-driven-development-in-go)
