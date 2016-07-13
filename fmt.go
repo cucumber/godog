@@ -145,11 +145,9 @@ type basefmt struct {
 
 func (f *basefmt) Node(n interface{}) {
 	switch t := n.(type) {
-	case *gherkin.ScenarioOutline:
+	case *gherkin.TableRow:
 		f.owner = t
 	case *gherkin.Scenario:
-		f.owner = t
-	case *gherkin.Background:
 		f.owner = t
 	}
 }

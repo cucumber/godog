@@ -36,6 +36,9 @@ type pretty struct {
 	steps      int
 	commentPos int
 
+	// whether scenario or scenario outline keyword was printed
+	scenarioKeyword bool
+
 	// outline
 	outlineSteps       []*stepResult
 	outlineNumExample  int
@@ -75,12 +78,16 @@ func (f *pretty) Node(node interface{}) {
 	case *gherkin.Scenario:
 		f.scenario = t
 		f.outline = nil
-		f.steps = len(t.Steps)
+		f.steps = len(t.Steps) + f.bgSteps
+		f.scenarioKeyword = false
 	case *gherkin.ScenarioOutline:
 		f.outline = t
 		f.scenario = nil
-		f.steps = len(t.Steps)
 		f.outlineNumExample = -1
+		f.scenarioKeyword = false
+	case *gherkin.TableRow:
+		f.steps = len(f.outline.Steps) + f.bgSteps
+		f.outlineSteps = []*stepResult{}
 	}
 }
 
@@ -237,8 +244,6 @@ func (f *pretty) printStep(step *gherkin.Step, def *StepDef, c color) {
 }
 
 func (f *pretty) printStepKind(res *stepResult) {
-	_, isBgStep := res.owner.(*gherkin.Background)
-
 	// if has not printed background yet
 	switch {
 	// first background step
@@ -249,51 +254,43 @@ func (f *pretty) printStepKind(res *stepResult) {
 	// subsequent background steps
 	case f.bgSteps > 0:
 		f.bgSteps--
-	// a background step for another scenario, but all bg steps are
-	// already printed. so just skip it
-	case isBgStep:
-		return
 	// first step of scenario, print header and calculate comment position
-	case f.scenario != nil && f.steps == len(f.scenario.Steps):
-		f.commentPos = f.longestStep(f.scenario.Steps, f.length(f.scenario))
-		if f.feature.Background != nil {
-			if bgLen := f.longestStep(f.feature.Background.Steps, f.length(f.feature.Background)); bgLen > f.commentPos {
-				f.commentPos = bgLen
-			}
-		}
-		text := s(f.indent) + bcl(f.scenario.Keyword+": ", white) + f.scenario.Name
-		text += s(f.commentPos-f.length(f.scenario)+1) + f.line(f.scenario.Location)
-		fmt.Println("\n" + text)
-		f.steps--
-	// all subsequent scenario steps
 	case f.scenario != nil:
+		// print scenario keyword and value if first example
+		if !f.scenarioKeyword {
+			f.commentPos = f.longestStep(f.scenario.Steps, f.length(f.scenario))
+			if f.feature.Background != nil {
+				if bgLen := f.longestStep(f.feature.Background.Steps, f.length(f.feature.Background)); bgLen > f.commentPos {
+					f.commentPos = bgLen
+				}
+			}
+			text := s(f.indent) + bcl(f.scenario.Keyword+": ", white) + f.scenario.Name
+			text += s(f.commentPos-f.length(f.scenario)+1) + f.line(f.scenario.Location)
+			fmt.Println("\n" + text)
+			f.scenarioKeyword = true
+		}
 		f.steps--
 	// first step of outline scenario, print header and calculate comment position
-	case f.outline != nil && f.steps == len(f.outline.Steps):
-		f.commentPos = f.longestStep(f.outline.Steps, f.length(f.outline))
-		if bgLen := f.longestStep(f.feature.Background.Steps, f.length(f.feature.Background)); bgLen > f.commentPos {
-			f.commentPos = bgLen
-		}
-		text := s(f.indent) + bcl(f.outline.Keyword+": ", white) + f.outline.Name
-		text += s(f.commentPos-f.length(f.outline)+1) + f.line(f.outline.Location)
-		fmt.Println("\n" + text)
-		f.outlineSteps = append(f.outlineSteps, res)
-		f.steps--
-		if len(f.outlineSteps) == len(f.outline.Steps) {
-			// an outline example steps has went through
-			f.printOutlineExample(f.outline)
-			f.outlineSteps = []*stepResult{}
-			f.outlineNumExamples--
-		}
-		return
-	// all subsequent outline steps
 	case f.outline != nil:
 		f.outlineSteps = append(f.outlineSteps, res)
 		f.steps--
-		if len(f.outlineSteps) == len(f.outline.Steps) {
+
+		// print scenario keyword and value if first example
+		if !f.scenarioKeyword {
+			f.commentPos = f.longestStep(f.outline.Steps, f.length(f.outline))
+			if f.feature.Background != nil {
+				if bgLen := f.longestStep(f.feature.Background.Steps, f.length(f.feature.Background)); bgLen > f.commentPos {
+					f.commentPos = bgLen
+				}
+			}
+			text := s(f.indent) + bcl(f.outline.Keyword+": ", white) + f.outline.Name
+			text += s(f.commentPos-f.length(f.outline)+1) + f.line(f.outline.Location)
+			fmt.Println("\n" + text)
+			f.scenarioKeyword = true
+		}
+		if len(f.outlineSteps) == len(f.outline.Steps)+f.bgSteps {
 			// an outline example steps has went through
 			f.printOutlineExample(f.outline)
-			f.outlineSteps = []*stepResult{}
 			f.outlineNumExamples--
 		}
 		return
