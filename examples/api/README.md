@@ -11,7 +11,7 @@ error responses.
 ``` gherkin
 # file: version.feature
 Feature: get version
-  In order to know API version
+  In order to know godog version
   As an API user
   I need to be able to request version
 
@@ -31,7 +31,7 @@ Feature: get version
     And the response should match json:
       """
       {
-        "version": "v0.2.0"
+        "version": "v0.5.3"
       }
       """
 ```
@@ -75,7 +75,7 @@ func (a *apiFeature) theResponseShouldMatchJSON(body *gherkin.DocString) error {
 	return godog.ErrPending
 }
 
-func featureContext(s *godog.Suite) {
+func FeatureContext(s *godog.Suite) {
 	api := &apiFeature{}
 	s.Step(`^I send "([^"]*)" request to "([^"]*)"$`, api.iSendrequestTo)
 	s.Step(`^the response code should be (\d+)$`, api.theResponseCodeShouldBe)
@@ -99,7 +99,7 @@ import (
 	"net/http/httptest"
 
 	"github.com/DATA-DOG/godog"
-	"gopkg.in/cucumber/gherkin-go.v3"
+	"github.com/DATA-DOG/godog/gherkin"
 )
 
 type apiFeature struct {
@@ -158,7 +158,7 @@ func (a *apiFeature) theResponseShouldMatchJSON(body *gherkin.DocString) (err er
 	return
 }
 
-func featureContext(s *godog.Suite) {
+func FeatureContext(s *godog.Suite) {
 	api := &apiFeature{}
 
 	s.BeforeScenario(api.resetResponse)
@@ -184,6 +184,7 @@ Finally, lets implement the **api** server:
 
 ``` go
 // file: api.go
+// Example - demonstrates REST API server implementation tests.
 package main
 
 import (
