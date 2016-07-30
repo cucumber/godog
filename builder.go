@@ -184,7 +184,6 @@ func Build() (string, error) {
 	// link test suite executable
 	args = []string{
 		"-o", bin,
-		"-extld", build.Default.Compiler,
 		"-buildmode=exe",
 	}
 	for _, link := range pkgDirs {
@@ -196,7 +195,10 @@ func Build() (string, error) {
 
 	out, err = cmd.CombinedOutput()
 	if err != nil {
-		return bin, fmt.Errorf("failed to link test executable:\n%s", string(out))
+		msg := `failed to link test executable:
+	reason: %s
+	command: %s`
+		return bin, fmt.Errorf(msg, string(out), linker+" '"+strings.Join(args, "' '")+"'")
 	}
 
 	return bin, nil
