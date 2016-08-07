@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -66,7 +67,7 @@ func Build() (string, error) {
 
 	// we allow package to be nil, if godog is run only when
 	// there is a feature file in empty directory
-	pkg, _ := build.ImportDir(abs, 0)
+	pkg := importPackage(abs)
 	src, anyContexts, err := buildTestMain(pkg)
 	if err != nil {
 		return bin, err
@@ -205,8 +206,8 @@ func Build() (string, error) {
 }
 
 func locatePackage(try []string) (*build.Package, error) {
-	for _, path := range try {
-		abs, err := filepath.Abs(path)
+	for _, p := range try {
+		abs, err := filepath.Abs(p)
 		if err != nil {
 			continue
 		}
@@ -217,6 +218,29 @@ func locatePackage(try []string) (*build.Package, error) {
 		return pkg, nil
 	}
 	return nil, fmt.Errorf("failed to find godog package in any of:\n%s", strings.Join(try, "\n"))
+}
+
+func importPackage(dir string) *build.Package {
+	pkg, _ := build.ImportDir(dir, 0)
+
+	// normalize import path for local import packages
+	// taken from go source code
+	// see: https://github.com/golang/go/blob/go1.7rc5/src/cmd/go/pkg.go#L279
+	if pkg != nil && pkg.ImportPath == "." {
+		pkg.ImportPath = path.Join("_", strings.Map(makeImportValid, filepath.ToSlash(dir)))
+	}
+
+	return pkg
+}
+
+// from go src
+func makeImportValid(r rune) rune {
+	// Should match Go spec, compilers, and ../../go/parser/parser.go:/isValidImport.
+	const illegalChars = `!"#$%&'()*,:;<=>?[\]^{|}` + "`\uFFFD"
+	if !unicode.IsGraphic(r) || unicode.IsSpace(r) || strings.ContainsRune(illegalChars, r) {
+		return '_'
+	}
+	return r
 }
 
 func uniqStringList(strs []string) (unique []string) {
@@ -266,18 +290,15 @@ func buildTestMain(pkg *build.Package) ([]byte, bool, error) {
 // maybeVendorPaths determines possible vendor paths
 // which goes levels down from given directory
 // until it reaches GOPATH source dir
-func maybeVendorPaths(dir string) []string {
-	paths := []string{filepath.Join(dir, "vendor", godogImportPath)}
+func maybeVendorPaths(dir string) (paths []string) {
 	for _, gopath := range gopaths {
-		if !strings.HasPrefix(dir, gopath) {
-			continue
-		}
-
-		for p := filepath.Dir(dir); p != filepath.Join(gopath, "src"); p = filepath.Dir(p) {
-			paths = append(paths, filepath.Join(p, "vendor", godogImportPath))
+		gopath = filepath.Join(gopath, "src")
+		for strings.HasPrefix(dir, gopath) && dir != gopath {
+			paths = append(paths, filepath.Join(dir, "vendor", godogImportPath))
+			dir = filepath.Dir(dir)
 		}
 	}
-	return paths
+	return
 }
 
 // processPackageTestFiles runs through ast of each test
