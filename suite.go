@@ -385,7 +385,7 @@ func (s *Suite) printStepDefinitions() {
 	}
 	for _, def := range s.steps {
 		n := utf8.RuneCountInString(def.Expr.String())
-		location := def.funcName()
+		location := def.definitionID()
 		spaces := strings.Repeat(" ", longest-n)
 		fmt.Println(cl(def.Expr.String(), yellow)+spaces, cl("# "+location, black))
 	}
