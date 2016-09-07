@@ -414,3 +414,26 @@ func (f *basefmt) snippets() string {
 	}
 	return buf.String()
 }
+
+func (f *basefmt) isLastStep(s *gherkin.Step) bool {
+	ft := f.features[len(f.features)-1]
+
+	for _, def := range ft.ScenarioDefinitions {
+		if outline, ok := def.(*gherkin.ScenarioOutline); ok {
+			for n, step := range outline.Steps {
+				if step.Location.Line == s.Location.Line {
+					return n == len(outline.Steps)-1
+				}
+			}
+		}
+
+		if scenario, ok := def.(*gherkin.Scenario); ok {
+			for n, step := range scenario.Steps {
+				if step.Location.Line == s.Location.Line {
+					return n == len(scenario.Steps)-1
+				}
+			}
+		}
+	}
+	return false
+}
