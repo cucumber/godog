@@ -112,14 +112,22 @@ func (f *events) Summary() {
 			status = pending
 		}
 	}
+
+	snips := f.snippets()
+	if len(snips) > 0 {
+		snips = "You can implement step definitions for undefined steps with these snippets:\n" + snips
+	}
+
 	f.event(&struct {
 		Event     string `json:"event"`
 		Status    string `json:"status"`
 		Timestamp int64  `json:"timestamp"`
+		Snippets  string `json:"snippets"`
 	}{
 		"TestRunFinished",
 		status.String(),
 		time.Now().UnixNano() / nanoSec,
+		snips,
 	})
 }
 
@@ -146,15 +154,12 @@ func (f *events) step(res *stepResult) {
 	var finished bool
 	var line int
 	switch t := f.owner.(type) {
-	case *gherkin.ScenarioOutline:
-		if t.Steps[len(t.Steps)-1].Location.Line == res.step.Location.Line {
-			finished = true
-			last := t.Examples[len(t.Examples)-1]
-			line = last.TableBody[len(last.TableBody)-1].Location.Line
-		}
+	case *gherkin.TableRow:
+		line = t.Location.Line
+		finished = f.isLastStep(res.step)
 	case *gherkin.Scenario:
 		line = t.Location.Line
-		finished = t.Steps[len(t.Steps)-1].Location.Line == res.step.Location.Line
+		finished = f.isLastStep(res.step)
 	}
 
 	if finished {
