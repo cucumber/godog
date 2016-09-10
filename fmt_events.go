@@ -47,8 +47,9 @@ type events struct {
 	// this is sadly not passed by gherkin nodes.
 	// it restricts this formatter to run only in synchronous single
 	// threaded execution. Unless running a copy of formatter for each feature
-	path string
-	stat stepType // last step status, before skipped
+	path         string
+	stat         stepType // last step status, before skipped
+	outlineSteps int      // number of current outline scenario steps
 }
 
 func (f *events) event(ev interface{}) {
@@ -62,26 +63,46 @@ func (f *events) event(ev interface{}) {
 func (f *events) Node(n interface{}) {
 	f.basefmt.Node(n)
 
+	var id string
+	var undefined bool
 	switch t := n.(type) {
 	case *gherkin.Scenario:
-		f.event(&struct {
-			Event     string `json:"event"`
-			Location  string `json:"location"`
-			Timestamp int64  `json:"timestamp"`
-		}{
-			"TestCaseStarted",
-			fmt.Sprintf("%s:%d", f.path, t.Location.Line),
-			time.Now().UnixNano() / nanoSec,
-		})
+		id = fmt.Sprintf("%s:%d", f.path, t.Location.Line)
+		undefined = len(t.Steps) == 0
 	case *gherkin.TableRow:
+		id = fmt.Sprintf("%s:%d", f.path, t.Location.Line)
+		undefined = f.outlineSteps == 0
+	case *gherkin.ScenarioOutline:
+		f.outlineSteps = len(t.Steps)
+	}
+
+	if len(id) == 0 {
+		return
+	}
+
+	f.event(&struct {
+		Event     string `json:"event"`
+		Location  string `json:"location"`
+		Timestamp int64  `json:"timestamp"`
+	}{
+		"TestCaseStarted",
+		id,
+		time.Now().UnixNano() / nanoSec,
+	})
+
+	if undefined {
+		// @TODO: is status undefined or passed? when there are no steps
+		// for this scenario
 		f.event(&struct {
 			Event     string `json:"event"`
 			Location  string `json:"location"`
 			Timestamp int64  `json:"timestamp"`
+			Status    string `json:"status"`
 		}{
-			"TestCaseStarted",
-			fmt.Sprintf("%s:%d", f.path, t.Location.Line),
+			"TestCaseFinished",
+			id,
 			time.Now().UnixNano() / nanoSec,
+			"undefined",
 		})
 	}
 }
@@ -123,11 +144,13 @@ func (f *events) Summary() {
 		Status    string `json:"status"`
 		Timestamp int64  `json:"timestamp"`
 		Snippets  string `json:"snippets"`
+		Memory    string `json:"memory"`
 	}{
 		"TestRunFinished",
 		status.String(),
 		time.Now().UnixNano() / nanoSec,
 		snips,
+		"", // @TODO not sure that could be correctly implemented
 	})
 }
 
