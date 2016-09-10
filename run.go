@@ -117,7 +117,7 @@ func Run(suite string, contextInitializer func(suite *Suite)) int {
 	} else {
 		failed = r.run()
 	}
-	if failed {
+	if failed && format != "events" {
 		return 1
 	}
 	return 0
