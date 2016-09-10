@@ -105,7 +105,7 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 	} else {
 		failed = r.run()
 	}
-	if failed {
+	if failed && format != "events" {
 		return 1
 	}
 	return 0
