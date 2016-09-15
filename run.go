@@ -74,9 +74,9 @@ func (r *runner) run() (failed bool) {
 // the step definitions and event handlers.
 func Run(contextInitializer func(suite *Suite)) int {
 	var defs, sof, noclr bool
-	var tags, format string
+	var tags, format, output string
 	var concurrency int
-	flagSet := FlagSet(&format, &tags, &defs, &sof, &noclr, &concurrency)
+	flagSet := FlagSet(&format, &tags, &defs, &sof, &noclr, &concurrency, &output)
 	err := flagSet.Parse(os.Args[1:])
 	fatal(err)
 
