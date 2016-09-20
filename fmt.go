@@ -15,7 +15,9 @@ import (
 
 // some snippet formatting regexps
 var snippetExprCleanup = regexp.MustCompile("([\\/\\[\\]\\(\\)\\\\^\\$\\.\\|\\?\\*\\+\\'])")
-var snippetExprQuoted = regexp.MustCompile("(\\s*|^)\"(?:[^\"]*)\"(\\s+|$)")
+
+// var snippetExprQuoted = regexp.MustCompile("(\\s*|^)\"(?:[^\"]*)\"(\\s+|,|:|\\.|$)")
+var snippetExprQuoted = regexp.MustCompile("(\\W|^)\"(?:[^\"]*)\"(\\W|$)")
 var snippetMethodName = regexp.MustCompile("[^a-zA-Z\\_\\ ]")
 var snippetNumbers = regexp.MustCompile("(\\d+)")
 
@@ -346,7 +348,7 @@ func (f *basefmt) snippets() string {
 	for _, u := range f.undefined {
 		expr := snippetExprCleanup.ReplaceAllString(u.step.Text, "\\$1")
 		expr = snippetNumbers.ReplaceAllString(expr, "(\\d+)")
-		expr = snippetExprQuoted.ReplaceAllString(expr, " \"([^\"]*)\" ")
+		expr = snippetExprQuoted.ReplaceAllString(expr, "$1\"([^\"]*)\"$2")
 		expr = "^" + strings.TrimSpace(expr) + "$"
 
 		name := snippetNumbers.ReplaceAllString(u.step.Text, " ")

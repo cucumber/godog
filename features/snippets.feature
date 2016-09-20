@@ -92,3 +92,29 @@ Feature: undefined step snippets
               s.Step(`^the project should be there$`, theProjectShouldBeThere)
       }
       """
+
+  Scenario: should handle string argument followed by comma
+    Given a feature "undefined.feature" file:
+      """
+      Feature: undefined
+
+        Scenario: add item to basket
+          Given there is a "Sith Lord Lightsaber", which costs £5
+          When I add the "Sith Lord Lightsaber" to the basket
+      """
+    When I run feature suite
+    And the undefined step snippets should be:
+      """
+      func thereIsAWhichCosts(arg1 string, arg2 int) error {
+              return godog.ErrPending
+      }
+
+      func iAddTheToTheBasket(arg1 string) error {
+              return godog.ErrPending
+      }
+
+      func FeatureContext(s *godog.Suite) {
+              s.Step(`^there is a "([^"]*)", which costs £(\d+)$`, thereIsAWhichCosts)
+              s.Step(`^I add the "([^"]*)" to the basket$`, iAddTheToTheBasket)
+      }
+      """
