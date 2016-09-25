@@ -3,6 +3,7 @@ package godog
 import (
 	"fmt"
 	"os"
+	"os/exec"
 )
 
 type initializer func(*Suite)
@@ -72,7 +73,7 @@ func (r *runner) run() (failed bool) {
 //
 // contextInitializer must be able to register
 // the step definitions and event handlers.
-func Run(contextInitializer func(suite *Suite)) int {
+func Run(suite string, contextInitializer func(suite *Suite)) int {
 	var defs, sof, noclr bool
 	var tags, format string
 	var concurrency int
@@ -98,14 +99,37 @@ func Run(contextInitializer func(suite *Suite)) int {
 	if concurrency > 1 && format != "progress" {
 		fatal(fmt.Errorf("when concurrency level is higher than 1, only progress format is supported"))
 	}
-	formatter, err := findFmt(format)
-	fatal(err)
+
+	var formatter FormatterFunc
+	// cunicorn formatter is installed
+	_, err = exec.LookPath("cunicorn")
+	var output *os.File
+	var cunicorn *exec.Cmd
+	runWithCunicorn := err == nil && format == "progress"
+	if runWithCunicorn {
+		formatter, err = findFmt("events")
+		fatal(err)
+		reader, writer, err := os.Pipe()
+		fatal(err)
+
+		output = writer
+		cunicorn = exec.Command("cunicorn", "-f", format)
+		cunicorn.Stdin = reader
+		cunicorn.Stdout = os.Stdout
+		cunicorn.Stderr = os.Stderr
+		err = cunicorn.Start()
+		fatal(err)
+	} else {
+		formatter, err = findFmt(format)
+		output = os.Stdout
+		fatal(err)
+	}
 
 	features, err := parseFeatures(tags, paths)
 	fatal(err)
 
 	r := runner{
-		fmt:           formatter,
+		fmt:           formatter(suite, output),
 		initializer:   contextInitializer,
 		features:      features,
 		stopOnFailure: sof,
@@ -117,7 +141,14 @@ func Run(contextInitializer func(suite *Suite)) int {
 	} else {
 		failed = r.run()
 	}
-	if failed {
+
+	if runWithCunicorn {
+		output.Close() // need to close output in case if it was a pipe
+		err = cunicorn.Wait()
+		fatal(err)
+	}
+
+	if failed && format != "events" {
 		return 1
 	}
 	return 0

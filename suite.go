@@ -1,7 +1,9 @@
 package godog
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -19,7 +21,8 @@ var typeOfBytes = reflect.TypeOf([]byte(nil))
 
 type feature struct {
 	*gherkin.Feature
-	Path string `json:"path"`
+	Content []byte `json:"-"`
+	Path    string `json:"path"`
 }
 
 // ErrUndefined is returned in case if step definition was not found
@@ -193,11 +196,13 @@ func (s *Suite) matchStep(step *gherkin.Step) *StepDef {
 			return h
 		}
 	}
+	// @TODO can handle ambiguous
 	return nil
 }
 
 func (s *Suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
 	match := s.matchStep(step)
+	s.fmt.Defined(step, match)
 	if match == nil {
 		s.fmt.Undefined(step)
 		return ErrUndefined
@@ -325,7 +330,7 @@ func (s *Suite) runOutline(outline *gherkin.ScenarioOutline, b *gherkin.Backgrou
 }
 
 func (s *Suite) runFeature(f *feature) {
-	s.fmt.Feature(f.Feature, f.Path)
+	s.fmt.Feature(f.Feature, f.Path, f.Content)
 	for _, scenario := range f.ScenarioDefinitions {
 		var err error
 		if f.Background != nil {
@@ -380,7 +385,7 @@ func (s *Suite) printStepDefinitions() {
 	}
 	for _, def := range s.steps {
 		n := utf8.RuneCountInString(def.Expr.String())
-		location := def.funcName()
+		location := def.definitionID()
 		spaces := strings.Repeat(" ", longest-n)
 		fmt.Println(cl(def.Expr.String(), yellow)+spaces, cl("# "+location, black))
 	}
@@ -408,12 +413,13 @@ func parseFeatures(filter string, paths []string) (features []*feature, err erro
 				if err != nil {
 					return err
 				}
-				ft, err := gherkin.ParseFeature(reader)
+				var buf bytes.Buffer
+				ft, err := gherkin.ParseFeature(io.TeeReader(reader, &buf))
 				reader.Close()
 				if err != nil {
 					return err
 				}
-				features = append(features, &feature{Path: p, Feature: ft})
+				features = append(features, &feature{Path: p, Feature: ft, Content: buf.Bytes()})
 				// filter scenario by line number
 				if line != -1 {
 					var scenarios []interface{}

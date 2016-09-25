@@ -3,6 +3,7 @@ package godog
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"reflect"
 	"regexp"
 	"strings"
@@ -43,13 +44,13 @@ type undefinedSnippet struct {
 
 type registeredFormatter struct {
 	name        string
-	fmt         Formatter
+	fmt         FormatterFunc
 	description string
 }
 
 var formatters []*registeredFormatter
 
-func findFmt(format string) (f Formatter, err error) {
+func findFmt(format string) (f FormatterFunc, err error) {
 	var names []string
 	for _, el := range formatters {
 		if el.name == format {
@@ -66,9 +67,10 @@ func findFmt(format string) (f Formatter, err error) {
 }
 
 // Format registers a feature suite output
-// Formatter as the name and descriptiongiven.
-// Formatter is used to represent suite output
-func Format(name, description string, f Formatter) {
+// formatter by given name, description and
+// FormatterFunc constructor function, to initialize
+// formatter with the output recorder.
+func Format(name, description string, f FormatterFunc) {
 	formatters = append(formatters, &registeredFormatter{
 		name:        name,
 		fmt:         f,
@@ -84,8 +86,9 @@ func Format(name, description string, f Formatter) {
 // formatters needs to be registered with a
 // godog.Format function call
 type Formatter interface {
-	Feature(*gherkin.Feature, string)
+	Feature(*gherkin.Feature, string, []byte)
 	Node(interface{})
+	Defined(*gherkin.Step, *StepDef)
 	Failed(*gherkin.Step, *StepDef, error)
 	Passed(*gherkin.Step, *StepDef)
 	Skipped(*gherkin.Step)
@@ -93,6 +96,10 @@ type Formatter interface {
 	Pending(*gherkin.Step, *StepDef)
 	Summary()
 }
+
+// FormatterFunc builds a formatter with given
+// suite name and io.Writer to record output
+type FormatterFunc func(string, io.Writer) Formatter
 
 type stepType int
 
@@ -117,6 +124,23 @@ func (st stepType) clr() color {
 	}
 }
 
+func (st stepType) String() string {
+	switch st {
+	case passed:
+		return "passed"
+	case failed:
+		return "failed"
+	case skipped:
+		return "skipped"
+	case undefined:
+		return "undefined"
+	case pending:
+		return "pending"
+	default:
+		return "unknown"
+	}
+}
+
 type stepResult struct {
 	typ     stepType
 	feature *feature
@@ -131,6 +155,7 @@ func (f stepResult) line() string {
 }
 
 type basefmt struct {
+	out    io.Writer
 	owner  interface{}
 	indent int
 
@@ -152,7 +177,11 @@ func (f *basefmt) Node(n interface{}) {
 	}
 }
 
-func (f *basefmt) Feature(ft *gherkin.Feature, p string) {
+func (f *basefmt) Defined(*gherkin.Step, *StepDef) {
+
+}
+
+func (f *basefmt) Feature(ft *gherkin.Feature, p string, c []byte) {
 	f.features = append(f.features, &feature{Path: p, Feature: ft})
 }
 
@@ -264,23 +293,23 @@ func (f *basefmt) Summary() {
 	scenarios = append(scenarios, parts...)
 	elapsed := time.Since(f.started)
 
-	fmt.Println("")
+	fmt.Fprintln(f.out, "")
 	if total == 0 {
-		fmt.Println("No scenarios")
+		fmt.Fprintln(f.out, "No scenarios")
 	} else {
-		fmt.Println(fmt.Sprintf("%d scenarios (%s)", total, strings.Join(scenarios, ", ")))
+		fmt.Fprintln(f.out, fmt.Sprintf("%d scenarios (%s)", total, strings.Join(scenarios, ", ")))
 	}
 
 	if nsteps == 0 {
-		fmt.Println("No steps")
+		fmt.Fprintln(f.out, "No steps")
 	} else {
-		fmt.Println(fmt.Sprintf("%d steps (%s)", nsteps, strings.Join(steps, ", ")))
+		fmt.Fprintln(f.out, fmt.Sprintf("%d steps (%s)", nsteps, strings.Join(steps, ", ")))
 	}
-	fmt.Println(elapsed)
+	fmt.Fprintln(f.out, elapsed)
 
 	if text := f.snippets(); text != "" {
-		fmt.Println(cl("\nYou can implement step definitions for undefined steps with these snippets:", yellow))
-		fmt.Println(cl(text, yellow))
+		fmt.Fprintln(f.out, cl("\nYou can implement step definitions for undefined steps with these snippets:", yellow))
+		fmt.Fprintln(f.out, cl(text, yellow))
 	}
 }
 
@@ -383,5 +412,29 @@ func (f *basefmt) snippets() string {
 	if err := undefinedSnippetsTpl.Execute(&buf, snips); err != nil {
 		panic(err)
 	}
-	return buf.String()
+	// there may be trailing spaces
+	return strings.Replace(buf.String(), " \n", "\n", -1)
+}
+
+func (f *basefmt) isLastStep(s *gherkin.Step) bool {
+	ft := f.features[len(f.features)-1]
+
+	for _, def := range ft.ScenarioDefinitions {
+		if outline, ok := def.(*gherkin.ScenarioOutline); ok {
+			for n, step := range outline.Steps {
+				if step.Location.Line == s.Location.Line {
+					return n == len(outline.Steps)-1
+				}
+			}
+		}
+
+		if scenario, ok := def.(*gherkin.Scenario); ok {
+			for n, step := range scenario.Steps {
+				if step.Location.Line == s.Location.Line {
+					return n == len(scenario.Steps)-1
+				}
+			}
+		}
+	}
+	return false
 }

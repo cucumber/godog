@@ -1,6 +1,8 @@
 package godog
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"strconv"
@@ -18,6 +20,7 @@ func SuiteContext(s *Suite) {
 	s.Step(`^I parse features$`, c.parseFeatures)
 	s.Step(`^I'm listening to suite events$`, c.iAmListeningToSuiteEvents)
 	s.Step(`^I run feature suite$`, c.iRunFeatureSuite)
+	s.Step(`^I run feature suite with formatter "([^"]*)"$`, c.iRunFeatureSuiteWithFormatter)
 	s.Step(`^a feature "([^"]*)" file:$`, c.aFeatureFile)
 	s.Step(`^the suite should have (passed|failed)$`, c.theSuiteShouldHave)
 
@@ -31,6 +34,9 @@ func SuiteContext(s *Suite) {
 	s.Step(`^this step should fail`, c.aFailingStep)
 	s.Step(`^the following steps? should be (passed|failed|skipped|undefined|pending):`, c.followingStepsShouldHave)
 	s.Step(`^the undefined step snippets should be:$`, c.theUndefinedStepSnippetsShouldBe)
+
+	// event stream
+	s.Step(`^the following events should be fired:$`, c.thereShouldBeEventsFired)
 
 	// lt
 	s.Step(`^savybių aplankas "([^"]*)"$`, c.featurePath)
@@ -54,18 +60,57 @@ type suiteContext struct {
 	paths       []string
 	testedSuite *Suite
 	events      []*firedEvent
-	fmt         *testFormatter
+	out         bytes.Buffer
 }
 
 func (s *suiteContext) ResetBeforeEachScenario(interface{}) {
 	// reset whole suite with the state
-	s.fmt = &testFormatter{}
+	s.out.Reset()
 	s.paths = []string{}
-	s.testedSuite = &Suite{fmt: s.fmt}
+	s.testedSuite = &Suite{}
 	// our tested suite will have the same context registered
 	SuiteContext(s.testedSuite)
 	// reset all fired events
 	s.events = []*firedEvent{}
+}
+
+func (s *suiteContext) iRunFeatureSuiteWithFormatter(name string) error {
+	f, err := findFmt(name)
+	if err != nil {
+		return err
+	}
+	s.testedSuite.fmt = f("godog", &s.out)
+	if err := s.parseFeatures(); err != nil {
+		return err
+	}
+	s.testedSuite.run()
+	s.testedSuite.fmt.Summary()
+	return nil
+}
+
+func (s *suiteContext) thereShouldBeEventsFired(doc *gherkin.DocString) error {
+	actual := strings.Split(strings.TrimSpace(s.out.String()), "\n")
+	expect := strings.Split(strings.TrimSpace(doc.Content), "\n")
+	if len(expect) != len(actual) {
+		return fmt.Errorf("expected %d events, but got %d", len(expect), len(actual))
+	}
+
+	type ev struct {
+		Event string
+	}
+
+	for i, event := range actual {
+		exp := strings.TrimSpace(expect[i])
+		var act ev
+		if err := json.Unmarshal([]byte(event), &act); err != nil {
+			return fmt.Errorf("failed to read event data: %v", err)
+		}
+
+		if act.Event != exp {
+			return fmt.Errorf(`expected event: "%s" at position: %d, but actual was "%s"`, exp, i, act.Event)
+		}
+	}
+	return nil
 }
 
 func (s *suiteContext) cleanupSnippet(snip string) string {
@@ -77,10 +122,14 @@ func (s *suiteContext) cleanupSnippet(snip string) string {
 }
 
 func (s *suiteContext) theUndefinedStepSnippetsShouldBe(body *gherkin.DocString) error {
-	actual := s.cleanupSnippet(s.fmt.snippets())
+	f, ok := s.testedSuite.fmt.(*testFormatter)
+	if !ok {
+		return fmt.Errorf("this step requires testFormatter, but there is: %T", s.testedSuite.fmt)
+	}
+	actual := s.cleanupSnippet(f.snippets())
 	expected := s.cleanupSnippet(body.Content)
 	if actual != expected {
-		return fmt.Errorf("snippets do not match actual: %s", s.fmt.snippets())
+		return fmt.Errorf("snippets do not match actual: %s", f.snippets())
 	}
 	return nil
 }
@@ -89,25 +138,29 @@ func (s *suiteContext) followingStepsShouldHave(status string, steps *gherkin.Do
 	var expected = strings.Split(steps.Content, "\n")
 	var actual, unmatched, matched []string
 
+	f, ok := s.testedSuite.fmt.(*testFormatter)
+	if !ok {
+		return fmt.Errorf("this step requires testFormatter, but there is: %T", s.testedSuite.fmt)
+	}
 	switch status {
 	case "passed":
-		for _, st := range s.fmt.passed {
+		for _, st := range f.passed {
 			actual = append(actual, st.step.Text)
 		}
 	case "failed":
-		for _, st := range s.fmt.failed {
+		for _, st := range f.failed {
 			actual = append(actual, st.step.Text)
 		}
 	case "skipped":
-		for _, st := range s.fmt.skipped {
+		for _, st := range f.skipped {
 			actual = append(actual, st.step.Text)
 		}
 	case "undefined":
-		for _, st := range s.fmt.undefined {
+		for _, st := range f.undefined {
 			actual = append(actual, st.step.Text)
 		}
 	case "pending":
-		for _, st := range s.fmt.pending {
+		for _, st := range f.pending {
 			actual = append(actual, st.step.Text)
 		}
 	default:
@@ -231,7 +284,9 @@ func (s *suiteContext) iRunFeatureSuite() error {
 	if err := s.parseFeatures(); err != nil {
 		return err
 	}
+	s.testedSuite.fmt = testFormatterFunc("godog", &s.out)
 	s.testedSuite.run()
+	s.testedSuite.fmt.Summary()
 	return nil
 }
 

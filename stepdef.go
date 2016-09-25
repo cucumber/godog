@@ -29,7 +29,7 @@ type StepDef struct {
 	Handler interface{}
 }
 
-func (sd *StepDef) funcName() string {
+func (sd *StepDef) definitionID() string {
 	ptr := sd.hv.Pointer()
 	f := runtime.FuncForPC(ptr)
 	file, line := f.FileLine(ptr)

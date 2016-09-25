@@ -1,10 +1,25 @@
 package godog
 
-import "github.com/DATA-DOG/godog/gherkin"
+import (
+	"io"
+	"time"
+
+	"github.com/DATA-DOG/godog/gherkin"
+)
 
 type testFormatter struct {
 	basefmt
 	scenarios []interface{}
+}
+
+func testFormatterFunc(suite string, out io.Writer) Formatter {
+	return &testFormatter{
+		basefmt: basefmt{
+			started: time.Now(),
+			indent:  2,
+			out:     out,
+		},
+	}
 }
 
 func (f *testFormatter) Node(node interface{}) {
