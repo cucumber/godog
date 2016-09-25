@@ -31,9 +31,8 @@ var undefinedSnippetsTpl = template.Must(template.New("snippets").Funcs(snippetH
 	return godog.ErrPending
 }
 
-{{end}}func FeatureContext(s *godog.Suite) { {{- range . }}
-	s.Step({{ backticked .Expr }}, {{ .Method }})
-{{- end}}
+{{end}}func FeatureContext(s *godog.Suite) { {{ range . }}
+	s.Step({{ backticked .Expr }}, {{ .Method }}){{end}}
 }
 `))
 
@@ -413,7 +412,8 @@ func (f *basefmt) snippets() string {
 	if err := undefinedSnippetsTpl.Execute(&buf, snips); err != nil {
 		panic(err)
 	}
-	return buf.String()
+	// there may be trailing spaces
+	return strings.Replace(buf.String(), " \n", "\n", -1)
 }
 
 func (f *basefmt) isLastStep(s *gherkin.Step) bool {
