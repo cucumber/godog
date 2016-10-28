@@ -23,11 +23,8 @@ var descTagsOption = "Filter scenarios by tags. Expression can be:\n" +
 	s(4) + "- " + cl(`"@wip && ~@new"`, yellow) + ": run wip scenarios, but exclude new\n" +
 	s(4) + "- " + cl(`"@wip,@undone"`, yellow) + ": run wip or undone scenarios"
 
-var descOutputOption = "Output the temporary test runner executable:\n" +
-	s(4) + "- supply the name to give the executable " + cl("test_features.exe", yellow) + "\n"
-
 // FlagSet allows to manage flags by external suite runner
-func FlagSet(format, tags *string, defs, sof, noclr *bool, cr *int, output *string) *flag.FlagSet {
+func FlagSet(format, tags *string, defs, sof, noclr *bool, cr *int) *flag.FlagSet {
 	descFormatOption := "How to format tests output. Available formats:\n"
 	for _, f := range formatters {
 		descFormatOption += s(4) + "- " + cl(f.name, yellow) + ": " + f.description + "\n"
@@ -45,8 +42,6 @@ func FlagSet(format, tags *string, defs, sof, noclr *bool, cr *int, output *stri
 	set.BoolVar(defs, "d", false, "Print all available step definitions.")
 	set.BoolVar(sof, "stop-on-failure", false, "Stop processing on first failed scenario.")
 	set.BoolVar(noclr, "no-colors", false, "Disable ansi colors.")
-	set.StringVar(output, "output", "", descOutputOption)
-	set.StringVar(output, "o", "", descOutputOption)
 	set.Usage = usage(set)
 	return set
 }

@@ -206,7 +206,6 @@ installed. See the following example:
 package main
 
 import (
-	"flag"
 	"os"
 	"testing"
 
@@ -214,20 +213,12 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	args := os.Args
-	// args for godog
-	os.Args = []string{
-		args[0],
-		"-f", "progress",
-		"features",
-	}
-
-	status := godog.Run(func(s *godog.Suite) {
+	status := godog.RunWithOptions(func(s *godog.Suite) {
 		FeatureContext(s)
+	}, godog.Options{
+		Format: "progress",
+		Paths:  []string{"features"},
 	})
-
-	os.Args = args
-	flag.Parse()
 
 	if st := m.Run(); st > status {
 		status = st

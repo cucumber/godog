@@ -61,7 +61,58 @@ func (r *runner) run() (failed bool) {
 	return suite.failed
 }
 
+// RunWithOptions is same as Run function, except
+// it uses Options provided in order to run the
+// test suite without parsing flags
+//
+// This method is useful in case if you run
+// godog in for example TestMain function together
+// with go tests
+func RunWithOptions(contextInitializer func(suite *Suite), opt Options) int {
+	if opt.ShowStepDefinitions {
+		s := &Suite{}
+		contextInitializer(s)
+		s.printStepDefinitions()
+		return 0
+	}
+
+	if len(opt.Paths) == 0 {
+		inf, err := os.Stat("features")
+		if err == nil && inf.IsDir() {
+			opt.Paths = []string{"features"}
+		}
+	}
+
+	if opt.Concurrency > 1 && opt.Format != "progress" {
+		fatal(fmt.Errorf("when concurrency level is higher than 1, only progress format is supported"))
+	}
+	formatter, err := findFmt(opt.Format)
+	fatal(err)
+
+	features, err := parseFeatures(opt.Tags, opt.Paths)
+	fatal(err)
+
+	r := runner{
+		fmt:           formatter,
+		initializer:   contextInitializer,
+		features:      features,
+		stopOnFailure: opt.StopOnFailure,
+	}
+
+	var failed bool
+	if opt.Concurrency > 1 {
+		failed = r.concurrent(opt.Concurrency)
+	} else {
+		failed = r.run()
+	}
+	if failed {
+		return 1
+	}
+	return 0
+}
+
 // Run creates and runs the feature suite.
+// Reads all configuration options from flags.
 // uses contextInitializer to register contexts
 //
 // the concurrency option allows runner to
@@ -73,52 +124,18 @@ func (r *runner) run() (failed bool) {
 // contextInitializer must be able to register
 // the step definitions and event handlers.
 func Run(contextInitializer func(suite *Suite)) int {
-	var defs, sof, noclr bool
-	var tags, format, output string
-	var concurrency int
-	flagSet := FlagSet(&format, &tags, &defs, &sof, &noclr, &concurrency, &output)
+	var opt Options
+	flagSet := FlagSet(
+		&opt.Format,
+		&opt.Tags,
+		&opt.ShowStepDefinitions,
+		&opt.StopOnFailure,
+		&opt.NoColors,
+		&opt.Concurrency,
+	)
 	err := flagSet.Parse(os.Args[1:])
 	fatal(err)
+	opt.Paths = flagSet.Args()
 
-	if defs {
-		s := &Suite{}
-		contextInitializer(s)
-		s.printStepDefinitions()
-		return 0
-	}
-
-	paths := flagSet.Args()
-	if len(paths) == 0 {
-		inf, err := os.Stat("features")
-		if err == nil && inf.IsDir() {
-			paths = []string{"features"}
-		}
-	}
-
-	if concurrency > 1 && format != "progress" {
-		fatal(fmt.Errorf("when concurrency level is higher than 1, only progress format is supported"))
-	}
-	formatter, err := findFmt(format)
-	fatal(err)
-
-	features, err := parseFeatures(tags, paths)
-	fatal(err)
-
-	r := runner{
-		fmt:           formatter,
-		initializer:   contextInitializer,
-		features:      features,
-		stopOnFailure: sof,
-	}
-
-	var failed bool
-	if concurrency > 1 {
-		failed = r.concurrent(concurrency)
-	} else {
-		failed = r.run()
-	}
-	if failed {
-		return 1
-	}
-	return 0
+	return RunWithOptions(contextInitializer, opt)
 }

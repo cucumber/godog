@@ -68,8 +68,10 @@ func main() {
 	var tags, format, output string
 	var concurrency int
 
-	flagSet := godog.FlagSet(&format, &tags, &defs, &sof, &noclr, &concurrency, &output)
+	flagSet := godog.FlagSet(&format, &tags, &defs, &sof, &noclr, &concurrency)
 	flagSet.BoolVar(&vers, "version", false, "Show current version.")
+	flagSet.StringVar(&output, "o", "", "Build and output test runner executable to given target path.")
+	flagSet.StringVar(&output, "output", "", "Build and output test runner executable to given target path.")
 
 	err := flagSet.Parse(os.Args[1:])
 	if err != nil {
