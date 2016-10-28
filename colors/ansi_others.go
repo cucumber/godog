@@ -4,7 +4,7 @@
 
 // +build !windows
 
-package main
+package colors
 
 import "io"
 

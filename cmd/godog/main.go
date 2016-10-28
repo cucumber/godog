@@ -12,13 +12,11 @@ import (
 	"syscall"
 
 	"github.com/DATA-DOG/godog"
+	"github.com/DATA-DOG/godog/colors"
 )
 
 var statusMatch = regexp.MustCompile("^exit status (\\d+)")
 var parsedStatus int
-
-var stdout = io.Writer(os.Stdout)
-var stderr = statusOutputFilter(os.Stderr)
 
 func buildAndRun() (int, error) {
 	var status int
@@ -36,8 +34,8 @@ func buildAndRun() (int, error) {
 	defer os.Remove(bin)
 
 	cmd := exec.Command(bin, os.Args[1:]...)
-	cmd.Stdout = stdout
-	cmd.Stderr = stderr
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	cmd.Env = os.Environ()
 
 	if err = cmd.Start(); err != nil {
@@ -68,46 +66,37 @@ func main() {
 	var tags, format, output string
 	var concurrency int
 
-	flagSet := godog.FlagSet(&format, &tags, &defs, &sof, &noclr, &concurrency)
+	flagSet := godog.FlagSet(colors.Colored(os.Stdout), &format, &tags, &defs, &sof, &noclr, &concurrency)
 	flagSet.BoolVar(&vers, "version", false, "Show current version.")
 	flagSet.StringVar(&output, "o", "", "Build and output test runner executable to given target path.")
 	flagSet.StringVar(&output, "output", "", "Build and output test runner executable to given target path.")
 
-	err := flagSet.Parse(os.Args[1:])
-	if err != nil {
-		fmt.Fprintln(stderr, err)
+	if err := flagSet.Parse(os.Args[1:]); err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
 	if len(output) > 0 {
 		bin, err := filepath.Abs(output)
 		if err != nil {
-			fmt.Fprintln(stderr, "could not locate absolute path for:", output, err)
+			fmt.Fprintln(os.Stderr, "could not locate absolute path for:", output, err)
 			os.Exit(1)
 		}
 		if err = godog.Build(bin); err != nil {
-			fmt.Fprintln(stderr, "could not build binary at:", output, err)
+			fmt.Fprintln(os.Stderr, "could not build binary at:", output, err)
 			os.Exit(1)
 		}
 		os.Exit(0)
 	}
 
-	if noclr {
-		stdout = noColorsWriter(stdout)
-		stderr = noColorsWriter(stderr)
-	} else {
-		stdout = createAnsiColorWriter(stdout)
-		stderr = createAnsiColorWriter(stderr)
-	}
-
 	if vers {
-		fmt.Fprintln(stdout, "Godog version is:", godog.Version)
+		fmt.Fprintln(os.Stdout, "Godog version is:", godog.Version)
 		os.Exit(0) // should it be 0?
 	}
 
 	status, err := buildAndRun()
 	if err != nil {
-		fmt.Fprintln(stderr, err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 	// it might be a case, that status might not be resolved

@@ -387,7 +387,7 @@ func (s *Suite) printStepDefinitions() {
 		n := utf8.RuneCountInString(def.Expr.String())
 		location := def.definitionID()
 		spaces := strings.Repeat(" ", longest-n)
-		fmt.Println(cl(def.Expr.String(), yellow)+spaces, cl("# "+location, black))
+		fmt.Println(yellow(def.Expr.String())+spaces, black("# "+location))
 	}
 	if len(s.steps) == 0 {
 		fmt.Println("there were no contexts registered, could not find any step definition..")

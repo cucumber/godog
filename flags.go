@@ -3,31 +3,35 @@ package godog
 import (
 	"flag"
 	"fmt"
+	"io"
 	"strings"
+
+	"github.com/DATA-DOG/godog/colors"
 )
 
 var descFeaturesArgument = "Optional feature(s) to run. Can be:\n" +
-	s(4) + "- dir " + cl("(features/)", yellow) + "\n" +
-	s(4) + "- feature " + cl("(*.feature)", yellow) + "\n" +
-	s(4) + "- scenario at specific line " + cl("(*.feature:10)", yellow) + "\n" +
-	"If no feature paths are listed, suite tries " + cl("features", yellow) + " path by default.\n"
+	s(4) + "- dir " + colors.Yellow("(features/)") + "\n" +
+	s(4) + "- feature " + colors.Yellow("(*.feature)") + "\n" +
+	s(4) + "- scenario at specific line " + colors.Yellow("(*.feature:10)") + "\n" +
+	"If no feature paths are listed, suite tries " + colors.Yellow("features") + " path by default.\n"
 
 var descConcurrencyOption = "Run the test suite with concurrency level:\n" +
-	s(4) + "- " + cl(`= 1`, yellow) + ": supports all types of formats.\n" +
-	s(4) + "- " + cl(`>= 2`, yellow) + ": only supports " + cl("progress", yellow) + ". Note, that\n" +
+	s(4) + "- " + colors.Yellow(`= 1`) + ": supports all types of formats.\n" +
+	s(4) + "- " + colors.Yellow(`>= 2`) + ": only supports " + colors.Yellow("progress") + ". Note, that\n" +
 	s(4) + "your context needs to support parallel execution."
 
 var descTagsOption = "Filter scenarios by tags. Expression can be:\n" +
-	s(4) + "- " + cl(`"@wip"`, yellow) + ": run all scenarios with wip tag\n" +
-	s(4) + "- " + cl(`"~@wip"`, yellow) + ": exclude all scenarios with wip tag\n" +
-	s(4) + "- " + cl(`"@wip && ~@new"`, yellow) + ": run wip scenarios, but exclude new\n" +
-	s(4) + "- " + cl(`"@wip,@undone"`, yellow) + ": run wip or undone scenarios"
+	s(4) + "- " + colors.Yellow(`"@wip"`) + ": run all scenarios with wip tag\n" +
+	s(4) + "- " + colors.Yellow(`"~@wip"`) + ": exclude all scenarios with wip tag\n" +
+	s(4) + "- " + colors.Yellow(`"@wip && ~@new"`) + ": run wip scenarios, but exclude new\n" +
+	s(4) + "- " + colors.Yellow(`"@wip,@undone"`) + ": run wip or undone scenarios"
 
 // FlagSet allows to manage flags by external suite runner
-func FlagSet(format, tags *string, defs, sof, noclr *bool, cr *int) *flag.FlagSet {
+func FlagSet(w io.Writer, format, tags *string, defs, sof, noclr *bool, cr *int) *flag.FlagSet {
 	descFormatOption := "How to format tests output. Available formats:\n"
-	for _, f := range formatters {
-		descFormatOption += s(4) + "- " + cl(f.name, yellow) + ": " + f.description + "\n"
+	// @TODO: sort by name
+	for name, desc := range AvailableFormatters() {
+		descFormatOption += s(4) + "- " + colors.Yellow(name) + ": " + desc + "\n"
 	}
 	descFormatOption = strings.TrimSpace(descFormatOption)
 
@@ -42,7 +46,7 @@ func FlagSet(format, tags *string, defs, sof, noclr *bool, cr *int) *flag.FlagSe
 	set.BoolVar(defs, "d", false, "Print all available step definitions.")
 	set.BoolVar(sof, "stop-on-failure", false, "Stop processing on first failed scenario.")
 	set.BoolVar(noclr, "no-colors", false, "Disable ansi colors.")
-	set.Usage = usage(set)
+	set.Usage = usage(set, w)
 	return set
 }
 
@@ -66,7 +70,7 @@ func (f *flagged) name() string {
 	return name
 }
 
-func usage(set *flag.FlagSet) func() {
+func usage(set *flag.FlagSet, w io.Writer) func() {
 	return func() {
 		var list []*flagged
 		var longest int
@@ -102,7 +106,7 @@ func usage(set *flag.FlagSet) func() {
 		opt := func(name, desc string) string {
 			var ret []string
 			lines := strings.Split(desc, "\n")
-			ret = append(ret, s(2)+cl(name, green)+s(longest+2-len(name))+lines[0])
+			ret = append(ret, s(2)+colors.Green(name)+s(longest+2-len(name))+lines[0])
 			if len(lines) > 1 {
 				for _, ln := range lines[1:] {
 					ret = append(ret, s(2)+s(longest+2)+ln)
@@ -112,22 +116,22 @@ func usage(set *flag.FlagSet) func() {
 		}
 
 		// --- GENERAL ---
-		fmt.Println(cl("Usage:", yellow))
+		fmt.Fprintln(w, colors.Yellow("Usage:"))
 		fmt.Printf(s(2) + "godog [options] [<features>]\n\n")
 		// description
-		fmt.Println("Builds a test package and runs given feature files.")
-		fmt.Printf("Command should be run from the directory of tested package and contain buildable go source.\n\n")
+		fmt.Fprintln(w, "Builds a test package and runs given feature files.")
+		fmt.Fprintf(w, "Command should be run from the directory of tested package and contain buildable go source.\n\n")
 
 		// --- ARGUMENTS ---
-		fmt.Println(cl("Arguments:", yellow))
+		fmt.Fprintln(w, colors.Yellow("Arguments:"))
 		// --> features
-		fmt.Println(opt("features", descFeaturesArgument))
+		fmt.Fprintln(w, opt("features", descFeaturesArgument))
 
 		// --- OPTIONS ---
-		fmt.Println(cl("Options:", yellow))
+		fmt.Fprintln(w, colors.Yellow("Options:"))
 		for _, f := range list {
-			fmt.Println(opt(f.name(), f.descr))
+			fmt.Fprintln(w, opt(f.name(), f.descr))
 		}
-		fmt.Println("")
+		fmt.Fprintln(w, "")
 	}
 }

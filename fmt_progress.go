@@ -48,18 +48,18 @@ func (f *progress) Summary() {
 	left := math.Mod(float64(f.steps), float64(f.stepsPerRow))
 	if left != 0 {
 		if int(f.steps) > f.stepsPerRow {
-			fmt.Printf(s(f.stepsPerRow-int(left)) + fmt.Sprintf(" %d\n", f.steps))
+			fmt.Fprintf(f.out, s(f.stepsPerRow-int(left))+fmt.Sprintf(" %d\n", f.steps))
 		} else {
-			fmt.Printf(" %d\n", f.steps)
+			fmt.Fprintf(f.out, " %d\n", f.steps)
 		}
 	}
 	fmt.Fprintln(f.out, "")
 
 	if len(f.failed) > 0 {
-		fmt.Fprintln(f.out, "\n--- "+cl("Failed steps:", red)+"\n")
+		fmt.Fprintln(f.out, "\n--- "+red("Failed steps:")+"\n")
 		for _, fail := range f.failed {
-			fmt.Fprintln(f.out, s(4)+cl(fail.step.Keyword+" "+fail.step.Text, red)+cl(" # "+fail.line(), black))
-			fmt.Fprintln(f.out, s(6)+cl("Error: ", red)+bcl(fail.err, red)+"\n")
+			fmt.Fprintln(f.out, s(4)+red(fail.step.Keyword+" "+fail.step.Text)+black(" # "+fail.line()))
+			fmt.Fprintln(f.out, s(6)+red("Error: ")+redb(fail.err)+"\n")
 		}
 	}
 	f.basefmt.Summary()
@@ -68,15 +68,15 @@ func (f *progress) Summary() {
 func (f *progress) step(res *stepResult) {
 	switch res.typ {
 	case passed:
-		fmt.Print(cl(".", green))
+		fmt.Fprint(f.out, green("."))
 	case skipped:
-		fmt.Print(cl("-", cyan))
+		fmt.Fprint(f.out, cyan("-"))
 	case failed:
-		fmt.Print(cl("F", red))
+		fmt.Fprint(f.out, red("F"))
 	case undefined:
-		fmt.Print(cl("U", yellow))
+		fmt.Fprint(f.out, yellow("U"))
 	case pending:
-		fmt.Print(cl("P", yellow))
+		fmt.Fprint(f.out, yellow("P"))
 	}
 	f.steps++
 	if math.Mod(float64(f.steps), float64(f.stepsPerRow)) == 0 {

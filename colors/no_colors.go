@@ -1,4 +1,4 @@
-package main
+package colors
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ type noColors struct {
 	lastbuf bytes.Buffer
 }
 
-func noColorsWriter(w io.Writer) io.Writer {
+func Uncolored(w io.Writer) io.Writer {
 	return &noColors{out: w}
 }
 

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-package main
+package colors
 
 import "io"
 
@@ -15,17 +15,17 @@ type outputMode int
 // color escape sequence.
 const (
 	_ outputMode = iota
-	DiscardNonColorEscSeq
-	OutputNonColorEscSeq
+	discardNonColorEscSeq
+	outputNonColorEscSeq
 )
 
-// NewAnsiColorWriter creates and initializes a new ansiColorWriter
+// Colored creates and initializes a new ansiColorWriter
 // using io.Writer w as its initial contents.
 // In the console of Windows, which change the foreground and background
 // colors of the text by the escape sequence.
 // In the console of other systems, which writes to w all text.
-func createAnsiColorWriter(w io.Writer) io.Writer {
-	return createModeAnsiColorWriter(w, DiscardNonColorEscSeq)
+func Colored(w io.Writer) io.Writer {
+	return createModeAnsiColorWriter(w, discardNonColorEscSeq)
 }
 
 // NewModeAnsiColorWriter create and initializes a new ansiColorWriter

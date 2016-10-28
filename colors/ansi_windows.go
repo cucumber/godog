@@ -4,7 +4,7 @@
 
 // +build windows
 
-package main
+package colors
 
 import (
 	"bytes"
@@ -351,7 +351,7 @@ func isParameterChar(b byte) bool {
 
 func (cw *ansiColorWriter) Write(p []byte) (int, error) {
 	r, nw, first, last := 0, 0, 0, 0
-	if cw.mode != DiscardNonColorEscSeq {
+	if cw.mode != discardNonColorEscSeq {
 		cw.state = outsideCsiCode
 		cw.resetBuffer()
 	}
@@ -388,7 +388,7 @@ func (cw *ansiColorWriter) Write(p []byte) (int, error) {
 				}
 				first = i + 1
 				result := parseEscapeSequence(ch, cw.paramBuf.Bytes())
-				if result == noConsole || (cw.mode == OutputNonColorEscSeq && result == unknown) {
+				if result == noConsole || (cw.mode == outputNonColorEscSeq && result == unknown) {
 					cw.paramBuf.WriteByte(ch)
 					nw, err := cw.flushBuffer()
 					if err != nil {
@@ -408,7 +408,7 @@ func (cw *ansiColorWriter) Write(p []byte) (int, error) {
 		}
 	}
 
-	if cw.mode != DiscardNonColorEscSeq || cw.state == outsideCsiCode {
+	if cw.mode != discardNonColorEscSeq || cw.state == outsideCsiCode {
 		nw, err = cw.w.Write(p[first:len(p)])
 		r += nw
 	}

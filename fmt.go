@@ -11,6 +11,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/DATA-DOG/godog/colors"
 	"github.com/DATA-DOG/godog/gherkin"
 )
 
@@ -78,6 +79,17 @@ func Format(name, description string, f FormatterFunc) {
 	})
 }
 
+// AvailableFormatters gives a map of all
+// formatters registered with their name as key
+// and description as value
+func AvailableFormatters() map[string]string {
+	fmts := make(map[string]string, len(formatters))
+	for _, f := range formatters {
+		fmts[f.name] = f.description
+	}
+	return fmts
+}
+
 // Formatter is an interface for feature runner
 // output summary presentation.
 //
@@ -111,7 +123,7 @@ const (
 	pending
 )
 
-func (st stepType) clr() color {
+func (st stepType) clr() colors.ColorFunc {
 	switch st {
 	case passed:
 		return green
@@ -267,28 +279,28 @@ func (f *basefmt) Summary() {
 	var steps, parts, scenarios []string
 	nsteps := len(f.passed) + len(f.failed) + len(f.skipped) + len(f.undefined) + len(f.pending)
 	if len(f.passed) > 0 {
-		steps = append(steps, cl(fmt.Sprintf("%d passed", len(f.passed)), green))
+		steps = append(steps, green(fmt.Sprintf("%d passed", len(f.passed))))
 	}
 	if len(f.failed) > 0 {
 		passed -= len(f.failed)
-		parts = append(parts, cl(fmt.Sprintf("%d failed", len(f.failed)), red))
+		parts = append(parts, red(fmt.Sprintf("%d failed", len(f.failed))))
 		steps = append(steps, parts[len(parts)-1])
 	}
 	if len(f.pending) > 0 {
 		passed -= len(f.pending)
-		parts = append(parts, cl(fmt.Sprintf("%d pending", len(f.pending)), yellow))
-		steps = append(steps, cl(fmt.Sprintf("%d pending", len(f.pending)), yellow))
+		parts = append(parts, yellow(fmt.Sprintf("%d pending", len(f.pending))))
+		steps = append(steps, yellow(fmt.Sprintf("%d pending", len(f.pending))))
 	}
 	if len(f.undefined) > 0 {
 		passed -= undefined
-		parts = append(parts, cl(fmt.Sprintf("%d undefined", undefined), yellow))
-		steps = append(steps, cl(fmt.Sprintf("%d undefined", len(f.undefined)), yellow))
+		parts = append(parts, yellow(fmt.Sprintf("%d undefined", undefined)))
+		steps = append(steps, yellow(fmt.Sprintf("%d undefined", len(f.undefined))))
 	}
 	if len(f.skipped) > 0 {
-		steps = append(steps, cl(fmt.Sprintf("%d skipped", len(f.skipped)), cyan))
+		steps = append(steps, cyan(fmt.Sprintf("%d skipped", len(f.skipped))))
 	}
 	if passed > 0 {
-		scenarios = append(scenarios, cl(fmt.Sprintf("%d passed", passed), green))
+		scenarios = append(scenarios, green(fmt.Sprintf("%d passed", passed)))
 	}
 	scenarios = append(scenarios, parts...)
 	elapsed := time.Since(f.started)
@@ -308,8 +320,8 @@ func (f *basefmt) Summary() {
 	fmt.Fprintln(f.out, elapsed)
 
 	if text := f.snippets(); text != "" {
-		fmt.Fprintln(f.out, cl("\nYou can implement step definitions for undefined steps with these snippets:", yellow))
-		fmt.Fprintln(f.out, cl(text, yellow))
+		fmt.Fprintln(f.out, yellow("\nYou can implement step definitions for undefined steps with these snippets:"))
+		fmt.Fprintln(f.out, yellow(text))
 	}
 }
 
