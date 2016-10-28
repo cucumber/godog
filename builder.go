@@ -41,7 +41,7 @@ func main() {
 	os.Exit(status)
 }`))
 
-// Build creates a test package like go test command.
+// Build creates a test package like go test command at given target path.
 // If there are no go files in tested directory, then
 // it simply builds a godog executable to scan features.
 //
@@ -53,16 +53,10 @@ func main() {
 // of tested package.
 //
 // Returns the path to generated executable
-func Build() (string, error) {
+func Build(bin string) error {
 	abs, err := filepath.Abs(".")
 	if err != nil {
-		return "", err
-	}
-
-	bin := filepath.Join(abs, "godog.test")
-	// suffix with .exe for windows
-	if goos == "windows" {
-		bin += ".exe"
+		return err
 	}
 
 	// we allow package to be nil, if godog is run only when
@@ -70,7 +64,7 @@ func Build() (string, error) {
 	pkg := importPackage(abs)
 	src, anyContexts, err := buildTestMain(pkg)
 	if err != nil {
-		return bin, err
+		return err
 	}
 
 	workdir := fmt.Sprintf(filepath.Join("%s", "godog-%d"), os.TempDir(), time.Now().UnixNano())
@@ -84,7 +78,7 @@ func Build() (string, error) {
 		// go does it better
 		out, err := exec.Command("go", "test", "-i").CombinedOutput()
 		if err != nil {
-			return bin, fmt.Errorf("failed to compile package %s:\n%s", pkg.Name, string(out))
+			return fmt.Errorf("failed to compile package %s:\n%s", pkg.Name, string(out))
 		}
 
 		// let go do the dirty work and compile test
@@ -101,21 +95,21 @@ func Build() (string, error) {
 		// go has built. We will reuse it for our suite workdir.
 		out, err = exec.Command("go", "test", "-c", "-work", "-o", temp).CombinedOutput()
 		if err != nil {
-			return bin, fmt.Errorf("failed to compile tested package %s:\n%s", pkg.Name, string(out))
+			return fmt.Errorf("failed to compile tested package %s:\n%s", pkg.Name, string(out))
 		}
 		defer os.Remove(temp)
 
 		// extract go-build temporary directory as our workdir
 		workdir = strings.TrimSpace(string(out))
 		if !strings.HasPrefix(workdir, "WORK=") {
-			return bin, fmt.Errorf("expected WORK dir path, but got: %s", workdir)
+			return fmt.Errorf("expected WORK dir path, but got: %s", workdir)
 		}
 		workdir = strings.Replace(workdir, "WORK=", "", 1)
 		testdir = filepath.Join(workdir, pkg.ImportPath, "_test")
 	} else {
 		// still need to create temporary workdir
 		if err = os.MkdirAll(testdir, 0755); err != nil {
-			return bin, err
+			return err
 		}
 	}
 	defer os.RemoveAll(workdir)
@@ -124,7 +118,7 @@ func Build() (string, error) {
 	testmain := filepath.Join(testdir, "_testmain.go")
 	err = ioutil.WriteFile(testmain, src, 0644)
 	if err != nil {
-		return bin, err
+		return err
 	}
 
 	// godog library may not be imported in tested package
@@ -137,7 +131,7 @@ func Build() (string, error) {
 	}
 	godogPkg, err := locatePackage(try)
 	if err != nil {
-		return bin, err
+		return err
 	}
 
 	// make sure godog package archive is installed, gherkin
@@ -146,7 +140,7 @@ func Build() (string, error) {
 	cmd.Env = os.Environ()
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return bin, fmt.Errorf("failed to install godog package:\n%s", string(out))
+		return fmt.Errorf("failed to install godog package:\n%s", string(out))
 	}
 
 	// collect all possible package dirs, will be
@@ -179,7 +173,7 @@ func Build() (string, error) {
 	cmd.Env = os.Environ()
 	out, err = cmd.CombinedOutput()
 	if err != nil {
-		return bin, fmt.Errorf("failed to compile testmain package:\n%s", string(out))
+		return fmt.Errorf("failed to compile testmain package:\n%s", string(out))
 	}
 
 	// link test suite executable
@@ -199,10 +193,10 @@ func Build() (string, error) {
 		msg := `failed to link test executable:
 	reason: %s
 	command: %s`
-		return bin, fmt.Errorf(msg, string(out), linker+" '"+strings.Join(args, "' '")+"'")
+		return fmt.Errorf(msg, string(out), linker+" '"+strings.Join(args, "' '")+"'")
 	}
 
-	return bin, nil
+	return nil
 }
 
 func locatePackage(try []string) (*build.Package, error) {

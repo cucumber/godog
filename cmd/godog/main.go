@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"go/build"
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"syscall"
@@ -18,23 +20,20 @@ var parsedStatus int
 var stdout = io.Writer(os.Stdout)
 var stderr = statusOutputFilter(os.Stderr)
 
-func buildAndRun(output string) (int, error) {
+func buildAndRun() (int, error) {
 	var status int
 
-	bin, err := godog.Build()
+	bin, err := filepath.Abs("godog.test")
 	if err != nil {
 		return 1, err
 	}
+	if build.Default.GOOS == "windows" {
+		bin += ".exe"
+	}
+	if err = godog.Build(bin); err != nil {
+		return 1, err
+	}
 	defer os.Remove(bin)
-    //output the generated binary file and exit if the output option was provided
-    if output != ""{
-        err = Copy(output,bin)
-        status := 0
-        if err != nil {
-            status = 1
-        } 
-        return status, err    
-    }
 
 	cmd := exec.Command(bin, os.Args[1:]...)
 	cmd.Stdout = stdout
@@ -78,6 +77,19 @@ func main() {
 		os.Exit(1)
 	}
 
+	if len(output) > 0 {
+		bin, err := filepath.Abs(output)
+		if err != nil {
+			fmt.Fprintln(stderr, "could not locate absolute path for:", output, err)
+			os.Exit(1)
+		}
+		if err = godog.Build(bin); err != nil {
+			fmt.Fprintln(stderr, "could not build binary at:", output, err)
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
+
 	if noclr {
 		stdout = noColorsWriter(stdout)
 		stderr = noColorsWriter(stderr)
@@ -91,7 +103,7 @@ func main() {
 		os.Exit(0) // should it be 0?
 	}
 
-	status, err := buildAndRun(output)
+	status, err := buildAndRun()
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		os.Exit(1)
@@ -119,17 +131,4 @@ type writerFunc func([]byte) (int, error)
 
 func (w writerFunc) Write(b []byte) (int, error) {
 	return w(b)
-}
-
-func Copy(dst, src string) error {
-    in, err := os.Open(src)
-    if err != nil { return err }
-    defer in.Close()
-    out, err := os.Create(dst)
-    if err != nil { return err }
-    defer out.Close()
-    _, err = io.Copy(out, in)
-    cerr := out.Close()
-    if err != nil { return err }
-    return cerr
 }
