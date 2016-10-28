@@ -18,7 +18,7 @@ var parsedStatus int
 var stdout = io.Writer(os.Stdout)
 var stderr = statusOutputFilter(os.Stderr)
 
-func buildAndRun() (int, error) {
+func buildAndRun(output string) (int, error) {
 	var status int
 
 	bin, err := godog.Build()
@@ -26,6 +26,15 @@ func buildAndRun() (int, error) {
 		return 1, err
 	}
 	defer os.Remove(bin)
+    //output the generated binary file and exit if the output option was provided
+    if output != ""{
+        err = Copy(output,bin)
+        status := 0
+        if err != nil {
+            status = 1
+        } 
+        return status, err    
+    }
 
 	cmd := exec.Command(bin, os.Args[1:]...)
 	cmd.Stdout = stdout
@@ -57,10 +66,10 @@ func buildAndRun() (int, error) {
 
 func main() {
 	var vers, defs, sof, noclr bool
-	var tags, format string
+	var tags, format, output string
 	var concurrency int
 
-	flagSet := godog.FlagSet(&format, &tags, &defs, &sof, &noclr, &concurrency)
+	flagSet := godog.FlagSet(&format, &tags, &defs, &sof, &noclr, &concurrency, &output)
 	flagSet.BoolVar(&vers, "version", false, "Show current version.")
 
 	err := flagSet.Parse(os.Args[1:])
@@ -82,7 +91,7 @@ func main() {
 		os.Exit(0) // should it be 0?
 	}
 
-	status, err := buildAndRun()
+	status, err := buildAndRun(output)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		os.Exit(1)
@@ -110,4 +119,17 @@ type writerFunc func([]byte) (int, error)
 
 func (w writerFunc) Write(b []byte) (int, error) {
 	return w(b)
+}
+
+func Copy(dst, src string) error {
+    in, err := os.Open(src)
+    if err != nil { return err }
+    defer in.Close()
+    out, err := os.Create(dst)
+    if err != nil { return err }
+    defer out.Close()
+    _, err = io.Copy(out, in)
+    cerr := out.Close()
+    if err != nil { return err }
+    return cerr
 }
