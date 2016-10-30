@@ -1,5 +1,18 @@
 # Change LOG
 
+**2016-10-30** - **v0.6.0**
+- added experimental **events** format, this might be used for unified
+  cucumber formats. But should be not adapted widely, since it is highly
+  possible that specification will change.
+- added **RunWithOptions** method which allows to easily run godog from
+  **TestMain** without needing to simulate flag arguments. These options
+  now allows to configure output writer.
+- added flag **-o, --output=runner.binary** which only compiles the test
+  runner executable, but does not execute it.
+- **FlagSet** initialization now takes io.Writer as output for help text
+  output. It was not showing nice colors on windows before.
+  **--no-colors** option only applies to test run output.
+
 **2016-06-14** - **v0.5.0**
 - godog now uses **go tool compile** and **go tool link** to support
   vendor directory dependencies. It also compiles test executable the same
