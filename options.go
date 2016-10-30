@@ -1,5 +1,7 @@
 package godog
 
+import "io"
+
 // Options are suite run options
 // flags are mapped to these options.
 //
@@ -8,11 +10,28 @@ package godog
 //
 // See the flags for more details
 type Options struct {
+	// Print step definitions found and exit
 	ShowStepDefinitions bool
-	StopOnFailure       bool
-	NoColors            bool
-	Tags                string
-	Format              string
-	Concurrency         int
-	Paths               []string
+
+	// Stops on the first failure
+	StopOnFailure bool
+
+	// Forces ansi color stripping
+	NoColors bool
+
+	// Various filters for scenarios parsed
+	// from feature files
+	Tags string
+
+	// The formatter name
+	Format string
+
+	// Concurrency rate, not all formatters accepts this
+	Concurrency int
+
+	// All feature file paths
+	Paths []string
+
+	// Where it should print formatter output
+	Output io.Writer
 }

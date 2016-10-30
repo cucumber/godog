@@ -2,7 +2,10 @@ package godog
 
 import (
 	"fmt"
+	"io"
 	"os"
+
+	"github.com/DATA-DOG/godog/colors"
 )
 
 type initializer func(*Suite)
@@ -69,6 +72,17 @@ func (r *runner) run() (failed bool) {
 // godog in for example TestMain function together
 // with go tests
 func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Options) int {
+	var output io.Writer = os.Stdout
+	if nil != opt.Output {
+		output = opt.Output
+	}
+
+	if opt.NoColors {
+		output = colors.Uncolored(output)
+	} else {
+		output = colors.Colored(output)
+	}
+
 	if opt.ShowStepDefinitions {
 		s := &Suite{}
 		contextInitializer(s)
@@ -93,7 +107,7 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 	fatal(err)
 
 	r := runner{
-		fmt:           formatter(suite, os.Stdout),
+		fmt:           formatter(suite, output),
 		initializer:   contextInitializer,
 		features:      features,
 		stopOnFailure: opt.StopOnFailure,
@@ -105,7 +119,7 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 	} else {
 		failed = r.run()
 	}
-	if failed && format != "events" {
+	if failed && opt.Format != "events" {
 		return 1
 	}
 	return 0
@@ -126,6 +140,7 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 func Run(suite string, contextInitializer func(suite *Suite)) int {
 	var opt Options
 	flagSet := FlagSet(
+		colors.Colored(os.Stdout),
 		&opt.Format,
 		&opt.Tags,
 		&opt.ShowStepDefinitions,
@@ -135,6 +150,7 @@ func Run(suite string, contextInitializer func(suite *Suite)) int {
 	)
 	err := flagSet.Parse(os.Args[1:])
 	fatal(err)
+
 	opt.Paths = flagSet.Args()
 
 	return RunWithOptions(suite, contextInitializer, opt)

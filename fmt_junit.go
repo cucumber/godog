@@ -137,7 +137,7 @@ func (j *junitFormatter) Summary() {
 	j.suite.Time = time.Since(j.started).String()
 	io.WriteString(j.out, xml.Header)
 
-	enc := xml.NewEncoder(os.Stdout)
+	enc := xml.NewEncoder(j.out)
 	enc.Indent("", s(2))
 	if err := enc.Encode(j.suite); err != nil {
 		fmt.Fprintln(os.Stderr, "failed to write junit xml:", err)
