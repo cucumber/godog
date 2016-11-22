@@ -287,6 +287,7 @@ func (s *suiteContext) iRunFeatureSuite() error {
 	s.testedSuite.fmt = testFormatterFunc("godog", &s.out)
 	s.testedSuite.run()
 	s.testedSuite.fmt.Summary()
+
 	return nil
 }
 

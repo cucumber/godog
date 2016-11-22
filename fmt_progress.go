@@ -59,7 +59,7 @@ func (f *progress) Summary() {
 		fmt.Fprintln(f.out, "\n--- "+red("Failed steps:")+"\n")
 		for _, fail := range f.failed {
 			fmt.Fprintln(f.out, s(4)+red(fail.step.Keyword+" "+fail.step.Text)+black(" # "+fail.line()))
-			fmt.Fprintln(f.out, s(6)+red("Error: ")+redb(fail.err)+"\n")
+			fmt.Fprintln(f.out, s(6)+red("Error: ")+redb(fmt.Sprintf("%+v", fail.err))+"\n")
 		}
 	}
 	f.basefmt.Summary()

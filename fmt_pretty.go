@@ -308,7 +308,7 @@ func (f *pretty) printStepKind(res *stepResult) {
 
 	f.printStep(res.step, res.def, res.typ.clr())
 	if res.err != nil {
-		fmt.Fprintln(f.out, s(f.indent*2)+redb(res.err))
+		fmt.Fprintln(f.out, s(f.indent*2)+redb(fmt.Sprintf("%+v", res.err)))
 	}
 	if res.typ == pending {
 		fmt.Fprintln(f.out, s(f.indent*3)+yellow("TODO: write pending definition"))

@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"strings"
 
+	txdb "github.com/DATA-DOG/go-txdb"
 	"github.com/DATA-DOG/godog"
 	"github.com/DATA-DOG/godog/gherkin"
 )

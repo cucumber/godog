@@ -220,10 +220,9 @@ func (s *Suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
 
 	defer func() {
 		if e := recover(); e != nil {
-			var ok bool
-			err, ok = e.(error)
-			if !ok {
-				err = fmt.Errorf("%v", e)
+			err = &traceError{
+				msg:   fmt.Sprintf("%v", e),
+				stack: callStack(),
 			}
 		}
 		switch err {
