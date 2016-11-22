@@ -213,7 +213,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	status := godog.RunWithOptions(func(s *godog.Suite) {
+	status := godog.RunWithOptions("godogs", func(s *godog.Suite) {
 		FeatureContext(s)
 	}, godog.Options{
 		Format: "progress",
