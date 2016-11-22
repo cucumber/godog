@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 
 	"github.com/DATA-DOG/godog/colors"
 )
@@ -100,14 +101,14 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 	if opt.Concurrency > 1 && opt.Format != "progress" {
 		fatal(fmt.Errorf("when concurrency level is higher than 1, only progress format is supported"))
 	}
-	formatter, err := findFmt(opt.Format)
+	formatter, err := createFormatter(opt.Format, suite, output)
 	fatal(err)
 
 	features, err := parseFeatures(opt.Tags, opt.Paths)
 	fatal(err)
 
 	r := runner{
-		fmt:           formatter(suite, output),
+		fmt:           formatter,
 		initializer:   contextInitializer,
 		features:      features,
 		stopOnFailure: opt.StopOnFailure,
@@ -119,10 +120,67 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 	} else {
 		failed = r.run()
 	}
+
+	if closer, ok := formatter.(io.Closer); ok {
+		closer.Close()
+	}
+
 	if failed && opt.Format != "events" {
 		return 1
 	}
 	return 0
+}
+
+func createFormatter(format, suite string, out io.Writer) (Formatter, error) {
+	build := func(_fmt string, _out io.Writer) (Formatter, error) {
+		f, err := findFmt(_fmt)
+		if err != nil {
+			return nil, err
+		}
+		return f(suite, _out), nil
+	}
+
+	if format != "progress" {
+		return build(format, out)
+	}
+
+	if _, err := exec.LookPath("cunicorn"); err != nil {
+		return build(format, out)
+	}
+
+	reader, writer, err := os.Pipe()
+	if err != nil {
+		return nil, err
+	}
+
+	cunicorn := exec.Command("cunicorn", "-f", format)
+	cunicorn.Stdin = reader
+	cunicorn.Stdout = os.Stdout
+	cunicorn.Stderr = os.Stderr
+	if err := cunicorn.Start(); err != nil {
+		return nil, err
+	}
+
+	events, err := build("events", writer)
+	if err != nil {
+		return nil, err
+	}
+
+	return &cunicornFormatter{events, cunicorn, writer}, nil
+}
+
+type cunicornFormatter struct {
+	Formatter
+	cmd    *exec.Cmd
+	output *os.File
+}
+
+func (cf *cunicornFormatter) Close() error {
+	if err := cf.output.Close(); err != nil {
+		return err
+	}
+
+	return cf.cmd.Wait()
 }
 
 // Run creates and runs the feature suite.
