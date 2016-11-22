@@ -27,7 +27,7 @@ var descTagsOption = "Filter scenarios by tags. Expression can be:\n" +
 	s(4) + "- " + colors.Yellow(`"@wip,@undone"`) + ": run wip or undone scenarios"
 
 // FlagSet allows to manage flags by external suite runner
-func FlagSet(w io.Writer, format, tags *string, defs, sof, noclr *bool, cr *int) *flag.FlagSet {
+func FlagSet(opt *Options) *flag.FlagSet {
 	descFormatOption := "How to format tests output. Available formats:\n"
 	// @TODO: sort by name
 	for name, desc := range AvailableFormatters() {
@@ -36,17 +36,17 @@ func FlagSet(w io.Writer, format, tags *string, defs, sof, noclr *bool, cr *int)
 	descFormatOption = strings.TrimSpace(descFormatOption)
 
 	set := flag.NewFlagSet("godog", flag.ExitOnError)
-	set.StringVar(format, "format", "pretty", descFormatOption)
-	set.StringVar(format, "f", "pretty", descFormatOption)
-	set.StringVar(tags, "tags", "", descTagsOption)
-	set.StringVar(tags, "t", "", descTagsOption)
-	set.IntVar(cr, "concurrency", 1, descConcurrencyOption)
-	set.IntVar(cr, "c", 1, descConcurrencyOption)
-	set.BoolVar(defs, "definitions", false, "Print all available step definitions.")
-	set.BoolVar(defs, "d", false, "Print all available step definitions.")
-	set.BoolVar(sof, "stop-on-failure", false, "Stop processing on first failed scenario.")
-	set.BoolVar(noclr, "no-colors", false, "Disable ansi colors.")
-	set.Usage = usage(set, w)
+	set.StringVar(&opt.Format, "format", "pretty", descFormatOption)
+	set.StringVar(&opt.Format, "f", "pretty", descFormatOption)
+	set.StringVar(&opt.Tags, "tags", "", descTagsOption)
+	set.StringVar(&opt.Tags, "t", "", descTagsOption)
+	set.IntVar(&opt.Concurrency, "concurrency", 1, descConcurrencyOption)
+	set.IntVar(&opt.Concurrency, "c", 1, descConcurrencyOption)
+	set.BoolVar(&opt.ShowStepDefinitions, "definitions", false, "Print all available step definitions.")
+	set.BoolVar(&opt.ShowStepDefinitions, "d", false, "Print all available step definitions.")
+	set.BoolVar(&opt.StopOnFailure, "stop-on-failure", false, "Stop processing on first failed scenario.")
+	set.BoolVar(&opt.NoColors, "no-colors", false, "Disable ansi colors.")
+	set.Usage = usage(set, opt.Output)
 	return set
 }
 

@@ -139,15 +139,8 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 // the step definitions and event handlers.
 func Run(suite string, contextInitializer func(suite *Suite)) int {
 	var opt Options
-	flagSet := FlagSet(
-		colors.Colored(os.Stdout),
-		&opt.Format,
-		&opt.Tags,
-		&opt.ShowStepDefinitions,
-		&opt.StopOnFailure,
-		&opt.NoColors,
-		&opt.Concurrency,
-	)
+	opt.Output = colors.Colored(os.Stdout)
+	flagSet := FlagSet(&opt)
 	err := flagSet.Parse(os.Args[1:])
 	fatal(err)
 

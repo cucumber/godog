@@ -62,11 +62,11 @@ func buildAndRun() (int, error) {
 }
 
 func main() {
-	var vers, defs, sof, noclr bool
-	var tags, format, output string
-	var concurrency int
+	var vers bool
+	var output string
 
-	flagSet := godog.FlagSet(colors.Colored(os.Stdout), &format, &tags, &defs, &sof, &noclr, &concurrency)
+	opt := godog.Options{Output: colors.Colored(os.Stdout)}
+	flagSet := godog.FlagSet(&opt)
 	flagSet.BoolVar(&vers, "version", false, "Show current version.")
 	flagSet.StringVar(&output, "o", "", "Build and output test runner executable to given target path.")
 	flagSet.StringVar(&output, "output", "", "Build and output test runner executable to given target path.")
