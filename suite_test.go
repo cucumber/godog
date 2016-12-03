@@ -4,12 +4,29 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"testing"
 
 	"github.com/DATA-DOG/godog/gherkin"
 )
+
+func TestMain(m *testing.M) {
+	status := RunWithOptions("godogs", func(s *Suite) {
+		SuiteContext(s)
+	}, Options{
+		Format:      "progress",
+		Paths:       []string{"features"},
+		Concurrency: 4,
+	})
+
+	if st := m.Run(); st > status {
+		status = st
+	}
+	os.Exit(status)
+}
 
 func SuiteContext(s *Suite) {
 	c := &suiteContext{}

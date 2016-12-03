@@ -5,14 +5,15 @@ go:
   - 1.7
   - tip
 
+go_import_path: github.com/DATA-DOG/godog
+
 install: go install github.com/DATA-DOG/godog/cmd/godog
 
 script:
   # run standard go tests
   - go vet ./...
   - go fmt ./...
-  - go test -v
-  - go test -race
+  - go test -race -coverprofile=coverage.txt -covermode=atomic
 
-  # run features
-  - godog --format=progress --concurrency=4
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
