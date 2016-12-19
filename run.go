@@ -97,7 +97,16 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 		}
 	}
 
-	if opt.Concurrency > 1 && opt.Format != "progress" {
+	isGodogFormat := false
+
+	for _, godogFormat := range godogFormats {
+		if godogFormat == opt.Format {
+			isGodogFormat = true
+			break
+		}
+	}
+
+	if isGodogFormat && opt.Concurrency > 1 && opt.Format != "progress" {
 		fatal(fmt.Errorf("when concurrency level is higher than 1, only progress format is supported"))
 	}
 	formatter, err := findFmt(opt.Format)
