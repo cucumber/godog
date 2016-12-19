@@ -33,6 +33,7 @@ func FlagSet(opt *Options) *flag.FlagSet {
 	for name, desc := range AvailableFormatters() {
 		descFormatOption += s(4) + "- " + colors.Yellow(name) + ": " + desc + "\n"
 	}
+	descFormatOption += s(4) + "- " + colors.Yellow("<format>") + ": name of your custom format" + "\n"
 	descFormatOption = strings.TrimSpace(descFormatOption)
 
 	set := flag.NewFlagSet("godog", flag.ExitOnError)
