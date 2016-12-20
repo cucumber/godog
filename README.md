@@ -246,13 +246,19 @@ func minimaleFunc(suite string, out io.Writer) godog.Formatter {
 		out:     out,
 		indent:  2,
 		started: time.Now(),
+    delayedMessageWriter: godog.NewDelayedMessagesWriter(),
 	}
 }
 
 type minimale struct {
+  delayedMessageWriter *godog.DelayedMessagesWriter
 	out     io.Writer
 	indent  int
 	started time.Time
+}
+
+func (m *minimale)Output() io.writer {
+  return m.delayedMessageWriter
 }
 
 func (m *minimale) Feature(f *gherkin.Feature, s, string, b, []byte) {
@@ -295,10 +301,16 @@ func (m *minimale) Summary() {
 }
 ```
 
-Then make sure to import this package in your mail file :
+Then make sure to import this package in your main file:
 
 ```go
 import _ "path"
+```
+
+Now to print any messages in your tests or external library:
+
+```go
+fmt.Fprintln(c.suite.Output(), strings.Repeat(" ", 10)+colors.Cyan("my log"))
 ```
 
 ### References and Tutorials

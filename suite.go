@@ -163,6 +163,12 @@ func (s *Suite) AfterSuite(f func()) {
 	s.afterSuiteHandlers = append(s.afterSuiteHandlers, f)
 }
 
+// Output returns the output writer of the current formatter
+// It will not return os.Stdout but a writer used to print some delayed messages
+func (s *Suite) Output() io.Writer {
+	return s.fmt.Output()
+}
+
 func (s *Suite) run() {
 	// run before suite handlers
 	for _, f := range s.beforeSuiteHandlers {

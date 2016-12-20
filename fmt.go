@@ -1,6 +1,7 @@
 package godog
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -92,6 +93,46 @@ func AvailableFormatters() map[string]string {
 	return fmts
 }
 
+// DelayedMessagesWriter is a structure used to print messages from a external library
+// This struct is useful when printing logs from the test themself
+// It will guarantee the orders of the log
+// For instance, when using this struct, the format will first print the step name and then all of the logs printed in this step
+type DelayedMessagesWriter struct {
+	b *bytes.Buffer
+	w *bufio.Writer
+}
+
+// Write writes in the writer of the DelayedMessagesWriter
+func (d *DelayedMessagesWriter) Write(p []byte) (int, error) {
+	return d.w.Write(p)
+}
+
+// Writer returns the writer of DelayedMessagesWriter
+func (d *DelayedMessagesWriter) Writer() io.Writer {
+	return d.w
+}
+
+// Flush the writer of the DelayedMessagesWriter
+func (d *DelayedMessagesWriter) Flush() {
+	d.w.Flush()
+}
+
+// Read the content of the buffer and clean it
+func (d *DelayedMessagesWriter) Read() string {
+	content := d.b.String()
+	d.b.Reset()
+	return content
+}
+
+// NewDelayedMessagesWriter returns a new DelayedMessagesWriter
+func NewDelayedMessagesWriter() *DelayedMessagesWriter {
+	buffer := &bytes.Buffer{}
+	return &DelayedMessagesWriter{
+		b: buffer,
+		w: bufio.NewWriter(buffer),
+	}
+}
+
 // Formatter is an interface for feature runner
 // output summary presentation.
 //
@@ -109,6 +150,7 @@ type Formatter interface {
 	Undefined(*gherkin.Step)
 	Pending(*gherkin.Step, *StepDef)
 	Summary()
+	Output() io.Writer
 }
 
 // FormatterFunc builds a formatter with given
@@ -169,9 +211,10 @@ func (f stepResult) line() string {
 }
 
 type basefmt struct {
-	out    io.Writer
-	owner  interface{}
-	indent int
+	delayedMessagesWriter *DelayedMessagesWriter
+	out                   io.Writer
+	owner                 interface{}
+	indent                int
 
 	started   time.Time
 	features  []*feature
@@ -180,6 +223,20 @@ type basefmt struct {
 	skipped   []*stepResult
 	undefined []*stepResult
 	pending   []*stepResult
+}
+
+// flushDelayedOuput flush the delayedMessagesWriter and print it
+func (f *basefmt) flushDelayedOuput() {
+	f.delayedMessagesWriter.Flush()
+	content := f.delayedMessagesWriter.Read()
+	if len(content) > 0 {
+		fmt.Println(content)
+	}
+}
+
+// Output returns the delayed message writer of this formatter
+func (f *basefmt) Output() io.Writer {
+	return f.delayedMessagesWriter.Writer()
 }
 
 func (f *basefmt) Node(n interface{}) {

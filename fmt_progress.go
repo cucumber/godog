@@ -20,6 +20,7 @@ func progressFunc(suite string, out io.Writer) Formatter {
 			started: time.Now(),
 			indent:  2,
 			out:     out,
+			delayedMessagesWriter: NewDelayedMessagesWriter(),
 		},
 		stepsPerRow: 70,
 	}
