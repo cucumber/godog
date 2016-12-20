@@ -36,6 +36,7 @@ func buildAndRun() (int, error) {
 	cmd := exec.Command(bin, os.Args[1:]...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
 	cmd.Env = os.Environ()
 
 	if err = cmd.Start(); err != nil {
