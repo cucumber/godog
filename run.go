@@ -17,7 +17,7 @@ type runner struct {
 	initializer   initializer
 }
 
-func (r *runner) concurrent(rate int, f FormatterFunc, s string, output io.Writer) (failed bool) { {
+func (r *runner) concurrent(rate int, f FormatterFunc, s string, output io.Writer) (failed bool) {
 	queue := make(chan int, rate)
 	for i, ft := range r.features {
 		queue <- i // reserve space in queue
