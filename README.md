@@ -228,6 +228,91 @@ func TestMain(m *testing.M) {
 }
 ```
 
+### Usage of a custom formatter
+
+You can implement a custom format when running godog. To achieve that, you need to implement a struct which implement the interface Formatter.
+
+See the following example :
+
+```go
+package fmtminimale
+
+func init() {
+	godog.Format("minimale", "Prints minimal status", minimaleFunc)
+}
+
+func minimaleFunc(suite string, out io.Writer) godog.Formatter {
+	return &minimale{
+		out:     out,
+		indent:  2,
+		started: time.Now(),
+    delayedMessageWriter: godog.NewDelayedMessagesWriter(),
+	}
+}
+
+type minimale struct {
+  delayedMessageWriter *godog.DelayedMessagesWriter
+	out     io.Writer
+	indent  int
+	started time.Time
+}
+
+func (m *minimale)Output() io.writer {
+  return m.delayedMessageWriter
+}
+
+func (m *minimale) Feature(f *gherkin.Feature, s, string, b, []byte) {
+  fmt.Println("[FEATURE]" + f.Name)
+}
+
+func (m *minimale) Node(node interface{}) {
+  switch t := node.(type) {
+  case *gherkin.Scenario:
+    fmt.Println("[SCENARIO]" + t.Name)
+  }
+}
+
+func (m *minimale) Defined(s *gherkin.Step, sd *godog.StepDef) {
+  fmt.Println("[DEFINED]" + s.Name)
+}
+
+func (m *minimale) Failed(s *gherkin.Step, sd *godog.StepDef, e error) {
+  fmt.Println("[FAILED]" + s.Name)
+}
+
+func (m *minimale) Passed(s *gherkin.Step, sd *godog.StepDef) {
+  fmt.Println("[PASSED]" + s.Name)
+}
+
+func (m *minimale) Skipped(s *gherkin.Step) {
+  fmt.Println("[SKIPPED]" + s.Name)
+}
+
+func (m *minimale) Undefined(s *gherkin.Step) {
+  fmt.Println("[UNDEFINED]" + s.Name)
+}
+
+func (m *minimale) Pending(s *gherkin.Step, sd *godog.StepDef) {
+  fmt.Println("[PENDING]" + s.Name)
+}
+
+func (m *minimale) Summary() {
+  fmt.Println("[END]")
+}
+```
+
+Then make sure to import this package in your main file:
+
+```go
+import _ "path"
+```
+
+Now to print any messages in your tests or external library:
+
+```go
+fmt.Fprintln(c.suite.Output(), strings.Repeat(" ", 10)+colors.Cyan("my log"))
+```
+
 ### References and Tutorials
 
 - [how to use godog by semaphoreci](https://semaphoreci.com/community/tutorials/how-to-use-godog-for-behavior-driven-development-in-go)

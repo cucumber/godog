@@ -38,6 +38,10 @@ type junitFormatter struct {
 	outlineExample int
 }
 
+func (j *junitFormatter) Output() io.Writer {
+	return j.out
+}
+
 func (j *junitFormatter) Feature(feature *gherkin.Feature, path string, c []byte) {
 	testSuite := &junitTestSuite{
 		TestCases: make([]*junitTestCase, 0),

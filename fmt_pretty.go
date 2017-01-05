@@ -23,6 +23,7 @@ func prettyFunc(suite string, out io.Writer) Formatter {
 			started: time.Now(),
 			indent:  2,
 			out:     out,
+			delayedMessagesWriter: NewDelayedMessagesWriter(),
 		},
 	}
 }
@@ -53,6 +54,7 @@ type pretty struct {
 }
 
 func (f *pretty) Feature(ft *gherkin.Feature, p string, c []byte) {
+
 	if len(f.features) != 0 {
 		// not a first feature, add a newline
 		fmt.Fprintln(f.out, "")
@@ -72,6 +74,8 @@ func (f *pretty) Feature(ft *gherkin.Feature, p string, c []byte) {
 	if ft.Background != nil {
 		f.bgSteps = len(ft.Background.Steps)
 	}
+
+	f.basefmt.flushDelayedOuput()
 }
 
 // Node takes a gherkin node for formatting
@@ -96,10 +100,13 @@ func (f *pretty) Node(node interface{}) {
 		f.steps = len(f.outline.Steps) + f.bgSteps
 		f.outlineSteps = []*stepResult{}
 	}
+
+	f.basefmt.flushDelayedOuput()
 }
 
 // Summary sumarize the feature formatter output
 func (f *pretty) Summary() {
+	f.basefmt.flushDelayedOuput()
 	// failed steps on background are not scenarios
 	var failedScenarios []*stepResult
 	for _, fail := range f.failed {
@@ -330,26 +337,31 @@ func (f *pretty) printTable(t *gherkin.DataTable, c colors.ColorFunc) {
 func (f *pretty) Passed(step *gherkin.Step, match *StepDef) {
 	f.basefmt.Passed(step, match)
 	f.printStepKind(f.passed[len(f.passed)-1])
+	f.basefmt.flushDelayedOuput()
 }
 
 func (f *pretty) Skipped(step *gherkin.Step) {
 	f.basefmt.Skipped(step)
 	f.printStepKind(f.skipped[len(f.skipped)-1])
+	f.basefmt.flushDelayedOuput()
 }
 
 func (f *pretty) Undefined(step *gherkin.Step) {
 	f.basefmt.Undefined(step)
 	f.printStepKind(f.undefined[len(f.undefined)-1])
+	f.basefmt.flushDelayedOuput()
 }
 
 func (f *pretty) Failed(step *gherkin.Step, match *StepDef, err error) {
 	f.basefmt.Failed(step, match, err)
 	f.printStepKind(f.failed[len(f.failed)-1])
+	f.basefmt.flushDelayedOuput()
 }
 
 func (f *pretty) Pending(step *gherkin.Step, match *StepDef) {
 	f.basefmt.Pending(step, match)
 	f.printStepKind(f.pending[len(f.pending)-1])
+	f.basefmt.flushDelayedOuput()
 }
 
 // longest gives a list of longest columns of all rows in Table
