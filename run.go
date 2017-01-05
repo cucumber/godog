@@ -40,7 +40,7 @@ func (r *runner) concurrent(rate int, f FormatterFunc, s string, output io.Write
 			}
 
 			// print summary
-			r.fmt.Summary()
+			suite.fmt.Summary()
 		}(&failed, ft)
 	}
 	// wait until last are processed
