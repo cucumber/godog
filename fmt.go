@@ -37,6 +37,8 @@ var undefinedSnippetsTpl = template.Must(template.New("snippets").Funcs(snippetH
 }
 `))
 
+var godogFormats = []string{"events", "junit", "pretty", "progress"}
+
 type undefinedSnippet struct {
 	Method   string
 	Expr     string

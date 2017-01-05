@@ -17,7 +17,7 @@ type runner struct {
 	initializer   initializer
 }
 
-func (r *runner) concurrent(rate int) (failed bool) {
+func (r *runner) concurrent(rate int, f FormatterFunc, s string, output io.Writer) (failed bool) {
 	queue := make(chan int, rate)
 	for i, ft := range r.features {
 		queue <- i // reserve space in queue
@@ -29,7 +29,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 				return
 			}
 			suite := &Suite{
-				fmt:           r.fmt,
+				fmt:           f(s, output),
 				stopOnFailure: r.stopOnFailure,
 				features:      []*feature{feat},
 			}
@@ -38,6 +38,9 @@ func (r *runner) concurrent(rate int) (failed bool) {
 			if suite.failed {
 				*fail = true
 			}
+
+			// print summary
+			suite.fmt.Summary()
 		}(&failed, ft)
 	}
 	// wait until last are processed
@@ -46,8 +49,6 @@ func (r *runner) concurrent(rate int) (failed bool) {
 	}
 	close(queue)
 
-	// print summary
-	r.fmt.Summary()
 	return
 }
 
@@ -97,7 +98,16 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 		}
 	}
 
-	if opt.Concurrency > 1 && opt.Format != "progress" {
+	isGodogFormat := false
+
+	for _, godogFormat := range godogFormats {
+		if godogFormat == opt.Format {
+			isGodogFormat = true
+			break
+		}
+	}
+
+	if isGodogFormat && opt.Concurrency > 1 && opt.Format != "progress" {
 		fatal(fmt.Errorf("when concurrency level is higher than 1, only progress format is supported"))
 	}
 	formatter, err := findFmt(opt.Format)
@@ -115,7 +125,7 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 
 	var failed bool
 	if opt.Concurrency > 1 {
-		failed = r.concurrent(opt.Concurrency)
+		failed = r.concurrent(opt.Concurrency, formatter, suite, output)
 	} else {
 		failed = r.run()
 	}
