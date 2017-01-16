@@ -13,7 +13,7 @@ type initializer func(*Suite)
 type runner struct {
 	stopOnFailure bool
 	features      []*feature
-	fmt           Formatter // needs to support concurrency
+	fmt           Formatter
 	initializer   initializer
 }
 
@@ -97,8 +97,8 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 		}
 	}
 
-	if opt.Concurrency > 1 && opt.Format != "progress" {
-		fatal(fmt.Errorf("when concurrency level is higher than 1, only progress format is supported"))
+	if opt.Concurrency > 1 && !supportsConcurrency(opt.Format) {
+		fatal(fmt.Errorf("format \"%s\" does not support concurrent execution", opt.Format))
 	}
 	formatter, err := findFmt(opt.Format)
 	fatal(err)
@@ -147,4 +147,16 @@ func Run(suite string, contextInitializer func(suite *Suite)) int {
 	opt.Paths = flagSet.Args()
 
 	return RunWithOptions(suite, contextInitializer, opt)
+}
+
+func supportsConcurrency(format string) bool {
+	switch format {
+	case "events":
+		return false
+	case "junit":
+		return false
+	case "pretty":
+		return false
+	}
+	return true // all custom formatters are treated as supporting concurrency
 }
