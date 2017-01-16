@@ -48,8 +48,9 @@ type Suite struct {
 	features []*feature
 	fmt      Formatter
 
-	failed        bool
-	stopOnFailure bool
+	arbitraryFailureError error
+	failed                bool
+	stopOnFailure         bool
 
 	// suite event handlers
 	beforeSuiteHandlers    []func()
@@ -163,11 +164,22 @@ func (s *Suite) AfterSuite(f func()) {
 	s.afterSuiteHandlers = append(s.afterSuiteHandlers, f)
 }
 
+// FailWithError makes fail the suite with the given error
+func (s *Suite) FailWithError(err error) {
+	s.arbitraryFailureError = err
+	s.failed = true
+}
+
 func (s *Suite) run() {
 	// run before suite handlers
 	for _, f := range s.beforeSuiteHandlers {
 		f()
 	}
+
+	if s.failed {
+		return
+	}
+
 	// run features
 	for _, f := range s.features {
 		s.runFeature(f)
@@ -218,6 +230,12 @@ func (s *Suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
 		f(step)
 	}
 
+	if s.arbitraryFailureError != nil {
+		err = s.arbitraryFailureError
+		s.fmt.Failed(step, match, err)
+		return
+	}
+
 	defer func() {
 		if e := recover(); e != nil {
 			err = &traceError{
@@ -237,6 +255,11 @@ func (s *Suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
 		// run after step handlers
 		for _, f := range s.afterStepHandlers {
 			f(step, err)
+		}
+
+		if s.arbitraryFailureError != nil {
+			err = s.arbitraryFailureError
+			s.fmt.Failed(step, match, err)
 		}
 	}()
 
@@ -287,6 +310,15 @@ func (s *Suite) runOutline(outline *gherkin.ScenarioOutline, b *gherkin.Backgrou
 			for _, f := range s.beforeScenarioHandlers {
 				f(outline)
 			}
+
+			if s.arbitraryFailureError != nil {
+				failErr = s.arbitraryFailureError
+				if s.stopOnFailure {
+					return
+				}
+				continue
+			}
+
 			var steps []*gherkin.Step
 			for _, outlineStep := range outline.Steps {
 				text := outlineStep.Text
@@ -315,6 +347,10 @@ func (s *Suite) runOutline(outline *gherkin.ScenarioOutline, b *gherkin.Backgrou
 
 			for _, f := range s.afterScenarioHandlers {
 				f(outline, err)
+			}
+
+			if s.arbitraryFailureError != nil {
+				err = s.arbitraryFailureError
 			}
 
 			if err != nil && err != ErrUndefined && err != ErrPending {
@@ -356,6 +392,11 @@ func (s *Suite) runScenario(scenario *gherkin.Scenario, b *gherkin.Background) (
 		f(scenario)
 	}
 
+	if s.arbitraryFailureError != nil {
+		err = s.arbitraryFailureError
+		return
+	}
+
 	s.fmt.Node(scenario)
 
 	// background
@@ -369,6 +410,11 @@ func (s *Suite) runScenario(scenario *gherkin.Scenario, b *gherkin.Background) (
 	// run after scenario handlers
 	for _, f := range s.afterScenarioHandlers {
 		f(scenario, err)
+	}
+
+	if s.arbitraryFailureError != nil {
+		err = s.arbitraryFailureError
+		return
 	}
 
 	return
