@@ -226,7 +226,7 @@ func (f *pretty) printStep(step *gherkin.Step, def *StepDef, c colors.ColorFunc)
 				if math.Mod(float64(i), 2) == 0 {
 					text += c(step.Text[pos:m[i]])
 				} else {
-					text += c(step.Text[pos:m[i]])
+					text += colors.Bold(c)(step.Text[pos:m[i]])
 				}
 				pos = m[i]
 			}
