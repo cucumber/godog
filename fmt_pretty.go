@@ -220,6 +220,9 @@ func (f *pretty) printStep(step *gherkin.Step, def *StepDef, c colors.ColorFunc)
 		if m := def.Expr.FindStringSubmatchIndex(step.Text)[2:]; len(m) > 0 {
 			var pos, i int
 			for pos, i = 0, 0; i < len(m); i++ {
+				if m[i] == -1 {
+					continue // no index for this match
+				}
 				if math.Mod(float64(i), 2) == 0 {
 					text += c(step.Text[pos:m[i]])
 				} else {
