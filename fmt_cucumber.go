@@ -7,7 +7,6 @@ import (
 	"strings"
 	"github.com/DATA-DOG/godog/gherkin"
 	"encoding/json"
-	"strconv"
 )
 
 const cukeurl = "https://www.relishapp.com/cucumber/cucumber/docs/formatters/json-output-formatter"
@@ -48,20 +47,6 @@ type cukeMatch struct {
 	Location string `json:"location"`
 }
 
-type cukeExample struct {
-	Keyword     string `json:"keyword"`
-	Id          string `json:"id"`
-	Name        string `json:"name"`
-	Line        int `json:"line"`
-	Description string `json:"description"`
-	Rows []cukeRow `json:"rows"`
-}
-
-type cukeRow struct {
-	Cells []string `json:"cells"`
-	Id    string `json:"id"`
-	Line  int `json:"line"`
-}
 
 type cukeStep struct {
 	Keyword string `json:"keyword"`
@@ -78,9 +63,8 @@ type cukeElement struct {
 	Line        int `json:"line"`
 	Description string `json:"description"`
 	Tags        []cukeTag `json:"tags"`
-	Type        string `json:type`
-	Steps       []cukeStep `json:steps`
-	Examples    []cukeExample `json:examples,omitempty`
+	Type        string `json:"type"`
+	Steps       []cukeStep `json:"steps"`
 }
 
 type cukeFeatureJson struct {
@@ -109,6 +93,8 @@ type cukefmt struct {
 	curStep      *cukeStep         // track the current step
 	curElement   *cukeElement      // track the current element
 	curFeature   *cukeFeatureJson  // track the current feature
+	curOutline   cukeElement       // Each example show up as an outline element but the outline is parsed only once
+					// so I need to keep track of the current outline
 }
 
 func (f *cukefmt) Node(n interface{}) {
@@ -117,44 +103,26 @@ func (f *cukefmt) Node(n interface{}) {
 	switch t := n.(type) {
 
 	case *gherkin.Examples:
-		ex := cukeExample{}
-		ex.Description = t.Description
-		ex.Id = f.curElement.Id + ";" + makeId(t.Name)
-		ex.Line = t.Location.Line
-		ex.Name = t.Name
-		ex.Keyword = t.Keyword
-		ex.Rows = make([]cukeRow,len(t.TableBody)+1)
+		fmt.Fprintln("Examples")
+		saveElement := f.curElement
 
-		// first row is the header
-		ex.Rows[0].Line = t.TableHeader.Location.Line
-		ex.Rows[0].Cells = make([]string,len(t.TableHeader.Cells))
-		ex.Rows[0].Id = ex.Id + ";1"
-		for idx, val := range t.TableHeader.Cells {
-			ex.Rows[0].Cells[idx] = val.Value
-		}
+		f.curElement.Id = f.curElement.Id + ";" + makeId(t.Name)
+		f.curFeature.Elements = append(f.curFeature.Elements, f.curElement)
 
-		// The other example are in the body
-		for i, row := range t.TableBody {
-			ex.Rows[1+i].Line = row.Location.Line
-			ex.Rows[1+i].Cells = make([]string,len(row.Cells))
-			ex.Rows[1+i].Id = ex.Id + ";"+strconv.Itoa(i+2)
-			for idx, val := range row.Cells {
-				ex.Rows[1+i].Cells[idx] = val.Value
-			}
-		}
-
-		f.curElement.Examples = append(f.curElement.Examples,ex)
+		f.curElement = saveElement
 
 	case *gherkin.ScenarioOutline:
-		f.curFeature.Elements = append(f.curFeature.Elements, cukeElement{})
-		f.curElement = &f.curFeature.Elements[len(f.curFeature.Elements) - 1]
+		fmt.Fprintln("Outline")
+		//f.curFeature.Elements = append(f.curFeature.Elements, cukeElement{})
+		//f.curElement = &f.curFeature.Elements[len(f.curFeature.Elements) - 1]
 
+		f.curElement=cukeElement{}
 		f.curElement.Name = t.Name
 		f.curElement.Line = t.Location.Line
 		f.curElement.Description = t.Description
 		f.curElement.Keyword = t.Keyword
 		f.curElement.Id = f.curFeature.Id + ";" + makeId(t.Name)
-		f.curElement.Type = t.Type
+		f.curElement.Type = "scenario"
 		f.curElement.Tags = make([]cukeTag, len(t.Tags))
 		for idx, element := range t.Tags {
 			f.curElement.Tags[idx].Line = element.Location.Line
@@ -162,24 +130,26 @@ func (f *cukefmt) Node(n interface{}) {
 		}
 
 	case *gherkin.Scenario:
-		f.curFeature.Elements = append(f.curFeature.Elements, cukeElement{})
-		f.curElement = &f.curFeature.Elements[len(f.curFeature.Elements) - 1]
+		fmt.Fprintln("Scenario")
 
+		f.curElement = cukeElement{}
 		f.curElement.Name = t.Name
 		f.curElement.Line = t.Location.Line
 		f.curElement.Description = t.Description
 		f.curElement.Keyword = t.Keyword
 		f.curElement.Id = f.curFeature.Id + ";" + makeId(t.Name)
-		f.curElement.Type = t.Type
+		f.curElement.Type = "scenario"
 		f.curElement.Tags = make([]cukeTag, len(t.Tags))
 		for idx, element := range t.Tags {
 			f.curElement.Tags[idx].Line = element.Location.Line
 			f.curElement.Tags[idx].Name = element.Name
 		}
+		f.curFeature.Elements = append(f.curFeature.Elements, f.curElement)
 
 	case *gherkin.TableRow:
+		lastElement := &f.curFeature.Elements[len(f.curFeature.Elements) - 1]
+		lastElement.Id = lastElement.Id + ";cnt"
 
-		fmt.Fprintf(f.out, "Entering Node TableRow: %s:%d\n", f.path, t.Location.Line)
 	}
 
 }
@@ -218,13 +188,13 @@ func (f *cukefmt) Summary() {
 func (f *cukefmt) step(res *stepResult) {
 
 	// determine if test case has finished
-	var finished bool
-	var line int
-	switch t := f.owner.(type) {
+	switch t:= f.owner.(type) {
 	case *gherkin.TableRow:
-		line = t.Location.Line
-		finished = f.isLastStep(res.step)
-		fmt.Fprintf(f.out, "step: TableRow: line:%v finished:%v\n", line, finished)
+		f.curStep.Line = t.Location.Line
+		f.curStep.Result.Status = res.typ.String()
+		if res.err != nil {
+			f.curStep.Result.Error = res.err.Error()
+		}
 	case *gherkin.Scenario:
 		f.curStep.Result.Status = res.typ.String()
 		if res.err != nil {
