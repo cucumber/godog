@@ -8,10 +8,11 @@ Savybė: užkrauti savybes
   Scenarijus: savybių užkrovimas iš aplanko
     Duota savybių aplankas "features"
     Kai aš išskaitau savybes
-    Tada aš turėčiau turėti 8 savybių failus:
+    Tada aš turėčiau turėti 9 savybių failus:
       """
       features/background.feature
       features/events.feature
+      features/formatter/cucumber.feature
       features/formatter/events.feature
       features/lang.feature
       features/load.feature

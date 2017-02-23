@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/DATA-DOG/godog/gherkin"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 	"testing"
-
-	"github.com/DATA-DOG/godog/gherkin"
 )
 
 func TestMain(m *testing.M) {
@@ -66,6 +66,10 @@ func SuiteContext(s *Suite) {
 	s.Step(`^passing step$`, func() error {
 		return nil
 	})
+
+	// Introduced to test formatter/cucumber.feature
+	s.Step(`^the rendered json will be as follows:$`, c.theRenderJsonWillBe)
+
 }
 
 type firedEvent struct {
@@ -185,7 +189,7 @@ func (s *suiteContext) followingStepsShouldHave(status string, steps *gherkin.Do
 	}
 
 	if len(expected) > len(actual) {
-		return fmt.Errorf("number of expected %s steps: %d is less than actual %s steps: %d", status, len(expected), status, len(actual))
+		return fmt.Errorf("number of expeted %s steps: %d is less than actual %s steps: %d", status, len(expected), status, len(actual))
 	}
 
 	for _, a := range actual {
@@ -374,5 +378,105 @@ func (s *suiteContext) theseEventsHadToBeFiredForNumberOfTimes(tbl *gherkin.Data
 			return err
 		}
 	}
+	return nil
+}
+
+func (s *suiteContext) theRenderJsonWillBe2(docstring *gherkin.DocString) error {
+
+	var expected bytes.Buffer
+	var actual bytes.Buffer
+
+	if err := json.Compact(&expected, []byte(docstring.Content)); err != nil {
+		return err
+	}
+
+	if err := json.Compact(&actual, s.out.Bytes()); err != nil {
+		return err
+	}
+
+	if string(expected.Bytes()) != string(actual.Bytes()) {
+		return fmt.Errorf("format mismatch expected:[%v] actual:[%v]", string(expected.Bytes()), string(actual.Bytes()))
+	}
+
+	return nil
+}
+
+func (s *suiteContext) theRenderJsonWillBe(docstring *gherkin.DocString) error {
+
+	var expected interface{}
+	if err := json.Unmarshal([]byte(docstring.Content), &expected); err != nil {
+		return err
+	}
+
+	var actual interface{}
+	if err := json.Unmarshal(s.out.Bytes(), &actual); err != nil {
+		return err
+	}
+
+	expectedArr := expected.([]interface{})
+	actualArr := actual.([]interface{})
+
+	for idx, entry := range expectedArr {
+		if err := s.mapCompare(entry.(map[string]interface{}), actualArr[idx].(map[string]interface{})); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+/*
+  Due to specialize matching logic to ignore exact matches on the "location" and "duration" fields.  It was
+  necessary to create this compare function to validate the values of the map.
+*/
+func (s *suiteContext) mapCompare(expected map[string]interface{}, actual map[string]interface{}) error {
+
+	// Process all keys in the map and handle them based on the type of the field.
+	for k, v := range expected {
+
+		if actual[k] == nil {
+			return fmt.Errorf("No matching field in actual:[%s] expected value:[%v]",k,v)
+		}
+		// Process other maps via recursion
+		if reflect.TypeOf(v).Kind() == reflect.Map {
+			if err := s.mapCompare(v.(map[string]interface{}), actual[k].(map[string]interface{})); err != nil {
+				return err
+			}
+			// This is an array of maps show as a slice
+		} else if reflect.TypeOf(v).Kind() == reflect.Slice {
+			for i, e := range v.([]interface{}) {
+				if err := s.mapCompare(e.(map[string]interface{}), actual[k].([]interface{})[i].(map[string]interface{})); err != nil {
+					return err
+				}
+			}
+			// We need special rules to check location so that we are not bound to version of the code.
+		} else if k == "location" {
+			if !strings.Contains(actual[k].(string), "suite_test.go:") {
+				return fmt.Errorf("location has unexpected filename [%s] should contains suite_test.go",
+					actual[k])
+			}
+			// We need special rules to validate duration too.
+		} else if k == "duration" {
+			if actual[k].(float64) <= 0 {
+				return fmt.Errorf("duration is <= zero: actual:[%v]", actual[k])
+			}
+			// default numbers in json are coming as float64
+		} else if reflect.TypeOf(v).Kind() == reflect.Float64 {
+			if v.(float64) != actual[k].(float64) {
+				if v.(float64) != actual[k].(float64) {
+					return fmt.Errorf("Field:[%s] not matching expected:[%v] actual:[%v]",
+						k, v, actual[k])
+				}
+			}
+
+		} else if reflect.TypeOf(v).Kind() == reflect.String {
+			if v.(string) != actual[k].(string) {
+				return fmt.Errorf("Field:[%s] not matching expected:[%v] actual:[%v]",
+					k, v, actual[k])
+			}
+		} else {
+			return fmt.Errorf("Unexepcted type encountered in json at key:[%s] Type:[%v]", k, reflect.TypeOf(v).Kind())
+		}
+	}
+
 	return nil
 }

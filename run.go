@@ -157,6 +157,9 @@ func supportsConcurrency(format string) bool {
 		return false
 	case "pretty":
 		return false
+	case "cucumber":
+		return false
 	}
+
 	return true // all custom formatters are treated as supporting concurrency
 }
