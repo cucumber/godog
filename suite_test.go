@@ -67,6 +67,11 @@ func SuiteContext(s *Suite) {
 		return nil
 	})
 
+	// duplicate step to 'a failing step' I added to help test cucumber.feature
+	// I needed to have an Scenario Outline where the status was passing or failing
+	// I needed the same step def language.
+	s.Step(`^failing step$`, c.aFailingStep)
+
 	// Introduced to test formatter/cucumber.feature
 	s.Step(`^the rendered json will be as follows:$`, c.theRenderJSONWillBe)
 
