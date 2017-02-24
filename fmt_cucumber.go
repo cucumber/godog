@@ -1,4 +1,5 @@
 package godog
+
 /*
    The specification for the formatting originated from https://www.relishapp.com/cucumber/cucumber/docs/formatters/json-output-formatter.
    I found that documentation was misleading or out dated.  To validate formatting I create a ruby cucumber test harness and ran the
@@ -8,16 +9,16 @@ package godog
 
    I did note that comments in ruby could be at just about any level in particular Feature, Scenario and Step.  In godog I
    could only find comments under the Feature data structure.
- */
+*/
 
 import (
-	"fmt"
-	"io"
-	"time"
-	"strings"
 	"encoding/json"
+	"fmt"
 	"github.com/DATA-DOG/godog/gherkin"
+	"io"
 	"strconv"
+	"strings"
+	"time"
 )
 
 const cukeurl = "https://www.relishapp.com/cucumber/cucumber/docs/formatters/json-output-formatter"
@@ -39,7 +40,7 @@ func cucumberFunc(suite string, out io.Writer) Formatter {
 }
 
 // Replace spaces with - This function is used to create the "id" fields of the cucumber output.
-func makeId(name string) string {
+func makeID(name string) string {
 	return strings.Replace(strings.ToLower(name), " ", "-", -1)
 }
 
@@ -50,9 +51,9 @@ type cukeComment struct {
 }
 
 type cukeDocstring struct {
-	Value string `json:"value"`
+	Value       string `json:"value"`
 	ContentType string `json:"content_type"`
-	Line  int    `json:"line"`
+	Line        int    `json:"line"`
 }
 
 type cukeTag struct {
@@ -71,16 +72,16 @@ type cukeMatch struct {
 }
 
 type cukeStep struct {
-	Keyword string     `json:"keyword"`
-	Name    string     `json:"name"`
-	Line    int        `json:"line"`
+	Keyword   string        `json:"keyword"`
+	Name      string        `json:"name"`
+	Line      int           `json:"line"`
 	Docstring cukeDocstring `json:"doc_string,omitempty"`
-	Match   cukeMatch  `json:"match"`
-	Result  cukeResult `json:"result"`
+	Match     cukeMatch     `json:"match"`
+	Result    cukeResult    `json:"result"`
 }
 
 type cukeElement struct {
-	Id          string     `json:"id"`
+	ID          string     `json:"id"`
 	Keyword     string     `json:"keyword"`
 	Name        string     `json:"name"`
 	Description string     `json:"description"`
@@ -90,9 +91,9 @@ type cukeElement struct {
 	Steps       []cukeStep `json:"steps,omitempty"`
 }
 
-type cukeFeatureJson struct {
-	Uri         string        `json:"uri"`
-	Id          string        `json:"id"`
+type cukeFeatureJSON struct {
+	URI         string        `json:"uri"`
+	ID          string        `json:"id"`
 	Keyword     string        `json:"keyword"`
 	Name        string        `json:"name"`
 	Description string        `json:"description"`
@@ -112,18 +113,18 @@ type cukefmt struct {
 	path         string
 	stat         stepType          // last step status, before skipped
 	outlineSteps int               // number of current outline scenario steps
-	id           string            // current test id.
-	results      []cukeFeatureJson // structure that represent cuke results
+	ID           string            // current test id.
+	results      []cukeFeatureJSON // structure that represent cuke results
 	curStep      *cukeStep         // track the current step
 	curElement   *cukeElement      // track the current element
-	curFeature   *cukeFeatureJson  // track the current feature
+	curFeature   *cukeFeatureJSON  // track the current feature
 	curOutline   cukeElement       // Each example show up as an outline element but the outline is parsed only once
 	// so I need to keep track of the current outline
 	curRow         int       // current row of the example table as it is being processed.
 	curExampleTags []cukeTag // temporary storage for tags associate with the current example table.
 	startTime      time.Time // used to time duration of the step execution
-	curExampleName string  // Due to the fact that examples are parsed once and then iterated over for each result then we need to keep track
-	                       // of the example name inorder to build id fields.
+	curExampleName string    // Due to the fact that examples are parsed once and then iterated over for each result then we need to keep track
+	// of the example name inorder to build id fields.
 }
 
 func (f *cukefmt) Node(n interface{}) {
@@ -135,7 +136,7 @@ func (f *cukefmt) Node(n interface{}) {
 	// append the name associated with the example as part of the id.
 	case *gherkin.Examples:
 
-		f.curExampleName = makeId(t.Name)
+		f.curExampleName = makeID(t.Name)
 		f.curRow = 2 // there can be more than one example set per outline so reset row count.
 		// cucumber counts the header row as an example when creating the id.
 
@@ -154,7 +155,7 @@ func (f *cukefmt) Node(n interface{}) {
 		f.curOutline.Line = t.Location.Line
 		f.curOutline.Description = t.Description
 		f.curOutline.Keyword = t.Keyword
-		f.curOutline.Id = f.curFeature.Id + ";" + makeId(t.Name)
+		f.curOutline.ID = f.curFeature.ID + ";" + makeID(t.Name)
 		f.curOutline.Type = "scenario"
 		f.curOutline.Tags = make([]cukeTag, len(t.Tags)+len(f.curFeature.Tags))
 
@@ -178,7 +179,7 @@ func (f *cukefmt) Node(n interface{}) {
 		f.curElement.Line = t.Location.Line
 		f.curElement.Description = t.Description
 		f.curElement.Keyword = t.Keyword
-		f.curElement.Id = f.curFeature.Id + ";" + makeId(t.Name)
+		f.curElement.ID = f.curFeature.ID + ";" + makeID(t.Name)
 		f.curElement.Type = "scenario"
 		f.curElement.Tags = make([]cukeTag, len(t.Tags)+len(f.curFeature.Tags))
 
@@ -193,13 +194,12 @@ func (f *cukefmt) Node(n interface{}) {
 			}
 		}
 
-
 	// This is an outline scenario and the element is added to the output as
 	// the TableRows are encountered.
 	case *gherkin.TableRow:
 		tmpElem := f.curOutline
 		tmpElem.Line = t.Location.Line
-		tmpElem.Id = tmpElem.Id + ";" + f.curExampleName + ";" + strconv.Itoa(f.curRow)
+		tmpElem.ID = tmpElem.ID + ";" + f.curExampleName + ";" + strconv.Itoa(f.curRow)
 		f.curRow++
 		f.curFeature.Elements = append(f.curFeature.Elements, tmpElem)
 		f.curElement = &f.curFeature.Elements[len(f.curFeature.Elements)-1]
@@ -215,16 +215,16 @@ func (f *cukefmt) Feature(ft *gherkin.Feature, p string, c []byte) {
 
 	f.basefmt.Feature(ft, p, c)
 	f.path = p
-	f.id = makeId(ft.Name)
-	f.results = append(f.results, cukeFeatureJson{})
+	f.ID = makeID(ft.Name)
+	f.results = append(f.results, cukeFeatureJSON{})
 
 	f.curFeature = &f.results[len(f.results)-1]
-	f.curFeature.Uri = p
+	f.curFeature.URI = p
 	f.curFeature.Name = ft.Name
 	f.curFeature.Keyword = ft.Keyword
 	f.curFeature.Line = ft.Location.Line
 	f.curFeature.Description = ft.Description
-	f.curFeature.Id = f.id
+	f.curFeature.ID = f.ID
 	f.curFeature.Tags = make([]cukeTag, len(ft.Tags))
 
 	for idx, element := range ft.Tags {

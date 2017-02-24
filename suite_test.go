@@ -68,7 +68,7 @@ func SuiteContext(s *Suite) {
 	})
 
 	// Introduced to test formatter/cucumber.feature
-	s.Step(`^the rendered json will be as follows:$`, c.theRenderJsonWillBe)
+	s.Step(`^the rendered json will be as follows:$`, c.theRenderJSONWillBe)
 
 }
 
@@ -381,27 +381,7 @@ func (s *suiteContext) theseEventsHadToBeFiredForNumberOfTimes(tbl *gherkin.Data
 	return nil
 }
 
-func (s *suiteContext) theRenderJsonWillBe2(docstring *gherkin.DocString) error {
-
-	var expected bytes.Buffer
-	var actual bytes.Buffer
-
-	if err := json.Compact(&expected, []byte(docstring.Content)); err != nil {
-		return err
-	}
-
-	if err := json.Compact(&actual, s.out.Bytes()); err != nil {
-		return err
-	}
-
-	if string(expected.Bytes()) != string(actual.Bytes()) {
-		return fmt.Errorf("format mismatch expected:[%v] actual:[%v]", string(expected.Bytes()), string(actual.Bytes()))
-	}
-
-	return nil
-}
-
-func (s *suiteContext) theRenderJsonWillBe(docstring *gherkin.DocString) error {
+func (s *suiteContext) theRenderJSONWillBe(docstring *gherkin.DocString) error {
 
 	var expected interface{}
 	if err := json.Unmarshal([]byte(docstring.Content), &expected); err != nil {
@@ -434,7 +414,7 @@ func (s *suiteContext) mapCompare(expected map[string]interface{}, actual map[st
 	for k, v := range expected {
 
 		if actual[k] == nil {
-			return fmt.Errorf("No matching field in actual:[%s] expected value:[%v]",k,v)
+			return fmt.Errorf("No matching field in actual:[%s] expected value:[%v]", k, v)
 		}
 		// Process other maps via recursion
 		if reflect.TypeOf(v).Kind() == reflect.Map {
