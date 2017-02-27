@@ -250,7 +250,6 @@ func (f *cukefmt) Summary() {
 
 func (f *cukefmt) step(res *stepResult) {
 
-
 	// determine if test case has finished
 	switch t := f.owner.(type) {
 	case *gherkin.TableRow:
@@ -313,7 +312,7 @@ func (f *cukefmt) Undefined(step *gherkin.Step) {
 	f.step(f.undefined[len(f.undefined) - 1])
 
 	// the location for undefined is the feature file location not the step file.
-	f.curStep.Match.Location = fmt.Sprintf("%s:%d",f.path,step.Location.Line)
+	f.curStep.Match.Location = fmt.Sprintf("%s:%d", f.path, step.Location.Line)
 	f.curStep.Result.Duration = nil
 }
 
@@ -329,6 +328,6 @@ func (f *cukefmt) Pending(step *gherkin.Step, match *StepDef) {
 	f.step(f.pending[len(f.pending) - 1])
 
 	// the location for pending is the feature file location not the step file.
-	f.curStep.Match.Location = fmt.Sprintf("%s:%d",f.path,step.Location.Line)
+	f.curStep.Match.Location = fmt.Sprintf("%s:%d", f.path, step.Location.Line)
 	f.curStep.Result.Duration = nil
 }

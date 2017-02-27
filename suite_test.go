@@ -366,7 +366,7 @@ func (s *suiteContext) thereWasEventTriggeredBeforeScenario(expected string) err
 		return fmt.Errorf("before scenario event was never triggered or listened")
 	}
 
-	return fmt.Errorf(`expected "%s" scenario, but got these fired %s`, expected, `"`+strings.Join(found, `", "`)+`"`)
+	return fmt.Errorf(`expected "%s" scenario, but got these fired %s`, expected, `"` + strings.Join(found, `", "`) + `"`)
 }
 
 func (s *suiteContext) theseEventsHadToBeFiredForNumberOfTimes(tbl *gherkin.DataTable) error {
@@ -404,24 +404,24 @@ func (s *suiteContext) theRenderJSONWillBe(docstring *gherkin.DocString) error {
 	// Created to use in error reporting.
 	expectedCompact := &bytes.Buffer{}
 	actualCompact := &bytes.Buffer{}
-	json.Compact(expectedCompact,[]byte(docstring.Content))
-	json.Compact(actualCompact,s.out.Bytes())
+	json.Compact(expectedCompact, []byte(docstring.Content))
+	json.Compact(actualCompact, s.out.Bytes())
 
 	for idx, entry := range expectedArr {
 
 		// Make sure all of the expected are in the actual
 		if err := s.mapCompareStructure(entry.(map[string]interface{}), actualArr[idx].(map[string]interface{})); err != nil {
-			return fmt.Errorf("err:%v actual result is missing fields: expected:%s actual:%s",err,expectedCompact, actualCompact)
+			return fmt.Errorf("err:%v actual result is missing fields: expected:%s actual:%s", err, expectedCompact, actualCompact)
 		}
 
 		// Make sure all of actual are in expected
-		if err := s.mapCompareStructure(actualArr[idx].(map[string]interface{}),entry.(map[string]interface{})); err != nil {
-			return fmt.Errorf("err:%v actual result contains too many fields: expected:%s actual:%s",err,expectedCompact, actualCompact)
+		if err := s.mapCompareStructure(actualArr[idx].(map[string]interface{}), entry.(map[string]interface{})); err != nil {
+			return fmt.Errorf("err:%v actual result contains too many fields: expected:%s actual:%s", err, expectedCompact, actualCompact)
 		}
 
 		// Make sure the values are correct
 		if err := s.mapCompare(entry.(map[string]interface{}), actualArr[idx].(map[string]interface{})); err != nil {
-			return fmt.Errorf("err:%v values don't match expected:%s actual:%s",err,expectedCompact, actualCompact)
+			return fmt.Errorf("err:%v values don't match expected:%s actual:%s", err, expectedCompact, actualCompact)
 		}
 	}
 	return nil
@@ -451,7 +451,7 @@ func (s *suiteContext) mapCompare(expected map[string]interface{}, actual map[st
 					return err
 				}
 			}
-		// We need special rules to check location so that we are not bound to version of the code.
+			// We need special rules to check location so that we are not bound to version of the code.
 		} else if k == "location" {
 
 			// location is tricky.  the cucumber value is either a the step def location for passed,failed, and skipped.
@@ -460,9 +460,9 @@ func (s *suiteContext) mapCompare(expected map[string]interface{}, actual map[st
 			// the context i need contained within its value.
 			// FEATURE_PATH myfile.feature:20 or
 			// STEP_ID
-			t := strings.Split(v.(string)," ")
+			t := strings.Split(v.(string), " ")
 			if t[0] == "FEATURE_PATH" {
-				if actual[k].(string) != t[1]{
+				if actual[k].(string) != t[1] {
 					return fmt.Errorf("location has unexpected value [%s] should be [%s]",
 						actual[k], t[1])
 				}
@@ -474,15 +474,15 @@ func (s *suiteContext) mapCompare(expected map[string]interface{}, actual map[st
 				}
 
 			} else {
-				return fmt.Errorf("Bad location value [%v]",v)
+				return fmt.Errorf("Bad location value [%v]", v)
 			}
 
-		// We need special rules to validate duration too.
+			// We need special rules to validate duration too.
 		} else if k == "duration" {
 			if actual[k].(float64) <= 0 {
 				return fmt.Errorf("duration is <= zero: actual:[%v]", actual[k])
 			}
-		// default numbers in json are coming as float64
+			// default numbers in json are coming as float64
 		} else if reflect.TypeOf(v).Kind() == reflect.Float64 {
 			if v.(float64) != actual[k].(float64) {
 				if v.(float64) != actual[k].(float64) {
@@ -513,7 +513,7 @@ func (s *suiteContext) mapCompareStructure(expected map[string]interface{}, actu
 	for k, v := range expected {
 
 		if actual[k] == nil {
-			return fmt.Errorf("Structure Mismatch: no matching field:[%s] expected value:[%v]",k, v)
+			return fmt.Errorf("Structure Mismatch: no matching field:[%s] expected value:[%v]", k, v)
 		}
 		// Process other maps via recursion
 		if reflect.TypeOf(v).Kind() == reflect.Map {
