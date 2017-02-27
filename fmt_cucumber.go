@@ -64,7 +64,7 @@ type cukeTag struct {
 type cukeResult struct {
 	Status   string `json:"status"`
 	Error    string `json:"error_message,omitempty"`
-	Duration int    `json:"duration"`
+	Duration *int    `json:"duration,omitempty"`
 }
 
 type cukeMatch struct {
@@ -75,7 +75,7 @@ type cukeStep struct {
 	Keyword   string        `json:"keyword"`
 	Name      string        `json:"name"`
 	Line      int           `json:"line"`
-	Docstring cukeDocstring `json:"doc_string,omitempty"`
+	Docstring *cukeDocstring `json:"doc_string,omitempty"`
 	Match     cukeMatch     `json:"match"`
 	Result    cukeResult    `json:"result"`
 }
@@ -106,25 +106,25 @@ type cukeFeatureJSON struct {
 type cukefmt struct {
 	basefmt
 
-	// currently running feature path, to be part of id.
-	// this is sadly not passed by gherkin nodes.
-	// it restricts this formatter to run only in synchronous single
-	// threaded execution. Unless running a copy of formatter for each feature
-	path         string
-	stat         stepType          // last step status, before skipped
-	outlineSteps int               // number of current outline scenario steps
-	ID           string            // current test id.
-	results      []cukeFeatureJSON // structure that represent cuke results
-	curStep      *cukeStep         // track the current step
-	curElement   *cukeElement      // track the current element
-	curFeature   *cukeFeatureJSON  // track the current feature
-	curOutline   cukeElement       // Each example show up as an outline element but the outline is parsed only once
-	// so I need to keep track of the current outline
-	curRow         int       // current row of the example table as it is being processed.
-	curExampleTags []cukeTag // temporary storage for tags associate with the current example table.
-	startTime      time.Time // used to time duration of the step execution
-	curExampleName string    // Due to the fact that examples are parsed once and then iterated over for each result then we need to keep track
-	// of the example name inorder to build id fields.
+					 // currently running feature path, to be part of id.
+					 // this is sadly not passed by gherkin nodes.
+					 // it restricts this formatter to run only in synchronous single
+					 // threaded execution. Unless running a copy of formatter for each feature
+	path           string
+	stat           stepType          // last step status, before skipped
+	outlineSteps   int               // number of current outline scenario steps
+	ID             string            // current test id.
+	results        []cukeFeatureJSON // structure that represent cuke results
+	curStep        *cukeStep         // track the current step
+	curElement     *cukeElement      // track the current element
+	curFeature     *cukeFeatureJSON  // track the current feature
+	curOutline     cukeElement       // Each example show up as an outline element but the outline is parsed only once
+					 // so I need to keep track of the current outline
+	curRow         int               // current row of the example table as it is being processed.
+	curExampleTags []cukeTag         // temporary storage for tags associate with the current example table.
+	startTime      time.Time         // used to time duration of the step execution
+	curExampleName string            // Due to the fact that examples are parsed once and then iterated over for each result then we need to keep track
+					 // of the example name inorder to build id fields.
 }
 
 func (f *cukefmt) Node(n interface{}) {
@@ -157,7 +157,7 @@ func (f *cukefmt) Node(n interface{}) {
 		f.curOutline.Keyword = t.Keyword
 		f.curOutline.ID = f.curFeature.ID + ";" + makeID(t.Name)
 		f.curOutline.Type = "scenario"
-		f.curOutline.Tags = make([]cukeTag, len(t.Tags)+len(f.curFeature.Tags))
+		f.curOutline.Tags = make([]cukeTag, len(t.Tags) + len(f.curFeature.Tags))
 
 		// apply feature level tags
 		if len(f.curOutline.Tags) > 0 {
@@ -165,15 +165,15 @@ func (f *cukefmt) Node(n interface{}) {
 
 			// apply outline level tags.
 			for idx, element := range t.Tags {
-				f.curOutline.Tags[idx+len(f.curFeature.Tags)].Line = element.Location.Line
-				f.curOutline.Tags[idx+len(f.curFeature.Tags)].Name = element.Name
+				f.curOutline.Tags[idx + len(f.curFeature.Tags)].Line = element.Location.Line
+				f.curOutline.Tags[idx + len(f.curFeature.Tags)].Name = element.Name
 			}
 		}
 
 	// This scenario adds the element to the output immediately.
 	case *gherkin.Scenario:
 		f.curFeature.Elements = append(f.curFeature.Elements, cukeElement{})
-		f.curElement = &f.curFeature.Elements[len(f.curFeature.Elements)-1]
+		f.curElement = &f.curFeature.Elements[len(f.curFeature.Elements) - 1]
 
 		f.curElement.Name = t.Name
 		f.curElement.Line = t.Location.Line
@@ -181,7 +181,7 @@ func (f *cukefmt) Node(n interface{}) {
 		f.curElement.Keyword = t.Keyword
 		f.curElement.ID = f.curFeature.ID + ";" + makeID(t.Name)
 		f.curElement.Type = "scenario"
-		f.curElement.Tags = make([]cukeTag, len(t.Tags)+len(f.curFeature.Tags))
+		f.curElement.Tags = make([]cukeTag, len(t.Tags) + len(f.curFeature.Tags))
 
 		if len(f.curElement.Tags) > 0 {
 			// apply feature level tags
@@ -189,8 +189,8 @@ func (f *cukefmt) Node(n interface{}) {
 
 			// apply scenario level tags.
 			for idx, element := range t.Tags {
-				f.curElement.Tags[idx+len(f.curFeature.Tags)].Line = element.Location.Line
-				f.curElement.Tags[idx+len(f.curFeature.Tags)].Name = element.Name
+				f.curElement.Tags[idx + len(f.curFeature.Tags)].Line = element.Location.Line
+				f.curElement.Tags[idx + len(f.curFeature.Tags)].Name = element.Name
 			}
 		}
 
@@ -202,7 +202,7 @@ func (f *cukefmt) Node(n interface{}) {
 		tmpElem.ID = tmpElem.ID + ";" + f.curExampleName + ";" + strconv.Itoa(f.curRow)
 		f.curRow++
 		f.curFeature.Elements = append(f.curFeature.Elements, tmpElem)
-		f.curElement = &f.curFeature.Elements[len(f.curFeature.Elements)-1]
+		f.curElement = &f.curFeature.Elements[len(f.curFeature.Elements) - 1]
 
 		// copy in example level tags.
 		f.curElement.Tags = append(f.curElement.Tags, f.curExampleTags...)
@@ -218,7 +218,7 @@ func (f *cukefmt) Feature(ft *gherkin.Feature, p string, c []byte) {
 	f.ID = makeID(ft.Name)
 	f.results = append(f.results, cukeFeatureJSON{})
 
-	f.curFeature = &f.results[len(f.results)-1]
+	f.curFeature = &f.results[len(f.results) - 1]
 	f.curFeature.URI = p
 	f.curFeature.Name = ft.Name
 	f.curFeature.Keyword = ft.Keyword
@@ -250,17 +250,20 @@ func (f *cukefmt) Summary() {
 
 func (f *cukefmt) step(res *stepResult) {
 
+
 	// determine if test case has finished
 	switch t := f.owner.(type) {
 	case *gherkin.TableRow:
-		f.curStep.Result.Duration = int(time.Since(f.startTime).Nanoseconds())
+		d := int(time.Since(f.startTime).Nanoseconds())
+		f.curStep.Result.Duration = &d
 		f.curStep.Line = t.Location.Line
 		f.curStep.Result.Status = res.typ.String()
 		if res.err != nil {
 			f.curStep.Result.Error = res.err.Error()
 		}
 	case *gherkin.Scenario:
-		f.curStep.Result.Duration = int(time.Since(f.startTime).Nanoseconds())
+		d := int(time.Since(f.startTime).Nanoseconds())
+		f.curStep.Result.Duration = &d
 		f.curStep.Result.Status = res.typ.String()
 		if res.err != nil {
 			f.curStep.Result.Error = res.err.Error()
@@ -272,13 +275,14 @@ func (f *cukefmt) Defined(step *gherkin.Step, def *StepDef) {
 
 	f.startTime = time.Now() // start timing the step
 	f.curElement.Steps = append(f.curElement.Steps, cukeStep{})
-	f.curStep = &f.curElement.Steps[len(f.curElement.Steps)-1]
+	f.curStep = &f.curElement.Steps[len(f.curElement.Steps) - 1]
 
 	f.curStep.Name = step.Text
 	f.curStep.Line = step.Location.Line
 	f.curStep.Keyword = step.Keyword
 
 	if _, ok := step.Argument.(*gherkin.DocString); ok {
+		f.curStep.Docstring = &cukeDocstring{}
 		f.curStep.Docstring.ContentType = strings.TrimSpace(step.Argument.(*gherkin.DocString).ContentType)
 		f.curStep.Docstring.Line = step.Argument.(*gherkin.DocString).Location.Line
 		f.curStep.Docstring.Value = step.Argument.(*gherkin.DocString).Content
@@ -292,28 +296,39 @@ func (f *cukefmt) Defined(step *gherkin.Step, def *StepDef) {
 func (f *cukefmt) Passed(step *gherkin.Step, match *StepDef) {
 	f.basefmt.Passed(step, match)
 	f.stat = passed
-	f.step(f.passed[len(f.passed)-1])
+	f.step(f.passed[len(f.passed) - 1])
 }
 
 func (f *cukefmt) Skipped(step *gherkin.Step) {
 	f.basefmt.Skipped(step)
-	f.step(f.skipped[len(f.skipped)-1])
+	f.step(f.skipped[len(f.skipped) - 1])
+
+	// no duration reported for skipped.
+	f.curStep.Result.Duration = nil
 }
 
 func (f *cukefmt) Undefined(step *gherkin.Step) {
 	f.basefmt.Undefined(step)
 	f.stat = undefined
-	f.step(f.undefined[len(f.undefined)-1])
+	f.step(f.undefined[len(f.undefined) - 1])
+
+	// the location for undefined is the feature file location not the step file.
+	f.curStep.Match.Location = fmt.Sprintf("%s:%d",f.path,step.Location.Line)
+	f.curStep.Result.Duration = nil
 }
 
 func (f *cukefmt) Failed(step *gherkin.Step, match *StepDef, err error) {
 	f.basefmt.Failed(step, match, err)
 	f.stat = failed
-	f.step(f.failed[len(f.failed)-1])
+	f.step(f.failed[len(f.failed) - 1])
 }
 
 func (f *cukefmt) Pending(step *gherkin.Step, match *StepDef) {
 	f.stat = pending
 	f.basefmt.Pending(step, match)
-	f.step(f.pending[len(f.pending)-1])
+	f.step(f.pending[len(f.pending) - 1])
+
+	// the location for pending is the feature file location not the step file.
+	f.curStep.Match.Location = fmt.Sprintf("%s:%d",f.path,step.Location.Line)
+	f.curStep.Result.Duration = nil
 }
