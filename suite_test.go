@@ -366,7 +366,7 @@ func (s *suiteContext) thereWasEventTriggeredBeforeScenario(expected string) err
 		return fmt.Errorf("before scenario event was never triggered or listened")
 	}
 
-	return fmt.Errorf(`expected "%s" scenario, but got these fired %s`, expected, `"` + strings.Join(found, `", "`) + `"`)
+	return fmt.Errorf(`expected "%s" scenario, but got these fired %s`, expected, `"`+strings.Join(found, `", "`)+`"`)
 }
 
 func (s *suiteContext) theseEventsHadToBeFiredForNumberOfTimes(tbl *gherkin.DataTable) error {
@@ -503,6 +503,7 @@ func (s *suiteContext) mapCompare(expected map[string]interface{}, actual map[st
 
 	return nil
 }
+
 /*
   Due to specialize matching logic to ignore exact matches on the "location" and "duration" fields.  It was
   necessary to create this compare function to validate the values of the map.
