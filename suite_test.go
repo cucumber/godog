@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/DATA-DOG/godog/gherkin"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 	"testing"
-
-	"github.com/DATA-DOG/godog/gherkin"
 )
 
 func TestMain(m *testing.M) {
@@ -66,6 +66,15 @@ func SuiteContext(s *Suite) {
 	s.Step(`^passing step$`, func() error {
 		return nil
 	})
+
+	// duplicate step to 'a failing step' I added to help test cucumber.feature
+	// I needed to have an Scenario Outline where the status was passing or failing
+	// I needed the same step def language.
+	s.Step(`^failing step$`, c.aFailingStep)
+
+	// Introduced to test formatter/cucumber.feature
+	s.Step(`^the rendered json will be as follows:$`, c.theRenderJSONWillBe)
+
 }
 
 type firedEvent struct {
@@ -185,7 +194,7 @@ func (s *suiteContext) followingStepsShouldHave(status string, steps *gherkin.Do
 	}
 
 	if len(expected) > len(actual) {
-		return fmt.Errorf("number of expected %s steps: %d is less than actual %s steps: %d", status, len(expected), status, len(actual))
+		return fmt.Errorf("number of expeted %s steps: %d is less than actual %s steps: %d", status, len(expected), status, len(actual))
 	}
 
 	for _, a := range actual {
@@ -374,5 +383,153 @@ func (s *suiteContext) theseEventsHadToBeFiredForNumberOfTimes(tbl *gherkin.Data
 			return err
 		}
 	}
+	return nil
+}
+
+func (s *suiteContext) theRenderJSONWillBe(docstring *gherkin.DocString) error {
+
+	var expected interface{}
+	if err := json.Unmarshal([]byte(docstring.Content), &expected); err != nil {
+		return err
+	}
+
+	var actual interface{}
+	if err := json.Unmarshal(s.out.Bytes(), &actual); err != nil {
+		return err
+	}
+
+	expectedArr := expected.([]interface{})
+	actualArr := actual.([]interface{})
+
+	// Created to use in error reporting.
+	expectedCompact := &bytes.Buffer{}
+	actualCompact := &bytes.Buffer{}
+	json.Compact(expectedCompact, []byte(docstring.Content))
+	json.Compact(actualCompact, s.out.Bytes())
+
+	for idx, entry := range expectedArr {
+
+		// Make sure all of the expected are in the actual
+		if err := s.mapCompareStructure(entry.(map[string]interface{}), actualArr[idx].(map[string]interface{})); err != nil {
+			return fmt.Errorf("err:%v actual result is missing fields: expected:%s actual:%s", err, expectedCompact, actualCompact)
+		}
+
+		// Make sure all of actual are in expected
+		if err := s.mapCompareStructure(actualArr[idx].(map[string]interface{}), entry.(map[string]interface{})); err != nil {
+			return fmt.Errorf("err:%v actual result contains too many fields: expected:%s actual:%s", err, expectedCompact, actualCompact)
+		}
+
+		// Make sure the values are correct
+		if err := s.mapCompare(entry.(map[string]interface{}), actualArr[idx].(map[string]interface{})); err != nil {
+			return fmt.Errorf("err:%v values don't match expected:%s actual:%s", err, expectedCompact, actualCompact)
+		}
+	}
+	return nil
+}
+
+/*
+  Due to specialize matching logic to ignore exact matches on the "location" and "duration" fields.  It was
+  necessary to create this compare function to validate the values of the map.
+*/
+func (s *suiteContext) mapCompare(expected map[string]interface{}, actual map[string]interface{}) error {
+
+	// Process all keys in the map and handle them based on the type of the field.
+	for k, v := range expected {
+
+		if actual[k] == nil {
+			return fmt.Errorf("No matching field in actual:[%s] expected value:[%v]", k, v)
+		}
+		// Process other maps via recursion
+		if reflect.TypeOf(v).Kind() == reflect.Map {
+			if err := s.mapCompare(v.(map[string]interface{}), actual[k].(map[string]interface{})); err != nil {
+				return err
+			}
+			// This is an array of maps show as a slice
+		} else if reflect.TypeOf(v).Kind() == reflect.Slice {
+			for i, e := range v.([]interface{}) {
+				if err := s.mapCompare(e.(map[string]interface{}), actual[k].([]interface{})[i].(map[string]interface{})); err != nil {
+					return err
+				}
+			}
+			// We need special rules to check location so that we are not bound to version of the code.
+		} else if k == "location" {
+
+			// location is tricky.  the cucumber value is either a the step def location for passed,failed, and skipped.
+			// it is the feature file location for undefined and skipped.
+			// I dont have the result context readily available so the expected input will have
+			// the context i need contained within its value.
+			// FEATURE_PATH myfile.feature:20 or
+			// STEP_ID
+			t := strings.Split(v.(string), " ")
+			if t[0] == "FEATURE_PATH" {
+				if actual[k].(string) != t[1] {
+					return fmt.Errorf("location has unexpected value [%s] should be [%s]",
+						actual[k], t[1])
+				}
+
+			} else if t[0] == "STEP_ID" {
+				if !strings.Contains(actual[k].(string), "suite_test.go:") {
+					return fmt.Errorf("location has unexpected filename [%s] should contain suite_test.go",
+						actual[k])
+				}
+
+			} else {
+				return fmt.Errorf("Bad location value [%v]", v)
+			}
+
+			// We need special rules to validate duration too.
+		} else if k == "duration" {
+			if actual[k].(float64) <= 0 {
+				return fmt.Errorf("duration is <= zero: actual:[%v]", actual[k])
+			}
+			// default numbers in json are coming as float64
+		} else if reflect.TypeOf(v).Kind() == reflect.Float64 {
+			if v.(float64) != actual[k].(float64) {
+				if v.(float64) != actual[k].(float64) {
+					return fmt.Errorf("Field:[%s] not matching expected:[%v] actual:[%v]",
+						k, v, actual[k])
+				}
+			}
+
+		} else if reflect.TypeOf(v).Kind() == reflect.String {
+			if v.(string) != actual[k].(string) {
+				return fmt.Errorf("Field:[%s] not matching expected:[%v] actual:[%v]",
+					k, v, actual[k])
+			}
+		} else {
+			return fmt.Errorf("Unexepcted type encountered in json at key:[%s] Type:[%v]", k, reflect.TypeOf(v).Kind())
+		}
+	}
+
+	return nil
+}
+
+/*
+  Due to specialize matching logic to ignore exact matches on the "location" and "duration" fields.  It was
+  necessary to create this compare function to validate the values of the map.
+*/
+func (s *suiteContext) mapCompareStructure(expected map[string]interface{}, actual map[string]interface{}) error {
+
+	// Process all keys in the map and handle them based on the type of the field.
+	for k, v := range expected {
+
+		if actual[k] == nil {
+			return fmt.Errorf("Structure Mismatch: no matching field:[%s] expected value:[%v]", k, v)
+		}
+		// Process other maps via recursion
+		if reflect.TypeOf(v).Kind() == reflect.Map {
+			if err := s.mapCompareStructure(v.(map[string]interface{}), actual[k].(map[string]interface{})); err != nil {
+				return err
+			}
+			// This is an array of maps show as a slice
+		} else if reflect.TypeOf(v).Kind() == reflect.Slice {
+			for i, e := range v.([]interface{}) {
+				if err := s.mapCompareStructure(e.(map[string]interface{}), actual[k].([]interface{})[i].(map[string]interface{})); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	return nil
 }
