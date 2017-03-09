@@ -14,17 +14,16 @@ package godog
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/DATA-DOG/godog/gherkin"
 	"io"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/DATA-DOG/godog/gherkin"
 )
 
-const cukeurl = "https://www.relishapp.com/cucumber/cucumber/docs/formatters/json-output-formatter"
-
 func init() {
-	Format("cucumber", fmt.Sprintf("Produces cucumber JSON stream, based on spec @: %s.", cukeurl), cucumberFunc)
+	Format("cucumber", "Produces cucumber JSON format output.", cucumberFunc)
 }
 
 func cucumberFunc(suite string, out io.Writer) Formatter {

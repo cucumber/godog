@@ -257,7 +257,7 @@ Feature: cucumber json formatter
                   "name": "passing step",
                   "line": 7,
                   "match": {
-                    "location": "STEP_ID"
+                    "location": "suite_test.go:69"
                   },
                   "result": {
                     "status": "passed",
@@ -269,7 +269,7 @@ Feature: cucumber json formatter
                   "name": "a failing step",
                   "line": 8,
                   "match": {
-                    "location": "STEP_ID"
+                    "location": "suite_test.go:52"
                   },
                   "result": {
                     "status": "failed",
@@ -325,7 +325,7 @@ Feature: cucumber json formatter
                   "name": "passing step",
                   "line": 11,
                   "match": {
-                    "location": "STEP_ID"
+                    "location": "suite_test.go:69"
                   },
                   "result": {
                     "status": "passed",
@@ -347,7 +347,7 @@ Feature: cucumber json formatter
                   "name": "failing step",
                   "line": 12,
                   "match": {
-                    "location": "STEP_ID"
+                    "location": "suite_test.go:52"
                   },
                   "result": {
                     "status": "failed",
@@ -448,7 +448,7 @@ Feature: cucumber json formatter
                   "line": 8
                 },
                 "match": {
-                  "location": "STEP_ID"
+                  "location": "suite_test.go:69"
                 },
                 "result": {
                   "status": "passed",
@@ -501,11 +501,11 @@ Feature: cucumber json formatter
                   "name": "passing step",
                   "line": 7,
                   "match": {
-                    "location": "STEP_ID"
+                    "location": "suite_test.go:69"
                   },
                   "result": {
                     "status": "passed",
-                    "duration": 397087
+                    "duration": -1
                   }
                 },
                 {
@@ -513,7 +513,7 @@ Feature: cucumber json formatter
                   "name": "pending step",
                   "line": 8,
                   "match": {
-                    "location": "FEATURE_PATH features/simple.feature:8"
+                    "location": "features/simple.feature:8"
                   },
                   "result": {
                     "status": "pending"
@@ -524,7 +524,7 @@ Feature: cucumber json formatter
                   "name": "undefined",
                   "line": 9,
                   "match": {
-                    "location": "FEATURE_PATH features/simple.feature:9"
+                    "location": "features/simple.feature:9"
                   },
                   "result": {
                     "status": "undefined"
@@ -535,7 +535,7 @@ Feature: cucumber json formatter
                   "name": "passing step",
                   "line": 10,
                   "match": {
-                    "location": "STEP_ID"
+                    "location": "suite_test.go:69"
                   },
                   "result": {
                     "status": "skipped"
