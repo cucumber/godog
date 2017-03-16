@@ -60,9 +60,18 @@ func (a *apiFeature) theResponseShouldMatchJSON(body *gherkin.DocString) (err er
 	if expected, err = json.Marshal(data); err != nil {
 		return
 	}
-	actual = a.resp.Body.Bytes()
-	if !bytes.Equal(actual, expected) {
-		err = fmt.Errorf("expected json, does not match actual: %s", string(actual))
+	actual = bytes.TrimSpace(a.resp.Body.Bytes())
+	if len(actual) != len(expected) {
+		return fmt.Errorf("expected json length: %d does not match actual: %d", len(expected), len(actual))
+	}
+	for i, b := range actual {
+		if b != expected[i] {
+			return fmt.Errorf(
+				"expected json does not match actual at character: %s^%s",
+				string(actual[:i]),
+				string(actual[i:i+1]),
+			)
+		}
 	}
 	return
 }
