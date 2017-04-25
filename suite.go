@@ -337,7 +337,8 @@ func (s *Suite) runFeature(f *feature) {
 	// then shuffle it if we are randomizing scenarios
 	scenarios := make([]interface{}, len(f.ScenarioDefinitions))
 	if s.randomSeed != 0 {
-		perm := rand.Perm(len(f.ScenarioDefinitions))
+		r := rand.New(rand.NewSource(s.randomSeed))
+		perm := r.Perm(len(f.ScenarioDefinitions))
 		for i, v := range perm {
 			scenarios[v] = f.ScenarioDefinitions[i]
 		}

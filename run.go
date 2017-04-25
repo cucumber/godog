@@ -118,10 +118,6 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 		r := rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
 		seed = r.Int63n(99998) + 1
 	}
-	if seed != 0 {
-		// init global rand module (concurrent safe) with our seed
-		rand.Seed(seed)
-	}
 
 	r := runner{
 		fmt:           formatter(suite, output),
