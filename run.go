@@ -111,10 +111,14 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 	features, err := parseFeatures(opt.Tags, opt.Paths)
 	fatal(err)
 
-	seed := opt.RandomSeed
-	if seed == -1 {
-		// if RandomSeed opt is -1, means pick a memorable rand seed as default
-		// the docStrings for Option specify this should be 1-99999 (same as ruby Cucumber)
+	// the actual seed value which will be propogated
+	// if left as nil value, then scenarios run sequentially
+	var seed int64
+	// use specified seed if exists, or assign one ourselves if
+	// none specified but user wants randomization
+	if opt.RandomSeed != 0 {
+		seed = opt.RandomSeed
+	} else if opt.Randomize && opt.RandomSeed == 0 {
 		r := rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
 		seed = r.Int63n(99998) + 1
 	}

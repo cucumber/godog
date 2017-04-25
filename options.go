@@ -13,16 +13,22 @@ type Options struct {
 	// Print step definitions found and exit
 	ShowStepDefinitions bool
 
-	// RandomSeed, if not `0`, will be used to run scenarios in a random order.
+	// Randomize causes scenarios to be run in random order.
 	//
 	// Randomizing scenario order is especially helpful for detecting
 	// situations where you have state leaking between scenarios, which can
 	// cause flickering or fragile tests.
+	Randomize bool
+
+	// RandomSeed allows specifying the seed to reproduce the random scenario
+	// shuffling from a previous run.
 	//
-	// The default value of `0` means "do not randomize".
+	// When `RandomSeed` is left at the nil value (`0`), but `Randomize`
+	// has been set to `true`, then godog will automatically pick a random
+	// seed between `1-99999` for ease of specification.
 	//
-	// The magic value of `-1` means "pick a random seed for me", the resulting
-	// seed will only be between `1-99999` for ease of specification.
+	// If RandomSeed is set to anything other than the default nil value (`0`),
+	// then `Randomize = true` will be implied.
 	RandomSeed int64
 
 	// Stops on the first failure

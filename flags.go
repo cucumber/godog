@@ -46,6 +46,8 @@ func FlagSet(opt *Options) *flag.FlagSet {
 	set.BoolVar(&opt.ShowStepDefinitions, "d", false, "Print all available step definitions.")
 	set.BoolVar(&opt.StopOnFailure, "stop-on-failure", false, "Stop processing on first failed scenario.")
 	set.BoolVar(&opt.NoColors, "no-colors", false, "Disable ansi colors.")
+	set.BoolVar(&opt.Randomize, "random", false, "Randomize scenario execution order.")
+	set.Int64Var(&opt.RandomSeed, "seed", 0, "Specify random seed to reproduce shuffling from a previous run.\n(implies --random)")
 	set.Usage = usage(set, opt.Output)
 	return set
 }
@@ -64,7 +66,14 @@ func (f *flagged) name() string {
 	case len(f.short) > 0:
 		name = fmt.Sprintf("-%s", f.short)
 	}
-	if f.dflt != "true" && f.dflt != "false" {
+
+	if f.long == "seed" {
+		// `seed`` is special in that we will later assign it randomly
+		// if the user specifies `--random` without specifying one,
+		// so mask the "default" value here to avoid UI confusion about
+		// what the value will end up being.
+		name += "=SEED"
+	} else if f.dflt != "true" && f.dflt != "false" {
 		name += "=" + f.dflt
 	}
 	return name
