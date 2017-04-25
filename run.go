@@ -3,7 +3,9 @@ package godog
 import (
 	"fmt"
 	"io"
+	"math/rand"
 	"os"
+	"time"
 
 	"github.com/DATA-DOG/godog/colors"
 )
@@ -11,6 +13,7 @@ import (
 type initializer func(*Suite)
 
 type runner struct {
+	randomOrder   bool
 	stopOnFailure bool
 	features      []*feature
 	fmt           Formatter
@@ -30,6 +33,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 			}
 			suite := &Suite{
 				fmt:           r.fmt,
+				randomOrder:   r.randomOrder,
 				stopOnFailure: r.stopOnFailure,
 				features:      []*feature{feat},
 			}
@@ -54,6 +58,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 func (r *runner) run() (failed bool) {
 	suite := &Suite{
 		fmt:           r.fmt,
+		randomOrder:   r.randomOrder,
 		stopOnFailure: r.stopOnFailure,
 		features:      r.features,
 	}
@@ -110,7 +115,14 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 		fmt:           formatter(suite, output),
 		initializer:   contextInitializer,
 		features:      features,
+		randomOrder:   opt.RandomOrder,
 		stopOnFailure: opt.StopOnFailure,
+	}
+
+	if opt.RandomOrder {
+		// TODO(mroth): allow for seed to be specified in options,
+		// and print it at the end of a run for replication purposes
+		rand.Seed(time.Now().UTC().UnixNano())
 	}
 
 	var failed bool

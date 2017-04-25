@@ -13,6 +13,13 @@ type Options struct {
 	// Print step definitions found and exit
 	ShowStepDefinitions bool
 
+	// Run scenarios in random order.
+	//
+	// This is especially helpful for detecting situations
+	// where you have state leaking between scenarios, which
+	// can cause flickering or fragile tests.
+	RandomOrder bool
+
 	// Stops on the first failure
 	StopOnFailure bool
 

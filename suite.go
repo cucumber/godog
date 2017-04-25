@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -49,6 +50,7 @@ type Suite struct {
 	fmt      Formatter
 
 	failed        bool
+	randomOrder   bool
 	stopOnFailure bool
 
 	// suite event handlers
@@ -330,7 +332,20 @@ func (s *Suite) runOutline(outline *gherkin.ScenarioOutline, b *gherkin.Backgrou
 
 func (s *Suite) runFeature(f *feature) {
 	s.fmt.Feature(f.Feature, f.Path, f.Content)
-	for _, scenario := range f.ScenarioDefinitions {
+
+	// make a local copy of the feature scenario defenitions,
+	// then shuffle it if we are randomizing scenarios
+	scenarios := make([]interface{}, len(f.ScenarioDefinitions))
+	if s.randomOrder {
+		perm := rand.Perm(len(f.ScenarioDefinitions))
+		for i, v := range perm {
+			scenarios[v] = f.ScenarioDefinitions[i]
+		}
+	} else {
+		copy(scenarios, f.ScenarioDefinitions)
+	}
+
+	for _, scenario := range scenarios {
 		var err error
 		if f.Background != nil {
 			s.fmt.Node(f.Background)
