@@ -50,7 +50,7 @@ type Suite struct {
 	fmt      Formatter
 
 	failed        bool
-	randomOrder   bool
+	randomSeed    int64
 	stopOnFailure bool
 
 	// suite event handlers
@@ -336,7 +336,7 @@ func (s *Suite) runFeature(f *feature) {
 	// make a local copy of the feature scenario defenitions,
 	// then shuffle it if we are randomizing scenarios
 	scenarios := make([]interface{}, len(f.ScenarioDefinitions))
-	if s.randomOrder {
+	if s.randomSeed != 0 {
 		perm := rand.Perm(len(f.ScenarioDefinitions))
 		for i, v := range perm {
 			scenarios[v] = f.ScenarioDefinitions[i]

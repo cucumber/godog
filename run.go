@@ -13,7 +13,7 @@ import (
 type initializer func(*Suite)
 
 type runner struct {
-	randomOrder   bool
+	randomSeed    int64
 	stopOnFailure bool
 	features      []*feature
 	fmt           Formatter
@@ -33,7 +33,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 			}
 			suite := &Suite{
 				fmt:           r.fmt,
-				randomOrder:   r.randomOrder,
+				randomSeed:    r.randomSeed,
 				stopOnFailure: r.stopOnFailure,
 				features:      []*feature{feat},
 			}
@@ -58,7 +58,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 func (r *runner) run() (failed bool) {
 	suite := &Suite{
 		fmt:           r.fmt,
-		randomOrder:   r.randomOrder,
+		randomSeed:    r.randomSeed,
 		stopOnFailure: r.stopOnFailure,
 		features:      r.features,
 	}
@@ -111,18 +111,24 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 	features, err := parseFeatures(opt.Tags, opt.Paths)
 	fatal(err)
 
+	seed := opt.RandomSeed
+	if seed == -1 {
+		// if RandomSeed opt is -1, means pick a memorable rand seed as default
+		// the docStrings for Option specify this should be 1-99999 (same as ruby Cucumber)
+		r := rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
+		seed = r.Int63n(99998) + 1
+	}
+	if seed != 0 {
+		// init global rand module (concurrent safe) with our seed
+		rand.Seed(seed)
+	}
+
 	r := runner{
 		fmt:           formatter(suite, output),
 		initializer:   contextInitializer,
 		features:      features,
-		randomOrder:   opt.RandomOrder,
+		randomSeed:    seed,
 		stopOnFailure: opt.StopOnFailure,
-	}
-
-	if opt.RandomOrder {
-		// TODO(mroth): allow for seed to be specified in options,
-		// and print it at the end of a run for replication purposes
-		rand.Seed(time.Now().UTC().UnixNano())
 	}
 
 	var failed bool

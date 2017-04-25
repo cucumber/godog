@@ -13,12 +13,17 @@ type Options struct {
 	// Print step definitions found and exit
 	ShowStepDefinitions bool
 
-	// Run scenarios in random order.
+	// RandomSeed, if not `0`, will be used to run scenarios in a random order.
 	//
-	// This is especially helpful for detecting situations
-	// where you have state leaking between scenarios, which
-	// can cause flickering or fragile tests.
-	RandomOrder bool
+	// Randomizing scenario order is especially helpful for detecting
+	// situations where you have state leaking between scenarios, which can
+	// cause flickering or fragile tests.
+	//
+	// The default value of `0` means "do not randomize".
+	//
+	// The magic value of `-1` means "pick a random seed for me", the resulting
+	// seed will only be between `1-99999` for ease of specification.
+	RandomSeed int64
 
 	// Stops on the first failure
 	StopOnFailure bool
