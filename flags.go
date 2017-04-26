@@ -26,6 +26,10 @@ var descTagsOption = "Filter scenarios by tags. Expression can be:\n" +
 	s(4) + "- " + colors.Yellow(`"@wip && ~@new"`) + ": run wip scenarios, but exclude new\n" +
 	s(4) + "- " + colors.Yellow(`"@wip,@undone"`) + ": run wip or undone scenarios"
 
+var descRandomOption = "Randomly shuffle the scenario execution order.\n" +
+	"Specify SEED to reproduce the shuffling from a previous run.\n" +
+	s(4) + `e.g. ` + colors.Yellow(`--random`) + " or " + colors.Yellow(`--random=5738`)
+
 // FlagSet allows to manage flags by external suite runner
 func FlagSet(opt *Options) *flag.FlagSet {
 	descFormatOption := "How to format tests output. Available formats:\n"
@@ -46,8 +50,7 @@ func FlagSet(opt *Options) *flag.FlagSet {
 	set.BoolVar(&opt.ShowStepDefinitions, "d", false, "Print all available step definitions.")
 	set.BoolVar(&opt.StopOnFailure, "stop-on-failure", false, "Stop processing on first failed scenario.")
 	set.BoolVar(&opt.NoColors, "no-colors", false, "Disable ansi colors.")
-	set.BoolVar(&opt.Randomize, "random", false, "Randomize scenario execution order.")
-	set.Int64Var(&opt.RandomSeed, "seed", 0, "Specify random seed to reproduce shuffling from a previous run.\n(implies --random)")
+	set.Var(&opt.Randomize, "random", descRandomOption)
 	set.Usage = usage(set, opt.Output)
 	return set
 }
@@ -67,12 +70,12 @@ func (f *flagged) name() string {
 		name = fmt.Sprintf("-%s", f.short)
 	}
 
-	if f.long == "seed" {
-		// `seed`` is special in that we will later assign it randomly
+	if f.long == "random" {
+		// `random` is special in that we will later assign it randomly
 		// if the user specifies `--random` without specifying one,
 		// so mask the "default" value here to avoid UI confusion about
 		// what the value will end up being.
-		name += "=SEED"
+		name += "[=SEED]"
 	} else if f.dflt != "true" && f.dflt != "false" {
 		name += "=" + f.dflt
 	}

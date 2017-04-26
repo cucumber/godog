@@ -3,9 +3,7 @@ package godog
 import (
 	"fmt"
 	"io"
-	"math/rand"
 	"os"
-	"time"
 
 	"github.com/DATA-DOG/godog/colors"
 )
@@ -111,23 +109,17 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 	features, err := parseFeatures(opt.Tags, opt.Paths)
 	fatal(err)
 
-	// the actual seed value which will be propogated
-	// if left as nil value, then scenarios run sequentially
-	var seed int64
-	// use specified seed if exists, or assign one ourselves if
-	// none specified but user wants randomization
-	if opt.RandomSeed != 0 {
-		seed = opt.RandomSeed
-	} else if opt.Randomize && opt.RandomSeed == 0 {
-		r := rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
-		seed = r.Int63n(99998) + 1
+	// handle convenience condition where user specified `-1` in Options struct,
+	// asking us to choose the random value seed for them.
+	if opt.Randomize == -1 {
+		opt.Randomize.Choose()
 	}
 
 	r := runner{
 		fmt:           formatter(suite, output),
 		initializer:   contextInitializer,
 		features:      features,
-		randomSeed:    seed,
+		randomSeed:    int64(opt.Randomize),
 		stopOnFailure: opt.StopOnFailure,
 	}
 
