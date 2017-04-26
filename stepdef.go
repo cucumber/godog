@@ -53,7 +53,7 @@ func (sd *StepDef) definitionID() string {
 
 // run a step with the matched arguments using
 // reflect
-func (sd *StepDef) run() error {
+func (sd *StepDef) run() interface{} {
 	typ := sd.hv.Type()
 	if len(sd.args) < typ.NumIn() {
 		return fmt.Errorf("func expects %d arguments, which is more than %d matched from step", typ.NumIn(), len(sd.args))
@@ -171,12 +171,7 @@ func (sd *StepDef) run() error {
 			return fmt.Errorf("the argument %d type %s is not supported", i, param.Kind())
 		}
 	}
-	ret := sd.hv.Call(values)[0].Interface()
-	if nil == ret {
-		return nil
-	}
-
-	return ret.(error)
+	return sd.hv.Call(values)[0].Interface()
 }
 
 func (sd *StepDef) shouldBeString(idx int) (string, error) {

@@ -95,12 +95,25 @@ func (s *Suite) Step(expr interface{}, stepFunc interface{}) {
 	if typ.Kind() != reflect.Func {
 		panic(fmt.Sprintf("expected handler to be func, but got: %T", stepFunc))
 	}
+
 	if typ.NumOut() != 1 {
-		panic(fmt.Sprintf("expected handler to return an error, but it has more values in return: %d", typ.NumOut()))
+		panic(fmt.Sprintf("expected handler to return only one value, but it has: %d", typ.NumOut()))
 	}
-	if typ.Out(0).Kind() != reflect.Interface || !typ.Out(0).Implements(errorInterface) {
-		panic(fmt.Sprintf("expected handler to return an error interface, but we have: %s", typ.Out(0).Kind()))
+
+	typ = typ.Out(0)
+	switch typ.Kind() {
+	case reflect.Interface:
+		if !typ.Implements(errorInterface) {
+			panic(fmt.Sprintf("expected handler to return an error, but got: %s", typ.Kind()))
+		}
+	case reflect.Slice:
+		if typ.Elem().Kind() != reflect.String {
+			panic(fmt.Sprintf("expected handler to return []string for multistep, but got: []%s", typ.Kind()))
+		}
+	default:
+		panic(fmt.Sprintf("expected handler to return an error or []string, but got: %s", typ.Kind()))
 	}
+
 	s.steps = append(s.steps, &StepDef{
 		Handler: stepFunc,
 		Expr:    regex,
@@ -241,8 +254,49 @@ func (s *Suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
 		}
 	}()
 
-	err = match.run()
+	err = s.maybeSubSteps(match.run())
 	return
+}
+
+func (s *Suite) maybeSubSteps(result interface{}) error {
+	if nil == result {
+		return nil
+	}
+
+	if err, ok := result.(error); ok {
+		return err
+	}
+
+	steps, ok := result.([]string)
+	if !ok {
+		return fmt.Errorf("unexpected error, should have been []string: %T - %+v", result, result)
+	}
+
+	for _, step := range steps {
+		var def *StepDef
+		for _, h := range s.steps {
+			if m := h.Expr.FindStringSubmatch(step); len(m) > 0 {
+				var args []interface{}
+				for _, m := range m[1:] {
+					args = append(args, m)
+				}
+				h.args = args
+				def = h
+				break
+			}
+		}
+
+		if def == nil {
+			return ErrUndefined
+		}
+
+		// @TODO: step hooks only take gherkin.Step
+		// @TODO: cannot call formatter to register step execution either
+		if err := s.maybeSubSteps(def.run()); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *Suite) runSteps(steps []*gherkin.Step, prevErr error) (err error) {
