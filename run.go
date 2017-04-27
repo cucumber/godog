@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 
 	"github.com/DATA-DOG/godog/colors"
 )
@@ -11,6 +12,7 @@ import (
 type initializer func(*Suite)
 
 type runner struct {
+	randomSeed    int64
 	stopOnFailure bool
 	features      []*feature
 	fmt           Formatter
@@ -30,6 +32,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 			}
 			suite := &Suite{
 				fmt:           r.fmt,
+				randomSeed:    r.randomSeed,
 				stopOnFailure: r.stopOnFailure,
 				features:      []*feature{feat},
 			}
@@ -54,6 +57,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 func (r *runner) run() (failed bool) {
 	suite := &Suite{
 		fmt:           r.fmt,
+		randomSeed:    r.randomSeed,
 		stopOnFailure: r.stopOnFailure,
 		features:      r.features,
 	}
@@ -110,8 +114,12 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 		fmt:           formatter(suite, output),
 		initializer:   contextInitializer,
 		features:      features,
+		randomSeed:    opt.Randomize,
 		stopOnFailure: opt.StopOnFailure,
 	}
+
+	// store chosen seed in environment, so it could be seen in formatter summary report
+	os.Setenv("GODOG_SEED", strconv.FormatInt(r.randomSeed, 10))
 
 	var failed bool
 	if opt.Concurrency > 1 {

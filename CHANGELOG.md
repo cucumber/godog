@@ -1,5 +1,9 @@
 # Change LOG
 
+**2017-04-27**
+- added an option to randomize scenario execution order, so we could
+  ensure that scenarios do not depend on global state.
+
 **2016-10-30** - **v0.6.0**
 - added experimental **events** format, this might be used for unified
   cucumber formats. But should be not adapted widely, since it is highly
