@@ -14,6 +14,22 @@ import (
 
 var matchFuncDefRef = regexp.MustCompile(`\(([^\)]+)\)`)
 
+// Steps allows to nest steps
+// instead of returning an error in step func
+// it is possible to return combined steps:
+//
+//   func multistep(name string) godog.Steps {
+//     return godog.Steps{
+//       fmt.Sprintf(`an user named "%s"`, name),
+//       fmt.Sprintf(`user "%s" is authenticated`, name),
+//     }
+//   }
+//
+// These steps will be matched and executed in
+// sequential order. The first one which fails
+// will result in main step failure.
+type Steps []string
+
 // StepDef is a registered step definition
 // contains a StepHandler and regexp which
 // is used to match a step. Args which
@@ -27,6 +43,7 @@ type StepDef struct {
 	hv      reflect.Value
 	Expr    *regexp.Regexp
 	Handler interface{}
+	nested  bool
 }
 
 func (sd *StepDef) definitionID() string {

@@ -100,6 +100,12 @@ func (s *Suite) Step(expr interface{}, stepFunc interface{}) {
 		panic(fmt.Sprintf("expected handler to return only one value, but it has: %d", typ.NumOut()))
 	}
 
+	def := &StepDef{
+		Handler: stepFunc,
+		Expr:    regex,
+		hv:      v,
+	}
+
 	typ = typ.Out(0)
 	switch typ.Kind() {
 	case reflect.Interface:
@@ -107,6 +113,7 @@ func (s *Suite) Step(expr interface{}, stepFunc interface{}) {
 			panic(fmt.Sprintf("expected handler to return an error, but got: %s", typ.Kind()))
 		}
 	case reflect.Slice:
+		def.nested = true
 		if typ.Elem().Kind() != reflect.String {
 			panic(fmt.Sprintf("expected handler to return []string for multistep, but got: []%s", typ.Kind()))
 		}
@@ -114,11 +121,7 @@ func (s *Suite) Step(expr interface{}, stepFunc interface{}) {
 		panic(fmt.Sprintf("expected handler to return an error or []string, but got: %s", typ.Kind()))
 	}
 
-	s.steps = append(s.steps, &StepDef{
-		Handler: stepFunc,
-		Expr:    regex,
-		hv:      v,
-	})
+	s.steps = append(s.steps, def)
 }
 
 // BeforeSuite registers a function or method
@@ -197,27 +200,20 @@ func (s *Suite) run() {
 }
 
 func (s *Suite) matchStep(step *gherkin.Step) *StepDef {
-	for _, h := range s.steps {
-		if m := h.Expr.FindStringSubmatch(step.Text); len(m) > 0 {
-			var args []interface{}
-			for _, m := range m[1:] {
-				args = append(args, m)
-			}
-			if step.Argument != nil {
-				args = append(args, step.Argument)
-			}
-			h.args = args
-			return h
-		}
+	def := s.matchStepText(step.Text)
+	if def != nil && step.Argument != nil {
+		def.args = append(def.args, step.Argument)
 	}
-	// @TODO can handle ambiguous
-	return nil
+	return def
 }
 
 func (s *Suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
 	match := s.matchStep(step)
 	s.fmt.Defined(step, match)
-	if match == nil {
+
+	// @TODO custom undefined err here to pass step text for snippet
+	// @TODO user multistep definitions may panic
+	if s.maybeUndefined(match) {
 		s.fmt.Undefined(step)
 		return ErrUndefined
 	}
@@ -225,11 +221,6 @@ func (s *Suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
 	if prevStepErr != nil {
 		s.fmt.Skipped(step)
 		return nil
-	}
-
-	// run before step handlers
-	for _, f := range s.beforeStepHandlers {
-		f(step)
 	}
 
 	defer func() {
@@ -254,8 +245,30 @@ func (s *Suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
 		}
 	}()
 
+	// run before step handlers
+	for _, f := range s.beforeStepHandlers {
+		f(step)
+	}
+
 	err = s.maybeSubSteps(match.run())
 	return
+}
+
+func (s *Suite) maybeUndefined(step *StepDef) bool {
+	if nil == step {
+		return true
+	}
+
+	if !step.nested {
+		return false
+	}
+
+	for _, text := range step.run().(Steps) {
+		if s.maybeUndefined(s.matchStepText(text)) {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *Suite) maybeSubSteps(result interface{}) error {
@@ -267,33 +280,32 @@ func (s *Suite) maybeSubSteps(result interface{}) error {
 		return err
 	}
 
-	steps, ok := result.([]string)
+	steps, ok := result.(Steps)
 	if !ok {
 		return fmt.Errorf("unexpected error, should have been []string: %T - %+v", result, result)
 	}
 
-	for _, step := range steps {
-		var def *StepDef
-		for _, h := range s.steps {
-			if m := h.Expr.FindStringSubmatch(step); len(m) > 0 {
-				var args []interface{}
-				for _, m := range m[1:] {
-					args = append(args, m)
-				}
-				h.args = args
-				def = h
-				break
-			}
-		}
-
-		if def == nil {
+	for _, text := range steps {
+		if def := s.matchStepText(text); def == nil {
 			return ErrUndefined
-		}
-
-		// @TODO: step hooks only take gherkin.Step
-		// @TODO: cannot call formatter to register step execution either
-		if err := s.maybeSubSteps(def.run()); err != nil {
+		} else if err := s.maybeSubSteps(def.run()); err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+func (s *Suite) matchStepText(text string) *StepDef {
+	for _, h := range s.steps {
+		if m := h.Expr.FindStringSubmatch(text); len(m) > 0 {
+			var args []interface{}
+			for _, m := range m[1:] {
+				args = append(args, m)
+			}
+
+			// @TODO copy step def
+			h.args = args
+			return h
 		}
 	}
 	return nil

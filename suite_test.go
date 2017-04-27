@@ -89,6 +89,21 @@ func SuiteContext(s *Suite) {
 	// Introduced to test formatter/cucumber.feature
 	s.Step(`^the rendered json will be as follows:$`, c.theRenderJSONWillBe)
 
+	s.Step(`^failing multistep$`, func() Steps {
+		return Steps{"passing step", "failing step"}
+	})
+
+	s.Step(`^undefined multistep$`, func() Steps {
+		return Steps{"passing step", "undefined step", "passing step"}
+	})
+
+	s.Step(`^passing multistep$`, func() Steps {
+		return Steps{"passing step", "passing step", "passing step"}
+	})
+
+	s.Step(`^failing nested multistep$`, func() Steps {
+		return Steps{"passing step", "passing multistep", "failing multistep"}
+	})
 }
 
 type firedEvent struct {
