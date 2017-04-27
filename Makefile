@@ -1,4 +1,4 @@
-.PHONY: test gherkin bump
+.PHONY: test gherkin bump cover
 
 VERS := $(shell grep 'const Version' -m 1 godog.go | awk -F\" '{print $$2}')
 
@@ -25,3 +25,8 @@ bump:
 	@sed -i.bak 's/$(VERS)/$(VERSION)/g' godog.go
 	@sed -i.bak 's/$(VERS)/$(VERSION)/g' examples/api/version.feature
 	@find . -name '*.bak' | xargs rm
+
+cover:
+	go test -race -coverprofile=coverage.txt
+	go tool cover -html=coverage.txt
+	rm coverage.txt

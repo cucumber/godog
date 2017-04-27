@@ -3,7 +3,7 @@ go:
   - 1.5
   - 1.6
   - 1.7
-  - tip
+  - 1.8
 
 go_import_path: github.com/DATA-DOG/godog
 

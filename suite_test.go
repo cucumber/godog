@@ -11,17 +11,29 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/godog/gherkin"
 )
 
 func TestMain(m *testing.M) {
-	status := RunWithOptions("godogs", func(s *Suite) {
+	format := "progress" // non verbose mode
+	concurrency := 4
+
+	for _, arg := range os.Args[1:] {
+		if arg == "-test.v=true" { // go test transforms -v option - verbose mode
+			format = "pretty"
+			concurrency = 1
+			break
+		}
+	}
+	status := RunWithOptions("godog", func(s *Suite) {
 		SuiteContext(s)
 	}, Options{
-		Format:      "progress",
+		Format:      format, // pretty format for verbose mode, otherwise - progress
 		Paths:       []string{"features"},
-		Concurrency: 4,
+		Concurrency: concurrency,           // concurrency for verbose mode is 1
+		Randomize:   time.Now().UnixNano(), // randomize scenario execution order
 	})
 
 	if st := m.Run(); st > status {

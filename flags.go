@@ -35,7 +35,7 @@ var descRandomOption = "Randomly shuffle the scenario execution order.\n" +
 
 // FlagSet allows to manage flags by external suite runner
 func FlagSet(opt *Options) *flag.FlagSet {
-	descFormatOption := "How to format tests output. Available formats:\n"
+	descFormatOption := "How to format tests output. Built-in formats:\n"
 	// @TODO: sort by name
 	for name, desc := range AvailableFormatters() {
 		descFormatOption += s(4) + "- " + colors.Yellow(name) + ": " + desc + "\n"
