@@ -132,7 +132,7 @@ func usage(set *flag.FlagSet, w io.Writer) func() {
 
 		// --- GENERAL ---
 		fmt.Fprintln(w, colors.Yellow("Usage:"))
-		fmt.Printf(s(2) + "godog [options] [<features>]\n\n")
+		fmt.Fprintf(w, s(2)+"godog [options] [<features>]\n\n")
 		// description
 		fmt.Fprintln(w, "Builds a test package and runs given feature files.")
 		fmt.Fprintf(w, "Command should be run from the directory of tested package and contain buildable go source.\n\n")
