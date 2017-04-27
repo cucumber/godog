@@ -297,12 +297,19 @@ func (s *suiteContext) iShouldHaveNumFeatureFiles(num int, files *gherkin.DocStr
 		return fmt.Errorf("expected %d feature paths to be parsed, but have %d", len(expected), len(actual))
 	}
 	for i := 0; i < len(expected); i++ {
+		var matched bool
 		split := strings.Split(expected[i], "/")
 		exp := filepath.Join(split...)
-		split = strings.Split(actual[i], "/")
-		act := filepath.Join(split...)
-		if exp != act {
-			return fmt.Errorf(`expected feature path "%s" at position: %d, does not match actual "%s"`, exp, i, act)
+		for j := 0; j < len(actual); j++ {
+			split = strings.Split(actual[j], "/")
+			act := filepath.Join(split...)
+			if exp == act {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return fmt.Errorf(`expected feature path "%s" at position: %d, was not parsed, actual are %+v`, exp, i, actual)
 		}
 	}
 	return nil

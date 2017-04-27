@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -467,15 +466,8 @@ func parseFeatures(filter string, paths []string) (features []*feature, err erro
 			return features, err
 		}
 	}
-	sort.Sort(featuresSortedByPath(features))
 	return
 }
-
-type featuresSortedByPath []*feature
-
-func (s featuresSortedByPath) Len() int           { return len(s) }
-func (s featuresSortedByPath) Less(i, j int) bool { return s[i].Path < s[j].Path }
-func (s featuresSortedByPath) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 func applyTagFilter(tags string, ft *gherkin.Feature) {
 	if len(tags) == 0 {
