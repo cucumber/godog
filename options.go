@@ -2,9 +2,6 @@ package godog
 
 import (
 	"io"
-	"math/rand"
-	"strconv"
-	"time"
 )
 
 // Options are suite run options
@@ -33,7 +30,7 @@ type Options struct {
 	// Any other value will be used as the random seed for shuffling. Re-using the
 	// same seed will allow you to reproduce the shuffle order of a previous run
 	// to isolate an error condition.
-	Randomize randomSeed
+	Randomize int64
 
 	// Stops on the first failure
 	StopOnFailure bool
@@ -56,41 +53,4 @@ type Options struct {
 
 	// Where it should print formatter output
 	Output io.Writer
-}
-
-// randomSeed implements `flag.Value`, see https://golang.org/pkg/flag/#Value
-type randomSeed int64
-
-// Choose randomly assigns a convenient pseudo-random seed value.
-// The resulting seed will be between `1-99999` for later ease of specification.
-func (rs *randomSeed) Choose() {
-	r := rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
-	*rs = randomSeed(r.Int63n(99998) + 1)
-}
-
-func (rs *randomSeed) Set(s string) error {
-	if s == "true" {
-		rs.Choose()
-		return nil
-	}
-
-	if s == "false" {
-		*rs = 0
-		return nil
-	}
-
-	i, err := strconv.ParseInt(s, 10, 64)
-	*rs = randomSeed(i)
-	return err
-}
-
-func (rs randomSeed) String() string {
-	return strconv.FormatInt(int64(rs), 10)
-}
-
-// If a Value has an IsBoolFlag() bool method returning true, the command-line
-// parser makes -name equivalent to -name=true rather than using the next
-// command-line argument.
-func (rs *randomSeed) IsBoolFlag() bool {
-	return *rs == 0
 }

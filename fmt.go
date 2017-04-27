@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"os"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -318,6 +320,13 @@ func (f *basefmt) Summary() {
 		fmt.Fprintln(f.out, fmt.Sprintf("%d steps (%s)", nsteps, strings.Join(steps, ", ")))
 	}
 	fmt.Fprintln(f.out, elapsed)
+
+	// prints used randomization seed
+	seed, err := strconv.ParseInt(os.Getenv("GODOG_SEED"), 10, 64)
+	if err == nil && seed != 0 {
+		fmt.Fprintln(f.out, "")
+		fmt.Fprintln(f.out, "Randomized with seed:", colors.Yellow(seed))
+	}
 
 	if text := f.snippets(); text != "" {
 		fmt.Fprintln(f.out, yellow("\nYou can implement step definitions for undefined steps with these snippets:"))

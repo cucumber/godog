@@ -4,7 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"math/rand"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/DATA-DOG/godog/colors"
 )
@@ -50,7 +53,7 @@ func FlagSet(opt *Options) *flag.FlagSet {
 	set.BoolVar(&opt.ShowStepDefinitions, "d", false, "Print all available step definitions.")
 	set.BoolVar(&opt.StopOnFailure, "stop-on-failure", false, "Stop processing on first failed scenario.")
 	set.BoolVar(&opt.NoColors, "no-colors", false, "Disable ansi colors.")
-	set.Var(&opt.Randomize, "random", descRandomOption)
+	set.Var(&randomSeed{&opt.Randomize}, "random", descRandomOption)
 	set.Usage = usage(set, opt.Output)
 	return set
 }
@@ -146,4 +149,43 @@ func usage(set *flag.FlagSet, w io.Writer) func() {
 		}
 		fmt.Fprintln(w, "")
 	}
+}
+
+// randomSeed implements `flag.Value`, see https://golang.org/pkg/flag/#Value
+type randomSeed struct {
+	ref *int64
+}
+
+// Choose randomly assigns a convenient pseudo-random seed value.
+// The resulting seed will be between `1-99999` for later ease of specification.
+func (rs *randomSeed) choose() {
+	r := rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
+	*rs.ref = r.Int63n(99998) + 1
+}
+
+func (rs *randomSeed) Set(s string) error {
+	if s == "true" {
+		rs.choose()
+		return nil
+	}
+
+	if s == "false" {
+		*rs.ref = 0
+		return nil
+	}
+
+	i, err := strconv.ParseInt(s, 10, 64)
+	*rs.ref = i
+	return err
+}
+
+func (rs randomSeed) String() string {
+	return strconv.FormatInt(*rs.ref, 10)
+}
+
+// If a Value has an IsBoolFlag() bool method returning true, the command-line
+// parser makes -name equivalent to -name=true rather than using the next
+// command-line argument.
+func (rs *randomSeed) IsBoolFlag() bool {
+	return *rs.ref == 0
 }

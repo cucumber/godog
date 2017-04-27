@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 
 	"github.com/DATA-DOG/godog/colors"
 )
@@ -109,19 +110,16 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 	features, err := parseFeatures(opt.Tags, opt.Paths)
 	fatal(err)
 
-	// handle convenience condition where user specified `-1` in Options struct,
-	// asking us to choose the random value seed for them.
-	if opt.Randomize == -1 {
-		opt.Randomize.Choose()
-	}
-
 	r := runner{
 		fmt:           formatter(suite, output),
 		initializer:   contextInitializer,
 		features:      features,
-		randomSeed:    int64(opt.Randomize),
+		randomSeed:    opt.Randomize,
 		stopOnFailure: opt.StopOnFailure,
 	}
+
+	// store chosen seed in environment, so it could be seen in formatter summary report
+	os.Setenv("GODOG_SEED", strconv.FormatInt(r.randomSeed, 10))
 
 	var failed bool
 	if opt.Concurrency > 1 {
