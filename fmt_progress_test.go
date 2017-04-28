@@ -20,18 +20,19 @@ func TestProgressFormatterOutput(t *testing.T) {
 
 	var buf bytes.Buffer
 	w := colors.Uncolored(&buf)
-	s := &Suite{
+	r := runner{
 		fmt: progressFunc("progress", w),
 		features: []*feature{&feature{
 			Path:    "any.feature",
 			Feature: feat,
 			Content: []byte(sampleGherkinFeature),
 		}},
+		initializer: func(s *Suite) {
+			s.Step(`^passing$`, func() error { return nil })
+			s.Step(`^failing$`, func() error { return fmt.Errorf("errored") })
+			s.Step(`^pending$`, func() error { return ErrPending })
+		},
 	}
-
-	s.Step(`^passing$`, func() error { return nil })
-	s.Step(`^failing$`, func() error { return fmt.Errorf("errored") })
-	s.Step(`^pending$`, func() error { return ErrPending })
 
 	// var zeroDuration time.Duration
 	expected := `
@@ -72,8 +73,7 @@ func FeatureContext(s *godog.Suite) {
 	expected = fmt.Sprintf(expected, zeroDuration.String(), os.Getenv("GODOG_SEED"))
 	expected = trimAllLines(expected)
 
-	s.run()
-	s.fmt.Summary()
+	r.run()
 
 	actual := trimAllLines(buf.String())
 	if actual != expected {
