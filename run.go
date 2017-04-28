@@ -90,7 +90,7 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 	if opt.ShowStepDefinitions {
 		s := &Suite{}
 		contextInitializer(s)
-		s.printStepDefinitions()
+		s.printStepDefinitions(output)
 		return 0
 	}
 

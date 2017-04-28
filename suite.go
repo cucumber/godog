@@ -389,7 +389,7 @@ func (s *Suite) runScenario(scenario *gherkin.Scenario, b *gherkin.Background) (
 	return
 }
 
-func (s *Suite) printStepDefinitions() {
+func (s *Suite) printStepDefinitions(w io.Writer) {
 	var longest int
 	for _, def := range s.steps {
 		n := utf8.RuneCountInString(def.Expr.String())
@@ -401,10 +401,10 @@ func (s *Suite) printStepDefinitions() {
 		n := utf8.RuneCountInString(def.Expr.String())
 		location := def.definitionID()
 		spaces := strings.Repeat(" ", longest-n)
-		fmt.Println(yellow(def.Expr.String())+spaces, black("# "+location))
+		fmt.Fprintln(w, yellow(def.Expr.String())+spaces, black("# "+location))
 	}
 	if len(s.steps) == 0 {
-		fmt.Println("there were no contexts registered, could not find any step definition..")
+		fmt.Fprintln(w, "there were no contexts registered, could not find any step definition..")
 	}
 }
 
