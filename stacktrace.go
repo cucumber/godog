@@ -2,8 +2,10 @@ package godog
 
 import (
 	"fmt"
+	"go/build"
 	"io"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 )
@@ -23,6 +25,13 @@ func (f stackFrame) file() string {
 		return "unknown"
 	}
 	file, _ := fn.FileLine(f.pc())
+	return file
+}
+
+func trimGoPath(file string) string {
+	for _, p := range filepath.SplitList(build.Default.GOPATH) {
+		file = strings.Replace(file, filepath.Join(p, "src")+string(filepath.Separator), "", 1)
+	}
 	return file
 }
 
@@ -66,7 +75,7 @@ func (f stackFrame) Format(s fmt.State, verb rune) {
 				io.WriteString(s, "unknown")
 			} else {
 				file, _ := fn.FileLine(pc)
-				fmt.Fprintf(s, "%s\n\t%s", fn.Name(), file)
+				fmt.Fprintf(s, "%s\n\t%s", fn.Name(), trimGoPath(file))
 			}
 		default:
 			io.WriteString(s, path.Base(f.file()))
