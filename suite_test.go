@@ -415,9 +415,8 @@ func (s *suiteContext) theRenderJSONWillBe(docstring *gherkin.DocString) error {
 	}
 
 	var actual []cukeFeatureJSON
-	re := regexp.MustCompile(`"duration":\s*\d+`)
-	replaced := re.ReplaceAllString(s.out.String(), `"duration": -1`)
-	if err := json.Unmarshal([]byte(loc.ReplaceAllString(replaced, `"suite_test.go:0"`)), &actual); err != nil {
+	replaced := loc.ReplaceAllString(s.out.String(), `"suite_test.go:0"`)
+	if err := json.Unmarshal([]byte(replaced), &actual); err != nil {
 		return err
 	}
 

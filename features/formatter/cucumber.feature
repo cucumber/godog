@@ -261,7 +261,7 @@ Feature: cucumber json formatter
                   },
                   "result": {
                     "status": "passed",
-                    "duration": -1
+                    "duration": 0
                   }
                 },
                 {
@@ -274,7 +274,7 @@ Feature: cucumber json formatter
                   "result": {
                     "status": "failed",
                     "error_message": "intentional failure",
-                    "duration": -1
+                    "duration": 0
                   }
                 }
               ]
@@ -329,7 +329,7 @@ Feature: cucumber json formatter
                   },
                   "result": {
                     "status": "passed",
-                    "duration": -1
+                    "duration": 0
                   }
                 }
               ]
@@ -352,7 +352,7 @@ Feature: cucumber json formatter
                   "result": {
                     "status": "failed",
                     "error_message": "intentional failure",
-                    "duration": -1
+                    "duration": 0
                   }
                 }
               ]
@@ -452,7 +452,7 @@ Feature: cucumber json formatter
                 },
                 "result": {
                   "status": "passed",
-                  "duration": -1
+                  "duration": 0
                 }
               }
             ]
@@ -505,7 +505,7 @@ Feature: cucumber json formatter
                   },
                   "result": {
                     "status": "passed",
-                    "duration": -1
+                    "duration": 0
                   }
                 },
                 {

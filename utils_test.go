@@ -5,6 +5,9 @@ import (
 	"time"
 )
 
+// this zeroes the time throughout whole test suite
+// and makes it easier to assert output
+// activated only when godog tests are being run
 func init() {
 	timeNowFunc = func() time.Time {
 		return time.Time{}
