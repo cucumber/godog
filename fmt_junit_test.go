@@ -49,7 +49,7 @@ Feature: junit formatter
       | passing | undefined |
 `
 
-func TestJUnitSimpleFeature(t *testing.T) {
+func TestJUnitFormatterOutput(t *testing.T) {
 	feat, err := gherkin.ParseFeature(strings.NewReader(sampleGherkinFeature))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

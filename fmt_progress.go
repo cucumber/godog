@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"strings"
 	"sync"
 
 	"github.com/DATA-DOG/godog/gherkin"
@@ -57,7 +58,7 @@ func (f *progress) Summary() {
 	if len(f.failed) > 0 {
 		fmt.Fprintln(f.out, "\n--- "+red("Failed steps:")+"\n")
 		for _, fail := range f.failed {
-			fmt.Fprintln(f.out, s(4)+red(fail.step.Keyword+" "+fail.step.Text)+black(" # "+fail.line()))
+			fmt.Fprintln(f.out, s(4)+red(strings.TrimSpace(fail.step.Keyword)+" "+fail.step.Text)+black(" # "+fail.line()))
 			fmt.Fprintln(f.out, s(6)+red("Error: ")+redb(fmt.Sprintf("%+v", fail.err))+"\n")
 		}
 	}
