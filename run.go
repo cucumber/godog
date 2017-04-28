@@ -54,7 +54,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 	return
 }
 
-func (r *runner) run() (failed bool) {
+func (r *runner) run() bool {
 	suite := &Suite{
 		fmt:           r.fmt,
 		randomSeed:    r.randomSeed,

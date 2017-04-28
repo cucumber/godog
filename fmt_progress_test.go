@@ -34,7 +34,6 @@ func TestProgressFormatterOutput(t *testing.T) {
 		},
 	}
 
-	// var zeroDuration time.Duration
 	expected := `
 ...F-.P-.UU.....F..P..U 23
 
@@ -87,4 +86,114 @@ func trimAllLines(s string) string {
 		lines = append(lines, strings.TrimSpace(ln))
 	}
 	return strings.Join(lines, "\n")
+}
+
+var basicGherkinFeature = `
+Feature: basic
+
+  Scenario: passing scenario
+	When step1
+	Then step2
+`
+
+func TestProgressFormatterWhenStepPanics(t *testing.T) {
+	feat, err := gherkin.ParseFeature(strings.NewReader(basicGherkinFeature))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var buf bytes.Buffer
+	w := colors.Uncolored(&buf)
+	r := runner{
+		fmt:      progressFunc("progress", w),
+		features: []*feature{&feature{Feature: feat}},
+		initializer: func(s *Suite) {
+			s.Step(`^step1$`, func() error { return nil })
+			s.Step(`^step2$`, func() error { panic("omg") })
+		},
+	}
+
+	if !r.run() {
+		t.Fatal("the suite should have failed")
+	}
+
+	out := buf.String()
+	if idx := strings.Index(out, "github.com/DATA-DOG/godog/fmt_progress_test.go:116"); idx == -1 {
+		t.Fatal("expected to find panic stacktrace")
+	}
+}
+
+func TestProgressFormatterWithPassingMultisteps(t *testing.T) {
+	feat, err := gherkin.ParseFeature(strings.NewReader(basicGherkinFeature))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var buf bytes.Buffer
+	w := colors.Uncolored(&buf)
+	r := runner{
+		fmt:      progressFunc("progress", w),
+		features: []*feature{&feature{Feature: feat}},
+		initializer: func(s *Suite) {
+			s.Step(`^sub1$`, func() error { return nil })
+			s.Step(`^sub-sub$`, func() error { return nil })
+			s.Step(`^sub2$`, func() Steps { return Steps{"sub-sub", "sub1", "step1"} })
+			s.Step(`^step1$`, func() error { return nil })
+			s.Step(`^step2$`, func() Steps { return Steps{"sub1", "sub2"} })
+		},
+	}
+
+	if r.run() {
+		t.Fatal("the suite should have passed")
+	}
+}
+
+func TestProgressFormatterWithFailingMultisteps(t *testing.T) {
+	feat, err := gherkin.ParseFeature(strings.NewReader(basicGherkinFeature))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var buf bytes.Buffer
+	w := colors.Uncolored(&buf)
+	r := runner{
+		fmt:      progressFunc("progress", w),
+		features: []*feature{&feature{Feature: feat}},
+		initializer: func(s *Suite) {
+			s.Step(`^sub1$`, func() error { return nil })
+			s.Step(`^sub-sub$`, func() error { return fmt.Errorf("errored") })
+			s.Step(`^sub2$`, func() Steps { return Steps{"sub-sub", "sub1", "step1"} })
+			s.Step(`^step1$`, func() error { return nil })
+			s.Step(`^step2$`, func() Steps { return Steps{"sub1", "sub2"} })
+		},
+	}
+
+	if !r.run() {
+		t.Fatal("the suite should have failed")
+	}
+}
+
+func TestProgressFormatterWithPanicInMultistep(t *testing.T) {
+	feat, err := gherkin.ParseFeature(strings.NewReader(basicGherkinFeature))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var buf bytes.Buffer
+	w := colors.Uncolored(&buf)
+	r := runner{
+		fmt:      progressFunc("progress", w),
+		features: []*feature{&feature{Feature: feat}},
+		initializer: func(s *Suite) {
+			s.Step(`^sub1$`, func() error { return nil })
+			s.Step(`^sub-sub$`, func() error { return nil })
+			s.Step(`^sub2$`, func() []string { return []string{"sub-sub", "sub1", "step1"} })
+			s.Step(`^step1$`, func() error { return nil })
+			s.Step(`^step2$`, func() []string { return []string{"sub1", "sub2"} })
+		},
+	}
+
+	if !r.run() {
+		t.Fatal("the suite should have failed")
+	}
 }

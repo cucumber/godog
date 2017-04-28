@@ -211,18 +211,7 @@ func (s *Suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
 	match := s.matchStep(step)
 	s.fmt.Defined(step, match)
 
-	// @TODO custom undefined err here to pass step text for snippet
-	// @TODO user multistep definitions may panic
-	if s.maybeUndefined(match) {
-		s.fmt.Undefined(step)
-		return ErrUndefined
-	}
-
-	if prevStepErr != nil {
-		s.fmt.Skipped(step)
-		return nil
-	}
-
+	// user multistep definitions may panic
 	defer func() {
 		if e := recover(); e != nil {
 			err = &traceError{
@@ -230,6 +219,15 @@ func (s *Suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
 				stack: callStack(),
 			}
 		}
+
+		if prevStepErr != nil {
+			return
+		}
+
+		if err == ErrUndefined {
+			return
+		}
+
 		switch err {
 		case nil:
 			s.fmt.Passed(step, match)
@@ -244,6 +242,17 @@ func (s *Suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
 			f(step, err)
 		}
 	}()
+
+	// @TODO custom undefined err here to pass step text for snippet
+	if s.maybeUndefined(match) {
+		s.fmt.Undefined(step)
+		return ErrUndefined
+	}
+
+	if prevStepErr != nil {
+		s.fmt.Skipped(step)
+		return nil
+	}
 
 	// run before step handlers
 	for _, f := range s.beforeStepHandlers {
@@ -303,9 +312,15 @@ func (s *Suite) matchStepText(text string) *StepDef {
 				args = append(args, m)
 			}
 
-			// @TODO copy step def
-			h.args = args
-			return h
+			// since we need to assign arguments
+			// better to copy the step definition
+			return &StepDef{
+				args:    args,
+				hv:      h.hv,
+				Expr:    h.Expr,
+				Handler: h.Handler,
+				nested:  h.nested,
+			}
 		}
 	}
 	return nil
