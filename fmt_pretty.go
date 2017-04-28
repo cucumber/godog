@@ -6,7 +6,6 @@ import (
 	"math"
 	"regexp"
 	"strings"
-	"time"
 	"unicode/utf8"
 
 	"github.com/DATA-DOG/godog/colors"
@@ -20,7 +19,7 @@ func init() {
 func prettyFunc(suite string, out io.Writer) Formatter {
 	return &pretty{
 		basefmt: basefmt{
-			started: time.Now(),
+			started: timeNowFunc(),
 			indent:  2,
 			out:     out,
 		},

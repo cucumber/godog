@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/DATA-DOG/godog/colors"
 )
@@ -32,4 +33,8 @@ func fatal(err error) {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+var timeNowFunc = func() time.Time {
+	return time.Now()
 }

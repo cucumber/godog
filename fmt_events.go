@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"time"
 
 	"github.com/DATA-DOG/godog/gherkin"
 )
@@ -19,7 +18,7 @@ func init() {
 func eventsFunc(suite string, out io.Writer) Formatter {
 	formatter := &events{
 		basefmt: basefmt{
-			started: time.Now(),
+			started: timeNowFunc(),
 			indent:  2,
 			out:     out,
 		},
@@ -33,7 +32,7 @@ func eventsFunc(suite string, out io.Writer) Formatter {
 	}{
 		"TestRunStarted",
 		spec,
-		time.Now().UnixNano() / nanoSec,
+		timeNowFunc().UnixNano() / nanoSec,
 		suite,
 	})
 
@@ -87,7 +86,7 @@ func (f *events) Node(n interface{}) {
 	}{
 		"TestCaseStarted",
 		id,
-		time.Now().UnixNano() / nanoSec,
+		timeNowFunc().UnixNano() / nanoSec,
 	})
 
 	if undefined {
@@ -101,7 +100,7 @@ func (f *events) Node(n interface{}) {
 		}{
 			"TestCaseFinished",
 			id,
-			time.Now().UnixNano() / nanoSec,
+			timeNowFunc().UnixNano() / nanoSec,
 			"undefined",
 		})
 	}
@@ -148,7 +147,7 @@ func (f *events) Summary() {
 	}{
 		"TestRunFinished",
 		status.String(),
-		time.Now().UnixNano() / nanoSec,
+		timeNowFunc().UnixNano() / nanoSec,
 		snips,
 		"", // @TODO not sure that could be correctly implemented
 	})
@@ -168,7 +167,7 @@ func (f *events) step(res *stepResult) {
 	}{
 		"TestStepFinished",
 		fmt.Sprintf("%s:%d", f.path, res.step.Location.Line),
-		time.Now().UnixNano() / nanoSec,
+		timeNowFunc().UnixNano() / nanoSec,
 		res.typ.String(),
 		errMsg,
 	})
@@ -194,7 +193,7 @@ func (f *events) step(res *stepResult) {
 		}{
 			"TestCaseFinished",
 			fmt.Sprintf("%s:%d", f.path, line),
-			time.Now().UnixNano() / nanoSec,
+			timeNowFunc().UnixNano() / nanoSec,
 			f.stat.String(),
 		})
 	}
@@ -236,7 +235,7 @@ func (f *events) Defined(step *gherkin.Step, def *StepDef) {
 	}{
 		"TestStepStarted",
 		fmt.Sprintf("%s:%d", f.path, step.Location.Line),
-		time.Now().UnixNano() / nanoSec,
+		timeNowFunc().UnixNano() / nanoSec,
 	})
 }
 

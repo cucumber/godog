@@ -305,7 +305,7 @@ func (f *basefmt) Summary() {
 		scenarios = append(scenarios, green(fmt.Sprintf("%d passed", passed)))
 	}
 	scenarios = append(scenarios, parts...)
-	elapsed := time.Since(f.started)
+	elapsed := timeNowFunc().Sub(f.started)
 
 	fmt.Fprintln(f.out, "")
 	if total == 0 {

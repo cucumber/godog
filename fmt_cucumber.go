@@ -29,7 +29,7 @@ func init() {
 func cucumberFunc(suite string, out io.Writer) Formatter {
 	formatter := &cukefmt{
 		basefmt: basefmt{
-			started: time.Now(),
+			started: timeNowFunc(),
 			indent:  2,
 			out:     out,
 		},
@@ -252,7 +252,7 @@ func (f *cukefmt) step(res *stepResult) {
 	// determine if test case has finished
 	switch t := f.owner.(type) {
 	case *gherkin.TableRow:
-		d := int(time.Since(f.startTime).Nanoseconds())
+		d := int(timeNowFunc().Sub(f.startTime).Nanoseconds())
 		f.curStep.Result.Duration = &d
 		f.curStep.Line = t.Location.Line
 		f.curStep.Result.Status = res.typ.String()
@@ -260,7 +260,7 @@ func (f *cukefmt) step(res *stepResult) {
 			f.curStep.Result.Error = res.err.Error()
 		}
 	case *gherkin.Scenario:
-		d := int(time.Since(f.startTime).Nanoseconds())
+		d := int(timeNowFunc().Sub(f.startTime).Nanoseconds())
 		f.curStep.Result.Duration = &d
 		f.curStep.Result.Status = res.typ.String()
 		if res.err != nil {
@@ -271,7 +271,7 @@ func (f *cukefmt) step(res *stepResult) {
 
 func (f *cukefmt) Defined(step *gherkin.Step, def *StepDef) {
 
-	f.startTime = time.Now() // start timing the step
+	f.startTime = timeNowFunc() // start timing the step
 	f.curElement.Steps = append(f.curElement.Steps, cukeStep{})
 	f.curStep = &f.curElement.Steps[len(f.curElement.Steps)-1]
 

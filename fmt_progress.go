@@ -5,7 +5,6 @@ import (
 	"io"
 	"math"
 	"sync"
-	"time"
 
 	"github.com/DATA-DOG/godog/gherkin"
 )
@@ -17,7 +16,7 @@ func init() {
 func progressFunc(suite string, out io.Writer) Formatter {
 	return &progress{
 		basefmt: basefmt{
-			started: time.Now(),
+			started: timeNowFunc(),
 			indent:  2,
 			out:     out,
 		},

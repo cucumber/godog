@@ -21,7 +21,7 @@ func junitFunc(suite string, out io.Writer) Formatter {
 			TestSuites: make([]*junitTestSuite, 0),
 		},
 		out:     out,
-		started: time.Now(),
+		started: timeNowFunc(),
 	}
 }
 
@@ -45,9 +45,9 @@ func (j *junitFormatter) Feature(feature *gherkin.Feature, path string, c []byte
 	}
 
 	if len(j.suite.TestSuites) > 0 {
-		j.current().Time = time.Since(j.featStarted).String()
+		j.current().Time = timeNowFunc().Sub(j.featStarted).String()
 	}
-	j.featStarted = time.Now()
+	j.featStarted = timeNowFunc()
 	j.suite.TestSuites = append(j.suite.TestSuites, testSuite)
 }
 
@@ -79,9 +79,9 @@ func (j *junitFormatter) Node(node interface{}) {
 		return
 	}
 	if len(suite.TestCases) > 0 {
-		suite.current().Time = time.Since(j.caseStarted).String()
+		suite.current().Time = timeNowFunc().Sub(j.caseStarted).String()
 	}
-	j.caseStarted = time.Now()
+	j.caseStarted = timeNowFunc()
 	suite.TestCases = append(suite.TestCases, tcase)
 }
 
@@ -134,7 +134,7 @@ func (j *junitFormatter) Pending(step *gherkin.Step, match *StepDef) {
 }
 
 func (j *junitFormatter) Summary() {
-	j.suite.Time = time.Since(j.started).String()
+	j.suite.Time = timeNowFunc().Sub(j.started).String()
 	io.WriteString(j.out, xml.Header)
 
 	enc := xml.NewEncoder(j.out)
