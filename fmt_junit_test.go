@@ -7,6 +7,7 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/godog/colors"
 	"github.com/DATA-DOG/godog/gherkin"
@@ -69,30 +70,31 @@ func TestJUnitSimpleFeature(t *testing.T) {
 	s.Step(`^failing$`, func() error { return fmt.Errorf("errored") })
 	s.Step(`^pending$`, func() error { return ErrPending })
 
+	var zeroDuration time.Duration
 	expected := junitPackageSuite{
 		Name:     "junit",
 		Tests:    8,
 		Skipped:  0,
 		Failures: 2,
 		Errors:   4,
-		Time:     "0s",
+		Time:     zeroDuration.String(),
 		TestSuites: []*junitTestSuite{{
 			Name:     "junit formatter",
 			Tests:    8,
 			Skipped:  0,
 			Failures: 2,
 			Errors:   4,
-			Time:     "0s",
+			Time:     zeroDuration.String(),
 			TestCases: []*junitTestCase{
 				{
 					Name:   "passing scenario",
 					Status: "passed",
-					Time:   "0s",
+					Time:   zeroDuration.String(),
 				},
 				{
 					Name:   "failing scenario",
 					Status: "failed",
-					Time:   "0s",
+					Time:   zeroDuration.String(),
 					Failure: &junitFailure{
 						Message: "Step failing: errored",
 					},
@@ -103,7 +105,7 @@ func TestJUnitSimpleFeature(t *testing.T) {
 				{
 					Name:   "pending scenario",
 					Status: "pending",
-					Time:   "0s",
+					Time:   zeroDuration.String(),
 					Error: []*junitError{
 						{Message: "Step pending: TODO: write pending definition", Type: "pending"},
 						{Message: "Step passing", Type: "skipped"},
@@ -112,7 +114,7 @@ func TestJUnitSimpleFeature(t *testing.T) {
 				{
 					Name:   "undefined scenario",
 					Status: "undefined",
-					Time:   "0s",
+					Time:   zeroDuration.String(),
 					Error: []*junitError{
 						{Message: "Step undefined", Type: "undefined"},
 						{Message: "Step next undefined", Type: "undefined"},
@@ -121,12 +123,12 @@ func TestJUnitSimpleFeature(t *testing.T) {
 				{
 					Name:   "outline #1",
 					Status: "passed",
-					Time:   "0s",
+					Time:   zeroDuration.String(),
 				},
 				{
 					Name:   "outline #2",
 					Status: "failed",
-					Time:   "0s",
+					Time:   zeroDuration.String(),
 					Failure: &junitFailure{
 						Message: "Step failing: errored",
 					},
@@ -134,7 +136,7 @@ func TestJUnitSimpleFeature(t *testing.T) {
 				{
 					Name:   "outline #3",
 					Status: "pending",
-					Time:   "0s",
+					Time:   zeroDuration.String(),
 					Error: []*junitError{
 						{Message: "Step pending: TODO: write pending definition", Type: "pending"},
 					},
@@ -142,7 +144,7 @@ func TestJUnitSimpleFeature(t *testing.T) {
 				{
 					Name:   "outline #4",
 					Status: "undefined",
-					Time:   "0s",
+					Time:   zeroDuration.String(),
 					Error: []*junitError{
 						{Message: "Step undefined", Type: "undefined"},
 					},
