@@ -254,6 +254,18 @@ There are no global options or configuration files. Alias your common or
 project based commands: `alias godog-wip="godog --format=progress
 --tags=@wip"`
 
+#### Testing browser interactions
+
+**godog** does not come with builtin packages to connect to the browser.
+You may want to look at [selenium](http://www.seleniumhq.org/) and
+probably [phantomjs](http://phantomjs.org/). See also the following
+components:
+
+1. [browsersteps](https://github.com/llonchj/browsersteps) - provides
+   basic context steps to start selenium and navigate browser content.
+2. You may wish to have [goquery](https://github.com/PuerkitoBio/goquery)
+   in order to work with HTML responses like with JQuery.
+
 ### Contributions
 
 Feel free to open a pull request. Note, if you wish to contribute an extension to public (exported methods or types) -
@@ -262,13 +274,15 @@ and will be treated cautiously.
 
 ### License
 
-All package dependencies are **MIT** or **BSD** licensed.
-
 **Godog** is licensed under the [three clause BSD license][license]
+
+**Gherkin** is licensed under the [MIT][gherkin-license] and developed as
+a part of the [cucumber project][cucumber]
 
 [godoc]: http://godoc.org/github.com/DATA-DOG/godog "Documentation on godoc"
 [golang]: https://golang.org/  "GO programming language"
 [behat]: http://docs.behat.org/ "Behavior driven development framework for PHP"
-[cucumber]: https://cucumber.io/ "Behavior driven development framework for Ruby"
+[cucumber]: https://cucumber.io/ "Behavior driven development framework"
 [gherkin]: https://github.com/cucumber/gherkin-go "Gherkin3 parser for GO"
+[gherkin-license]: https://en.wikipedia.org/wiki/MIT_License "The MIT license"
 [license]: http://en.wikipedia.org/wiki/BSD_licenses "The three clause BSD license"

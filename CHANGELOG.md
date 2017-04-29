@@ -1,6 +1,6 @@
 # Change LOG
 
-**2017-04-29**
+**2017-04-29** - **v0.7.0**
 - added support for nested steps. From now on, it is possible to return
   **godog.Steps** instead of an **error** in the step definition func.
   This change introduced few minor changes in **Formatter** interface. Be
