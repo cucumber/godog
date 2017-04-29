@@ -113,10 +113,10 @@ func (s *Suite) Step(expr interface{}, stepFunc interface{}) {
 			panic(fmt.Sprintf("expected handler to return an error, but got: %s", typ.Kind()))
 		}
 	case reflect.Slice:
-		def.nested = true
 		if typ.Elem().Kind() != reflect.String {
 			panic(fmt.Sprintf("expected handler to return []string for multistep, but got: []%s", typ.Kind()))
 		}
+		def.nested = true
 	default:
 		panic(fmt.Sprintf("expected handler to return an error or []string, but got: %s", typ.Kind()))
 	}
@@ -243,14 +243,23 @@ func (s *Suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
 		}
 	}()
 
-	// @TODO custom undefined err here to pass step text for snippet
-	if s.maybeUndefined(match) {
-		s.fmt.Undefined(step)
+	if undef := s.maybeUndefined(step.Text); len(undef) > 0 {
+		if match != nil {
+			match = &StepDef{
+				args:      match.args,
+				hv:        match.hv,
+				Expr:      match.Expr,
+				Handler:   match.Handler,
+				nested:    match.nested,
+				undefined: undef,
+			}
+		}
+		s.fmt.Undefined(step, match)
 		return ErrUndefined
 	}
 
 	if prevStepErr != nil {
-		s.fmt.Skipped(step)
+		s.fmt.Skipped(step, match)
 		return nil
 	}
 
@@ -263,21 +272,21 @@ func (s *Suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
 	return
 }
 
-func (s *Suite) maybeUndefined(step *StepDef) bool {
+func (s *Suite) maybeUndefined(text string) (undefined []string) {
+	step := s.matchStepText(text)
 	if nil == step {
-		return true
+		undefined = append(undefined, text)
+		return
 	}
 
 	if !step.nested {
-		return false
+		return
 	}
 
-	for _, text := range step.run().(Steps) {
-		if s.maybeUndefined(s.matchStepText(text)) {
-			return true
-		}
+	for _, next := range step.run().(Steps) {
+		undefined = append(undefined, s.maybeUndefined(next)...)
 	}
-	return false
+	return
 }
 
 func (s *Suite) maybeSubSteps(result interface{}) error {
@@ -345,7 +354,7 @@ func (s *Suite) runSteps(steps []*gherkin.Step, prevErr error) (err error) {
 
 func (s *Suite) skipSteps(steps []*gherkin.Step) {
 	for _, step := range steps {
-		s.fmt.Skipped(step)
+		s.fmt.Skipped(step, s.matchStep(step))
 	}
 }
 

@@ -334,13 +334,13 @@ func (f *pretty) Passed(step *gherkin.Step, match *StepDef) {
 	f.printStepKind(f.passed[len(f.passed)-1])
 }
 
-func (f *pretty) Skipped(step *gherkin.Step) {
-	f.basefmt.Skipped(step)
+func (f *pretty) Skipped(step *gherkin.Step, match *StepDef) {
+	f.basefmt.Skipped(step, match)
 	f.printStepKind(f.skipped[len(f.skipped)-1])
 }
 
-func (f *pretty) Undefined(step *gherkin.Step) {
-	f.basefmt.Undefined(step)
+func (f *pretty) Undefined(step *gherkin.Step, match *StepDef) {
+	f.basefmt.Undefined(step, match)
 	f.printStepKind(f.undefined[len(f.undefined)-1])
 }
 

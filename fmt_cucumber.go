@@ -297,16 +297,16 @@ func (f *cukefmt) Passed(step *gherkin.Step, match *StepDef) {
 	f.step(f.passed[len(f.passed)-1])
 }
 
-func (f *cukefmt) Skipped(step *gherkin.Step) {
-	f.basefmt.Skipped(step)
+func (f *cukefmt) Skipped(step *gherkin.Step, match *StepDef) {
+	f.basefmt.Skipped(step, match)
 	f.step(f.skipped[len(f.skipped)-1])
 
 	// no duration reported for skipped.
 	f.curStep.Result.Duration = nil
 }
 
-func (f *cukefmt) Undefined(step *gherkin.Step) {
-	f.basefmt.Undefined(step)
+func (f *cukefmt) Undefined(step *gherkin.Step, match *StepDef) {
+	f.basefmt.Undefined(step, match)
 	f.stat = undefined
 	f.step(f.undefined[len(f.undefined)-1])
 

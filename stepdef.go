@@ -43,7 +43,10 @@ type StepDef struct {
 	hv      reflect.Value
 	Expr    *regexp.Regexp
 	Handler interface{}
-	nested  bool
+
+	// multistep related
+	nested    bool
+	undefined []string
 }
 
 func (sd *StepDef) definitionID() string {

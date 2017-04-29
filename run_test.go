@@ -2,10 +2,13 @@ package godog
 
 import (
 	"bytes"
+	"fmt"
+	"io/ioutil"
 	"strings"
 	"testing"
 
 	"github.com/DATA-DOG/godog/colors"
+	"github.com/DATA-DOG/godog/gherkin"
 )
 
 func okStep() error {
@@ -48,5 +51,45 @@ func TestPrintsNoStepDefinitionsIfNoneFound(t *testing.T) {
 	out := strings.TrimSpace(buf.String())
 	if out != "there were no contexts registered, could not find any step definition.." {
 		t.Fatalf("expected output does not match to: %s", out)
+	}
+}
+
+func TestShouldNotFailWhenHasPendingSteps(t *testing.T) {
+	feat, err := gherkin.ParseFeature(strings.NewReader(basicGherkinFeature))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	r := runner{
+		fmt:      progressFunc("progress", ioutil.Discard),
+		features: []*feature{&feature{Feature: feat}},
+		initializer: func(s *Suite) {
+			s.Step(`^one$`, func() error { return nil })
+			s.Step(`^two$`, func() error { return ErrPending })
+		},
+	}
+
+	if r.run() {
+		t.Fatal("the suite should have passed")
+	}
+}
+
+func TestShouldFailOnError(t *testing.T) {
+	feat, err := gherkin.ParseFeature(strings.NewReader(basicGherkinFeature))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	r := runner{
+		fmt:      progressFunc("progress", ioutil.Discard),
+		features: []*feature{&feature{Feature: feat}},
+		initializer: func(s *Suite) {
+			s.Step(`^one$`, func() error { return nil })
+			s.Step(`^two$`, func() error { return fmt.Errorf("error") })
+		},
+	}
+
+	if !r.run() {
+		t.Fatal("the suite should have failed")
 	}
 }
