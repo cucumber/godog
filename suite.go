@@ -95,17 +95,33 @@ func (s *Suite) Step(expr interface{}, stepFunc interface{}) {
 	if typ.Kind() != reflect.Func {
 		panic(fmt.Sprintf("expected handler to be func, but got: %T", stepFunc))
 	}
+
 	if typ.NumOut() != 1 {
-		panic(fmt.Sprintf("expected handler to return an error, but it has more values in return: %d", typ.NumOut()))
+		panic(fmt.Sprintf("expected handler to return only one value, but it has: %d", typ.NumOut()))
 	}
-	if typ.Out(0).Kind() != reflect.Interface || !typ.Out(0).Implements(errorInterface) {
-		panic(fmt.Sprintf("expected handler to return an error interface, but we have: %s", typ.Out(0).Kind()))
-	}
-	s.steps = append(s.steps, &StepDef{
+
+	def := &StepDef{
 		Handler: stepFunc,
 		Expr:    regex,
 		hv:      v,
-	})
+	}
+
+	typ = typ.Out(0)
+	switch typ.Kind() {
+	case reflect.Interface:
+		if !typ.Implements(errorInterface) {
+			panic(fmt.Sprintf("expected handler to return an error, but got: %s", typ.Kind()))
+		}
+	case reflect.Slice:
+		if typ.Elem().Kind() != reflect.String {
+			panic(fmt.Sprintf("expected handler to return []string for multistep, but got: []%s", typ.Kind()))
+		}
+		def.nested = true
+	default:
+		panic(fmt.Sprintf("expected handler to return an error or []string, but got: %s", typ.Kind()))
+	}
+
+	s.steps = append(s.steps, def)
 }
 
 // BeforeSuite registers a function or method
@@ -184,41 +200,18 @@ func (s *Suite) run() {
 }
 
 func (s *Suite) matchStep(step *gherkin.Step) *StepDef {
-	for _, h := range s.steps {
-		if m := h.Expr.FindStringSubmatch(step.Text); len(m) > 0 {
-			var args []interface{}
-			for _, m := range m[1:] {
-				args = append(args, m)
-			}
-			if step.Argument != nil {
-				args = append(args, step.Argument)
-			}
-			h.args = args
-			return h
-		}
+	def := s.matchStepText(step.Text)
+	if def != nil && step.Argument != nil {
+		def.args = append(def.args, step.Argument)
 	}
-	// @TODO can handle ambiguous
-	return nil
+	return def
 }
 
 func (s *Suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
 	match := s.matchStep(step)
 	s.fmt.Defined(step, match)
-	if match == nil {
-		s.fmt.Undefined(step)
-		return ErrUndefined
-	}
 
-	if prevStepErr != nil {
-		s.fmt.Skipped(step)
-		return nil
-	}
-
-	// run before step handlers
-	for _, f := range s.beforeStepHandlers {
-		f(step)
-	}
-
+	// user multistep definitions may panic
 	defer func() {
 		if e := recover(); e != nil {
 			err = &traceError{
@@ -226,6 +219,15 @@ func (s *Suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
 				stack: callStack(),
 			}
 		}
+
+		if prevStepErr != nil {
+			return
+		}
+
+		if err == ErrUndefined {
+			return
+		}
+
 		switch err {
 		case nil:
 			s.fmt.Passed(step, match)
@@ -241,8 +243,96 @@ func (s *Suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
 		}
 	}()
 
-	err = match.run()
+	if undef := s.maybeUndefined(step.Text); len(undef) > 0 {
+		if match != nil {
+			match = &StepDef{
+				args:      match.args,
+				hv:        match.hv,
+				Expr:      match.Expr,
+				Handler:   match.Handler,
+				nested:    match.nested,
+				undefined: undef,
+			}
+		}
+		s.fmt.Undefined(step, match)
+		return ErrUndefined
+	}
+
+	if prevStepErr != nil {
+		s.fmt.Skipped(step, match)
+		return nil
+	}
+
+	// run before step handlers
+	for _, f := range s.beforeStepHandlers {
+		f(step)
+	}
+
+	err = s.maybeSubSteps(match.run())
 	return
+}
+
+func (s *Suite) maybeUndefined(text string) (undefined []string) {
+	step := s.matchStepText(text)
+	if nil == step {
+		undefined = append(undefined, text)
+		return
+	}
+
+	if !step.nested {
+		return
+	}
+
+	for _, next := range step.run().(Steps) {
+		undefined = append(undefined, s.maybeUndefined(next)...)
+	}
+	return
+}
+
+func (s *Suite) maybeSubSteps(result interface{}) error {
+	if nil == result {
+		return nil
+	}
+
+	if err, ok := result.(error); ok {
+		return err
+	}
+
+	steps, ok := result.(Steps)
+	if !ok {
+		return fmt.Errorf("unexpected error, should have been []string: %T - %+v", result, result)
+	}
+
+	for _, text := range steps {
+		if def := s.matchStepText(text); def == nil {
+			return ErrUndefined
+		} else if err := s.maybeSubSteps(def.run()); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Suite) matchStepText(text string) *StepDef {
+	for _, h := range s.steps {
+		if m := h.Expr.FindStringSubmatch(text); len(m) > 0 {
+			var args []interface{}
+			for _, m := range m[1:] {
+				args = append(args, m)
+			}
+
+			// since we need to assign arguments
+			// better to copy the step definition
+			return &StepDef{
+				args:    args,
+				hv:      h.hv,
+				Expr:    h.Expr,
+				Handler: h.Handler,
+				nested:  h.nested,
+			}
+		}
+	}
+	return nil
 }
 
 func (s *Suite) runSteps(steps []*gherkin.Step, prevErr error) (err error) {
@@ -264,7 +354,7 @@ func (s *Suite) runSteps(steps []*gherkin.Step, prevErr error) (err error) {
 
 func (s *Suite) skipSteps(steps []*gherkin.Step) {
 	for _, step := range steps {
-		s.fmt.Skipped(step)
+		s.fmt.Skipped(step, s.matchStep(step))
 	}
 }
 

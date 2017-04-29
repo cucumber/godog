@@ -54,7 +54,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 	return
 }
 
-func (r *runner) run() (failed bool) {
+func (r *runner) run() bool {
 	suite := &Suite{
 		fmt:           r.fmt,
 		randomSeed:    r.randomSeed,
@@ -160,13 +160,11 @@ func Run(suite string, contextInitializer func(suite *Suite)) int {
 func supportsConcurrency(format string) bool {
 	switch format {
 	case "events":
-		return false
 	case "junit":
-		return false
 	case "pretty":
-		return false
 	case "cucumber":
-		return false
+	default:
+		return true // supports concurrency
 	}
 
 	return true // all custom formatters are treated as supporting concurrency

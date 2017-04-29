@@ -14,6 +14,22 @@ import (
 
 var matchFuncDefRef = regexp.MustCompile(`\(([^\)]+)\)`)
 
+// Steps allows to nest steps
+// instead of returning an error in step func
+// it is possible to return combined steps:
+//
+//   func multistep(name string) godog.Steps {
+//     return godog.Steps{
+//       fmt.Sprintf(`an user named "%s"`, name),
+//       fmt.Sprintf(`user "%s" is authenticated`, name),
+//     }
+//   }
+//
+// These steps will be matched and executed in
+// sequential order. The first one which fails
+// will result in main step failure.
+type Steps []string
+
 // StepDef is a registered step definition
 // contains a StepHandler and regexp which
 // is used to match a step. Args which
@@ -27,6 +43,10 @@ type StepDef struct {
 	hv      reflect.Value
 	Expr    *regexp.Regexp
 	Handler interface{}
+
+	// multistep related
+	nested    bool
+	undefined []string
 }
 
 func (sd *StepDef) definitionID() string {
@@ -53,7 +73,7 @@ func (sd *StepDef) definitionID() string {
 
 // run a step with the matched arguments using
 // reflect
-func (sd *StepDef) run() error {
+func (sd *StepDef) run() interface{} {
 	typ := sd.hv.Type()
 	if len(sd.args) < typ.NumIn() {
 		return fmt.Errorf("func expects %d arguments, which is more than %d matched from step", typ.NumIn(), len(sd.args))
@@ -171,12 +191,7 @@ func (sd *StepDef) run() error {
 			return fmt.Errorf("the argument %d type %s is not supported", i, param.Kind())
 		}
 	}
-	ret := sd.hv.Call(values)[0].Interface()
-	if nil == ret {
-		return nil
-	}
-
-	return ret.(error)
+	return sd.hv.Call(values)[0].Interface()
 }
 
 func (sd *StepDef) shouldBeString(idx int) (string, error) {

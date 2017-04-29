@@ -91,17 +91,17 @@ func (f *progress) Passed(step *gherkin.Step, match *StepDef) {
 	f.step(f.passed[len(f.passed)-1])
 }
 
-func (f *progress) Skipped(step *gherkin.Step) {
+func (f *progress) Skipped(step *gherkin.Step, match *StepDef) {
 	f.Lock()
 	defer f.Unlock()
-	f.basefmt.Skipped(step)
+	f.basefmt.Skipped(step, match)
 	f.step(f.skipped[len(f.skipped)-1])
 }
 
-func (f *progress) Undefined(step *gherkin.Step) {
+func (f *progress) Undefined(step *gherkin.Step, match *StepDef) {
 	f.Lock()
 	defer f.Unlock()
-	f.basefmt.Undefined(step)
+	f.basefmt.Undefined(step, match)
 	f.step(f.undefined[len(f.undefined)-1])
 }
 

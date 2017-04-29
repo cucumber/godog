@@ -101,7 +101,7 @@ func (j *junitFormatter) Passed(step *gherkin.Step, match *StepDef) {
 	tcase.Status = "passed"
 }
 
-func (j *junitFormatter) Skipped(step *gherkin.Step) {
+func (j *junitFormatter) Skipped(step *gherkin.Step, match *StepDef) {
 	suite := j.current()
 
 	tcase := suite.current()
@@ -112,7 +112,7 @@ func (j *junitFormatter) Skipped(step *gherkin.Step) {
 	})
 }
 
-func (j *junitFormatter) Undefined(step *gherkin.Step) {
+func (j *junitFormatter) Undefined(step *gherkin.Step, match *StepDef) {
 	suite := j.current()
 	tcase := suite.current()
 	if tcase.Status != "undefined" {

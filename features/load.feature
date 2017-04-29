@@ -6,7 +6,7 @@ Feature: load features
   Scenario: load features within path
     Given a feature path "features"
     When I parse features
-    Then I should have 9 feature files:
+    Then I should have 10 feature files:
       """
       features/background.feature
       features/events.feature
@@ -14,6 +14,7 @@ Feature: load features
       features/formatter/events.feature
       features/lang.feature
       features/load.feature
+      features/multistep.feature
       features/outline.feature
       features/run.feature
       features/snippets.feature

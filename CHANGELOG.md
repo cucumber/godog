@@ -1,5 +1,11 @@
 # Change LOG
 
+**2017-04-29**
+- added support for nested steps. From now on, it is possible to return
+  **godog.Steps** instead of an **error** in the step definition func.
+  This change introduced few minor changes in **Formatter** interface. Be
+  sure to adapt the changes if you have custom formatters.
+
 **2017-04-27**
 - added an option to randomize scenario execution order, so we could
   ensure that scenarios do not depend on global state.

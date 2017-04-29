@@ -245,13 +245,13 @@ func (f *events) Passed(step *gherkin.Step, match *StepDef) {
 	f.step(f.passed[len(f.passed)-1])
 }
 
-func (f *events) Skipped(step *gherkin.Step) {
-	f.basefmt.Skipped(step)
+func (f *events) Skipped(step *gherkin.Step, match *StepDef) {
+	f.basefmt.Skipped(step, match)
 	f.step(f.skipped[len(f.skipped)-1])
 }
 
-func (f *events) Undefined(step *gherkin.Step) {
-	f.basefmt.Undefined(step)
+func (f *events) Undefined(step *gherkin.Step, match *StepDef) {
+	f.basefmt.Undefined(step, match)
 	f.stat = undefined
 	f.step(f.undefined[len(f.undefined)-1])
 }
