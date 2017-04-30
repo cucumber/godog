@@ -30,9 +30,6 @@ Example:
 		  foo
 		  """
 
-As a developer, your work is done as soon as you’ve made the ls command behave as
-described in the Scenario.
-
 Now, wouldn’t it be cool if something could read this sentence and use it to actually
 run a test against the ls command? Hey, that’s exactly what this package does!
 As you’ll see, Godog is easy to learn, quick to use, and will put the fun back into tests.

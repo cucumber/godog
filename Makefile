@@ -9,7 +9,7 @@ test:
 	@golint github.com/DATA-DOG/godog
 	@golint github.com/DATA-DOG/godog/cmd/godog
 	go vet ./...
-	go test
+	go test -race
 	godog -f progress -c 4
 
 gherkin:
