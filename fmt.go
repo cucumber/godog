@@ -53,20 +53,13 @@ type registeredFormatter struct {
 
 var formatters []*registeredFormatter
 
-func findFmt(format string) (f FormatterFunc, err error) {
-	var names []string
+func findFmt(format string) FormatterFunc {
 	for _, el := range formatters {
 		if el.name == format {
-			f = el.fmt
-			break
+			return el.fmt
 		}
-		names = append(names, el.name)
 	}
-
-	if f == nil {
-		err = fmt.Errorf(`unregistered formatter name: "%s", use one of: %s`, format, strings.Join(names, ", "))
-	}
-	return
+	return nil
 }
 
 // Format registers a feature suite output

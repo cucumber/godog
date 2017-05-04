@@ -1,8 +1,6 @@
 package godog
 
 import (
-	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -25,14 +23,6 @@ var whiteb = colors.Bold(colors.White)
 // repeats a space n times
 func s(n int) string {
 	return strings.Repeat(" ", n)
-}
-
-// checks the error and exits with error status code
-func fatal(err error) {
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
 }
 
 var timeNowFunc = func() time.Time {

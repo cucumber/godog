@@ -2,6 +2,7 @@ package godog
 
 import (
 	"io"
+	"testing"
 
 	"github.com/DATA-DOG/godog/gherkin"
 )
@@ -32,3 +33,25 @@ func (f *testFormatter) Node(node interface{}) {
 }
 
 func (f *testFormatter) Summary() {}
+
+func TestShouldFindFormatter(t *testing.T) {
+	cases := map[string]bool{
+		"progress": true, // true means should be available
+		"unknown":  false,
+		"junit":    true,
+		"cucumber": true,
+		"pretty":   true,
+		"custom":   true, // is available for test purposes only
+		"undef":    false,
+	}
+
+	for name, shouldFind := range cases {
+		actual := findFmt(name)
+		if actual == nil && shouldFind {
+			t.Fatalf("expected %s formatter should be available", name)
+		}
+		if actual != nil && !shouldFind {
+			t.Fatalf("expected %s formatter should not be available", name)
+		}
+	}
+}

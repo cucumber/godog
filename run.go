@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/DATA-DOG/godog/colors"
 )
@@ -93,7 +94,7 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 		s := &Suite{}
 		contextInitializer(s)
 		s.printStepDefinitions(output)
-		return 0
+		return 2 // showing help or printing definitions, results exit code - 2
 	}
 
 	if len(opt.Paths) == 0 {
@@ -104,13 +105,28 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 	}
 
 	if opt.Concurrency > 1 && !supportsConcurrency(opt.Format) {
-		fatal(fmt.Errorf("format \"%s\" does not support concurrent execution", opt.Format))
+		fmt.Fprintln(os.Stderr, fmt.Errorf("format \"%s\" does not support concurrent execution", opt.Format))
+		return 1
 	}
-	formatter, err := findFmt(opt.Format)
-	fatal(err)
+	formatter := findFmt(opt.Format)
+	if nil == formatter {
+		var names []string
+		for name := range AvailableFormatters() {
+			names = append(names, name)
+		}
+		fmt.Fprintln(os.Stderr, fmt.Errorf(
+			`unregistered formatter name: "%s", use one of: %s`,
+			opt.Format,
+			strings.Join(names, ", "),
+		))
+		return 1
+	}
 
 	features, err := parseFeatures(opt.Tags, opt.Paths)
-	fatal(err)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
 
 	r := runner{
 		fmt:           formatter(suite, output),
@@ -152,8 +168,10 @@ func Run(suite string, contextInitializer func(suite *Suite)) int {
 	var opt Options
 	opt.Output = colors.Colored(os.Stdout)
 	flagSet := FlagSet(&opt)
-	err := flagSet.Parse(os.Args[1:])
-	fatal(err)
+	if err := flagSet.Parse(os.Args[1:]); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
 
 	opt.Paths = flagSet.Args()
 

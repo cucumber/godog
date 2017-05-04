@@ -137,9 +137,9 @@ func (s *suiteContext) ResetBeforeEachScenario(interface{}) {
 }
 
 func (s *suiteContext) iRunFeatureSuiteWithFormatter(name string) error {
-	f, err := findFmt(name)
-	if err != nil {
-		return err
+	f := findFmt(name)
+	if f == nil {
+		return fmt.Errorf(`formatter "%s" is not available`, name)
 	}
 	s.testedSuite.fmt = f("godog", &s.out)
 	if err := s.parseFeatures(); err != nil {
