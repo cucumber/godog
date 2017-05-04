@@ -54,7 +54,7 @@ func TestPrintsNoStepDefinitionsIfNoneFound(t *testing.T) {
 	}
 }
 
-func TestShouldNotFailWhenHasPendingSteps(t *testing.T) {
+func TestFailsOrPassesBasedOnStrictModeWhenHasPendingSteps(t *testing.T) {
 	feat, err := gherkin.ParseFeature(strings.NewReader(basicGherkinFeature))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -71,6 +71,36 @@ func TestShouldNotFailWhenHasPendingSteps(t *testing.T) {
 
 	if r.run() {
 		t.Fatal("the suite should have passed")
+	}
+
+	r.strict = true
+	if !r.run() {
+		t.Fatal("the suite should have failed")
+	}
+}
+
+func TestFailsOrPassesBasedOnStrictModeWhenHasUndefinedSteps(t *testing.T) {
+	feat, err := gherkin.ParseFeature(strings.NewReader(basicGherkinFeature))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	r := runner{
+		fmt:      progressFunc("progress", ioutil.Discard),
+		features: []*feature{&feature{Feature: feat}},
+		initializer: func(s *Suite) {
+			s.Step(`^one$`, func() error { return nil })
+			// two - is undefined
+		},
+	}
+
+	if r.run() {
+		t.Fatal("the suite should have passed")
+	}
+
+	r.strict = true
+	if !r.run() {
+		t.Fatal("the suite should have failed")
 	}
 }
 

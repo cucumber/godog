@@ -52,6 +52,7 @@ func FlagSet(opt *Options) *flag.FlagSet {
 	set.BoolVar(&opt.ShowStepDefinitions, "definitions", false, "Print all available step definitions.")
 	set.BoolVar(&opt.ShowStepDefinitions, "d", false, "Print all available step definitions.")
 	set.BoolVar(&opt.StopOnFailure, "stop-on-failure", false, "Stop processing on first failed scenario.")
+	set.BoolVar(&opt.Strict, "strict", false, "Fail suite when there are pending or undefined steps.")
 	set.BoolVar(&opt.NoColors, "no-colors", false, "Disable ansi colors.")
 	set.Var(&randomSeed{&opt.Randomize}, "random", descRandomOption)
 	set.Usage = usage(set, opt.Output)

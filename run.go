@@ -12,11 +12,11 @@ import (
 type initializer func(*Suite)
 
 type runner struct {
-	randomSeed    int64
-	stopOnFailure bool
-	features      []*feature
-	fmt           Formatter
-	initializer   initializer
+	randomSeed            int64
+	stopOnFailure, strict bool
+	features              []*feature
+	fmt                   Formatter
+	initializer           initializer
 }
 
 func (r *runner) concurrent(rate int) (failed bool) {
@@ -34,6 +34,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 				fmt:           r.fmt,
 				randomSeed:    r.randomSeed,
 				stopOnFailure: r.stopOnFailure,
+				strict:        r.strict,
 				features:      []*feature{feat},
 			}
 			r.initializer(suite)
@@ -59,6 +60,7 @@ func (r *runner) run() bool {
 		fmt:           r.fmt,
 		randomSeed:    r.randomSeed,
 		stopOnFailure: r.stopOnFailure,
+		strict:        r.strict,
 		features:      r.features,
 	}
 	r.initializer(suite)
@@ -116,6 +118,7 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 		features:      features,
 		randomSeed:    opt.Randomize,
 		stopOnFailure: opt.StopOnFailure,
+		strict:        opt.Strict,
 	}
 
 	// store chosen seed in environment, so it could be seen in formatter summary report

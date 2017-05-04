@@ -51,6 +51,7 @@ type Suite struct {
 	failed        bool
 	randomSeed    int64
 	stopOnFailure bool
+	strict        bool
 
 	// suite event handlers
 	beforeSuiteHandlers    []func()
@@ -409,7 +410,7 @@ func (s *Suite) runOutline(outline *gherkin.ScenarioOutline, b *gherkin.Backgrou
 				f(outline, err)
 			}
 
-			if err != nil && err != ErrUndefined && err != ErrPending {
+			if s.shouldFail(err) {
 				failErr = err
 				if s.stopOnFailure {
 					return
@@ -418,6 +419,18 @@ func (s *Suite) runOutline(outline *gherkin.ScenarioOutline, b *gherkin.Backgrou
 		}
 	}
 	return
+}
+
+func (s *Suite) shouldFail(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	if err == ErrUndefined || err == ErrPending {
+		return s.strict
+	}
+
+	return true
 }
 
 func (s *Suite) runFeature(f *feature) {
@@ -447,7 +460,7 @@ func (s *Suite) runFeature(f *feature) {
 		case *gherkin.Scenario:
 			err = s.runScenario(t, f.Background)
 		}
-		if err != nil && err != ErrUndefined && err != ErrPending {
+		if s.shouldFail(err) {
 			s.failed = true
 			if s.stopOnFailure {
 				return

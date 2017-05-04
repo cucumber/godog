@@ -1,5 +1,10 @@
 # Change LOG
 
+**2017-05-04**
+- added **--strict** option in order to fail suite when there are pending
+  or undefined steps. By default, suite passes and treats pending or
+  undefined steps as TODOs.
+
 **2017-04-29** - **v0.7.0**
 - added support for nested steps. From now on, it is possible to return
   **godog.Steps** instead of an **error** in the step definition func.
