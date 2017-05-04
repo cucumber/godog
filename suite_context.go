@@ -211,7 +211,7 @@ func (s *suiteContext) followingStepsShouldHave(status string, steps *gherkin.Do
 	}
 
 	if len(expected) > len(actual) {
-		return fmt.Errorf("number of expeted %s steps: %d is less than actual %s steps: %d", status, len(expected), status, len(actual))
+		return fmt.Errorf("number of expected %s steps: %d is less than actual %s steps: %d", status, len(expected), status, len(actual))
 	}
 
 	for _, a := range actual {
