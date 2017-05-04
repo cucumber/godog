@@ -50,6 +50,7 @@ func SuiteContext(s *Suite, additionalContextInitializers ...func(suite *Suite))
 	s.Step(`^a failing step`, c.aFailingStep)
 	s.Step(`^this step should fail`, c.aFailingStep)
 	s.Step(`^the following steps? should be (passed|failed|skipped|undefined|pending):`, c.followingStepsShouldHave)
+	s.Step(`^all steps should (?:be|have|have been) (passed|failed|skipped|undefined|pending)$`, c.allStepsShouldHave)
 	s.Step(`^the undefined step snippets should be:$`, c.theUndefinedStepSnippetsShouldBe)
 
 	// event stream
@@ -239,6 +240,35 @@ func (s *suiteContext) followingStepsShouldHave(status string, steps *gherkin.Do
 	}
 
 	return fmt.Errorf("the steps: %s - are not %s", strings.Join(unmatched, ", "), status)
+}
+
+func (s *suiteContext) allStepsShouldHave(status string) error {
+	f, ok := s.testedSuite.fmt.(*testFormatter)
+	if !ok {
+		return fmt.Errorf("this step requires testFormatter, but there is: %T", s.testedSuite.fmt)
+	}
+
+	total := len(f.passed) + len(f.failed) + len(f.skipped) + len(f.undefined) + len(f.pending)
+	var actual int
+	switch status {
+	case "passed":
+		actual = len(f.passed)
+	case "failed":
+		actual = len(f.failed)
+	case "skipped":
+		actual = len(f.skipped)
+	case "undefined":
+		actual = len(f.undefined)
+	case "pending":
+		actual = len(f.pending)
+	default:
+		return fmt.Errorf("unexpected step status wanted: %s", status)
+	}
+
+	if total > actual {
+		return fmt.Errorf("number of expected %s steps: %d is less than actual %s steps: %d", status, total, status, actual)
+	}
+	return nil
 }
 
 func (s *suiteContext) iAmListeningToSuiteEvents() error {
