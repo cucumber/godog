@@ -190,3 +190,75 @@ Feature: run features
       """
       I should have 1 scenario registered
       """
+
+  Scenario: should fail suite if undefined steps follow after the failure
+    Given a feature "failed.feature" file:
+      """
+      Feature: failed feature
+
+        Scenario: parse a scenario
+          Given a failing step
+          When an undefined step
+          Then another undefined step
+      """
+    When I run feature suite
+    Then the following step should be failed:
+      """
+      a failing step
+      """
+    And the following steps should be undefined:
+      """
+      an undefined step
+      another undefined step
+      """
+    And the suite should have failed
+
+  Scenario: should fail suite and skip pending step after failed step
+    Given a feature "failed.feature" file:
+      """
+      Feature: failed feature
+
+        Scenario: parse a scenario
+          Given a failing step
+          When pending step
+          Then another undefined step
+      """
+    When I run feature suite
+    Then the following step should be failed:
+      """
+      a failing step
+      """
+    And the following steps should be skipped:
+      """
+      pending step
+      """
+    And the following steps should be undefined:
+      """
+      another undefined step
+      """
+    And the suite should have failed
+
+  Scenario: should fail suite and skip next step after failed step
+    Given a feature "failed.feature" file:
+      """
+      Feature: failed feature
+
+        Scenario: parse a scenario
+          Given a failing step
+          When a failing step
+          Then another undefined step
+      """
+    When I run feature suite
+    Then the following step should be failed:
+      """
+      a failing step
+      """
+    And the following steps should be skipped:
+      """
+      a failing step
+      """
+    And the following steps should be undefined:
+      """
+      another undefined step
+      """
+    And the suite should have failed

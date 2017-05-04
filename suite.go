@@ -335,13 +335,15 @@ func (s *Suite) matchStepText(text string) *StepDef {
 	return nil
 }
 
-func (s *Suite) runSteps(steps []*gherkin.Step, prevErr error) (err error) {
-	err = prevErr
+func (s *Suite) runSteps(steps []*gherkin.Step) (err error) {
 	for _, step := range steps {
 		stepErr := s.runStep(step, err)
 		switch stepErr {
 		case ErrUndefined:
-			err = stepErr
+			// do not overwrite failed error
+			if err == ErrUndefined || err == nil {
+				err = stepErr
+			}
 		case ErrPending:
 			err = stepErr
 		case nil:
@@ -397,12 +399,11 @@ func (s *Suite) runOutline(outline *gherkin.ScenarioOutline, b *gherkin.Backgrou
 			// run example table row
 			s.fmt.Node(group)
 
-			// run background
-			var err error
 			if b != nil {
-				err = s.runSteps(b.Steps, err)
+				steps = append(b.Steps, steps...)
 			}
-			err = s.runSteps(steps, err)
+
+			err := s.runSteps(steps)
 
 			for _, f := range s.afterScenarioHandlers {
 				f(outline, err)
@@ -464,12 +465,13 @@ func (s *Suite) runScenario(scenario *gherkin.Scenario, b *gherkin.Background) (
 	s.fmt.Node(scenario)
 
 	// background
+	steps := scenario.Steps
 	if b != nil {
-		err = s.runSteps(b.Steps, err)
+		steps = append(b.Steps, steps...)
 	}
 
 	// scenario
-	err = s.runSteps(scenario.Steps, err)
+	err = s.runSteps(steps)
 
 	// run after scenario handlers
 	for _, f := range s.afterScenarioHandlers {
