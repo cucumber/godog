@@ -16,9 +16,20 @@ import (
 
 // SuiteContext can be used for meta-testing of godog features/steps themselves.
 //
-// For an example, see godog's own `features/` and `suite_test.go`.
-func SuiteContext(s *Suite) {
-	c := &suiteContext{}
+// A typical user of the godog library should never need this, rather it is
+// provided for those developing add-on libraries for godog.
+//
+// For an example of how to use, see godog's own `features/` and `suite_test.go`.
+func SuiteContext(s *Suite, additionalContextInitializers ...func(suite *Suite)) {
+	c := &suiteContext{
+		extraCIs: additionalContextInitializers,
+	}
+
+	// apply any additional context intializers to modify the context that the
+	// meta-tests will be run in
+	for _, ci := range additionalContextInitializers {
+		ci(s)
+	}
 
 	s.BeforeScenario(c.ResetBeforeEachScenario)
 
@@ -89,6 +100,7 @@ type firedEvent struct {
 type suiteContext struct {
 	paths       []string
 	testedSuite *Suite
+	extraCIs    []func(suite *Suite)
 	events      []*firedEvent
 	out         bytes.Buffer
 }
@@ -99,7 +111,7 @@ func (s *suiteContext) ResetBeforeEachScenario(interface{}) {
 	s.paths = []string{}
 	s.testedSuite = &Suite{}
 	// our tested suite will have the same context registered
-	SuiteContext(s.testedSuite)
+	SuiteContext(s.testedSuite, s.extraCIs...)
 	// reset all fired events
 	s.events = []*firedEvent{}
 }
