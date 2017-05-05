@@ -442,14 +442,14 @@ func (s *suiteContext) theseEventsHadToBeFiredForNumberOfTimes(tbl *gherkin.Data
 }
 
 func (s *suiteContext) theRenderJSONWillBe(docstring *gherkin.DocString) error {
-	loc := regexp.MustCompile(`"suite_test.go:\d+"`)
+	loc := regexp.MustCompile(`"suite_context.go:\d+"`)
 	var expected []cukeFeatureJSON
-	if err := json.Unmarshal([]byte(loc.ReplaceAllString(docstring.Content, `"suite_test.go:0"`)), &expected); err != nil {
+	if err := json.Unmarshal([]byte(loc.ReplaceAllString(docstring.Content, `"suite_context.go:0"`)), &expected); err != nil {
 		return err
 	}
 
 	var actual []cukeFeatureJSON
-	replaced := loc.ReplaceAllString(s.out.String(), `"suite_test.go:0"`)
+	replaced := loc.ReplaceAllString(s.out.String(), `"suite_context.go:0"`)
 	if err := json.Unmarshal([]byte(replaced), &actual); err != nil {
 		return err
 	}
