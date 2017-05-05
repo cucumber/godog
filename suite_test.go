@@ -25,7 +25,7 @@ func TestMain(m *testing.M) {
 	var status int
 	if !specific {
 		status = RunWithOptions("godog", func(s *Suite) {
-			SuiteContext(s)
+			GodogContext(s)
 		}, Options{
 			Format:      format, // pretty format for verbose mode, otherwise - progress
 			Paths:       []string{"features"},
@@ -38,4 +38,9 @@ func TestMain(m *testing.M) {
 		status = st
 	}
 	os.Exit(status)
+}
+
+// needed in order to use godog cli
+func GodogContext(s *Suite) {
+	SuiteContext(s)
 }
