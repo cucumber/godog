@@ -10,7 +10,7 @@ Feature: get version
     And the response should match json:
       """
       {
-        "error": "Method not allowed"
+        "error": "ethod not allowed"
       }
       """
 

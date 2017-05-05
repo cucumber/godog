@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 
 	"github.com/DATA-DOG/godog"
 	"github.com/DATA-DOG/godog/gherkin"
@@ -99,4 +100,18 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(`^I send "(GET|POST|PUT|DELETE)" request to "([^"]*)"$`, api.iSendrequestTo)
 	s.Step(`^the response code should be (\d+)$`, api.theResponseCodeShouldBe)
 	s.Step(`^the response should match json:$`, api.theResponseShouldMatchJSON)
+
+	// prints response context when step fails
+	s.AfterStep(func(_ *gherkin.Step, err error) {
+		if e, attachable := err.(interface {
+			Attach(string)
+		}); attachable {
+			lines := []string{"Headers:"}
+			for name, val := range api.resp.Header() {
+				lines = append(lines, fmt.Sprintf("  %s: %v", name, val))
+			}
+			e.Attach(strings.Join(lines, "\n"))
+			e.Attach(fmt.Sprintf("Status: %d", api.resp.Code))
+		}
+	})
 }

@@ -64,7 +64,7 @@ func (f *progress) Summary() {
 			if e, ok := fail.err.(interface {
 				ErrorIndent(int) string
 			}); ok {
-				msg = e.ErrorIndent(6)
+				msg = e.ErrorIndent(8)
 			}
 			fmt.Fprintln(f.out, s(6)+red("Error: ")+redb(msg)+"\n")
 		}

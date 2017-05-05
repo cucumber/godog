@@ -212,7 +212,7 @@ func (f *pretty) printOutlineExample(outline *gherkin.ScenarioOutline) {
 		if e, ok := err.(interface {
 			ErrorIndent(int) string
 		}); ok {
-			msg = e.ErrorIndent(f.indent * 4)
+			msg = e.ErrorIndent(f.indent * 5)
 		}
 		fmt.Fprintln(f.out, s(f.indent*4)+redb(msg))
 	}
@@ -320,7 +320,7 @@ func (f *pretty) printStepKind(res *stepResult) {
 		if e, ok := res.err.(interface {
 			ErrorIndent(int) string
 		}); ok {
-			msg = e.ErrorIndent(f.indent * 2)
+			msg = e.ErrorIndent(f.indent * 3)
 		}
 		fmt.Fprintln(f.out, s(f.indent*2)+redb(msg))
 	}
