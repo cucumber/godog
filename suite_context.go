@@ -14,10 +14,12 @@ import (
 	"github.com/DATA-DOG/godog/gherkin"
 )
 
-// SuiteContext can be used for meta-testing of godog features/steps themselves.
+// SuiteContext provides steps for godog suite execution and
+// can be used for meta-testing of godog features/steps themselves.
 //
-// A typical user of the godog library should never need this, rather it is
-// provided for those developing add-on libraries for godog.
+// Beware, steps or their definitions might change without backward
+// compatibility guarantees. A typical user of the godog library should never
+// need this, rather it is provided for those developing add-on libraries for godog.
 //
 // For an example of how to use, see godog's own `features/` and `suite_test.go`.
 func SuiteContext(s *Suite, additionalContextInitializers ...func(suite *Suite)) {
