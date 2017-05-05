@@ -25,13 +25,6 @@ type feature struct {
 	Path    string `json:"path"`
 }
 
-// ErrUndefined is returned in case if step definition was not found
-var ErrUndefined = fmt.Errorf("step is undefined")
-
-// ErrPending should be returned by step definition if
-// step implementation is pending
-var ErrPending = fmt.Errorf("step implementation is pending")
-
 // Suite allows various contexts
 // to register steps and event handlers.
 //
@@ -235,7 +228,8 @@ func (s *Suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
 		case ErrPending:
 			s.fmt.Pending(step, match)
 		default:
-			s.fmt.Failed(step, match, err)
+			err = &errFailure{main: err} // allows attaching context
+			defer s.fmt.Failed(step, match, err)
 		}
 
 		// run after step handlers

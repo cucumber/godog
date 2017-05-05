@@ -133,7 +133,7 @@ func (f *pretty) Summary() {
 }
 
 func (f *pretty) printOutlineExample(outline *gherkin.ScenarioOutline) {
-	var msg string
+	var err error
 	var clr colors.ColorFunc
 
 	ex := outline.Examples[f.outlineNumExample]
@@ -150,7 +150,7 @@ func (f *pretty) printOutlineExample(outline *gherkin.ScenarioOutline) {
 		// determine example row status
 		switch {
 		case res.typ == failed:
-			msg = res.err.Error()
+			err = res.err
 			clr = res.typ.clr()
 		case res.typ == undefined || res.typ == pending:
 			clr = res.typ.clr()
@@ -207,7 +207,13 @@ func (f *pretty) printOutlineExample(outline *gherkin.ScenarioOutline) {
 	fmt.Fprintln(f.out, s(f.indent*3)+"| "+strings.Join(cells, " | ")+" |")
 
 	// if there is an error
-	if msg != "" {
+	if err != nil {
+		msg := fmt.Sprintf("%+v", err)
+		if e, ok := err.(interface {
+			ErrorIndent(int) string
+		}); ok {
+			msg = e.ErrorIndent(f.indent * 4)
+		}
 		fmt.Fprintln(f.out, s(f.indent*4)+redb(msg))
 	}
 }
@@ -310,7 +316,13 @@ func (f *pretty) printStepKind(res *stepResult) {
 
 	f.printStep(res.step, res.def, res.typ.clr())
 	if res.err != nil {
-		fmt.Fprintln(f.out, s(f.indent*2)+redb(fmt.Sprintf("%+v", res.err)))
+		msg := fmt.Sprintf("%+v", res.err)
+		if e, ok := res.err.(interface {
+			ErrorIndent(int) string
+		}); ok {
+			msg = e.ErrorIndent(f.indent * 2)
+		}
+		fmt.Fprintln(f.out, s(f.indent*2)+redb(msg))
 	}
 	if res.typ == pending {
 		fmt.Fprintln(f.out, s(f.indent*3)+yellow("TODO: write pending definition"))
