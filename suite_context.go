@@ -35,12 +35,12 @@ func SuiteContext(s *Suite, additionalContextInitializers ...func(suite *Suite))
 
 	s.BeforeScenario(c.ResetBeforeEachScenario)
 
-	s.Step(`^a feature path "([^"]*)"$`, c.featurePath)
+	s.Step(`^(?:a )?feature path "([^"]*)"$`, c.featurePath)
 	s.Step(`^I parse features$`, c.parseFeatures)
 	s.Step(`^I'm listening to suite events$`, c.iAmListeningToSuiteEvents)
 	s.Step(`^I run feature suite$`, c.iRunFeatureSuite)
 	s.Step(`^I run feature suite with formatter "([^"]*)"$`, c.iRunFeatureSuiteWithFormatter)
-	s.Step(`^a feature "([^"]*)" file:$`, c.aFeatureFile)
+	s.Step(`^(?:a )?feature "([^"]*)"(?: file)?:$`, c.aFeatureFile)
 	s.Step(`^the suite should have (passed|failed)$`, c.theSuiteShouldHave)
 
 	s.Step(`^I should have ([\d]+) features? files?:$`, c.iShouldHaveNumFeatureFiles)
@@ -49,7 +49,7 @@ func SuiteContext(s *Suite, additionalContextInitializers ...func(suite *Suite))
 	s.Step(`^there was event triggered before scenario "([^"]*)"$`, c.thereWasEventTriggeredBeforeScenario)
 	s.Step(`^these events had to be fired for a number of times:$`, c.theseEventsHadToBeFiredForNumberOfTimes)
 
-	s.Step(`^a failing step`, c.aFailingStep)
+	s.Step(`^(?:a )?failing step`, c.aFailingStep)
 	s.Step(`^this step should fail`, c.aFailingStep)
 	s.Step(`^the following steps? should be (passed|failed|skipped|undefined|pending):`, c.followingStepsShouldHave)
 	s.Step(`^all steps should (?:be|have|have been) (passed|failed|skipped|undefined|pending)$`, c.allStepsShouldHave)
@@ -63,34 +63,29 @@ func SuiteContext(s *Suite, additionalContextInitializers ...func(suite *Suite))
 	s.Step(`^aš išskaitau savybes$`, c.parseFeatures)
 	s.Step(`^aš turėčiau turėti ([\d]+) savybių failus:$`, c.iShouldHaveNumFeatureFiles)
 
-	s.Step(`^pending step$`, func() error {
+	s.Step(`^(?:a )?pending step$`, func() error {
 		return ErrPending
 	})
-	s.Step(`^passing step$`, func() error {
+	s.Step(`^(?:a )?passing step$`, func() error {
 		return nil
 	})
-
-	// duplicate step to 'a failing step' I added to help test cucumber.feature
-	// I needed to have an Scenario Outline where the status was passing or failing
-	// I needed the same step def language.
-	s.Step(`^failing step$`, c.aFailingStep)
 
 	// Introduced to test formatter/cucumber.feature
 	s.Step(`^the rendered json will be as follows:$`, c.theRenderJSONWillBe)
 
-	s.Step(`^failing multistep$`, func() Steps {
+	s.Step(`^(?:a )?failing multistep$`, func() Steps {
 		return Steps{"passing step", "failing step"}
 	})
 
-	s.Step(`^undefined multistep$`, func() Steps {
+	s.Step(`^(?:a |an )?undefined multistep$`, func() Steps {
 		return Steps{"passing step", "undefined step", "passing step"}
 	})
 
-	s.Step(`^passing multistep$`, func() Steps {
+	s.Step(`^(?:a )?passing multistep$`, func() Steps {
 		return Steps{"passing step", "passing step", "passing step"}
 	})
 
-	s.Step(`^failing nested multistep$`, func() Steps {
+	s.Step(`^(?:a )?failing nested multistep$`, func() Steps {
 		return Steps{"passing step", "passing multistep", "failing multistep"}
 	})
 }
