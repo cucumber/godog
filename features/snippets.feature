@@ -118,3 +118,29 @@ Feature: undefined step snippets
               s.Step(`^I add the "([^"]*)" to the basket$`, iAddTheToTheBasket)
       }
       """
+
+  Scenario: should handle arguments in the beggining or end of the step
+    Given a feature "undefined.feature" file:
+      """
+      Feature: undefined
+
+        Scenario: add item to basket
+          Given "Sith Lord Lightsaber", which costs £5
+          And 12 godogs
+      """
+    When I run feature suite
+    And the undefined step snippets should be:
+      """
+      func whichCosts(arg1 string, arg2 int) error {
+              return godog.ErrPending
+      }
+
+      func godogs(arg1 int) error {
+              return godog.ErrPending
+      }
+
+      func FeatureContext(s *godog.Suite) {
+              s.Step(`^"([^"]*)", which costs £(\d+)$`, whichCosts)
+              s.Step(`^(\d+) godogs$`, godogs)
+      }
+      """

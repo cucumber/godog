@@ -403,7 +403,7 @@ func (f *basefmt) snippets() string {
 
 			name := snippetNumbers.ReplaceAllString(step, " ")
 			name = snippetExprQuoted.ReplaceAllString(name, " ")
-			name = snippetMethodName.ReplaceAllString(name, "")
+			name = strings.TrimSpace(snippetMethodName.ReplaceAllString(name, ""))
 			var words []string
 			for i, w := range strings.Split(name, " ") {
 				if i != 0 {
