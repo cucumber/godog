@@ -1,9 +1,9 @@
 language: go
 go:
-  - 1.5
-  - 1.6
-  - 1.7
-  - 1.8
+  - 1.5.x
+  - 1.6.x
+  - 1.7.x
+  - 1.8.x
 
 go_import_path: github.com/DATA-DOG/godog
 
@@ -11,7 +11,7 @@ install: go install github.com/DATA-DOG/godog/cmd/godog
 
 script:
   - go vet ./...
-  - go fmt ./...
+  - test -z "$(go fmt ./...)" # fail if not formatted properly
   - go test -v -race -coverprofile=coverage.txt -covermode=atomic
 
 after_success:
