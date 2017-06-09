@@ -244,7 +244,9 @@ func (s *Suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
 		}
 	}()
 
-	if undef := s.maybeUndefined(step.Text); len(undef) > 0 {
+	if undef, err := s.maybeUndefined(step.Text, step.Argument); err != nil {
+		return err
+	} else if len(undef) > 0 {
 		if match != nil {
 			match = &StepDef{
 				args:      match.args,
@@ -273,21 +275,37 @@ func (s *Suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
 	return
 }
 
-func (s *Suite) maybeUndefined(text string) (undefined []string) {
+func (s *Suite) maybeUndefined(text string, arg interface{}) ([]string, error) {
 	step := s.matchStepText(text)
 	if nil == step {
-		undefined = append(undefined, text)
-		return
+		return []string{text}, nil
 	}
 
+	var undefined []string
 	if !step.nested {
-		return
+		return undefined, nil
+	}
+
+	if arg != nil {
+		step.args = append(step.args, arg)
 	}
 
 	for _, next := range step.run().(Steps) {
-		undefined = append(undefined, s.maybeUndefined(next)...)
+		lines := strings.Split(next, "\n")
+		// @TODO: we cannot currently parse table or content body from nested steps
+		if len(lines) > 1 {
+			return undefined, fmt.Errorf("nested steps cannot be multiline and have table or content body argument")
+		}
+		if len(lines[0]) > 0 && lines[0][len(lines[0])-1] == ':' {
+			return undefined, fmt.Errorf("nested steps cannot be multiline and have table or content body argument")
+		}
+		undef, err := s.maybeUndefined(next, nil)
+		if err != nil {
+			return undefined, err
+		}
+		undefined = append(undefined, undef...)
 	}
-	return
+	return undefined, nil
 }
 
 func (s *Suite) maybeSubSteps(result interface{}) error {

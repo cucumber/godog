@@ -3,6 +3,7 @@ package godog
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
@@ -118,7 +119,7 @@ func TestProgressFormatterWhenStepPanics(t *testing.T) {
 	}
 
 	out := buf.String()
-	if idx := strings.Index(out, "github.com/DATA-DOG/godog/fmt_progress_test.go:116"); idx == -1 {
+	if idx := strings.Index(out, "github.com/DATA-DOG/godog/fmt_progress_test.go:113"); idx == -1 {
 		t.Fatal("expected to find panic stacktrace")
 	}
 }
@@ -250,6 +251,99 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(` + "`^unavailable \"([^\"]*)\" cost (\\d+)$`" + `, unavailableCost)
 	s.Step(` + "`^three$`" + `, three)
 }
+`
+
+	var zeroDuration time.Duration
+	expected = fmt.Sprintf(expected, zeroDuration.String(), os.Getenv("GODOG_SEED"))
+	expected = trimAllLines(expected)
+
+	actual := trimAllLines(buf.String())
+	if actual != expected {
+		t.Fatalf("expected output does not match: %s", actual)
+	}
+}
+
+func TestProgressFormatterWhenMultiStepHasArgument(t *testing.T) {
+
+	var featureSource = `
+Feature: basic
+
+  Scenario: passing scenario
+	When one
+	Then two:
+	"""
+	text
+	"""
+`
+	feat, err := gherkin.ParseFeature(strings.NewReader(featureSource))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	r := runner{
+		fmt:      progressFunc("progress", ioutil.Discard),
+		features: []*feature{&feature{Feature: feat}},
+		initializer: func(s *Suite) {
+			s.Step(`^one$`, func() error { return nil })
+			s.Step(`^two:$`, func(doc *gherkin.DocString) Steps { return Steps{"one"} })
+		},
+	}
+
+	if r.run() {
+		t.Fatal("the suite should have passed")
+	}
+}
+
+func TestProgressFormatterWhenMultiStepHasStepWithArgument(t *testing.T) {
+
+	var featureSource = `
+Feature: basic
+
+  Scenario: passing scenario
+	When one
+	Then two`
+
+	feat, err := gherkin.ParseFeature(strings.NewReader(featureSource))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var subStep = `three:
+	"""
+	content
+	"""`
+
+	var buf bytes.Buffer
+	w := colors.Uncolored(&buf)
+	r := runner{
+		fmt:      progressFunc("progress", w),
+		features: []*feature{&feature{Feature: feat}},
+		initializer: func(s *Suite) {
+			s.Step(`^one$`, func() error { return nil })
+			s.Step(`^two$`, func() Steps { return Steps{subStep} })
+			s.Step(`^three:$`, func(doc *gherkin.DocString) error { return nil })
+		},
+	}
+
+	if !r.run() {
+		t.Fatal("the suite should have failed")
+	}
+
+	expected := `
+.F 2
+
+
+--- Failed steps:
+
+    Then two # :6
+      Error: nested steps cannot be multiline and have table or content body argument
+
+
+1 scenarios (1 failed)
+2 steps (1 passed, 1 failed)
+%s
+
+Randomized with seed: %s
 `
 
 	var zeroDuration time.Duration
