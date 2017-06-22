@@ -554,7 +554,7 @@ func parseFeatures(filter string, paths []string) (features []*feature, err erro
 				ft, err := gherkin.ParseFeature(io.TeeReader(reader, &buf))
 				reader.Close()
 				if err != nil {
-					return err
+					return fmt.Errorf("%s - %v", p, err)
 				}
 				features = append(features, &feature{Path: p, Feature: ft, Content: buf.Bytes()})
 				// filter scenario by line number
