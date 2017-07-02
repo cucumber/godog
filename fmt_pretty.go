@@ -38,9 +38,10 @@ type pretty struct {
 	outline  *gherkin.ScenarioOutline
 
 	// state
-	bgSteps    int
-	steps      int
-	commentPos int
+	bgSteps      int
+	totalBgSteps int
+	steps        int
+	commentPos   int
 
 	// whether scenario or scenario outline keyword was printed
 	scenarioKeyword bool
@@ -68,8 +69,10 @@ func (f *pretty) Feature(ft *gherkin.Feature, p string, c []byte) {
 	f.scenario = nil
 	f.outline = nil
 	f.bgSteps = 0
+	f.totalBgSteps = 0
 	if ft.Background != nil {
 		f.bgSteps = len(ft.Background.Steps)
+		f.totalBgSteps = len(ft.Background.Steps)
 	}
 }
 
@@ -84,7 +87,7 @@ func (f *pretty) Node(node interface{}) {
 	case *gherkin.Scenario:
 		f.scenario = t
 		f.outline = nil
-		f.steps = len(t.Steps) + f.bgSteps
+		f.steps = len(t.Steps) + f.totalBgSteps
 		f.scenarioKeyword = false
 	case *gherkin.ScenarioOutline:
 		f.outline = t
@@ -92,7 +95,7 @@ func (f *pretty) Node(node interface{}) {
 		f.outlineNumExample = -1
 		f.scenarioKeyword = false
 	case *gherkin.TableRow:
-		f.steps = len(f.outline.Steps) + f.bgSteps
+		f.steps = len(f.outline.Steps) + f.totalBgSteps
 		f.outlineSteps = []*stepResult{}
 	}
 }
@@ -157,10 +160,10 @@ func (f *pretty) printOutlineExample(outline *gherkin.ScenarioOutline) {
 		case res.typ == skipped && clr == nil:
 			clr = cyan
 		}
-		if printSteps {
+		if printSteps && i >= f.totalBgSteps {
 			// in first example, we need to print steps
 			var text string
-			ostep := outline.Steps[i]
+			ostep := outline.Steps[i-f.totalBgSteps]
 			if res.def != nil {
 				if m := outlinePlaceholderRegexp.FindAllStringIndex(ostep.Text, -1); len(m) > 0 {
 					var pos int
@@ -180,6 +183,23 @@ func (f *pretty) printOutlineExample(outline *gherkin.ScenarioOutline) {
 			}
 			// print the step outline
 			fmt.Fprintln(f.out, s(f.indent*2)+cyan(strings.TrimSpace(ostep.Keyword))+" "+text)
+
+			// print step argument
+			// @TODO: need to make example header cells bold
+			switch t := ostep.Argument.(type) {
+			case *gherkin.DataTable:
+				f.printTable(t, cyan)
+			case *gherkin.DocString:
+				var ct string
+				if len(t.ContentType) > 0 {
+					ct = " " + cyan(t.ContentType)
+				}
+				fmt.Fprintln(f.out, s(f.indent*3)+cyan(t.Delimitter)+ct)
+				for _, ln := range strings.Split(t.Content, "\n") {
+					fmt.Fprintln(f.out, s(f.indent*3)+cyan(ln))
+				}
+				fmt.Fprintln(f.out, s(f.indent*3)+cyan(t.Delimitter))
+			}
 		}
 	}
 
@@ -256,6 +276,11 @@ func (f *pretty) printStep(step *gherkin.Step, def *StepDef, c colors.ColorFunc)
 }
 
 func (f *pretty) printStepKind(res *stepResult) {
+	f.steps--
+	if f.outline != nil {
+		f.outlineSteps = append(f.outlineSteps, res)
+	}
+
 	// if has not printed background yet
 	switch {
 	// first background step
@@ -281,12 +306,8 @@ func (f *pretty) printStepKind(res *stepResult) {
 			fmt.Fprintln(f.out, "\n"+text)
 			f.scenarioKeyword = true
 		}
-		f.steps--
 	// first step of outline scenario, print header and calculate comment position
 	case f.outline != nil:
-		f.outlineSteps = append(f.outlineSteps, res)
-		f.steps--
-
 		// print scenario keyword and value if first example
 		if !f.scenarioKeyword {
 			f.commentPos = f.longestStep(f.outline.Steps, f.length(f.outline))
@@ -300,7 +321,7 @@ func (f *pretty) printStepKind(res *stepResult) {
 			fmt.Fprintln(f.out, "\n"+text)
 			f.scenarioKeyword = true
 		}
-		if len(f.outlineSteps) == len(f.outline.Steps)+f.bgSteps {
+		if len(f.outlineSteps) == len(f.outline.Steps)+f.totalBgSteps {
 			// an outline example steps has went through
 			f.printOutlineExample(f.outline)
 			f.outlineNumExamples--

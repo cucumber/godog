@@ -98,3 +98,55 @@ Feature: run outline
       """
       a failing step
       """
+
+  Scenario: should translate step table body
+    Given a feature "normal.feature" file:
+      """
+      Feature: outline
+
+        Background:
+          Given I'm listening to suite events
+
+        Scenario Outline: run with events
+          Given a feature path "<path>"
+          When I run feature suite
+          Then these events had to be fired for a number of times:
+            | BeforeScenario | <scen> |
+            | BeforeStep     | <step> |
+
+          Examples:
+            | path                    | scen | step |
+            | features/load.feature:6 | 1    | 3    |
+            | features/load.feature   | 6    | 19   |
+      """
+    When I run feature suite
+    Then the suite should have passed
+    And the following steps should be passed:
+      """
+      I'm listening to suite events
+      I run feature suite
+      a feature path "features/load.feature:6"
+      a feature path "features/load.feature"
+      """
+
+  Scenario Outline: should translate step doc string argument
+    Given a feature "normal.feature" file:
+      """
+      Feature: scenario events
+
+        Background:
+          Given I'm listening to suite events
+
+        Scenario: run with events
+          Given a feature path "<path>"
+          When I run feature suite
+          Then these events had to be fired for a number of times:
+            | BeforeScenario | <scen> |
+      """
+    When I run feature suite
+    Then the suite should have passed
+
+    Examples:
+      | path                    | scen |
+      | features/load.feature:6 | 1    |
+      | features/load.feature   | 6    |

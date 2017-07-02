@@ -405,12 +405,52 @@ func (s *Suite) runOutline(outline *gherkin.ScenarioOutline, b *gherkin.Backgrou
 				for i, placeholder := range placeholders {
 					text = strings.Replace(text, "<"+placeholder.Value+">", group.Cells[i].Value, -1)
 				}
+
+				// translate argument
+				arg := outlineStep.Argument
+				switch t := outlineStep.Argument.(type) {
+				case *gherkin.DataTable:
+					tbl := &gherkin.DataTable{
+						Node: t.Node,
+						Rows: make([]*gherkin.TableRow, len(t.Rows)),
+					}
+					for i, row := range t.Rows {
+						cells := make([]*gherkin.TableCell, len(row.Cells))
+						for j, cell := range row.Cells {
+							trans := cell.Value
+							for i, placeholder := range placeholders {
+								trans = strings.Replace(trans, "<"+placeholder.Value+">", group.Cells[i].Value, -1)
+							}
+							cells[j] = &gherkin.TableCell{
+								Node:  cell.Node,
+								Value: trans,
+							}
+						}
+						tbl.Rows[i] = &gherkin.TableRow{
+							Node:  row.Node,
+							Cells: cells,
+						}
+					}
+					arg = tbl
+				case *gherkin.DocString:
+					trans := t.Content
+					for i, placeholder := range placeholders {
+						trans = strings.Replace(trans, "<"+placeholder.Value+">", group.Cells[i].Value, -1)
+					}
+					arg = &gherkin.DocString{
+						Node:        t.Node,
+						Content:     trans,
+						ContentType: t.ContentType,
+						Delimitter:  t.Delimitter,
+					}
+				}
+
 				// clone a step
 				step := &gherkin.Step{
 					Node:     outlineStep.Node,
 					Text:     text,
 					Keyword:  outlineStep.Keyword,
-					Argument: outlineStep.Argument,
+					Argument: arg,
 				}
 				steps = append(steps, step)
 			}
