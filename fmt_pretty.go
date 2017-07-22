@@ -203,26 +203,30 @@ func (f *pretty) printOutlineExample(outline *gherkin.ScenarioOutline) {
 		}
 	}
 
+	if clr == nil {
+		clr = green
+	}
 	cells := make([]string, len(example.TableHeader.Cells))
-	max := longest(example)
+	max := longest(example, clr, cyan)
 	// an example table header
 	if firstExample {
 		fmt.Fprintln(f.out, "")
 		fmt.Fprintln(f.out, s(f.indent*2)+whiteb(example.Keyword+": ")+example.Name)
 
 		for i, cell := range example.TableHeader.Cells {
-			cells[i] = cyan(cell.Value) + s(max[i]-len(cell.Value))
+			val := cyan(cell.Value)
+			ln := utf8.RuneCountInString(val)
+			cells[i] = val + s(max[i]-ln)
 		}
 		fmt.Fprintln(f.out, s(f.indent*3)+"| "+strings.Join(cells, " | ")+" |")
 	}
 
-	if clr == nil {
-		clr = green
-	}
 	// an example table row
 	row := example.TableBody[len(example.TableBody)-f.outlineNumExamples]
 	for i, cell := range row.Cells {
-		cells[i] = clr(cell.Value) + s(max[i]-len(cell.Value))
+		val := clr(cell.Value)
+		ln := utf8.RuneCountInString(val)
+		cells[i] = val + s(max[i]-ln)
 	}
 	fmt.Fprintln(f.out, s(f.indent*3)+"| "+strings.Join(cells, " | ")+" |")
 
@@ -340,13 +344,15 @@ func (f *pretty) printStepKind(res *stepResult) {
 
 // print table with aligned table cells
 func (f *pretty) printTable(t *gherkin.DataTable, c colors.ColorFunc) {
-	var l = longest(t)
+	var l = longest(t, c)
 	var cols = make([]string, len(t.Rows[0].Cells))
 	for _, row := range t.Rows {
 		for i, cell := range row.Cells {
-			cols[i] = cell.Value + s(l[i]-len(cell.Value))
+			val := c(cell.Value)
+			ln := utf8.RuneCountInString(val)
+			cols[i] = val + s(l[i]-ln)
 		}
-		fmt.Fprintln(f.out, s(f.indent*3)+c("| "+strings.Join(cols, " | ")+" |"))
+		fmt.Fprintln(f.out, s(f.indent*3)+"| "+strings.Join(cols, " | ")+" |")
 	}
 }
 
@@ -376,7 +382,7 @@ func (f *pretty) Pending(step *gherkin.Step, match *StepDef) {
 }
 
 // longest gives a list of longest columns of all rows in Table
-func longest(tbl interface{}) []int {
+func longest(tbl interface{}, clrs ...colors.ColorFunc) []int {
 	var rows []*gherkin.TableRow
 	switch t := tbl.(type) {
 	case *gherkin.Examples:
@@ -389,8 +395,16 @@ func longest(tbl interface{}) []int {
 	longest := make([]int, len(rows[0].Cells))
 	for _, row := range rows {
 		for i, cell := range row.Cells {
-			if longest[i] < len(cell.Value) {
-				longest[i] = len(cell.Value)
+			for _, c := range clrs {
+				ln := utf8.RuneCountInString(c(cell.Value))
+				if longest[i] < ln {
+					longest[i] = ln
+				}
+			}
+
+			ln := utf8.RuneCountInString(cell.Value)
+			if longest[i] < ln {
+				longest[i] = ln
 			}
 		}
 	}
