@@ -17,8 +17,9 @@ import (
 	"unicode"
 )
 
-var compiler = filepath.Join(build.ToolDir, "compile")
-var linker = filepath.Join(build.ToolDir, "link")
+var tooldir = findToolDir()
+var compiler = filepath.Join(tooldir, "compile")
+var linker = filepath.Join(tooldir, "link")
 var gopaths = filepath.SplitList(build.Default.GOPATH)
 var goarch = build.Default.GOARCH
 var goos = build.Default.GOOS
@@ -78,7 +79,7 @@ func Build(bin string) error {
 		// go does it better
 		out, err := exec.Command("go", "test", "-i").CombinedOutput()
 		if err != nil {
-			return fmt.Errorf("failed to compile package %s:\n%s", pkg.Name, string(out))
+			return fmt.Errorf("failed to compile package: %s, reason: %v, output: %s", pkg.Name, err, string(out))
 		}
 
 		// let go do the dirty work and compile test
@@ -95,7 +96,7 @@ func Build(bin string) error {
 		// go has built. We will reuse it for our suite workdir.
 		out, err = exec.Command("go", "test", "-c", "-work", "-o", temp).CombinedOutput()
 		if err != nil {
-			return fmt.Errorf("failed to compile tested package %s:\n%s", pkg.Name, string(out))
+			return fmt.Errorf("failed to compile tested package: %s, reason: %v, output: %s", pkg.Name, err, string(out))
 		}
 		defer os.Remove(temp)
 
@@ -140,7 +141,7 @@ func Build(bin string) error {
 	cmd.Env = os.Environ()
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to install godog package:\n%s", string(out))
+		return fmt.Errorf("failed to install godog package: %s, reason: %v", string(out), err)
 	}
 
 	// collect all possible package dirs, will be
@@ -173,7 +174,7 @@ func Build(bin string) error {
 	cmd.Env = os.Environ()
 	out, err = cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to compile testmain package:\n%s", string(out))
+		return fmt.Errorf("failed to compile testmain package: %v - output: %s", err, string(out))
 	}
 
 	// link test suite executable
@@ -323,4 +324,11 @@ func processPackageTestFiles(packs ...[]string) ([]string, error) {
 		return ctxs, fmt.Errorf("godog contexts must be exported:\n\t%s", strings.Join(failed, "\n\t"))
 	}
 	return ctxs, nil
+}
+
+func findToolDir() string {
+	if out, err := exec.Command("go", "env", "GOTOOLDIR").Output(); err != nil {
+		return filepath.Clean(strings.TrimSpace(string(out)))
+	}
+	return filepath.Clean(build.ToolDir)
 }

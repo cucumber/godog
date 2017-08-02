@@ -28,7 +28,8 @@ files.
 **Godog** acts similar compared to **go test** command, by using go
 compiler and linker tool in order to produce test executable. Godog
 contexts need to be exported the same way as **Test** functions for go
-tests.
+tests. Note, that if you use **godog** command tool, it will use `go`
+executable to determine compiler and linker.
 
 **Godog** ships gherkin parser dependency as a subpackage. This will
 ensure that it is always compatible with the installed version of godog.
