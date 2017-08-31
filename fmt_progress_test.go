@@ -76,9 +76,8 @@ func FeatureContext(s *godog.Suite) {
 	r.run()
 
 	actual := trimAllLines(buf.String())
-	if actual != expected {
-		t.Fatalf("expected output does not match: %s", actual)
-	}
+
+	shouldMatchOutput(expected, actual, t)
 }
 
 func trimAllLines(s string) string {
@@ -119,8 +118,8 @@ func TestProgressFormatterWhenStepPanics(t *testing.T) {
 	}
 
 	out := buf.String()
-	if idx := strings.Index(out, "github.com/DATA-DOG/godog/fmt_progress_test.go:113"); idx == -1 {
-		t.Fatal("expected to find panic stacktrace")
+	if idx := strings.Index(out, "github.com/DATA-DOG/godog/fmt_progress_test.go:116"); idx == -1 {
+		t.Fatalf("expected to find panic stacktrace, actual:\n%s", out)
 	}
 }
 
@@ -159,7 +158,7 @@ func TestProgressFormatterWithFailingMultisteps(t *testing.T) {
 	w := colors.Uncolored(&buf)
 	r := runner{
 		fmt:      progressFunc("progress", w),
-		features: []*feature{&feature{Feature: feat}},
+		features: []*feature{&feature{Feature: feat, Path: "some.feature"}},
 		initializer: func(s *Suite) {
 			s.Step(`^sub1$`, func() error { return nil })
 			s.Step(`^sub-sub$`, func() error { return fmt.Errorf("errored") })
@@ -171,6 +170,56 @@ func TestProgressFormatterWithFailingMultisteps(t *testing.T) {
 
 	if !r.run() {
 		t.Fatal("the suite should have failed")
+	}
+
+	expected := `
+.F 2
+
+
+--- Failed steps:
+
+Then two # some.feature:6
+Error: sub2: sub-sub: errored
+
+
+1 scenarios (1 failed)
+2 steps (1 passed, 1 failed)
+0s
+
+Randomized with seed: %s
+`
+
+	expected = trimAllLines(expected)
+	expected = fmt.Sprintf(expected, os.Getenv("GODOG_SEED"))
+	actual := trimAllLines(buf.String())
+
+	shouldMatchOutput(expected, actual, t)
+}
+
+func shouldMatchOutput(expected, actual string, t *testing.T) {
+	act := []byte(actual)
+	exp := []byte(expected)
+
+	if len(act) != len(exp) {
+		t.Fatalf("content lengths do not match, expected: %d, actual %d, actual output:\n%s", len(exp), len(act), actual)
+	}
+
+	for i := 0; i < len(exp); i++ {
+		if act[i] == exp[i] {
+			continue
+		}
+
+		cpe := make([]byte, len(exp))
+		copy(cpe, exp)
+		e := append(exp[:i], '^')
+		e = append(e, cpe[i:]...)
+
+		cpa := make([]byte, len(act))
+		copy(cpa, act)
+		a := append(act[:i], '^')
+		a = append(a, cpa[i:]...)
+
+		t.Fatalf("expected output does not match:\n%s\n\n%s", string(a), string(e))
 	}
 }
 

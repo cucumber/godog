@@ -352,7 +352,7 @@ func (s *Suite) maybeSubSteps(result interface{}) error {
 		if def := s.matchStepText(text); def == nil {
 			return ErrUndefined
 		} else if err := s.maybeSubSteps(def.run()); err != nil {
-			return err
+			return fmt.Errorf("%s: %+v", text, err)
 		}
 	}
 	return nil
