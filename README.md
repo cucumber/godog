@@ -207,6 +207,9 @@ composed.
 
 - [how to use godog by semaphoreci](https://semaphoreci.com/community/tutorials/how-to-use-godog-for-behavior-driven-development-in-go)
 - see [examples](https://github.com/DATA-DOG/godog/tree/master/examples)
+- see extension [AssistDog](https://github.com/hellomd/assistdog), which
+  may have useful **gherkin.DataTable** transformations or comparison
+  methods for assertions.
 
 ### Documentation
 
