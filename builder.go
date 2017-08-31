@@ -35,6 +35,7 @@ import (
 
 func main() {
 	status := godog.Run("{{ .Name }}", func (suite *godog.Suite) {
+		os.Setenv("GODOG_TESTED_PACKAGE", "{{.ImportPath}}")
 		{{range .Contexts}}
 			_test.{{ . }}(suite)
 		{{end}}

@@ -2,6 +2,7 @@ package godog
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"reflect"
 	"regexp"
@@ -66,6 +67,12 @@ func (sd *StepDef) definitionID() string {
 	} else {
 		// case when steps are just plain funcs
 		fn = strings.Trim(fn, "_.")
+	}
+
+	if pkg := os.Getenv("GODOG_TESTED_PACKAGE"); len(pkg) > 0 {
+		fn = strings.Replace(fn, pkg, "", 1)
+		fn = strings.TrimLeft(fn, ".")
+		fn = strings.Replace(fn, "..", ".", -1)
 	}
 
 	return fmt.Sprintf("%s:%d -> %s", filepath.Base(file), line, fn)

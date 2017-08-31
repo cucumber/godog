@@ -33,7 +33,7 @@ func TestPrintsStepDefinitions(t *testing.T) {
 	s.printStepDefinitions(w)
 
 	out := buf.String()
-	ref := `github.com/DATA-DOG/godog.okStep`
+	ref := `okStep`
 	for i, def := range strings.Split(strings.TrimSpace(out), "\n") {
 		if idx := strings.Index(def, steps[i]); idx == -1 {
 			t.Fatalf(`step "%s" was not found in output`, steps[i])

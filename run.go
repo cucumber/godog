@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -154,6 +156,9 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 
 	// store chosen seed in environment, so it could be seen in formatter summary report
 	os.Setenv("GODOG_SEED", strconv.FormatInt(r.randomSeed, 10))
+	// determine tested package
+	_, filename, _, _ := runtime.Caller(1)
+	os.Setenv("GODOG_TESTED_PACKAGE", runsFromPackage(filename))
 
 	var failed bool
 	if opt.Concurrency > 1 {
@@ -165,6 +170,17 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 		return exitFailure
 	}
 	return exitSuccess
+}
+
+func runsFromPackage(fp string) string {
+	dir := filepath.Dir(fp)
+	for _, gp := range gopaths {
+		gp = filepath.Join(gp, "src")
+		if strings.Index(dir, gp) == 0 {
+			return strings.TrimLeft(strings.Replace(dir, gp, "", 1), string(filepath.Separator))
+		}
+	}
+	return dir
 }
 
 // Run creates and runs the feature suite.

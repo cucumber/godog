@@ -184,13 +184,14 @@ Error: sub2: sub-sub: errored
 
 1 scenarios (1 failed)
 2 steps (1 passed, 1 failed)
-0s
+%s
 
 Randomized with seed: %s
 `
 
 	expected = trimAllLines(expected)
-	expected = fmt.Sprintf(expected, os.Getenv("GODOG_SEED"))
+	var zeroDuration time.Duration
+	expected = fmt.Sprintf(expected, zeroDuration.String(), os.Getenv("GODOG_SEED"))
 	actual := trimAllLines(buf.String())
 
 	shouldMatchOutput(expected, actual, t)

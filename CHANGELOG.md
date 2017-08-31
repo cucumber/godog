@@ -1,5 +1,14 @@
 # Change LOG
 
+**2017-08-31**
+- added **BeforeFeature** and **AfterFeature** hooks.
+- failed multistep error is now prepended with a parent step text in order
+  to determine failed nested step.
+- pretty format now removes the step definition location package name in
+  comment next to step if the step definition matches tested package. If
+  step definition is imported from other package, full package name will
+  be printed.
+
 **2017-05-04**
 - added **--strict** option in order to fail suite when there are pending
   or undefined steps. By default, suite passes and treats pending or
