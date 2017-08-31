@@ -16,10 +16,12 @@ Feature: suite events
     When I run feature suite
     Then these events had to be fired for a number of times:
       | BeforeSuite    | 1 |
+      | BeforeFeature  | 1 |
       | BeforeScenario | 1 |
       | BeforeStep     | 3 |
       | AfterStep      | 3 |
       | AfterScenario  | 1 |
+      | AfterFeature   | 1 |
       | AfterSuite     | 1 |
 
   Scenario: triggers appropriate events whole feature
@@ -27,8 +29,25 @@ Feature: suite events
     When I run feature suite
     Then these events had to be fired for a number of times:
       | BeforeSuite    | 1  |
+      | BeforeFeature  | 1  |
       | BeforeScenario | 6  |
       | BeforeStep     | 19 |
       | AfterStep      | 19 |
       | AfterScenario  | 6  |
+      | AfterFeature   | 1  |
       | AfterSuite     | 1  |
+
+  Scenario: triggers appropriate events for two feature files
+    Given a feature path "features/load.feature:6"
+    And a feature path "features/multistep.feature:6"
+    When I run feature suite
+    Then these events had to be fired for a number of times:
+      | BeforeSuite    | 1 |
+      | BeforeFeature  | 2 |
+      | BeforeScenario | 2 |
+      | BeforeStep     | 7 |
+      | AfterStep      | 7 |
+      | AfterScenario  | 2 |
+      | AfterFeature   | 2 |
+      | AfterSuite     | 1 |
+

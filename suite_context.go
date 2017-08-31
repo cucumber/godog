@@ -275,6 +275,12 @@ func (s *suiteContext) iAmListeningToSuiteEvents() error {
 	s.testedSuite.AfterSuite(func() {
 		s.events = append(s.events, &firedEvent{"AfterSuite", []interface{}{}})
 	})
+	s.testedSuite.BeforeFeature(func(ft *gherkin.Feature) {
+		s.events = append(s.events, &firedEvent{"BeforeFeature", []interface{}{ft}})
+	})
+	s.testedSuite.AfterFeature(func(ft *gherkin.Feature) {
+		s.events = append(s.events, &firedEvent{"AfterFeature", []interface{}{ft}})
+	})
 	s.testedSuite.BeforeScenario(func(scenario interface{}) {
 		s.events = append(s.events, &firedEvent{"BeforeScenario", []interface{}{scenario}})
 	})

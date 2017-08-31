@@ -303,6 +303,14 @@ corruption or race conditions in the application.
 It is also useful to randomize the order of scenario execution, which you
 can now do with **--random** command option.
 
+**NOTE:** if suite runs with concurrency option, it concurrently runs
+every feature, not scenario per different features. This gives
+a flexibility to isolate state per feature. For example using
+**BeforeFeature** hook, it is possible to spin up costly service and shut
+it down only in **AfterFeature** hook and share the service between all
+scenarios in that feature. It is not advisable though, because you are
+risking having a state dependency.
+
 ## Contributions
 
 Feel free to open a pull request. Note, if you wish to contribute an extension to public (exported methods or types) -

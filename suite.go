@@ -55,10 +55,12 @@ type Suite struct {
 
 	// suite event handlers
 	beforeSuiteHandlers    []func()
+	beforeFeatureHandlers  []func(*gherkin.Feature)
 	beforeScenarioHandlers []func(interface{})
 	beforeStepHandlers     []func(*gherkin.Step)
 	afterStepHandlers      []func(*gherkin.Step, error)
 	afterScenarioHandlers  []func(interface{}, error)
+	afterFeatureHandlers   []func(*gherkin.Feature)
 	afterSuiteHandlers     []func()
 }
 
@@ -130,8 +132,26 @@ func (s *Suite) Step(expr interface{}, stepFunc interface{}) {
 //
 // Use it to prepare the test suite for a spin.
 // Connect and prepare database for instance...
-func (s *Suite) BeforeSuite(f func()) {
-	s.beforeSuiteHandlers = append(s.beforeSuiteHandlers, f)
+func (s *Suite) BeforeSuite(fn func()) {
+	s.beforeSuiteHandlers = append(s.beforeSuiteHandlers, fn)
+}
+
+// BeforeFeature registers a function or method
+// to be run once before every feature execution.
+//
+// If godog is run with concurrency option, it will
+// run every feature per goroutine. So user may choose
+// whether to isolate state within feature context or
+// scenario.
+//
+// Best practice is not to have any state dependency on
+// every scenario, but in some cases if VM for example
+// needs to be started it may take very long for each
+// scenario to restart it.
+//
+// Use it wisely and avoid sharing state between scenarios.
+func (s *Suite) BeforeFeature(fn func(*gherkin.Feature)) {
+	s.beforeFeatureHandlers = append(s.beforeFeatureHandlers, fn)
 }
 
 // BeforeScenario registers a function or method
@@ -143,14 +163,14 @@ func (s *Suite) BeforeSuite(f func()) {
 // It is a good practice to restore the default state
 // before every scenario so it would be isolated from
 // any kind of state.
-func (s *Suite) BeforeScenario(f func(interface{})) {
-	s.beforeScenarioHandlers = append(s.beforeScenarioHandlers, f)
+func (s *Suite) BeforeScenario(fn func(interface{})) {
+	s.beforeScenarioHandlers = append(s.beforeScenarioHandlers, fn)
 }
 
 // BeforeStep registers a function or method
 // to be run before every scenario
-func (s *Suite) BeforeStep(f func(*gherkin.Step)) {
-	s.beforeStepHandlers = append(s.beforeStepHandlers, f)
+func (s *Suite) BeforeStep(fn func(*gherkin.Step)) {
+	s.beforeStepHandlers = append(s.beforeStepHandlers, fn)
 }
 
 // AfterStep registers an function or method
@@ -162,8 +182,8 @@ func (s *Suite) BeforeStep(f func(*gherkin.Step)) {
 //
 // In some cases, for example when running a headless
 // browser, to take a screenshot after failure.
-func (s *Suite) AfterStep(f func(*gherkin.Step, error)) {
-	s.afterStepHandlers = append(s.afterStepHandlers, f)
+func (s *Suite) AfterStep(fn func(*gherkin.Step, error)) {
+	s.afterStepHandlers = append(s.afterStepHandlers, fn)
 }
 
 // AfterScenario registers an function or method
@@ -171,14 +191,20 @@ func (s *Suite) AfterStep(f func(*gherkin.Step, error)) {
 //
 // The interface argument may be *gherkin.Scenario
 // or *gherkin.ScenarioOutline
-func (s *Suite) AfterScenario(f func(interface{}, error)) {
-	s.afterScenarioHandlers = append(s.afterScenarioHandlers, f)
+func (s *Suite) AfterScenario(fn func(interface{}, error)) {
+	s.afterScenarioHandlers = append(s.afterScenarioHandlers, fn)
+}
+
+// AfterFeature registers a function or method
+// to be run once after feature executed all scenarios.
+func (s *Suite) AfterFeature(fn func(*gherkin.Feature)) {
+	s.afterFeatureHandlers = append(s.afterFeatureHandlers, fn)
 }
 
 // AfterSuite registers a function or method
 // to be run once after suite runner
-func (s *Suite) AfterSuite(f func()) {
-	s.afterSuiteHandlers = append(s.afterSuiteHandlers, f)
+func (s *Suite) AfterSuite(fn func()) {
+	s.afterSuiteHandlers = append(s.afterSuiteHandlers, fn)
 }
 
 func (s *Suite) run() {
@@ -492,6 +518,10 @@ func (s *Suite) shouldFail(err error) bool {
 }
 
 func (s *Suite) runFeature(f *feature) {
+	for _, fn := range s.beforeFeatureHandlers {
+		fn(f.Feature)
+	}
+
 	s.fmt.Feature(f.Feature, f.Path, f.Content)
 
 	// make a local copy of the feature scenario defenitions,
@@ -506,6 +536,12 @@ func (s *Suite) runFeature(f *feature) {
 	} else {
 		copy(scenarios, f.ScenarioDefinitions)
 	}
+
+	defer func() {
+		for _, fn := range s.afterFeatureHandlers {
+			fn(f.Feature)
+		}
+	}()
 
 	for _, scenario := range scenarios {
 		var err error
