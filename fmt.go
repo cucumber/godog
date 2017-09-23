@@ -406,9 +406,10 @@ func (f *basefmt) snippets() string {
 			name = strings.TrimSpace(snippetMethodName.ReplaceAllString(name, ""))
 			var words []string
 			for i, w := range strings.Split(name, " ") {
-				if i != 0 {
+				switch {
+				case i != 0:
 					w = strings.Title(w)
-				} else {
+				case len(w) > 0:
 					w = string(unicode.ToLower(rune(w[0]))) + w[1:]
 				}
 				words = append(words, w)
