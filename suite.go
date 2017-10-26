@@ -425,8 +425,10 @@ func (s *Suite) runOutline(outline *gherkin.ScenarioOutline, b *gherkin.Backgrou
 		groups := example.TableBody
 
 		for _, group := range groups {
-			for _, f := range s.beforeScenarioHandlers {
-				f(outline)
+			if !isEmptyScenario(outline) {
+				for _, f := range s.beforeScenarioHandlers {
+					f(outline)
+				}
 			}
 			var steps []*gherkin.Step
 			for _, outlineStep := range outline.Steps {
@@ -493,8 +495,10 @@ func (s *Suite) runOutline(outline *gherkin.ScenarioOutline, b *gherkin.Backgrou
 
 			err := s.runSteps(steps)
 
-			for _, f := range s.afterScenarioHandlers {
-				f(outline, err)
+			if !isEmptyScenario(outline) {
+				for _, f := range s.afterScenarioHandlers {
+					f(outline, err)
+				}
 			}
 
 			if s.shouldFail(err) {
@@ -521,8 +525,10 @@ func (s *Suite) shouldFail(err error) bool {
 }
 
 func (s *Suite) runFeature(f *feature) {
-	for _, fn := range s.beforeFeatureHandlers {
-		fn(f.Feature)
+	if !isEmptyFeature(f.Feature) {
+		for _, fn := range s.beforeFeatureHandlers {
+			fn(f.Feature)
+		}
 	}
 
 	s.fmt.Feature(f.Feature, f.Path, f.Content)
@@ -541,8 +547,10 @@ func (s *Suite) runFeature(f *feature) {
 	}
 
 	defer func() {
-		for _, fn := range s.afterFeatureHandlers {
-			fn(f.Feature)
+		if !isEmptyFeature(f.Feature) {
+			for _, fn := range s.afterFeatureHandlers {
+				fn(f.Feature)
+			}
 		}
 	}()
 
@@ -567,6 +575,11 @@ func (s *Suite) runFeature(f *feature) {
 }
 
 func (s *Suite) runScenario(scenario *gherkin.Scenario, b *gherkin.Background) (err error) {
+	if isEmptyScenario(scenario) {
+		s.fmt.Node(scenario)
+		return ErrUndefined
+	}
+
 	// run before scenario handlers
 	for _, f := range s.beforeScenarioHandlers {
 		f(scenario)
@@ -704,9 +717,7 @@ func filterFeatures(tags string, collected map[string]*feature) (features []*fea
 		ft.ScenarioDefinitions = scenarios
 		applyTagFilter(tags, ft.Feature)
 
-		if len(ft.ScenarioDefinitions) > 0 {
-			features = append(features, ft)
-		}
+		features = append(features, ft)
 	}
 
 	sort.Sort(sortByOrderGiven(features))

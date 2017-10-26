@@ -51,3 +51,50 @@ Feature: suite events
       | AfterFeature   | 2 |
       | AfterSuite     | 1 |
 
+  Scenario: should not trigger events on empty feature
+    Given a feature "normal.feature" file:
+      """
+      Feature: empty
+
+        Scenario: one
+
+        Scenario: two
+      """
+    When I run feature suite
+    Then these events had to be fired for a number of times:
+      | BeforeSuite    | 1 |
+      | BeforeFeature  | 0 |
+      | BeforeScenario | 0 |
+      | BeforeStep     | 0 |
+      | AfterStep      | 0 |
+      | AfterScenario  | 0 |
+      | AfterFeature   | 0 |
+      | AfterSuite     | 1 |
+
+  Scenario: should not trigger events on empty scenarios
+    Given a feature "normal.feature" file:
+      """
+      Feature: half empty
+
+        Scenario: one
+
+        Scenario: two
+          Then passing step
+
+        Scenario Outline: three
+          Then passing step
+
+          Examples:
+            | a |
+            | 1 |
+      """
+    When I run feature suite
+    Then these events had to be fired for a number of times:
+      | BeforeSuite    | 1 |
+      | BeforeFeature  | 1 |
+      | BeforeScenario | 2 |
+      | BeforeStep     | 2 |
+      | AfterStep      | 2 |
+      | AfterScenario  | 2 |
+      | AfterFeature   | 1 |
+      | AfterSuite     | 1 |

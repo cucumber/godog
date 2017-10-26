@@ -89,6 +89,9 @@ func (f *pretty) Node(node interface{}) {
 		f.outline = nil
 		f.steps = len(t.Steps) + f.totalBgSteps
 		f.scenarioKeyword = false
+		if isEmptyScenario(t) {
+			f.printUndefinedScenario(t)
+		}
 	case *gherkin.ScenarioOutline:
 		f.outline = t
 		f.scenario = nil
@@ -98,6 +101,21 @@ func (f *pretty) Node(node interface{}) {
 		f.steps = len(f.outline.Steps) + f.totalBgSteps
 		f.outlineSteps = []*stepResult{}
 	}
+}
+
+func (f *pretty) printUndefinedScenario(sc *gherkin.Scenario) {
+	if f.bgSteps > 0 {
+		f.commentPos = f.longestStep(f.feature.Background.Steps, f.length(f.feature.Background))
+		fmt.Fprintln(f.out, "\n"+s(f.indent)+whiteb(f.feature.Background.Keyword+": "+f.feature.Background.Name))
+
+		for _, step := range f.feature.Background.Steps {
+			f.bgSteps--
+			f.printStep(step, nil, colors.Cyan)
+		}
+	}
+	text := s(f.indent) + whiteb(f.scenario.Keyword+": ") + sc.Name
+	text += s(f.commentPos-f.length(f.scenario)+1) + f.line(sc.Location)
+	fmt.Fprintln(f.out, "\n"+text)
 }
 
 // Summary sumarize the feature formatter output
@@ -284,6 +302,7 @@ func (f *pretty) printStepKind(res *stepResult) {
 	if f.outline != nil {
 		f.outlineSteps = append(f.outlineSteps, res)
 	}
+	var bgStep bool
 
 	// if has not printed background yet
 	switch {
@@ -292,9 +311,11 @@ func (f *pretty) printStepKind(res *stepResult) {
 		f.commentPos = f.longestStep(f.feature.Background.Steps, f.length(f.feature.Background))
 		fmt.Fprintln(f.out, "\n"+s(f.indent)+whiteb(f.feature.Background.Keyword+": "+f.feature.Background.Name))
 		f.bgSteps--
+		bgStep = true
 	// subsequent background steps
 	case f.bgSteps > 0:
 		f.bgSteps--
+		bgStep = true
 	// first step of scenario, print header and calculate comment position
 	case f.scenario != nil:
 		// print scenario keyword and value if first example
@@ -333,13 +354,28 @@ func (f *pretty) printStepKind(res *stepResult) {
 		return
 	}
 
-	f.printStep(res.step, res.def, res.typ.clr())
+	if !f.isBackgroundStep(res.step) || bgStep {
+		f.printStep(res.step, res.def, res.typ.clr())
+	}
 	if res.err != nil {
 		fmt.Fprintln(f.out, s(f.indent*2)+redb(fmt.Sprintf("%+v", res.err)))
 	}
 	if res.typ == pending {
 		fmt.Fprintln(f.out, s(f.indent*3)+yellow("TODO: write pending definition"))
 	}
+}
+
+func (f *pretty) isBackgroundStep(step *gherkin.Step) bool {
+	if f.feature.Background == nil {
+		return false
+	}
+
+	for _, bstep := range f.feature.Background.Steps {
+		if bstep.Location.Line == step.Location.Line {
+			return true
+		}
+	}
+	return false
 }
 
 // print table with aligned table cells
