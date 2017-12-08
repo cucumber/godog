@@ -143,6 +143,15 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 		return exitOptionError
 	}
 
+	if opt.ResultsFile != "" {
+		resultsOutput, err := os.Create(opt.ResultsFile)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, fmt.Errorf("results file '%v': %v", opt.ResultsFile, err))
+			return exitOptionError
+		}
+		output = colors.Uncolored(resultsOutput)
+	}
+
 	r := runner{
 		fmt:           formatter(suite, output),
 		initializer:   contextInitializer,

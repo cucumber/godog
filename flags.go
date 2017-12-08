@@ -55,6 +55,8 @@ func FlagSet(opt *Options) *flag.FlagSet {
 	set.BoolVar(&opt.Strict, "strict", false, "Fail suite when there are pending or undefined steps.")
 	set.BoolVar(&opt.NoColors, "no-colors", false, "Disable ansi colors.")
 	set.Var(&randomSeed{&opt.Randomize}, "random", descRandomOption)
+	set.StringVar(&opt.ResultsFile, "write", "", "Write results to a file.")
+	set.StringVar(&opt.ResultsFile, "w", "", "Write results to a file.")
 	set.Usage = usage(set, opt.Output)
 	return set
 }

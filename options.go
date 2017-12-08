@@ -56,4 +56,7 @@ type Options struct {
 
 	// Where it should print formatter output
 	Output io.Writer
+
+	// File path to write formatter output (this will override Output)
+	ResultsFile string
 }
