@@ -2,10 +2,12 @@ package godog
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -229,6 +231,40 @@ func TestByDefaultRunsFeaturesPath(t *testing.T) {
 	// should succeed in non strict mode due to undefined steps
 	if status != exitSuccess {
 		t.Fatalf("expected exit status to be 0, but was: %d", status)
+	}
+}
+
+func TestWritesToResultsFile(t *testing.T) {
+	dir, err := ioutil.TempDir("", "godog.test")
+	if err != nil {
+		t.Fatalf("error creating temp dir: %v", err)
+	}
+	defer os.RemoveAll(dir)
+
+	resultsFile := filepath.Join(dir, "results.json")
+
+	opt := Options{
+		Format:      "cucumber",
+		Output:      ioutil.Discard,
+		ResultsFile: resultsFile,
+	}
+
+	RunWithOptions("succeeds", func(_ *Suite) {}, opt)
+
+	res, err := ioutil.ReadFile(resultsFile)
+	if err != nil {
+		t.Fatalf("could not read results file: %v", err)
+	}
+
+	var resultsObj interface{}
+	json.Unmarshal(res, &resultsObj)
+	if resultsObj == nil {
+		t.Fatalf("results file did not contain valid json")
+	}
+
+	resultsArr := resultsObj.([]interface{})
+	if len(resultsArr) == 0 {
+		t.Fatalf("results file contained empty result set")
 	}
 }
 
