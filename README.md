@@ -262,9 +262,9 @@ func TestMain(m *testing.M) {
 			break
 		}
 	}
-	status := RunWithOptions("godog", func(s *Suite) {
-		SuiteContext(s)
-	}, Options{
+	status := godog.RunWithOptions("godog", func(s *godog.Suite) {
+		godog.SuiteContext(s)
+	}, godog.Options{
 		Format: format,
 		Paths:     []string{"features"},
 	})
