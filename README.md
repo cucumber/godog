@@ -205,6 +205,11 @@ composed.
 
 ### References and Tutorials
 
+- [cucumber-html-reporter](https://github.com/gkushang/cucumber-html-reporter)
+  may be used in order to generate **html** reports together with
+  **cucumber** output formatter. See the [following docker
+  image](https://github.com/myie/cucumber-html-reporter) for usage
+  details.
 - [how to use godog by semaphoreci](https://semaphoreci.com/community/tutorials/how-to-use-godog-for-behavior-driven-development-in-go)
 - see [examples](https://github.com/DATA-DOG/godog/tree/master/examples)
 - see extension [AssistDog](https://github.com/hellomd/assistdog), which
