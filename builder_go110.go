@@ -1,4 +1,4 @@
-// +build !go1.10
+// +build go1.10
 
 package godog
 
@@ -78,30 +78,22 @@ func Build(bin string) error {
 	// we will skip test package compilation, since it is useless
 	if anyContexts {
 		// first of all compile test package dependencies
-		// that will save was many compilations for dependencies
+		// that will save us many compilations for dependencies
 		// go does it better
 		out, err := exec.Command("go", "test", "-i").CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("failed to compile package: %s, reason: %v, output: %s", pkg.Name, err, string(out))
 		}
 
-		// let go do the dirty work and compile test
-		// package with it's dependencies. Older go
-		// versions does not accept existing file output
-		// so we create a temporary executable which will
-		// removed.
-		temp := fmt.Sprintf(filepath.Join("%s", "temp-%d.test"), os.TempDir(), time.Now().UnixNano())
-
 		// builds and compile the tested package.
 		// generated test executable will be removed
 		// since we do not need it for godog suite.
 		// we also print back the temp WORK directory
 		// go has built. We will reuse it for our suite workdir.
-		out, err = exec.Command("go", "test", "-c", "-work", "-o", temp).CombinedOutput()
+		out, err = exec.Command("go", "test", "-c", "-work", "-o", "/dev/null").CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("failed to compile tested package: %s, reason: %v, output: %s", pkg.Name, err, string(out))
 		}
-		defer os.Remove(temp)
 
 		// extract go-build temporary directory as our workdir
 		workdir = strings.TrimSpace(string(out))
@@ -109,7 +101,7 @@ func Build(bin string) error {
 			return fmt.Errorf("expected WORK dir path, but got: %s", workdir)
 		}
 		workdir = strings.Replace(workdir, "WORK=", "", 1)
-		testdir = filepath.Join(workdir, pkg.ImportPath, "_test")
+		testdir = filepath.Join(workdir, "b001")
 	} else {
 		// still need to create temporary workdir
 		if err = os.MkdirAll(testdir, 0755); err != nil {
@@ -161,6 +153,7 @@ func Build(bin string) error {
 	args := []string{
 		"-o", testMainPkgOut,
 		// "-trimpath", workdir,
+		"-importcfg", filepath.Join(testdir, "importcfg.link"),
 		"-p", "main",
 		"-complete",
 	}
@@ -183,6 +176,7 @@ func Build(bin string) error {
 	// link test suite executable
 	args = []string{
 		"-o", bin,
+		"-importcfg", filepath.Join(testdir, "importcfg.link"),
 		"-buildmode=exe",
 	}
 	for _, link := range pkgDirs {
