@@ -12,7 +12,6 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -27,7 +26,7 @@ var goarch = build.Default.GOARCH
 var goos = build.Default.GOOS
 
 var godogImportPath = "github.com/DATA-DOG/godog"
-var goversionForNewCompileOptions = 1.10
+var goversionForNewCompileOptions = "1.10"
 var runnerTemplate = template.Must(template.New("testmain").Parse(`package main
 
 import (
@@ -74,11 +73,7 @@ func Build(bin string) error {
 
 	workdir := fmt.Sprintf(filepath.Join("%s", "godog-%d"), os.TempDir(), time.Now().UnixNano())
 	testdir := workdir
-	goversion, err := strconv.ParseFloat(strings.TrimLeft(runtime.Version(), "go"), 64)
-
-	if err != nil {
-		return fmt.Errorf("failed to retrieve go version from runtime, reason: %s", err)
-	}
+	goversion := strings.TrimLeft(runtime.Version(), "go")
 
 	// if none of test files exist, or there are no contexts found
 	// we will skip test package compilation, since it is useless
