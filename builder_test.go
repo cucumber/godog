@@ -6,25 +6,6 @@ import (
 	"testing"
 )
 
-func TestDeps(t *testing.T) {
-	t.Log("hh")
-
-	abs, err := filepath.Abs(".")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// we allow package to be nil, if godog is run only when
-	// there is a feature file in empty directory
-	pkg := importPackage(abs)
-	deps := make(map[string]string)
-	err = dependencies(pkg, deps)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(deps)
-}
-
 func TestBuildTestRunner(t *testing.T) {
 	bin := filepath.Join(os.TempDir(), "godog.test")
 	if err := Build(bin); err != nil {

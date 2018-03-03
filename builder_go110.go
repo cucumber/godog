@@ -170,10 +170,10 @@ func Build(bin string) error {
 
 		for pkgName, pkgObj := range deps {
 			if i := strings.LastIndex(pkgName, "vendor/"); i != -1 {
-				fmt.Fprintf(in, "importmap %s=%s\n", pkgName, pkgObj)
-			} else {
-				fmt.Fprintf(in, "packagefile %s=%s\n", pkgName, pkgObj)
+				name := pkgName[i+7:]
+				fmt.Fprintf(in, "importmap %s=%s\n", name, pkgName)
 			}
+			fmt.Fprintf(in, "packagefile %s=%s\n", pkgName, pkgObj)
 		}
 	}
 	in.Close()
