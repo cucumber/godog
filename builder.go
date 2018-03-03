@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"text/template"
 	"time"
@@ -71,6 +72,11 @@ func Build(bin string) error {
 
 	workdir := fmt.Sprintf(filepath.Join("%s", "godog-%d"), os.TempDir(), time.Now().UnixNano())
 	testdir := workdir
+	newCompileVersion, err := isVersionGreaterOrEqual(strings.TrimLeft(runtime.Version(), "go"), "1.10")
+
+	if err != nil {
+		return fmt.Errorf("failed to check current version of golang reason: %s", err)
+	}
 
 	// if none of test files exist, or there are no contexts found
 	// we will skip test package compilation, since it is useless
@@ -107,7 +113,12 @@ func Build(bin string) error {
 			return fmt.Errorf("expected WORK dir path, but got: %s", workdir)
 		}
 		workdir = strings.Replace(workdir, "WORK=", "", 1)
-		testdir = filepath.Join(workdir, pkg.ImportPath, "_test")
+
+		if newCompileVersion {
+			testdir = filepath.Join(workdir, "b001")
+		} else {
+			testdir = filepath.Join(workdir, pkg.ImportPath, "_test")
+		}
 	} else {
 		// still need to create temporary workdir
 		if err = os.MkdirAll(testdir, 0755); err != nil {
@@ -170,6 +181,9 @@ func Build(bin string) error {
 	for _, inc := range pkgDirs {
 		args = append(args, "-I", inc)
 	}
+	if newCompileVersion {
+		args = append(args, "-importcfg", filepath.Join(testdir, "importcfg.link"))
+	}
 	args = append(args, "-pack", testmain)
 	cmd = exec.Command(compiler, args...)
 	cmd.Env = os.Environ()
@@ -185,6 +199,9 @@ func Build(bin string) error {
 	}
 	for _, link := range pkgDirs {
 		args = append(args, "-L", link)
+	}
+	if newCompileVersion {
+		args = append(args, "-importcfg", filepath.Join(testdir, "importcfg.link"))
 	}
 	args = append(args, testMainPkgOut)
 	cmd = exec.Command(linker, args...)
