@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DATA_DOG/godog/colors"
+	"github.com/DATA-DOG/godog/colors"
 )
 
 // empty struct value takes no space allocation
