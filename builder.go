@@ -26,7 +26,6 @@ var goarch = build.Default.GOARCH
 var goos = build.Default.GOOS
 
 var godogImportPath = "github.com/DATA-DOG/godog"
-var goversionForNewCompileOptions = "1.10"
 var runnerTemplate = template.Must(template.New("testmain").Parse(`package main
 
 import (
@@ -73,7 +72,11 @@ func Build(bin string) error {
 
 	workdir := fmt.Sprintf(filepath.Join("%s", "godog-%d"), os.TempDir(), time.Now().UnixNano())
 	testdir := workdir
-	goversion := strings.TrimLeft(runtime.Version(), "go")
+	newCompileVersion, err := isVersionGreaterOrEqual(strings.TrimLeft(runtime.Version(), "go"), "1.10")
+
+	if err != nil {
+		return fmt.Errorf("failed to check current version of golang reason: %s", err)
+	}
 
 	// if none of test files exist, or there are no contexts found
 	// we will skip test package compilation, since it is useless
@@ -111,7 +114,7 @@ func Build(bin string) error {
 		}
 		workdir = strings.Replace(workdir, "WORK=", "", 1)
 
-		if goversion >= goversionForNewCompileOptions {
+		if newCompileVersion {
 			testdir = filepath.Join(workdir, "b001")
 		} else {
 			testdir = filepath.Join(workdir, pkg.ImportPath, "_test")
@@ -178,7 +181,7 @@ func Build(bin string) error {
 	for _, inc := range pkgDirs {
 		args = append(args, "-I", inc)
 	}
-	if goversion >= goversionForNewCompileOptions {
+	if newCompileVersion {
 		args = append(args, "-importcfg", filepath.Join(testdir, "importcfg.link"))
 	}
 	args = append(args, "-pack", testmain)
@@ -197,7 +200,7 @@ func Build(bin string) error {
 	for _, link := range pkgDirs {
 		args = append(args, "-L", link)
 	}
-	if goversion >= goversionForNewCompileOptions {
+	if newCompileVersion {
 		args = append(args, "-importcfg", filepath.Join(testdir, "importcfg.link"))
 	}
 	args = append(args, testMainPkgOut)
