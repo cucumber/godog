@@ -1,40 +1,28 @@
 package godog
 
 import (
-	"go/build"
 	"os"
 	"path/filepath"
-	"reflect"
 	"testing"
 )
 
-func TestVendorPaths(t *testing.T) {
-	gopaths = []string{"/go"}
+func TestDeps(t *testing.T) {
+	t.Log("hh")
 
-	type Case struct {
-		dir    string
-		expect []string
+	abs, err := filepath.Abs(".")
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	cases := []Case{
-		{"/go", []string{}},
-		{"/go/src", []string{}},
-		{"/go/src/project", []string{"/go/src/project/vendor"}},
-		{"/go/src/party/project", []string{"/go/src/party/project/vendor", "/go/src/party/vendor"}},
+	// we allow package to be nil, if godog is run only when
+	// there is a feature file in empty directory
+	pkg := importPackage(abs)
+	deps := make(map[string]string)
+	err = dependencies(pkg, deps)
+	if err != nil {
+		t.Fatal(err)
 	}
-
-	for i, c := range cases {
-		actual := maybeVendorPaths(c.dir)
-		var expect []string
-		for _, s := range c.expect {
-			expect = append(expect, filepath.Join(s, godogImportPath))
-		}
-		if !reflect.DeepEqual(expect, actual) {
-			t.Fatalf("case %d expected %+v, got %+v", i, expect, actual)
-		}
-	}
-
-	gopaths = filepath.SplitList(build.Default.GOPATH)
+	t.Log(deps)
 }
 
 func TestBuildTestRunner(t *testing.T) {
