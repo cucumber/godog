@@ -1,4 +1,4 @@
-// +build !go1.10
+// +build go1.10
 
 package godog
 
@@ -24,6 +24,7 @@ var compiler = filepath.Join(tooldir, "compile")
 var linker = filepath.Join(tooldir, "link")
 var gopaths = filepath.SplitList(build.Default.GOPATH)
 var goarch = build.Default.GOARCH
+var goroot = build.Default.GOROOT
 var goos = build.Default.GOOS
 
 var godogImportPath = "github.com/DATA-DOG/godog"
@@ -78,30 +79,22 @@ func Build(bin string) error {
 	// we will skip test package compilation, since it is useless
 	if anyContexts {
 		// first of all compile test package dependencies
-		// that will save was many compilations for dependencies
+		// that will save us many compilations for dependencies
 		// go does it better
 		out, err := exec.Command("go", "test", "-i").CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("failed to compile package: %s, reason: %v, output: %s", pkg.Name, err, string(out))
 		}
 
-		// let go do the dirty work and compile test
-		// package with it's dependencies. Older go
-		// versions does not accept existing file output
-		// so we create a temporary executable which will
-		// removed.
-		temp := fmt.Sprintf(filepath.Join("%s", "temp-%d.test"), os.TempDir(), time.Now().UnixNano())
-
 		// builds and compile the tested package.
 		// generated test executable will be removed
 		// since we do not need it for godog suite.
 		// we also print back the temp WORK directory
 		// go has built. We will reuse it for our suite workdir.
-		out, err = exec.Command("go", "test", "-c", "-work", "-o", temp).CombinedOutput()
+		out, err = exec.Command("go", "test", "-c", "-work", "-o", "/dev/null").CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("failed to compile tested package: %s, reason: %v, output: %s", pkg.Name, err, string(out))
 		}
-		defer os.Remove(temp)
 
 		// extract go-build temporary directory as our workdir
 		workdir = strings.TrimSpace(string(out))
@@ -109,7 +102,7 @@ func Build(bin string) error {
 			return fmt.Errorf("expected WORK dir path, but got: %s", workdir)
 		}
 		workdir = strings.Replace(workdir, "WORK=", "", 1)
-		testdir = filepath.Join(workdir, pkg.ImportPath, "_test")
+		testdir = filepath.Join(workdir, "b001")
 	} else {
 		// still need to create temporary workdir
 		if err = os.MkdirAll(testdir, 0755); err != nil {
@@ -129,49 +122,62 @@ func Build(bin string) error {
 	// but we need it for our testmain package.
 	// So we look it up in available source paths
 	// including vendor directory, supported since 1.5.
-	try := maybeVendorPaths(abs)
-	for _, d := range build.Default.SrcDirs() {
-		try = append(try, filepath.Join(d, godogImportPath))
-	}
-	godogPkg, err := locatePackage(try)
+	godogPkg, err := locatePackage(godogImportPath)
 	if err != nil {
 		return err
 	}
 
 	// make sure godog package archive is installed, gherkin
 	// will be installed as dependency of godog
-	cmd := exec.Command("go", "install", godogPkg.ImportPath)
+	cmd := exec.Command("go", "install", "-i", godogPkg.ImportPath)
 	cmd.Env = os.Environ()
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to install godog package: %s, reason: %v", string(out), err)
 	}
 
-	// collect all possible package dirs, will be
-	// used for includes and linker
-	pkgDirs := []string{workdir, testdir}
-	for _, gopath := range gopaths {
-		pkgDirs = append(pkgDirs, filepath.Join(gopath, "pkg", goos+"_"+goarch))
-	}
-	pkgDirs = uniqStringList(pkgDirs)
-
 	// compile godog testmain package archive
 	// we do not depend on CGO so a lot of checks are not necessary
 	testMainPkgOut := filepath.Join(testdir, "main.a")
 	args := []string{
 		"-o", testMainPkgOut,
-		// "-trimpath", workdir,
 		"-p", "main",
 		"-complete",
 	}
-	// if godog library is in vendor directory
-	// link it with import map
-	if i := strings.LastIndex(godogPkg.ImportPath, "vendor/"); i != -1 {
-		args = append(args, "-importmap", godogImportPath+"="+godogPkg.ImportPath)
+
+	var in *os.File
+	cfg := filepath.Join(testdir, "importcfg.link")
+	args = append(args, "-importcfg", cfg)
+	if _, err := os.Stat(cfg); err == nil {
+		// there were go sources
+		in, err = os.OpenFile(cfg, os.O_APPEND|os.O_WRONLY, 0600)
+		if err != nil {
+			return err
+		}
+	} else {
+		// there were no go sources in the directory
+		// so we need to build all dependency tree ourselves
+		in, err = os.Create(cfg)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintln(in, "# import config")
+
+		deps := make(map[string]string)
+		if err := dependencies(godogPkg, deps); err != nil {
+			return err
+		}
+
+		for pkgName, pkgObj := range deps {
+			if i := strings.LastIndex(pkgName, "vendor/"); i != -1 {
+				name := pkgName[i+7:]
+				fmt.Fprintf(in, "importmap %s=%s\n", name, pkgName)
+			}
+			fmt.Fprintf(in, "packagefile %s=%s\n", pkgName, pkgObj)
+		}
 	}
-	for _, inc := range pkgDirs {
-		args = append(args, "-I", inc)
-	}
+	in.Close()
+
 	args = append(args, "-pack", testmain)
 	cmd = exec.Command(compiler, args...)
 	cmd.Env = os.Environ()
@@ -183,14 +189,32 @@ func Build(bin string) error {
 	// link test suite executable
 	args = []string{
 		"-o", bin,
+		"-importcfg", cfg,
 		"-buildmode=exe",
-	}
-	for _, link := range pkgDirs {
-		args = append(args, "-L", link)
 	}
 	args = append(args, testMainPkgOut)
 	cmd = exec.Command(linker, args...)
 	cmd.Env = os.Environ()
+
+	// in case if build is without contexts, need to remove import maps
+	if testdir == workdir {
+		data, err := ioutil.ReadFile(cfg)
+		if err != nil {
+			return err
+		}
+
+		lines := strings.Split(string(data), "\n")
+		var fixed []string
+		for _, line := range lines {
+			if strings.Index(line, "importmap") == 0 {
+				continue
+			}
+			fixed = append(fixed, line)
+		}
+		if err := ioutil.WriteFile(cfg, []byte(strings.Join(fixed, "\n")), 0600); err != nil {
+			return err
+		}
+	}
 
 	out, err = cmd.CombinedOutput()
 	if err != nil {
@@ -203,9 +227,9 @@ func Build(bin string) error {
 	return nil
 }
 
-func locatePackage(try []string) (*build.Package, error) {
-	for _, p := range try {
-		abs, err := filepath.Abs(p)
+func locatePackage(name string) (*build.Package, error) {
+	for _, p := range build.Default.SrcDirs() {
+		abs, err := filepath.Abs(filepath.Join(p, name))
 		if err != nil {
 			continue
 		}
@@ -215,7 +239,26 @@ func locatePackage(try []string) (*build.Package, error) {
 		}
 		return pkg, nil
 	}
-	return nil, fmt.Errorf("failed to find godog package in any of:\n%s", strings.Join(try, "\n"))
+
+	// search vendor paths
+	dir, err := filepath.Abs(".")
+	if err != nil {
+		return nil, err
+	}
+
+	for _, gopath := range gopaths {
+		gopath = filepath.Join(gopath, "src")
+		for strings.HasPrefix(dir, gopath) && dir != gopath {
+			pkg, err := build.ImportDir(filepath.Join(dir, "vendor", name), 0)
+			if err != nil {
+				dir = filepath.Dir(dir)
+				continue
+			}
+			return pkg, nil
+		}
+	}
+
+	return nil, fmt.Errorf("failed to find %s package in any of:\n%s", name, strings.Join(build.Default.SrcDirs(), "\n"))
 }
 
 func importPackage(dir string) *build.Package {
@@ -285,20 +328,6 @@ func buildTestMain(pkg *build.Package) ([]byte, bool, error) {
 	return buf.Bytes(), len(contexts) > 0, nil
 }
 
-// maybeVendorPaths determines possible vendor paths
-// which goes levels down from given directory
-// until it reaches GOPATH source dir
-func maybeVendorPaths(dir string) (paths []string) {
-	for _, gopath := range gopaths {
-		gopath = filepath.Join(gopath, "src")
-		for strings.HasPrefix(dir, gopath) && dir != gopath {
-			paths = append(paths, filepath.Join(dir, "vendor", godogImportPath))
-			dir = filepath.Dir(dir)
-		}
-	}
-	return
-}
-
 // processPackageTestFiles runs through ast of each test
 // file pack and looks for godog suite contexts to register
 // on run
@@ -334,4 +363,24 @@ func findToolDir() string {
 		return filepath.Clean(strings.TrimSpace(string(out)))
 	}
 	return filepath.Clean(build.ToolDir)
+}
+
+func dependencies(pkg *build.Package, visited map[string]string) error {
+	visited[pkg.ImportPath] = pkg.PkgObj
+	for _, name := range pkg.Imports {
+		if _, ok := visited[name]; ok {
+			continue
+		}
+
+		next, err := locatePackage(name)
+		if err != nil {
+			return err
+		}
+
+		visited[name] = pkg.PkgObj
+		if err := dependencies(next, visited); err != nil {
+			return err
+		}
+	}
+	return nil
 }
