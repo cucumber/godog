@@ -1,5 +1,8 @@
 # Change LOG
 
+**2018-03-04**
+- support go1.10 new compiler and linker changes for **godog** command.
+
 **2017-08-31**
 - added **BeforeFeature** and **AfterFeature** hooks.
 - failed multistep error is now prepended with a parent step text in order
