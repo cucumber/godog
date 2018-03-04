@@ -120,34 +120,12 @@ func (f *pretty) printUndefinedScenario(sc *gherkin.Scenario) {
 
 // Summary sumarize the feature formatter output
 func (f *pretty) Summary() {
-	// failed steps on background are not scenarios
-	var failedScenarios []*stepResult
-	for _, fail := range f.failed {
-		switch fail.owner.(type) {
-		case *gherkin.Scenario:
-			failedScenarios = append(failedScenarios, fail)
-		case *gherkin.TableRow:
-			failedScenarios = append(failedScenarios, fail)
-		}
-	}
-	if len(failedScenarios) > 0 {
-		fmt.Fprintln(f.out, "\n--- "+red("Failed scenarios:")+"\n")
-		var unique []string
-		for _, fail := range failedScenarios {
-			var found bool
-			for _, in := range unique {
-				if in == fail.line() {
-					found = true
-					break
-				}
-			}
-			if !found {
-				unique = append(unique, fail.line())
-			}
-		}
-
-		for _, fail := range unique {
-			fmt.Fprintln(f.out, "    "+red(fail))
+	if len(f.failed) > 0 {
+		fmt.Fprintln(f.out, "\n--- "+red("Failed steps:")+"\n")
+		for _, fail := range f.failed {
+			fmt.Fprintln(f.out, s(2)+red(fail.scenarioDesc())+black(" # "+fail.scenarioLine()))
+			fmt.Fprintln(f.out, s(4)+red(strings.TrimSpace(fail.step.Keyword)+" "+fail.step.Text)+black(" # "+fail.line()))
+			fmt.Fprintln(f.out, s(6)+red("Error: ")+redb(fmt.Sprintf("%+v", fail.err))+"\n")
 		}
 	}
 	f.basefmt.Summary()

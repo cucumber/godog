@@ -161,6 +161,54 @@ func (f stepResult) line() string {
 	return fmt.Sprintf("%s:%d", f.feature.Path, f.step.Location.Line)
 }
 
+func (f stepResult) scenarioDesc() string {
+	if sc, ok := f.owner.(*gherkin.Scenario); ok {
+		return fmt.Sprintf("%s: %s", sc.Keyword, sc.Name)
+	}
+
+	if row, ok := f.owner.(*gherkin.TableRow); ok {
+		for _, def := range f.feature.Feature.ScenarioDefinitions {
+			out, ok := def.(*gherkin.ScenarioOutline)
+			if !ok {
+				continue
+			}
+
+			for _, ex := range out.Examples {
+				for _, rw := range ex.TableBody {
+					if rw.Location.Line == row.Location.Line {
+						return fmt.Sprintf("%s: %s", out.Keyword, out.Name)
+					}
+				}
+			}
+		}
+	}
+	return f.line() // was not expecting different owner
+}
+
+func (f stepResult) scenarioLine() string {
+	if sc, ok := f.owner.(*gherkin.Scenario); ok {
+		return fmt.Sprintf("%s:%d", f.feature.Path, sc.Location.Line)
+	}
+
+	if row, ok := f.owner.(*gherkin.TableRow); ok {
+		for _, def := range f.feature.Feature.ScenarioDefinitions {
+			out, ok := def.(*gherkin.ScenarioOutline)
+			if !ok {
+				continue
+			}
+
+			for _, ex := range out.Examples {
+				for _, rw := range ex.TableBody {
+					if rw.Location.Line == row.Location.Line {
+						return fmt.Sprintf("%s:%d", f.feature.Path, out.Location.Line)
+					}
+				}
+			}
+		}
+	}
+	return f.line() // was not expecting different owner
+}
+
 type basefmt struct {
 	out    io.Writer
 	owner  interface{}

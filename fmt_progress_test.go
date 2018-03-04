@@ -41,10 +41,12 @@ func TestProgressFormatterOutput(t *testing.T) {
 
 --- Failed steps:
 
+  Scenario: failing scenario # any.feature:10
     When failing # any.feature:11
 	  Error: errored
 
-    When failing # any.feature:24
+  Scenario Outline: outline # any.feature:22
+	When failing # any.feature:24
 	  Error: errored
 
 
@@ -118,7 +120,7 @@ func TestProgressFormatterWhenStepPanics(t *testing.T) {
 	}
 
 	out := buf.String()
-	if idx := strings.Index(out, "github.com/DATA-DOG/godog/fmt_progress_test.go:116"); idx == -1 {
+	if idx := strings.Index(out, "github.com/DATA-DOG/godog/fmt_progress_test.go:114"); idx == -1 {
 		t.Fatalf("expected to find panic stacktrace, actual:\n%s", out)
 	}
 }
@@ -178,6 +180,7 @@ func TestProgressFormatterWithFailingMultisteps(t *testing.T) {
 
 --- Failed steps:
 
+Scenario: passing scenario # some.feature:4
 Then two # some.feature:6
 Error: sub2: sub-sub: errored
 
@@ -385,6 +388,7 @@ Feature: basic
 
 --- Failed steps:
 
+  Scenario: passing scenario # :4
     Then two # :6
       Error: nested steps cannot be multiline and have table or content body argument
 
