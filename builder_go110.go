@@ -129,7 +129,7 @@ func Build(bin string) error {
 
 	// make sure godog package archive is installed, gherkin
 	// will be installed as dependency of godog
-	cmd := exec.Command("go", "install", godogPkg.ImportPath)
+	cmd := exec.Command("go", "install", "-i", godogPkg.ImportPath)
 	cmd.Env = os.Environ()
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -195,6 +195,26 @@ func Build(bin string) error {
 	args = append(args, testMainPkgOut)
 	cmd = exec.Command(linker, args...)
 	cmd.Env = os.Environ()
+
+	// in case if build is without contexts, need to remove import maps
+	if testdir == workdir {
+		data, err := ioutil.ReadFile(cfg)
+		if err != nil {
+			return err
+		}
+
+		lines := strings.Split(string(data), "\n")
+		var fixed []string
+		for _, line := range lines {
+			if strings.Index(line, "importmap") == 0 {
+				continue
+			}
+			fixed = append(fixed, line)
+		}
+		if err := ioutil.WriteFile(cfg, []byte(strings.Join(fixed, "\n")), 0600); err != nil {
+			return err
+		}
+	}
 
 	out, err = cmd.CombinedOutput()
 	if err != nil {
