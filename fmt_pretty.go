@@ -126,7 +126,7 @@ func (f *pretty) Summary() {
 		switch fail.owner.(type) {
 		case *gherkin.Scenario:
 			failedScenarios = append(failedScenarios, fail)
-		case *gherkin.ScenarioOutline:
+		case *gherkin.TableRow:
 			failedScenarios = append(failedScenarios, fail)
 		}
 	}
