@@ -145,26 +145,20 @@ func Build(bin string) error {
 		"-complete",
 	}
 
-	var in *os.File
 	cfg := filepath.Join(testdir, "importcfg.link")
 	args = append(args, "-importcfg", cfg)
-	if _, err := os.Stat(cfg); err == nil {
-		// there were go sources
-		in, err = os.OpenFile(cfg, os.O_APPEND|os.O_WRONLY, 0600)
-		if err != nil {
-			return err
-		}
-	} else {
+	if _, err := os.Stat(cfg); err != nil {
 		// there were no go sources in the directory
 		// so we need to build all dependency tree ourselves
-		in, err = os.Create(cfg)
+		in, err := os.Create(cfg)
 		if err != nil {
 			return err
 		}
 		fmt.Fprintln(in, "# import config")
 
 		deps := make(map[string]string)
-		if err := dependencies(godogPkg, deps); err != nil {
+		if err := dependencies(godogPkg, deps, false); err != nil {
+			in.Close()
 			return err
 		}
 
@@ -175,8 +169,30 @@ func Build(bin string) error {
 			}
 			fmt.Fprintf(in, "packagefile %s=%s\n", pkgName, pkgObj)
 		}
+		in.Close()
+	} else {
+		// need to make sure that vendor dependencies are mapped
+		in, err := os.OpenFile(cfg, os.O_APPEND|os.O_WRONLY, 0600)
+		if err != nil {
+			return err
+		}
+		deps := make(map[string]string)
+		if err := dependencies(pkg, deps, true); err != nil {
+			in.Close()
+			return err
+		}
+		if err := dependencies(godogPkg, deps, false); err != nil {
+			in.Close()
+			return err
+		}
+		for pkgName := range deps {
+			if i := strings.LastIndex(pkgName, "vendor/"); i != -1 {
+				name := pkgName[i+7:]
+				fmt.Fprintf(in, "importmap %s=%s\n", name, pkgName)
+			}
+		}
+		in.Close()
 	}
-	in.Close()
 
 	args = append(args, "-pack", testmain)
 	cmd = exec.Command(compiler, args...)
@@ -197,23 +213,21 @@ func Build(bin string) error {
 	cmd.Env = os.Environ()
 
 	// in case if build is without contexts, need to remove import maps
-	if testdir == workdir {
-		data, err := ioutil.ReadFile(cfg)
-		if err != nil {
-			return err
-		}
+	data, err := ioutil.ReadFile(cfg)
+	if err != nil {
+		return err
+	}
 
-		lines := strings.Split(string(data), "\n")
-		var fixed []string
-		for _, line := range lines {
-			if strings.Index(line, "importmap") == 0 {
-				continue
-			}
-			fixed = append(fixed, line)
+	lines := strings.Split(string(data), "\n")
+	var fixed []string
+	for _, line := range lines {
+		if strings.Index(line, "importmap") == 0 {
+			continue
 		}
-		if err := ioutil.WriteFile(cfg, []byte(strings.Join(fixed, "\n")), 0600); err != nil {
-			return err
-		}
+		fixed = append(fixed, line)
+	}
+	if err := ioutil.WriteFile(cfg, []byte(strings.Join(fixed, "\n")), 0600); err != nil {
+		return err
 	}
 
 	out, err = cmd.CombinedOutput()
@@ -228,19 +242,7 @@ func Build(bin string) error {
 }
 
 func locatePackage(name string) (*build.Package, error) {
-	for _, p := range build.Default.SrcDirs() {
-		abs, err := filepath.Abs(filepath.Join(p, name))
-		if err != nil {
-			continue
-		}
-		pkg, err := build.ImportDir(abs, 0)
-		if err != nil {
-			continue
-		}
-		return pkg, nil
-	}
-
-	// search vendor paths
+	// search vendor paths first since that takes priority
 	dir, err := filepath.Abs(".")
 	if err != nil {
 		return nil, err
@@ -256,6 +258,19 @@ func locatePackage(name string) (*build.Package, error) {
 			}
 			return pkg, nil
 		}
+	}
+
+	// search source paths otherwise
+	for _, p := range build.Default.SrcDirs() {
+		abs, err := filepath.Abs(filepath.Join(p, name))
+		if err != nil {
+			continue
+		}
+		pkg, err := build.ImportDir(abs, 0)
+		if err != nil {
+			continue
+		}
+		return pkg, nil
 	}
 
 	return nil, fmt.Errorf("failed to find %s package in any of:\n%s", name, strings.Join(build.Default.SrcDirs(), "\n"))
@@ -365,9 +380,17 @@ func findToolDir() string {
 	return filepath.Clean(build.ToolDir)
 }
 
-func dependencies(pkg *build.Package, visited map[string]string) error {
+func dependencies(pkg *build.Package, visited map[string]string, vendor bool) error {
 	visited[pkg.ImportPath] = pkg.PkgObj
-	for _, name := range pkg.Imports {
+	imports := pkg.Imports
+	if vendor {
+		imports = append(imports, pkg.TestImports...)
+	}
+	for _, name := range imports {
+		if i := strings.LastIndex(name, "vendor/"); vendor && i == -1 {
+			continue // only interested in vendor packages
+		}
+
 		if _, ok := visited[name]; ok {
 			continue
 		}
@@ -378,7 +401,7 @@ func dependencies(pkg *build.Package, visited map[string]string) error {
 		}
 
 		visited[name] = pkg.PkgObj
-		if err := dependencies(next, visited); err != nil {
+		if err := dependencies(next, visited, vendor); err != nil {
 			return err
 		}
 	}
