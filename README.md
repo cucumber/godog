@@ -237,6 +237,42 @@ run it using go [TestMain](https://golang.org/pkg/testing/#hdr-Main) func
 available since **go 1.4**. In this case it is not necessary to have
 **godog** command installed. See the following example:
 
+The following example binds **godog** flags with specified prefix `godog`
+in order to prevent flag collisions.
+
+``` go
+var opt = godog.Options{Output: colors.Colored(os.Stdout)}
+
+func init() {
+	godog.BindFlags("godog.", flag.CommandLine, &opt)
+}
+
+func TestMain(m *testing.M) {
+	flag.Parse()
+	opt.Paths = flag.Args()
+
+	status := godog.RunWithOptions("godogs", func(s *godog.Suite) {
+		FeatureContext(s)
+	}, opt)
+
+	if st := m.Run(); st > status {
+		status = st
+	}
+	os.Exit(status)
+}
+```
+
+Then you may run tests with by specifying flags in order to filter
+features.
+
+```
+go test -v --godog.format=progress --godog.random --godog.tags=wip
+go test -v --godog.format=pretty --godog.random -race -coverprofile=coverage.txt -covermode=atomic
+```
+
+The following example does not bind godog flags, instead manually
+configuring needed options.
+
 ``` go
 func TestMain(m *testing.M) {
 	status := godog.RunWithOptions("godog", func(s *godog.Suite) {
@@ -251,8 +287,7 @@ func TestMain(m *testing.M) {
 		status = st
 	}
 	os.Exit(status)
-}
-```
+} ```
 
 You can even go one step further and reuse **go test** flags, like
 **verbose** mode in order to switch godog **format**. See the following

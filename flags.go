@@ -34,7 +34,17 @@ var descRandomOption = "Randomly shuffle the scenario execution order.\n" +
 	s(4) + `e.g. ` + colors.Yellow(`--random`) + " or " + colors.Yellow(`--random=5738`)
 
 // FlagSet allows to manage flags by external suite runner
+// builds flag.FlagSet with godog flags binded
 func FlagSet(opt *Options) *flag.FlagSet {
+	set := flag.NewFlagSet("godog", flag.ExitOnError)
+	BindFlags("", set, opt)
+	set.Usage = usage(set, opt.Output)
+	return set
+}
+
+// BindFlags binds godog flags to given flag set prefixed
+// by given prefix, without overriding usage
+func BindFlags(prefix string, set *flag.FlagSet, opt *Options) {
 	descFormatOption := "How to format tests output. Built-in formats:\n"
 	// @TODO: sort by name
 	for name, desc := range AvailableFormatters() {
@@ -42,21 +52,18 @@ func FlagSet(opt *Options) *flag.FlagSet {
 	}
 	descFormatOption = strings.TrimSpace(descFormatOption)
 
-	set := flag.NewFlagSet("godog", flag.ExitOnError)
-	set.StringVar(&opt.Format, "format", "pretty", descFormatOption)
-	set.StringVar(&opt.Format, "f", "pretty", descFormatOption)
-	set.StringVar(&opt.Tags, "tags", "", descTagsOption)
-	set.StringVar(&opt.Tags, "t", "", descTagsOption)
-	set.IntVar(&opt.Concurrency, "concurrency", 1, descConcurrencyOption)
-	set.IntVar(&opt.Concurrency, "c", 1, descConcurrencyOption)
-	set.BoolVar(&opt.ShowStepDefinitions, "definitions", false, "Print all available step definitions.")
-	set.BoolVar(&opt.ShowStepDefinitions, "d", false, "Print all available step definitions.")
-	set.BoolVar(&opt.StopOnFailure, "stop-on-failure", false, "Stop processing on first failed scenario.")
-	set.BoolVar(&opt.Strict, "strict", false, "Fail suite when there are pending or undefined steps.")
-	set.BoolVar(&opt.NoColors, "no-colors", false, "Disable ansi colors.")
-	set.Var(&randomSeed{&opt.Randomize}, "random", descRandomOption)
-	set.Usage = usage(set, opt.Output)
-	return set
+	set.StringVar(&opt.Format, prefix+"format", "pretty", descFormatOption)
+	set.StringVar(&opt.Format, prefix+"f", "pretty", descFormatOption)
+	set.StringVar(&opt.Tags, prefix+"tags", "", descTagsOption)
+	set.StringVar(&opt.Tags, prefix+"t", "", descTagsOption)
+	set.IntVar(&opt.Concurrency, prefix+"concurrency", 1, descConcurrencyOption)
+	set.IntVar(&opt.Concurrency, prefix+"c", 1, descConcurrencyOption)
+	set.BoolVar(&opt.ShowStepDefinitions, prefix+"definitions", false, "Print all available step definitions.")
+	set.BoolVar(&opt.ShowStepDefinitions, prefix+"d", false, "Print all available step definitions.")
+	set.BoolVar(&opt.StopOnFailure, prefix+"stop-on-failure", false, "Stop processing on first failed scenario.")
+	set.BoolVar(&opt.Strict, prefix+"strict", false, "Fail suite when there are pending or undefined steps.")
+	set.BoolVar(&opt.NoColors, prefix+"no-colors", false, "Disable ansi colors.")
+	set.Var(&randomSeed{&opt.Randomize}, prefix+"random", descRandomOption)
 }
 
 type flagged struct {
@@ -180,7 +187,10 @@ func (rs *randomSeed) Set(s string) error {
 	return err
 }
 
-func (rs randomSeed) String() string {
+func (rs *randomSeed) String() string {
+	if rs.ref == nil {
+		return "0"
+	}
 	return strconv.FormatInt(*rs.ref, 10)
 }
 

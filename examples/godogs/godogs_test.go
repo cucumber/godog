@@ -2,22 +2,28 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/DATA-DOG/godog"
+	"github.com/DATA-DOG/godog/colors"
 )
 
+var opt = godog.Options{Output: colors.Colored(os.Stdout)}
+
+func init() {
+	godog.BindFlags("godog.", flag.CommandLine, &opt)
+}
+
 func TestMain(m *testing.M) {
+	flag.Parse()
+	opt.Paths = flag.Args()
+
 	status := godog.RunWithOptions("godogs", func(s *godog.Suite) {
 		FeatureContext(s)
-	}, godog.Options{
-		Format:    "progress",
-		Paths:     []string{"features"},
-		Randomize: time.Now().UTC().UnixNano(), // randomize scenario execution order
-	})
+	}, opt)
 
 	if st := m.Run(); st > status {
 		status = st
