@@ -15,7 +15,7 @@ from time to time.
 
 Package godog is the official Cucumber BDD framework for Golang, it merges
 specification and test documentation into one cohesive whole. The author
-is a core member of [cucumber team](https://github.com/cucumber).
+is a member of [cucumber team](https://github.com/cucumber).
 
 The project is inspired by [behat][behat] and [cucumber][cucumber] and is
 based on cucumber [gherkin3 parser][gherkin].
@@ -235,7 +235,7 @@ See implementation examples:
 You may integrate running **godog** in your **go test** command. You can
 run it using go [TestMain](https://golang.org/pkg/testing/#hdr-Main) func
 available since **go 1.4**. In this case it is not necessary to have
-**godog** command installed. See the following example:
+**godog** command installed. See the following examples.
 
 The following example binds **godog** flags with specified prefix `godog`
 in order to prevent flag collisions.
@@ -287,7 +287,8 @@ func TestMain(m *testing.M) {
 		status = st
 	}
 	os.Exit(status)
-} ```
+}
+```
 
 You can even go one step further and reuse **go test** flags, like
 **verbose** mode in order to switch godog **format**. See the following
