@@ -91,7 +91,7 @@ func Build(bin string) error {
 		// since we do not need it for godog suite.
 		// we also print back the temp WORK directory
 		// go has built. We will reuse it for our suite workdir.
-		out, err = exec.Command("go", "test", "-c", "-work", "-o", "/dev/null").CombinedOutput()
+		out, err = exec.Command("go", "test", "-c", "-work", "-o", os.DevNull).CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("failed to compile tested package: %s, reason: %v, output: %s", pkg.Name, err, string(out))
 		}
