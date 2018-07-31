@@ -53,9 +53,12 @@ type registeredFormatter struct {
 
 var formatters []*registeredFormatter
 
-func findFmt(format string) FormatterFunc {
+// FindFmt searches available formatters registered
+// and returns FormaterFunc matched by given
+// format name or nil otherwise
+func FindFmt(name string) FormatterFunc {
 	for _, el := range formatters {
-		if el.name == format {
+		if el.name == name {
 			return el.fmt
 		}
 	}

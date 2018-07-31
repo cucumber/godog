@@ -125,7 +125,7 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 		fmt.Fprintln(os.Stderr, fmt.Errorf("format \"%s\" does not support concurrent execution", opt.Format))
 		return exitOptionError
 	}
-	formatter := findFmt(opt.Format)
+	formatter := FindFmt(opt.Format)
 	if nil == formatter {
 		var names []string
 		for name := range AvailableFormatters() {

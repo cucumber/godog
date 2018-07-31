@@ -115,7 +115,7 @@ func (s *suiteContext) ResetBeforeEachScenario(interface{}) {
 }
 
 func (s *suiteContext) iRunFeatureSuiteWithFormatter(name string) error {
-	f := findFmt(name)
+	f := FindFmt(name)
 	if f == nil {
 		return fmt.Errorf(`formatter "%s" is not available`, name)
 	}

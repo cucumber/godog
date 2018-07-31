@@ -14,7 +14,7 @@ func TestShouldFindFormatter(t *testing.T) {
 	}
 
 	for name, shouldFind := range cases {
-		actual := findFmt(name)
+		actual := FindFmt(name)
 		if actual == nil && shouldFind {
 			t.Fatalf("expected %s formatter should be available", name)
 		}
