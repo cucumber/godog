@@ -326,7 +326,12 @@ func buildTestMain(pkg *build.Package) ([]byte, bool, error) {
 			return nil, false, err
 		}
 		contexts = ctxs
-		importPath = pkg.ImportPath
+		// @TODO: is it a good indicator for packages outside GOPATH
+		if strings.Index(pkg.ImportPath, "_/") == 0 {
+			importPath = pkg.Name
+		} else {
+			importPath = pkg.ImportPath
+		}
 		name = pkg.Name
 	}
 
