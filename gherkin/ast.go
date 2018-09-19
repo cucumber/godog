@@ -24,14 +24,12 @@ type Feature struct {
 
 type Comment struct {
 	Node
-	Location *Location `json:"location,omitempty"`
-	Text     string    `json:"text"`
+	Text string `json:"text"`
 }
 
 type Tag struct {
 	Node
-	Location *Location `json:"location,omitempty"`
-	Name     string    `json:"name"`
+	Name string `json:"name"`
 }
 
 type Background struct {
