@@ -326,11 +326,16 @@ func buildTestMain(pkg *build.Package) ([]byte, bool, error) {
 			return nil, false, err
 		}
 		contexts = ctxs
-		// @TODO: is it a good indicator for packages outside GOPATH
-		if strings.Index(pkg.ImportPath, "_/") == 0 {
-			importPath = pkg.Name
-		} else {
+
+		// for module support, query the module import path
+		// @TODO: maybe there is a better way to read it
+		out, err := exec.Command("go", "list", "-m").CombinedOutput()
+		if err != nil {
+			// is not using modules or older go version
 			importPath = pkg.ImportPath
+		} else {
+			// otherwise read the module name from command output
+			importPath = strings.TrimSpace(string(out))
 		}
 		name = pkg.Name
 	}
