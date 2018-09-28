@@ -150,3 +150,4 @@ Feature: run outline
       | path                    | scen |
       | features/load.feature:6 | 1    |
       | features/load.feature   | 6    |
+

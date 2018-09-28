@@ -716,7 +716,6 @@ func filterFeatures(tags string, collected map[string]*feature) (features []*fea
 		}
 		ft.ScenarioDefinitions = scenarios
 		applyTagFilter(tags, ft.Feature)
-
 		features = append(features, ft)
 	}
 
@@ -732,8 +731,22 @@ func applyTagFilter(tags string, ft *gherkin.Feature) {
 
 	var scenarios []interface{}
 	for _, scenario := range ft.ScenarioDefinitions {
-		if matchesTags(tags, allTags(ft, scenario)) {
-			scenarios = append(scenarios, scenario)
+		switch t := scenario.(type) {
+		case *gherkin.ScenarioOutline:
+			var allExamples []*gherkin.Examples
+			for _, examples := range t.Examples {
+				if matchesTags(tags, allTags(ft, t, examples)) {
+					allExamples = append(allExamples, examples)
+				}
+			}
+			t.Examples = allExamples
+			if len(t.Examples) > 0 {
+				scenarios = append(scenarios, scenario)
+			}
+		case *gherkin.Scenario:
+			if matchesTags(tags, allTags(ft, t)) {
+				scenarios = append(scenarios, scenario)
+			}
 		}
 	}
 	ft.ScenarioDefinitions = scenarios

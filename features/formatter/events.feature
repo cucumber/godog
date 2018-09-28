@@ -14,7 +14,7 @@ Feature: event stream formatter
       """
 
   Scenario: should process simple scenario
-    Given a feature path "features/load.feature:23"
+    Given a feature path "features/load.feature:24"
     When I run feature suite with formatter "events"
     Then the following events should be fired:
       """
@@ -35,7 +35,7 @@ Feature: event stream formatter
       """
 
   Scenario: should process outline scenario
-    Given a feature path "features/load.feature:31"
+    Given a feature path "features/load.feature:32"
     When I run feature suite with formatter "events"
     Then the following events should be fired:
       """
