@@ -381,9 +381,11 @@ func (f *basefmt) Summary() {
 }
 
 func (s *undefinedSnippet) Args() (ret string) {
-	var args []string
-	var pos, idx int
-	var breakLoop bool
+	var (
+		args []string
+		pos int
+		breakLoop bool
+	)
 	for !breakLoop {
 		part := s.Expr[pos:]
 		ipos := strings.Index(part, "(\\d+)")
@@ -392,25 +394,20 @@ func (s *undefinedSnippet) Args() (ret string) {
 		case spos == -1 && ipos == -1:
 			breakLoop = true
 		case spos == -1:
-			idx++
 			pos += ipos + len("(\\d+)")
 			args = append(args, reflect.Int.String())
 		case ipos == -1:
-			idx++
 			pos += spos + len("\"([^\"]*)\"")
 			args = append(args, reflect.String.String())
 		case ipos < spos:
-			idx++
 			pos += ipos + len("(\\d+)")
 			args = append(args, reflect.Int.String())
 		case spos < ipos:
-			idx++
 			pos += spos + len("\"([^\"]*)\"")
 			args = append(args, reflect.String.String())
 		}
 	}
 	if s.argument != nil {
-		idx++
 		switch s.argument.(type) {
 		case *gherkin.DocString:
 			args = append(args, "*gherkin.DocString")

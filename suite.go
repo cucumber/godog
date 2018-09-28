@@ -402,12 +402,6 @@ func (s *Suite) runSteps(steps []*gherkin.Step) (err error) {
 	return
 }
 
-func (s *Suite) skipSteps(steps []*gherkin.Step) {
-	for _, step := range steps {
-		s.fmt.Skipped(step, s.matchStep(step))
-	}
-}
-
 func (s *Suite) runOutline(outline *gherkin.ScenarioOutline, b *gherkin.Background) (failErr error) {
 	s.fmt.Node(outline)
 

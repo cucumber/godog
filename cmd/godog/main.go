@@ -3,12 +3,10 @@ package main
 import (
 	"fmt"
 	"go/build"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"syscall"
 
 	"github.com/DATA-DOG/godog"
@@ -106,21 +104,4 @@ func main() {
 		status = parsedStatus
 	}
 	os.Exit(status)
-}
-
-func statusOutputFilter(w io.Writer) io.Writer {
-	return writerFunc(func(b []byte) (int, error) {
-		if m := statusMatch.FindStringSubmatch(string(b)); len(m) > 1 {
-			parsedStatus, _ = strconv.Atoi(m[1])
-			// skip status stderr output
-			return len(b), nil
-		}
-		return w.Write(b)
-	})
-}
-
-type writerFunc func([]byte) (int, error)
-
-func (w writerFunc) Write(b []byte) (int, error) {
-	return w(b)
 }

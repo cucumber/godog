@@ -19,16 +19,15 @@ import (
 	"unicode"
 )
 
-var tooldir = findToolDir()
-var compiler = filepath.Join(tooldir, "compile")
-var linker = filepath.Join(tooldir, "link")
-var gopaths = filepath.SplitList(build.Default.GOPATH)
-var goarch = build.Default.GOARCH
-var goroot = build.Default.GOROOT
-var goos = build.Default.GOOS
+var (
+	tooldir         = findToolDir()
+	compiler        = filepath.Join(tooldir, "compile")
+	linker          = filepath.Join(tooldir, "link")
+	gopaths         = filepath.SplitList(build.Default.GOPATH)
+	godogImportPath = "github.com/DATA-DOG/godog"
 
-var godogImportPath = "github.com/DATA-DOG/godog"
-var runnerTemplate = template.Must(template.New("testmain").Parse(`package main
+	// godep
+	runnerTemplate = template.Must(template.New("testmain").Parse(`package main
 
 import (
 	"github.com/DATA-DOG/godog"
@@ -45,6 +44,7 @@ func main() {
 	})
 	os.Exit(status)
 }`))
+)
 
 // Build creates a test package like go test command at given target path.
 // If there are no go files in tested directory, then
@@ -297,17 +297,6 @@ func makeImportValid(r rune) rune {
 		return '_'
 	}
 	return r
-}
-
-func uniqStringList(strs []string) (unique []string) {
-	uniq := make(map[string]void, len(strs))
-	for _, s := range strs {
-		if _, ok := uniq[s]; !ok {
-			uniq[s] = void{}
-			unique = append(unique, s)
-		}
-	}
-	return
 }
 
 // buildTestMain if given package is valid

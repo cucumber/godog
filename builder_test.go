@@ -27,7 +27,7 @@ func TestBuildTestRunnerWithoutGoFiles(t *testing.T) {
 	}
 
 	defer func() {
-		os.Chdir(pwd) // get back to current dir
+		_ = os.Chdir(pwd) // get back to current dir
 	}()
 
 	if err := Build(bin); err != nil {
