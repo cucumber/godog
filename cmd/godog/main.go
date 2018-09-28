@@ -6,14 +6,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"syscall"
 
 	"github.com/DATA-DOG/godog"
 	"github.com/DATA-DOG/godog/colors"
 )
 
-var statusMatch = regexp.MustCompile("^exit status (\\d+)")
 var parsedStatus int
 
 func buildAndRun() (int, error) {
