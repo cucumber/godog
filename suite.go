@@ -805,7 +805,7 @@ func matchesTags(filter string, tags []string) (ok bool) {
 				okComma = hasTag(tags, tag) || okComma
 			}
 		}
-		ok = (false != okComma && ok && okComma) || false
+		ok = ok && okComma
 	}
 	return
 }

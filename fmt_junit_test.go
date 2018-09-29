@@ -152,19 +152,18 @@ func TestJUnitFormatterOutput(t *testing.T) {
 			},
 		}},
 	}
-
 	s.run()
 	s.fmt.Summary()
 
 	var exp bytes.Buffer
-	io.WriteString(&exp, xml.Header)
-
-	enc := xml.NewEncoder(&exp)
-	enc.Indent("", "  ")
-	if err := enc.Encode(expected); err != nil {
+	if _, err = io.WriteString(&exp, xml.Header); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-
+	enc := xml.NewEncoder(&exp)
+	enc.Indent("", "  ")
+	if err = enc.Encode(expected); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	if buf.String() != exp.String() {
 		t.Fatalf("expected output does not match: %s", buf.String())
 	}

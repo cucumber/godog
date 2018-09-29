@@ -16,7 +16,7 @@ type outputMode int
 const (
 	_ outputMode = iota
 	discardNonColorEscSeq
-	outputNonColorEscSeq
+	outputNonColorEscSeq // unused
 )
 
 // Colored creates and initializes a new ansiColorWriter
