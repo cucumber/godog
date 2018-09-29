@@ -382,8 +382,8 @@ func (f *basefmt) Summary() {
 
 func (s *undefinedSnippet) Args() (ret string) {
 	var (
-		args []string
-		pos int
+		args      []string
+		pos       int
 		breakLoop bool
 	)
 	for !breakLoop {
