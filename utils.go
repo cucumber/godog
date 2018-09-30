@@ -7,9 +7,6 @@ import (
 	"github.com/DATA-DOG/godog/colors"
 )
 
-// build < go.10
-type void struct{}
-
 var (
 	red    = colors.Red
 	redb   = colors.Bold(colors.Red)
