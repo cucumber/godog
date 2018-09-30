@@ -241,6 +241,8 @@ func makeImportValid(r rune) rune {
 	return r
 }
 
+type void struct{}
+
 func uniqStringList(strs []string) (unique []string) {
 	uniq := make(map[string]void, len(strs))
 	for _, s := range strs {
