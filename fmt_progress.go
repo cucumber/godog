@@ -47,7 +47,7 @@ func (f *progress) Feature(ft *gherkin.Feature, p string, c []byte) {
 func (f *progress) Summary() {
 	left := math.Mod(float64(f.steps), float64(f.stepsPerRow))
 	if left != 0 {
-		if int(f.steps) > f.stepsPerRow {
+		if f.steps > f.stepsPerRow {
 			fmt.Fprintf(f.out, s(f.stepsPerRow-int(left))+fmt.Sprintf(" %d\n", f.steps))
 		} else {
 			fmt.Fprintf(f.out, " %d\n", f.steps)
