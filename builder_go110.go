@@ -317,7 +317,7 @@ func buildTestMain(pkg *build.Package) ([]byte, bool, error) {
 		if err != nil {
 			return nil, false, err
 		}
-		importPath = parseImport(pkg.ImportPath)
+		importPath = parseImport(pkg.ImportPath, pkg.Root)
 		name = pkg.Name
 	} else {
 		name = "main"
@@ -339,7 +339,13 @@ func buildTestMain(pkg *build.Package) ([]byte, bool, error) {
 }
 
 // parseImport parses the import path to deal with go module.
-func parseImport(rawPath string) string {
+func parseImport(rawPath, rootPath string) string {
+	// with go > 1.11 and go module enabled out of the GOPATH,
+	// the import path begins with an underscore and the GOPATH is unknown on build.
+	if rootPath != "" {
+		// go < 1.11 or it's a module inside the GOPATH
+		return rawPath
+	}
 	// for module support, query the module import path
 	cmd := exec.Command("go", "list", "-m", "-json")
 	out, err := cmd.StdoutPipe()
