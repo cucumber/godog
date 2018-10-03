@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -134,4 +136,111 @@ func ParseFeature(in io.Reader) (feature *Feature, err error) {
 	err = parser.Parse(scanner, matcher)
 
 	return builder.GetFeature(), err
+}
+
+//ParseStruct convert a feature data table to struct using tags
+// "godog" configured in struct
+func ParseStruct(dataTable *DataTable, i interface{}) error {
+	var d decode
+	if err := d.init(dataTable, i); err != nil {
+		return err
+	}
+	return d.unmarshal(i)
+}
+
+type decode struct {
+	Value     reflect.Value
+	Type      reflect.Type
+	DataTable map[string]string
+	NumField  int
+	Tag       string
+}
+
+func (d *decode) insertValue(i interface{}, index int, value interface{}) error {
+	t := d.Type.Field(index).Type.String()
+	switch t {
+	case "string":
+		d.Value.Elem().Field(index).SetString(fmt.Sprintf("%s", value))
+		return nil
+	case "int":
+		v, err := strconv.ParseInt(fmt.Sprintf("%s", value), 10, 64)
+		if err != nil {
+			return err
+		}
+		d.Value.Elem().Field(index).SetInt(v)
+		return nil
+	case "float64":
+		v, err := strconv.ParseFloat(fmt.Sprintf("%s", value), 64)
+		if err != nil {
+			return err
+		}
+		d.Value.Elem().Field(index).SetFloat(v)
+		return nil
+	case "float32":
+		v, err := strconv.ParseFloat(fmt.Sprintf("%s", value), 32)
+		if err != nil {
+			return err
+		}
+		d.Value.Elem().Field(index).SetFloat(v)
+		return nil
+	case "bool":
+		v, err := strconv.ParseBool(fmt.Sprintf("%s", value))
+		if err != nil {
+			return err
+		}
+		d.Value.Elem().Field(index).SetBool(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid type %v of field in struct", t)
+	}
+}
+
+func (d *decode) init(dataTable *DataTable, i interface{}) error {
+	d.Value = reflect.ValueOf(i)
+	d.Type = reflect.Indirect(d.Value).Type()
+	m, err := ParseMap(dataTable)
+	if err != nil {
+		return err
+	}
+	d.DataTable = m
+	d.NumField = d.Type.NumField()
+	d.Tag = "godog"
+	return nil
+}
+
+func (d *decode) unmarshal(v interface{}) error {
+	for i := 0; i < d.NumField; i++ {
+		key := d.Type.Field(i).Tag.Get(d.Tag)
+		if key == "" {
+			if value, ok := d.DataTable[d.Type.Field(i).Name]; ok {
+				if err := d.insertValue(v, i, value); err != nil {
+					return err
+				}
+			}
+		} else {
+			if value, ok := d.DataTable[key]; ok {
+				if err := d.insertValue(v, i, value); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
+//ParseMap convert data table of feature to map
+//data table need to have exactly two rows
+func ParseMap(dataTable *DataTable) (map[string]string, error) {
+	rows := dataTable.Rows
+	if len(rows) != 2 {
+		return nil, fmt.Errorf("data table need to have two rows")
+	}
+	m := map[string]string{}
+	for _, row := range rows[1:] {
+		cells := row.Cells
+		for i, cell := range cells {
+			m[rows[0].Cells[i].Value] = cell.Value
+		}
+	}
+	return m, nil
 }
