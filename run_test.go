@@ -178,8 +178,8 @@ func TestFailsWithUnknownFormatterOptionError(t *testing.T) {
 	}
 
 	out := strings.TrimSpace(string(b))
-	if strings.Index(out, `unregistered formatter name: "unknown", use one of`) == -1 {
-		t.Fatalf("unexpected error output: \"%s\"", out)
+	if !strings.Contains(out, `unregistered formatter name: "unknown", use one of`) {
+		t.Fatalf("unexpected error output: %q", out)
 	}
 }
 

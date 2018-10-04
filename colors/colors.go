@@ -16,8 +16,8 @@ const (
 	red
 	green
 	yellow
-	blue
-	magenta
+	blue    // unused
+	magenta // unused
 	cyan
 	white
 )

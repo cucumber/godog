@@ -148,11 +148,13 @@ func (j *junitFormatter) Summary() {
 		j.current().Time = timeNowFunc().Sub(j.featStarted).String()
 	}
 	j.suite.Time = timeNowFunc().Sub(j.started).String()
-	io.WriteString(j.out, xml.Header)
-
+	_, err := io.WriteString(j.out, xml.Header)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "failed to write junit string:", err)
+	}
 	enc := xml.NewEncoder(j.out)
 	enc.Indent("", s(2))
-	if err := enc.Encode(j.suite); err != nil {
+	if err = enc.Encode(j.suite); err != nil {
 		fmt.Fprintln(os.Stderr, "failed to write junit xml:", err)
 	}
 }

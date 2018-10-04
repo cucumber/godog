@@ -4,6 +4,7 @@ package godog
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"go/build"
 	"go/parser"
@@ -19,16 +20,15 @@ import (
 	"unicode"
 )
 
-var tooldir = findToolDir()
-var compiler = filepath.Join(tooldir, "compile")
-var linker = filepath.Join(tooldir, "link")
-var gopaths = filepath.SplitList(build.Default.GOPATH)
-var goarch = build.Default.GOARCH
-var goroot = build.Default.GOROOT
-var goos = build.Default.GOOS
+var (
+	tooldir         = findToolDir()
+	compiler        = filepath.Join(tooldir, "compile")
+	linker          = filepath.Join(tooldir, "link")
+	gopaths         = filepath.SplitList(build.Default.GOPATH)
+	godogImportPath = "github.com/DATA-DOG/godog"
 
-var godogImportPath = "github.com/DATA-DOG/godog"
-var runnerTemplate = template.Must(template.New("testmain").Parse(`package main
+	// godep
+	runnerTemplate = template.Must(template.New("testmain").Parse(`package main
 
 import (
 	"github.com/DATA-DOG/godog"
@@ -45,6 +45,7 @@ func main() {
 	})
 	os.Exit(status)
 }`))
+)
 
 // Build creates a test package like go test command at given target path.
 // If there are no go files in tested directory, then
@@ -299,58 +300,76 @@ func makeImportValid(r rune) rune {
 	return r
 }
 
-func uniqStringList(strs []string) (unique []string) {
-	uniq := make(map[string]void, len(strs))
-	for _, s := range strs {
-		if _, ok := uniq[s]; !ok {
-			uniq[s] = void{}
-			unique = append(unique, s)
-		}
-	}
-	return
-}
-
 // buildTestMain if given package is valid
 // it scans test files for contexts
 // and produces a testmain source code.
 func buildTestMain(pkg *build.Package) ([]byte, bool, error) {
-	var contexts []string
-	var importPath string
-	name := "main"
+	var (
+		contexts         []string
+		err              error
+		name, importPath string
+	)
 	if nil != pkg {
-		ctxs, err := processPackageTestFiles(
+		contexts, err = processPackageTestFiles(
 			pkg.TestGoFiles,
 			pkg.XTestGoFiles,
 		)
 		if err != nil {
 			return nil, false, err
 		}
-		contexts = ctxs
-
-		// for module support, query the module import path
-		// @TODO: maybe there is a better way to read it
-		out, err := exec.Command("go", "list", "-m").CombinedOutput()
-		if err != nil {
-			// is not using modules or older go version
-			importPath = pkg.ImportPath
-		} else {
-			// otherwise read the module name from command output
-			importPath = strings.TrimSpace(string(out))
-		}
+		importPath = parseImport(pkg.ImportPath, pkg.Root)
 		name = pkg.Name
+	} else {
+		name = "main"
 	}
-
 	data := struct {
 		Name       string
 		Contexts   []string
 		ImportPath string
-	}{name, contexts, importPath}
-
+	}{
+		Name:       name,
+		Contexts:   contexts,
+		ImportPath: importPath,
+	}
 	var buf bytes.Buffer
-	if err := runnerTemplate.Execute(&buf, data); err != nil {
+	if err = runnerTemplate.Execute(&buf, data); err != nil {
 		return nil, len(contexts) > 0, err
 	}
 	return buf.Bytes(), len(contexts) > 0, nil
+}
+
+// parseImport parses the import path to deal with go module.
+func parseImport(rawPath, rootPath string) string {
+	// with go > 1.11 and go module enabled out of the GOPATH,
+	// the import path begins with an underscore and the GOPATH is unknown on build.
+	if rootPath != "" {
+		// go < 1.11 or it's a module inside the GOPATH
+		return rawPath
+	}
+	// for module support, query the module import path
+	cmd := exec.Command("go", "list", "-m", "-json")
+	out, err := cmd.StdoutPipe()
+	if err != nil {
+		// Unable to read stdout
+		return rawPath
+	}
+	if cmd.Start() != nil {
+		// Does not using modules
+		return rawPath
+	}
+	var mod struct {
+		Dir  string `json:"Dir"`
+		Path string `json:"Path"`
+	}
+	if json.NewDecoder(out).Decode(&mod) != nil {
+		// Unexpected result
+		return rawPath
+	}
+	if cmd.Wait() != nil {
+		return rawPath
+	}
+	// Concatenates the module path with the current sub-folders if needed
+	return mod.Path + filepath.ToSlash(strings.TrimPrefix(strings.TrimPrefix(rawPath, "_"), mod.Dir))
 }
 
 // processPackageTestFiles runs through ast of each test
@@ -400,16 +419,13 @@ func dependencies(pkg *build.Package, visited map[string]string, vendor bool) er
 		if i := strings.LastIndex(name, "vendor/"); vendor && i == -1 {
 			continue // only interested in vendor packages
 		}
-
 		if _, ok := visited[name]; ok {
 			continue
 		}
-
 		next, err := locatePackage(name)
 		if err != nil {
 			return err
 		}
-
 		visited[name] = pkg.PkgObj
 		if err := dependencies(next, visited, vendor); err != nil {
 			return err

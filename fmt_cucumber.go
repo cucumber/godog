@@ -109,15 +109,14 @@ type cukefmt struct {
 	// this is sadly not passed by gherkin nodes.
 	// it restricts this formatter to run only in synchronous single
 	// threaded execution. Unless running a copy of formatter for each feature
-	path         string
-	stat         stepType          // last step status, before skipped
-	outlineSteps int               // number of current outline scenario steps
-	ID           string            // current test id.
-	results      []cukeFeatureJSON // structure that represent cuke results
-	curStep      *cukeStep         // track the current step
-	curElement   *cukeElement      // track the current element
-	curFeature   *cukeFeatureJSON  // track the current feature
-	curOutline   cukeElement       // Each example show up as an outline element but the outline is parsed only once
+	path       string
+	stat       stepType          // last step status, before skipped
+	ID         string            // current test id.
+	results    []cukeFeatureJSON // structure that represent cuke results
+	curStep    *cukeStep         // track the current step
+	curElement *cukeElement      // track the current element
+	curFeature *cukeFeatureJSON  // track the current feature
+	curOutline cukeElement       // Each example show up as an outline element but the outline is parsed only once
 	// so I need to keep track of the current outline
 	curRow         int       // current row of the example table as it is being processed.
 	curExampleTags []cukeTag // temporary storage for tags associate with the current example table.
