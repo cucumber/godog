@@ -87,7 +87,7 @@ func Build(bin string) error {
 			return fmt.Errorf("failed to compile package: %s, reason: %v, output: %s", pkg.Name, err, string(out))
 		}
 
-		// builds and compile the tested package.
+		// build and compile the tested package.
 		// generated test executable will be removed
 		// since we do not need it for godog suite.
 		// we also print back the temp WORK directory
@@ -98,11 +98,31 @@ func Build(bin string) error {
 		}
 
 		// extract go-build temporary directory as our workdir
-		workdir = strings.TrimSpace(string(out))
-		if !strings.HasPrefix(workdir, "WORK=") {
-			return fmt.Errorf("expected WORK dir path, but got: %s", workdir)
+		lines := strings.Split(strings.TrimSpace(string(out)), "\n")
+		// it may have some compilation warnings, in the output, but these are not
+		// considered to be errors, since command exit status is 0
+		for _, ln := range lines {
+			if !strings.HasPrefix(ln, "WORK=") {
+				continue
+			}
+			workdir = strings.Replace(ln, "WORK=", "", 1)
+			break
 		}
-		workdir = strings.Replace(workdir, "WORK=", "", 1)
+
+		// may not locate it in output
+		if workdir == testdir {
+			return fmt.Errorf("expected WORK dir path to be present in output: %s", string(out))
+		}
+
+		// check whether workdir exists
+		stats, err := os.Stat(workdir)
+		if os.IsNotExist(err) {
+			return fmt.Errorf("expected WORK dir: %s to be available", workdir)
+		}
+
+		if !stats.IsDir() {
+			return fmt.Errorf("expected WORK dir: %s to be directory", workdir)
+		}
 		testdir = filepath.Join(workdir, "b001")
 	} else {
 		// still need to create temporary workdir
