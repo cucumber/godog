@@ -92,10 +92,12 @@ func Build(bin string) error {
 		// since we do not need it for godog suite.
 		// we also print back the temp WORK directory
 		// go has built. We will reuse it for our suite workdir.
-		out, err = exec.Command("go", "test", "-c", "-work", "-o", os.DevNull).CombinedOutput()
+		temp := fmt.Sprintf(filepath.Join("%s", "temp-%d.test"), os.TempDir(), time.Now().UnixNano())
+		out, err = exec.Command("go", "test", "-c", "-work", "-o", temp).CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("failed to compile tested package: %s, reason: %v, output: %s", pkg.Name, err, string(out))
 		}
+		defer os.Remove(temp)
 
 		// extract go-build temporary directory as our workdir
 		lines := strings.Split(strings.TrimSpace(string(out)), "\n")
