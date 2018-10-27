@@ -52,17 +52,47 @@ func BindFlags(prefix string, set *flag.FlagSet, opt *Options) {
 	}
 	descFormatOption = strings.TrimSpace(descFormatOption)
 
-	set.StringVar(&opt.Format, prefix+"format", "pretty", descFormatOption)
-	set.StringVar(&opt.Format, prefix+"f", "pretty", descFormatOption)
-	set.StringVar(&opt.Tags, prefix+"tags", "", descTagsOption)
-	set.StringVar(&opt.Tags, prefix+"t", "", descTagsOption)
-	set.IntVar(&opt.Concurrency, prefix+"concurrency", 1, descConcurrencyOption)
-	set.IntVar(&opt.Concurrency, prefix+"c", 1, descConcurrencyOption)
-	set.BoolVar(&opt.ShowStepDefinitions, prefix+"definitions", false, "Print all available step definitions.")
-	set.BoolVar(&opt.ShowStepDefinitions, prefix+"d", false, "Print all available step definitions.")
-	set.BoolVar(&opt.StopOnFailure, prefix+"stop-on-failure", false, "Stop processing on first failed scenario.")
-	set.BoolVar(&opt.Strict, prefix+"strict", false, "Fail suite when there are pending or undefined steps.")
-	set.BoolVar(&opt.NoColors, prefix+"no-colors", false, "Disable ansi colors.")
+	// override flag defaults if any corresponding properties were supplied on the incoming `opt`
+	defFormatOption := "pretty"
+	if opt.Format != "" {
+		defFormatOption = opt.Format
+	}
+	defTagsOption := ""
+	if opt.Tags != "" {
+		defTagsOption = opt.Tags
+	}
+	defConcurrencyOption := 1
+	if opt.Concurrency != 0 {
+		defConcurrencyOption = opt.Concurrency
+	}
+	defShowStepDefinitions := false
+	if opt.ShowStepDefinitions {
+		defShowStepDefinitions = opt.ShowStepDefinitions
+	}
+	defStopOnFailure := false
+	if opt.StopOnFailure {
+		defStopOnFailure = opt.StopOnFailure
+	}
+	defStrict := false
+	if opt.Strict {
+		defStrict = opt.Strict
+	}
+	defNoColors := false
+	if opt.NoColors {
+		defNoColors = opt.NoColors
+	}
+
+	set.StringVar(&opt.Format, prefix+"format", defFormatOption, descFormatOption)
+	set.StringVar(&opt.Format, prefix+"f", defFormatOption, descFormatOption)
+	set.StringVar(&opt.Tags, prefix+"tags", defTagsOption, descTagsOption)
+	set.StringVar(&opt.Tags, prefix+"t", defTagsOption, descTagsOption)
+	set.IntVar(&opt.Concurrency, prefix+"concurrency", defConcurrencyOption, descConcurrencyOption)
+	set.IntVar(&opt.Concurrency, prefix+"c", defConcurrencyOption, descConcurrencyOption)
+	set.BoolVar(&opt.ShowStepDefinitions, prefix+"definitions", defShowStepDefinitions, "Print all available step definitions.")
+	set.BoolVar(&opt.ShowStepDefinitions, prefix+"d", defShowStepDefinitions, "Print all available step definitions.")
+	set.BoolVar(&opt.StopOnFailure, prefix+"stop-on-failure", defStopOnFailure, "Stop processing on first failed scenario.")
+	set.BoolVar(&opt.Strict, prefix+"strict", defStrict, "Fail suite when there are pending or undefined steps.")
+	set.BoolVar(&opt.NoColors, prefix+"no-colors", defNoColors, "Disable ansi colors.")
 	set.Var(&randomSeed{&opt.Randomize}, prefix+"random", descRandomOption)
 }
 
