@@ -241,7 +241,10 @@ The following example binds **godog** flags with specified prefix `godog`
 in order to prevent flag collisions.
 
 ``` go
-var opt = godog.Options{Output: colors.Colored(os.Stdout)}
+var opt = godog.Options{
+	Output: colors.Colored(os.Stdout),
+	Format: "progress", // can define default values
+}
 
 func init() {
 	godog.BindFlags("godog.", flag.CommandLine, &opt)
@@ -266,7 +269,7 @@ Then you may run tests with by specifying flags in order to filter
 features.
 
 ```
-go test -v --godog.format=progress --godog.random --godog.tags=wip
+go test -v --godog.random --godog.tags=wip
 go test -v --godog.format=pretty --godog.random -race -coverprofile=coverage.txt -covermode=atomic
 ```
 
