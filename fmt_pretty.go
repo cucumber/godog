@@ -113,6 +113,8 @@ func (f *pretty) printUndefinedScenario(sc *gherkin.Scenario) {
 			f.printStep(step, nil, colors.Cyan)
 		}
 	}
+
+	f.commentPos = f.longestStep(sc.Steps, f.length(sc))
 	text := s(f.indent) + whiteb(f.scenario.Keyword+": ") + sc.Name
 	text += s(f.commentPos-f.length(f.scenario)+1) + f.line(sc.Location)
 	fmt.Fprintln(f.out, "\n"+text)
