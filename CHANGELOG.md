@@ -1,5 +1,17 @@
 # Change LOG
 
+**2018-10-27**
+- support go1.11 new compiler and linker changes for **godog** command.
+- support go1.11 modules and `go mod` builds.
+- `BindFlags` now has a prefix option for flags, so that `go test` command
+  can avoid flag name collisions.
+- `BindFlags` respect default options provided for binding, so that it
+  does not override predefined options when flags are bind, see #144.
+- Minor patch to support tag filters on example tables for
+  ScenarioOutline.
+- Minor patch for pretty printer, when scenario has no steps, comment
+  possition computation was in panic.
+
 **2018-03-04**
 - support go1.10 new compiler and linker changes for **godog** command.
 
