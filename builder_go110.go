@@ -143,11 +143,15 @@ func Build(bin string) error {
 
 	// godog library may not be imported in tested package
 	// but we need it for our testmain package.
-	// So we look it up in available source paths
-	// including vendor directory, supported since 1.5.
-	godogPkg, err := locatePackage(godogImportPath)
-	if err != nil {
-		return err
+	godogPkg := locateModule(godogImportPath)
+	if godogPkg == nil {
+		// if it was not located as module
+		// we look it up in available source paths
+		// including vendor directory, supported since 1.5.
+		godogPkg, err = locatePackage(godogImportPath)
+		if err != nil {
+			return err
+		}
 	}
 
 	// make sure godog package archive is installed, gherkin
@@ -444,14 +448,61 @@ func dependencies(pkg *build.Package, visited map[string]string, vendor bool) er
 		if _, ok := visited[name]; ok {
 			continue
 		}
-		next, err := locatePackage(name)
-		if err != nil {
-			return err
+
+		next := locateModule(name) // module takes priority
+		if next == nil {
+			var err error
+			next, err = locatePackage(name)
+			if err != nil {
+				return err
+			}
 		}
+
 		visited[name] = pkg.PkgObj
 		if err := dependencies(next, visited, vendor); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func locateModule(name string) *build.Package {
+	// for module support, query the module import path
+	cmd := exec.Command("go", "mod", "download", "-json")
+	out, err := cmd.StdoutPipe()
+	if err != nil {
+		// Unable to read stdout
+		return nil
+	}
+	if cmd.Start() != nil {
+		// Does not using modules
+		return nil
+	}
+
+	type module struct {
+		Dir  string
+		Path string
+	}
+
+	var mod *module
+	if err := json.NewDecoder(out).Decode(&mod); err != nil {
+		// Unexpected result
+		return nil
+	}
+	if cmd.Wait() != nil {
+		return nil
+	}
+
+	if strings.Index(name, mod.Path) == -1 {
+		return nil
+	}
+
+	suffix := strings.Replace(name, mod.Path, "", 1)
+	add := strings.Replace(suffix, "/", string(filepath.Separator), -1)
+	pkg, err := build.ImportDir(mod.Dir+add, 0)
+	if err != nil {
+		return nil
+	}
+
+	return pkg
 }
