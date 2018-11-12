@@ -47,6 +47,25 @@ func main() {
 }`))
 )
 
+type module struct {
+	Path, Dir string
+}
+
+func (mod *module) match(name string) *build.Package {
+	if strings.Index(name, mod.Path) == -1 {
+		return nil
+	}
+
+	suffix := strings.Replace(name, mod.Path, "", 1)
+	add := strings.Replace(suffix, "/", string(filepath.Separator), -1)
+	pkg, err := build.ImportDir(mod.Dir+add, 0)
+	if err != nil {
+		return nil
+	}
+
+	return pkg
+}
+
 // Build creates a test package like go test command at given target path.
 // If there are no go files in tested directory, then
 // it simply builds a godog executable to scan features.
@@ -79,21 +98,13 @@ func Build(bin string) error {
 	// if none of test files exist, or there are no contexts found
 	// we will skip test package compilation, since it is useless
 	if anyContexts {
-		// first of all compile test package dependencies
-		// that will save us many compilations for dependencies
-		// go does it better
-		out, err := exec.Command("go", "test", "-i").CombinedOutput()
-		if err != nil {
-			return fmt.Errorf("failed to compile package: %s, reason: %v, output: %s", pkg.Name, err, string(out))
-		}
-
 		// build and compile the tested package.
 		// generated test executable will be removed
 		// since we do not need it for godog suite.
 		// we also print back the temp WORK directory
 		// go has built. We will reuse it for our suite workdir.
 		temp := fmt.Sprintf(filepath.Join("%s", "temp-%d.test"), os.TempDir(), time.Now().UnixNano())
-		out, err = exec.Command("go", "test", "-c", "-work", "-o", temp).CombinedOutput()
+		out, err := exec.Command("go", "test", "-c", "-work", "-o", temp).CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("failed to compile tested package: %s, reason: %v, output: %s", pkg.Name, err, string(out))
 		}
@@ -141,26 +152,13 @@ func Build(bin string) error {
 		return err
 	}
 
-	// godog library may not be imported in tested package
-	// but we need it for our testmain package.
-	godogPkg := locateModule(godogImportPath)
-	if godogPkg == nil {
-		// if it was not located as module
-		// we look it up in available source paths
-		// including vendor directory, supported since 1.5.
-		godogPkg, err = locatePackage(godogImportPath)
-		if err != nil {
-			return err
-		}
-	}
-
-	// make sure godog package archive is installed, gherkin
-	// will be installed as dependency of godog
-	cmd := exec.Command("go", "install", "-i", godogPkg.ImportPath)
-	cmd.Env = os.Environ()
-	out, err := cmd.CombinedOutput()
+	mods := readModules()
+	// if it was not located as module
+	// we look it up in available source paths
+	// including vendor directory, supported since 1.5.
+	godogPkg, err := locatePackage(godogImportPath, mods)
 	if err != nil {
-		return fmt.Errorf("failed to install godog package: %s, reason: %v", string(out), err)
+		return err
 	}
 
 	// compile godog testmain package archive
@@ -184,7 +182,7 @@ func Build(bin string) error {
 		fmt.Fprintln(in, "# import config")
 
 		deps := make(map[string]string)
-		if err := dependencies(godogPkg, deps, false); err != nil {
+		if err := dependencies(godogPkg, mods, deps, false); err != nil {
 			in.Close()
 			return err
 		}
@@ -204,11 +202,11 @@ func Build(bin string) error {
 			return err
 		}
 		deps := make(map[string]string)
-		if err := dependencies(pkg, deps, true); err != nil {
+		if err := dependencies(pkg, mods, deps, true); err != nil {
 			in.Close()
 			return err
 		}
-		if err := dependencies(godogPkg, deps, false); err != nil {
+		if err := dependencies(godogPkg, mods, deps, false); err != nil {
 			in.Close()
 			return err
 		}
@@ -222,9 +220,9 @@ func Build(bin string) error {
 	}
 
 	args = append(args, "-pack", testmain)
-	cmd = exec.Command(compiler, args...)
+	cmd := exec.Command(compiler, args...)
 	cmd.Env = os.Environ()
-	out, err = cmd.CombinedOutput()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to compile testmain package: %v - output: %s", err, string(out))
 	}
@@ -268,11 +266,20 @@ func Build(bin string) error {
 	return nil
 }
 
-func locatePackage(name string) (*build.Package, error) {
+func locatePackage(name string, mods []*module) (*build.Package, error) {
 	// search vendor paths first since that takes priority
 	dir, err := filepath.Abs(".")
 	if err != nil {
 		return nil, err
+	}
+
+	// first of all check modules
+	if mods != nil {
+		for _, mod := range mods {
+			if pkg := mod.match(name); pkg != nil {
+				return pkg, nil
+			}
+		}
 	}
 
 	for _, gopath := range gopaths {
@@ -435,7 +442,7 @@ func findToolDir() string {
 	return filepath.Clean(build.ToolDir)
 }
 
-func dependencies(pkg *build.Package, visited map[string]string, vendor bool) error {
+func dependencies(pkg *build.Package, mods []*module, visited map[string]string, vendor bool) error {
 	visited[pkg.ImportPath] = pkg.PkgObj
 	imports := pkg.Imports
 	if vendor {
@@ -449,60 +456,35 @@ func dependencies(pkg *build.Package, visited map[string]string, vendor bool) er
 			continue
 		}
 
-		next := locateModule(name) // module takes priority
-		if next == nil {
-			var err error
-			next, err = locatePackage(name)
-			if err != nil {
-				return err
-			}
+		next, err := locatePackage(name, mods)
+		if err != nil {
+			return err
 		}
 
 		visited[name] = pkg.PkgObj
-		if err := dependencies(next, visited, vendor); err != nil {
+		if err := dependencies(next, mods, visited, vendor); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func locateModule(name string) *build.Package {
+func readModules() []*module {
 	// for module support, query the module import path
-	cmd := exec.Command("go", "mod", "download", "-json")
-	out, err := cmd.StdoutPipe()
+	out, err := exec.Command("go", "mod", "download", "-json").Output()
 	if err != nil {
 		// Unable to read stdout
 		return nil
 	}
-	if cmd.Start() != nil {
-		// Does not using modules
-		return nil
-	}
 
-	type module struct {
-		Dir  string
-		Path string
+	var mods []*module
+	reader := json.NewDecoder(bytes.NewReader(out))
+	for {
+		var mod *module
+		if err := reader.Decode(&mod); err != nil {
+			break // might be also EOF
+		}
+		mods = append(mods, mod)
 	}
-
-	var mod *module
-	if err := json.NewDecoder(out).Decode(&mod); err != nil {
-		// Unexpected result
-		return nil
-	}
-	if cmd.Wait() != nil {
-		return nil
-	}
-
-	if strings.Index(name, mod.Path) == -1 {
-		return nil
-	}
-
-	suffix := strings.Replace(name, mod.Path, "", 1)
-	add := strings.Replace(suffix, "/", string(filepath.Separator), -1)
-	pkg, err := build.ImportDir(mod.Dir+add, 0)
-	if err != nil {
-		return nil
-	}
-
-	return pkg
+	return mods
 }

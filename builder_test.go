@@ -64,7 +64,8 @@ var builderMainCodeFile = `package main
 // Godogs available to eat
 var Godogs int
 
-func main() { /* usual main func */ }
+func main() {
+}
 `
 
 func buildTestPackage(dir, feat, src, testSrc string) error {
