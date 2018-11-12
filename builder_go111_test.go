@@ -11,8 +11,13 @@ import (
 )
 
 func TestGodogBuildWithModuleOutsideGopath(t *testing.T) {
+	_, err := exec.LookPath("godog")
+	if err != nil {
+		t.SkipNow() // no command installed
+	}
+
 	dir := filepath.Join(os.TempDir(), "godogs")
-	err := buildTestPackage(dir, builderFeatureFile, builderMainCodeFile, builderTestFile)
+	err = buildTestPackage(dir, builderFeatureFile, builderMainCodeFile, builderTestFile)
 	if err != nil {
 		os.RemoveAll(dir)
 		t.Fatal(err)
@@ -48,9 +53,13 @@ func TestGodogBuildWithModuleOutsideGopath(t *testing.T) {
 }
 
 func TestGodogBuildWithModuleInsideGopath(t *testing.T) {
+	_, err := exec.LookPath("godog")
+	if err != nil {
+		t.SkipNow() // no command installed
+	}
 	gopath := filepath.Join(os.TempDir(), "_gp")
 	dir := filepath.Join(gopath, "src", "godogs")
-	err := buildTestPackage(dir, builderFeatureFile, builderMainCodeFile, builderTestFile)
+	err = buildTestPackage(dir, builderFeatureFile, builderMainCodeFile, builderTestFile)
 	if err != nil {
 		os.RemoveAll(gopath)
 		t.Fatal(err)

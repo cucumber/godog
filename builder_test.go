@@ -92,8 +92,12 @@ func buildTestPackage(dir, feat, src, testSrc string) error {
 }
 
 func TestGodogBuildWithSourceNotInGoPath(t *testing.T) {
+	_, err := exec.LookPath("godog")
+	if err != nil {
+		t.SkipNow() // no command installed
+	}
 	dir := filepath.Join(os.TempDir(), "godogs")
-	err := buildTestPackage(dir, builderFeatureFile, builderMainCodeFile, builderTestFile)
+	err = buildTestPackage(dir, builderFeatureFile, builderMainCodeFile, builderTestFile)
 	if err != nil {
 		os.RemoveAll(dir)
 		t.Fatal(err)
@@ -124,8 +128,12 @@ func TestGodogBuildWithSourceNotInGoPath(t *testing.T) {
 }
 
 func TestGodogBuildWithoutSourceNotInGoPath(t *testing.T) {
+	_, err := exec.LookPath("godog")
+	if err != nil {
+		t.SkipNow() // no command installed
+	}
 	dir := filepath.Join(os.TempDir(), "godogs")
-	err := buildTestPackage(dir, builderFeatureFile, "", "")
+	err = buildTestPackage(dir, builderFeatureFile, "", "")
 	if err != nil {
 		os.RemoveAll(dir)
 		t.Fatal(err)
@@ -156,8 +164,12 @@ func TestGodogBuildWithoutSourceNotInGoPath(t *testing.T) {
 }
 
 func TestGodogBuildWithoutTestSourceNotInGoPath(t *testing.T) {
+	_, err := exec.LookPath("godog")
+	if err != nil {
+		t.SkipNow() // no command installed
+	}
 	dir := filepath.Join(os.TempDir(), "godogs")
-	err := buildTestPackage(dir, builderFeatureFile, builderMainCodeFile, "")
+	err = buildTestPackage(dir, builderFeatureFile, builderMainCodeFile, "")
 	if err != nil {
 		os.RemoveAll(dir)
 		t.Fatal(err)
@@ -188,9 +200,13 @@ func TestGodogBuildWithoutTestSourceNotInGoPath(t *testing.T) {
 }
 
 func TestGodogBuildWithinGopath(t *testing.T) {
+	_, err := exec.LookPath("godog")
+	if err != nil {
+		t.SkipNow() // no command installed
+	}
 	gopath := filepath.Join(os.TempDir(), "_gp")
 	dir := filepath.Join(gopath, "src", "godogs")
-	err := buildTestPackage(dir, builderFeatureFile, builderMainCodeFile, builderTestFile)
+	err = buildTestPackage(dir, builderFeatureFile, builderMainCodeFile, builderTestFile)
 	if err != nil {
 		os.RemoveAll(gopath)
 		t.Fatal(err)
@@ -233,9 +249,13 @@ func TestGodogBuildWithinGopath(t *testing.T) {
 }
 
 func TestGodogBuildWithVendoredGodog(t *testing.T) {
+	_, err := exec.LookPath("godog")
+	if err != nil {
+		t.SkipNow() // no command installed
+	}
 	gopath := filepath.Join(os.TempDir(), "_gp")
 	dir := filepath.Join(gopath, "src", "godogs")
-	err := buildTestPackage(dir, builderFeatureFile, builderMainCodeFile, builderTestFile)
+	err = buildTestPackage(dir, builderFeatureFile, builderMainCodeFile, builderTestFile)
 	if err != nil {
 		os.RemoveAll(gopath)
 		t.Fatal(err)

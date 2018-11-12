@@ -161,6 +161,16 @@ func Build(bin string) error {
 		return err
 	}
 
+	if !isModule(godogImportPath, mods) {
+		// must make sure that package is installed
+		// modules are installed on download
+		cmd := exec.Command("go", "install", "-i", godogPkg.ImportPath)
+		cmd.Env = os.Environ()
+		if out, err := cmd.CombinedOutput(); err != nil {
+			return fmt.Errorf("failed to install godog package: %s, reason: %v", string(out), err)
+		}
+	}
+
 	// compile godog testmain package archive
 	// we do not depend on CGO so a lot of checks are not necessary
 	testMainPkgOut := filepath.Join(testdir, "main.a")
@@ -487,4 +497,18 @@ func readModules() []*module {
 		mods = append(mods, mod)
 	}
 	return mods
+}
+
+func isModule(name string, mods []*module) bool {
+	if mods == nil {
+		return false
+	}
+
+	for _, mod := range mods {
+		if pkg := mod.match(name); pkg != nil {
+			return true
+		}
+	}
+
+	return false
 }
