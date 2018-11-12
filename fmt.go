@@ -306,16 +306,21 @@ func (f *basefmt) Summary() {
 			switch t := def.(type) {
 			case *gherkin.Scenario:
 				total++
+				if len(t.Steps) == 0 {
+					undefined++
+				}
 			case *gherkin.ScenarioOutline:
 				for _, ex := range t.Examples {
 					if examples, hasExamples := examples(ex); hasExamples {
 						total += len(examples.TableBody)
+						if len(t.Steps) == 0 {
+							undefined += len(examples.TableBody)
+						}
 					}
 				}
 			}
 		}
 	}
-	passed = total
 	var owner interface{}
 	for _, undef := range f.undefined {
 		if owner != undef.owner {
@@ -323,6 +328,7 @@ func (f *basefmt) Summary() {
 			owner = undef.owner
 		}
 	}
+	passed = total - undefined
 
 	var steps, parts, scenarios []string
 	nsteps := len(f.passed) + len(f.failed) + len(f.skipped) + len(f.undefined) + len(f.pending)
@@ -343,6 +349,9 @@ func (f *basefmt) Summary() {
 		passed -= undefined
 		parts = append(parts, yellow(fmt.Sprintf("%d undefined", undefined)))
 		steps = append(steps, yellow(fmt.Sprintf("%d undefined", len(f.undefined))))
+	} else if undefined > 0 {
+		// there may be some scenarios without steps
+		parts = append(parts, yellow(fmt.Sprintf("%d undefined", undefined)))
 	}
 	if len(f.skipped) > 0 {
 		steps = append(steps, cyan(fmt.Sprintf("%d skipped", len(f.skipped))))

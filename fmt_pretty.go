@@ -58,7 +58,7 @@ func (f *pretty) Feature(ft *gherkin.Feature, p string, c []byte) {
 		fmt.Fprintln(f.out, "")
 	}
 	f.features = append(f.features, &feature{Path: p, Feature: ft})
-	fmt.Fprintln(f.out, whiteb(ft.Keyword+": ")+ft.Name)
+	fmt.Fprintln(f.out, whiteb(ft.Keyword+":")+" "+ft.Name)
 	if strings.TrimSpace(ft.Description) != "" {
 		for _, line := range strings.Split(ft.Description, "\n") {
 			fmt.Fprintln(f.out, s(f.indent)+strings.TrimSpace(line))
@@ -115,7 +115,7 @@ func (f *pretty) printUndefinedScenario(sc *gherkin.Scenario) {
 	}
 
 	f.commentPos = f.longestStep(sc.Steps, f.length(sc))
-	text := s(f.indent) + whiteb(f.scenario.Keyword+": ") + sc.Name
+	text := s(f.indent) + whiteb(f.scenario.Keyword+":") + " " + sc.Name
 	text += s(f.commentPos-f.length(f.scenario)+1) + f.line(sc.Location)
 	fmt.Fprintln(f.out, "\n"+text)
 }
@@ -209,7 +209,7 @@ func (f *pretty) printOutlineExample(outline *gherkin.ScenarioOutline) {
 	// an example table header
 	if firstExample {
 		fmt.Fprintln(f.out, "")
-		fmt.Fprintln(f.out, s(f.indent*2)+whiteb(example.Keyword+": ")+example.Name)
+		fmt.Fprintln(f.out, s(f.indent*2)+whiteb(example.Keyword+":")+" "+example.Name)
 
 		for i, cell := range example.TableHeader.Cells {
 			val := cyan(cell.Value)
@@ -306,7 +306,7 @@ func (f *pretty) printStepKind(res *stepResult) {
 					f.commentPos = bgLen
 				}
 			}
-			text := s(f.indent) + whiteb(f.scenario.Keyword+": ") + f.scenario.Name
+			text := s(f.indent) + whiteb(f.scenario.Keyword+":") + " " + f.scenario.Name
 			text += s(f.commentPos-f.length(f.scenario)+1) + f.line(f.scenario.Location)
 			fmt.Fprintln(f.out, "\n"+text)
 			f.scenarioKeyword = true
