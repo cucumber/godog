@@ -1,5 +1,9 @@
 # Change LOG
 
+**2018-11-12**
+- proper go module support added for `godog` command build.
+- added build tests.
+
 **2018-10-27**
 - support go1.11 new compiler and linker changes for **godog** command.
 - support go1.11 modules and `go mod` builds.
