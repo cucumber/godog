@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/DATA-DOG/godog/colors"
 	"github.com/DATA-DOG/godog/gherkin"
@@ -51,7 +50,7 @@ func TestProgressFormatterOutput(t *testing.T) {
 
 8 scenarios (2 passed, 2 failed, 2 pending, 2 undefined)
 23 steps (14 passed, 2 failed, 2 pending, 3 undefined, 2 skipped)
-%s
+0s
 
 You can implement step definitions for undefined steps with these snippets:
 
@@ -68,8 +67,6 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(` + "`^next undefined$`" + `, nextUndefined)
 }`
 
-	var zeroDuration time.Duration
-	expected = fmt.Sprintf(expected, zeroDuration.String())
 	expected = trimAllLines(expected)
 
 	r.run()
@@ -117,7 +114,7 @@ func TestProgressFormatterWhenStepPanics(t *testing.T) {
 	}
 
 	out := buf.String()
-	if idx := strings.Index(out, "github.com/DATA-DOG/godog/fmt_progress_test.go:111"); idx == -1 {
+	if idx := strings.Index(out, "github.com/DATA-DOG/godog/fmt_progress_test.go:108"); idx == -1 {
 		t.Fatalf("expected to find panic stacktrace, actual:\n%s", out)
 	}
 }
@@ -184,12 +181,10 @@ Error: sub2: sub-sub: errored
 
 1 scenarios (1 failed)
 2 steps (1 passed, 1 failed)
-%s
+0s
 `
 
 	expected = trimAllLines(expected)
-	var zeroDuration time.Duration
-	expected = fmt.Sprintf(expected, zeroDuration.String())
 	actual := trimAllLines(buf.String())
 
 	shouldMatchOutput(expected, actual, t)
@@ -276,7 +271,7 @@ func TestProgressFormatterMultistepTemplates(t *testing.T) {
 
 1 scenarios (1 undefined)
 2 steps (1 passed, 1 undefined)
-%s
+0s
 
 You can implement step definitions for undefined steps with these snippets:
 
@@ -299,8 +294,6 @@ func FeatureContext(s *godog.Suite) {
 }
 `
 
-	var zeroDuration time.Duration
-	expected = fmt.Sprintf(expected, zeroDuration.String())
 	expected = trimAllLines(expected)
 
 	actual := trimAllLines(buf.String())
@@ -388,13 +381,10 @@ Feature: basic
 
 1 scenarios (1 failed)
 2 steps (1 passed, 1 failed)
-%s
+0s
 `
 
-	var zeroDuration time.Duration
-	expected = fmt.Sprintf(expected, zeroDuration.String())
 	expected = trimAllLines(expected)
-
 	actual := trimAllLines(buf.String())
 	if actual != expected {
 		t.Fatalf("expected output does not match: %s", actual)

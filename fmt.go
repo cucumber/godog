@@ -374,7 +374,13 @@ func (f *basefmt) Summary() {
 	} else {
 		fmt.Fprintln(f.out, fmt.Sprintf("%d steps (%s)", nsteps, strings.Join(steps, ", ")))
 	}
-	fmt.Fprintln(f.out, elapsed)
+
+	elapsedString := elapsed.String()
+	if elapsed.Nanoseconds() == 0 {
+		// go 1.5 and 1.6 prints 0 instead of 0s, if duration is zero.
+		elapsedString = "0s"
+	}
+	fmt.Fprintln(f.out, elapsedString)
 
 	// prints used randomization seed
 	seed, err := strconv.ParseInt(os.Getenv("GODOG_SEED"), 10, 64)
