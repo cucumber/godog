@@ -166,6 +166,10 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 	} else {
 		failed = r.run()
 	}
+
+	// @TODO: should prevent from having these
+	os.Setenv("GODOG_SEED", "")
+	os.Setenv("GODOG_TESTED_PACKAGE", "")
 	if failed && opt.Format != "events" {
 		return exitFailure
 	}

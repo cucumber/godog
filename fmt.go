@@ -321,6 +321,7 @@ func (f *basefmt) Summary() {
 			}
 		}
 	}
+	passed = total - undefined
 	var owner interface{}
 	for _, undef := range f.undefined {
 		if owner != undef.owner {
@@ -328,7 +329,6 @@ func (f *basefmt) Summary() {
 			owner = undef.owner
 		}
 	}
-	passed = total - undefined
 
 	var steps, parts, scenarios []string
 	nsteps := len(f.passed) + len(f.failed) + len(f.skipped) + len(f.undefined) + len(f.pending)

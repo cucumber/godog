@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -54,8 +53,6 @@ func TestProgressFormatterOutput(t *testing.T) {
 23 steps (14 passed, 2 failed, 2 pending, 3 undefined, 2 skipped)
 %s
 
-Randomized with seed: %s
-
 You can implement step definitions for undefined steps with these snippets:
 
 func undefined() error {
@@ -72,7 +69,7 @@ func FeatureContext(s *godog.Suite) {
 }`
 
 	var zeroDuration time.Duration
-	expected = fmt.Sprintf(expected, zeroDuration.String(), os.Getenv("GODOG_SEED"))
+	expected = fmt.Sprintf(expected, zeroDuration.String())
 	expected = trimAllLines(expected)
 
 	r.run()
@@ -120,7 +117,7 @@ func TestProgressFormatterWhenStepPanics(t *testing.T) {
 	}
 
 	out := buf.String()
-	if idx := strings.Index(out, "github.com/DATA-DOG/godog/fmt_progress_test.go:114"); idx == -1 {
+	if idx := strings.Index(out, "github.com/DATA-DOG/godog/fmt_progress_test.go:111"); idx == -1 {
 		t.Fatalf("expected to find panic stacktrace, actual:\n%s", out)
 	}
 }
@@ -188,13 +185,11 @@ Error: sub2: sub-sub: errored
 1 scenarios (1 failed)
 2 steps (1 passed, 1 failed)
 %s
-
-Randomized with seed: %s
 `
 
 	expected = trimAllLines(expected)
 	var zeroDuration time.Duration
-	expected = fmt.Sprintf(expected, zeroDuration.String(), os.Getenv("GODOG_SEED"))
+	expected = fmt.Sprintf(expected, zeroDuration.String())
 	actual := trimAllLines(buf.String())
 
 	shouldMatchOutput(expected, actual, t)
@@ -283,8 +278,6 @@ func TestProgressFormatterMultistepTemplates(t *testing.T) {
 2 steps (1 passed, 1 undefined)
 %s
 
-Randomized with seed: %s
-
 You can implement step definitions for undefined steps with these snippets:
 
 func undef() error {
@@ -307,7 +300,7 @@ func FeatureContext(s *godog.Suite) {
 `
 
 	var zeroDuration time.Duration
-	expected = fmt.Sprintf(expected, zeroDuration.String(), os.Getenv("GODOG_SEED"))
+	expected = fmt.Sprintf(expected, zeroDuration.String())
 	expected = trimAllLines(expected)
 
 	actual := trimAllLines(buf.String())
@@ -396,12 +389,10 @@ Feature: basic
 1 scenarios (1 failed)
 2 steps (1 passed, 1 failed)
 %s
-
-Randomized with seed: %s
 `
 
 	var zeroDuration time.Duration
-	expected = fmt.Sprintf(expected, zeroDuration.String(), os.Getenv("GODOG_SEED"))
+	expected = fmt.Sprintf(expected, zeroDuration.String())
 	expected = trimAllLines(expected)
 
 	actual := trimAllLines(buf.String())
