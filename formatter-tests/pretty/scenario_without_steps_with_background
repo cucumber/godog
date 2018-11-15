@@ -1,0 +1,10 @@
+<bold-white>Feature:</bold-white> empty feature
+
+  <bold-white>Background:</bold-white>
+    <cyan>Given</cyan> <cyan>passing step</cyan>
+
+  <bold-white>Scenario:</bold-white> without steps <black># formatter-tests/features/scenario_without_steps_with_background.feature:6</black>
+
+1 scenarios (<yellow>1 undefined</yellow>)
+No steps
+0s
