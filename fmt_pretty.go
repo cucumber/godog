@@ -97,13 +97,16 @@ func (f *pretty) Node(node interface{}) {
 		f.scenario = nil
 		f.outlineNumExample = -1
 		f.scenarioKeyword = false
+		if isEmptyScenario(t) {
+			f.printUndefinedScenario(t)
+		}
 	case *gherkin.TableRow:
 		f.steps = len(f.outline.Steps) + f.totalBgSteps
 		f.outlineSteps = []*stepResult{}
 	}
 }
 
-func (f *pretty) printUndefinedScenario(sc *gherkin.Scenario) {
+func (f *pretty) printUndefinedScenario(sc interface{}) {
 	if f.bgSteps > 0 {
 		f.commentPos = f.longestStep(f.feature.Background.Steps, f.length(f.feature.Background))
 		fmt.Fprintln(f.out, "\n"+s(f.indent)+whiteb(f.feature.Background.Keyword+": "+f.feature.Background.Name))
@@ -114,10 +117,26 @@ func (f *pretty) printUndefinedScenario(sc *gherkin.Scenario) {
 		}
 	}
 
-	f.commentPos = f.longestStep(sc.Steps, f.length(sc))
-	text := s(f.indent) + whiteb(f.scenario.Keyword+":") + " " + sc.Name
-	text += s(f.commentPos-f.length(f.scenario)+1) + f.line(sc.Location)
-	fmt.Fprintln(f.out, "\n"+text)
+	switch t := sc.(type) {
+	case *gherkin.Scenario:
+		f.commentPos = f.longestStep(t.Steps, f.length(sc))
+		text := s(f.indent) + whiteb(t.Keyword+":") + " " + t.Name
+		text += s(f.commentPos-f.length(t)+1) + f.line(t.Location)
+		fmt.Fprintln(f.out, "\n"+text)
+	case *gherkin.ScenarioOutline:
+		f.commentPos = f.longestStep(t.Steps, f.length(sc))
+		text := s(f.indent) + whiteb(t.Keyword+":") + " " + t.Name
+		text += s(f.commentPos-f.length(t)+1) + f.line(t.Location)
+		fmt.Fprintln(f.out, "\n"+text)
+
+		for _, example := range t.Examples {
+			max := longest(example, cyan)
+			f.printExampleHeader(example, max)
+			for _, row := range example.TableBody {
+				f.printExampleRow(row, max, cyan)
+			}
+		}
+	}
 }
 
 // Summary sumarize the feature formatter output
@@ -204,34 +223,45 @@ func (f *pretty) printOutlineExample(outline *gherkin.ScenarioOutline) {
 	if clr == nil {
 		clr = green
 	}
-	cells := make([]string, len(example.TableHeader.Cells))
+
 	max := longest(example, clr, cyan)
 	// an example table header
 	if firstExample {
-		fmt.Fprintln(f.out, "")
-		fmt.Fprintln(f.out, s(f.indent*2)+whiteb(example.Keyword+":")+" "+example.Name)
-
-		for i, cell := range example.TableHeader.Cells {
-			val := cyan(cell.Value)
-			ln := utf8.RuneCountInString(val)
-			cells[i] = val + s(max[i]-ln)
-		}
-		fmt.Fprintln(f.out, s(f.indent*3)+"| "+strings.Join(cells, " | ")+" |")
+		f.printExampleHeader(example, max)
 	}
 
 	// an example table row
 	row := example.TableBody[len(example.TableBody)-f.outlineNumExamples]
+	f.printExampleRow(row, max, clr)
+
+	// if there is an error
+	if msg != "" {
+		fmt.Fprintln(f.out, s(f.indent*4)+redb(msg))
+	}
+}
+
+func (f *pretty) printExampleRow(row *gherkin.TableRow, max []int, clr colors.ColorFunc) {
+	cells := make([]string, len(row.Cells))
 	for i, cell := range row.Cells {
 		val := clr(cell.Value)
 		ln := utf8.RuneCountInString(val)
 		cells[i] = val + s(max[i]-ln)
 	}
 	fmt.Fprintln(f.out, s(f.indent*3)+"| "+strings.Join(cells, " | ")+" |")
+}
 
-	// if there is an error
-	if msg != "" {
-		fmt.Fprintln(f.out, s(f.indent*4)+redb(msg))
+func (f *pretty) printExampleHeader(example *gherkin.Examples, max []int) {
+	cells := make([]string, len(example.TableHeader.Cells))
+	// an example table header
+	fmt.Fprintln(f.out, "")
+	fmt.Fprintln(f.out, s(f.indent*2)+whiteb(example.Keyword+":")+" "+example.Name)
+
+	for i, cell := range example.TableHeader.Cells {
+		val := cyan(cell.Value)
+		ln := utf8.RuneCountInString(val)
+		cells[i] = val + s(max[i]-ln)
 	}
+	fmt.Fprintln(f.out, s(f.indent*3)+"| "+strings.Join(cells, " | ")+" |")
 }
 
 func (f *pretty) printStep(step *gherkin.Step, def *StepDef, c colors.ColorFunc) {
