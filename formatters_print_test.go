@@ -22,19 +22,14 @@ func TestPrintingFormatters(t *testing.T) {
 		features: features,
 	}
 
-	suite.Step(`^(?:a )?failing step`, func() error {
-		return fmt.Errorf("step failed")
-	})
-	suite.Step(`^this step should fail`, func() error {
-		return fmt.Errorf("step failed")
-	})
-	suite.Step(`^(?:a )?pending step$`, func() error {
-		return ErrPending
-	})
-	suite.Step(`^(?:a )?passing step$`, func() error {
-		return nil
-	})
+	// inlining steps to have same source code line reference
+	suite.Step(`^(?:a )?failing step`, failingStepDef)
+	suite.Step(`^(?:a )?pending step$`, pendingStepDef)
+	suite.Step(`^(?:a )?passing step$`, passingStepDef)
+	suite.Step(`^is <odd> and <even> number$`, oddEvenStepDef)
 
+	pkg := os.Getenv("GODOG_TESTED_PACKAGE")
+	os.Setenv("GODOG_TESTED_PACKAGE", "github.com/DATA-DOG/godog")
 	for _, feat := range features {
 		for name := range AvailableFormatters() {
 			expectOutputPath := strings.Replace(feat.Path, "features", name, 1)
@@ -63,4 +58,23 @@ func TestPrintingFormatters(t *testing.T) {
 			}
 		}
 	}
+	os.Setenv("GODOG_TESTED_PACKAGE", pkg)
 }
+
+func passingStepDef() error { return nil }
+
+func oddEvenStepDef(odd, even int) error { return oddOrEven(odd, even) }
+
+func oddOrEven(odd, even int) error {
+	if odd%2 == 0 {
+		return fmt.Errorf("%d is not odd", odd)
+	}
+	if even%2 != 0 {
+		return fmt.Errorf("%d is not even", even)
+	}
+	return nil
+}
+
+func pendingStepDef() error { return ErrPending }
+
+func failingStepDef() error { return fmt.Errorf("step failed") }

@@ -388,7 +388,8 @@ func (f *basefmt) Summary() {
 	}
 
 	if text := f.snippets(); text != "" {
-		fmt.Fprintln(f.out, yellow("\nYou can implement step definitions for undefined steps with these snippets:"))
+		fmt.Fprintln(f.out, "")
+		fmt.Fprintln(f.out, yellow("You can implement step definitions for undefined steps with these snippets:"))
 		fmt.Fprintln(f.out, yellow(text))
 	}
 }
