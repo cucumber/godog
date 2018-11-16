@@ -1,5 +1,10 @@
 # Change LOG
 
+**2018-11-16**
+- added formatter output test suite, currently mainly pretty format
+  tested.
+- these tests, helped to identify some output format issues.
+
 **2018-11-12**
 - proper go module support added for `godog` command build.
 - added build tests.
