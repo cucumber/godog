@@ -1,19 +1,19 @@
 <bold-white>Feature:</bold-white> some scenarios
 
   <bold-white>Scenario:</bold-white> failing    <black># formatter-tests/features/some_scenarions_including_failing.feature:3</black>
-    <green>Given</green> <green>passing step</green> <black># formatters_print_test.go:64 -> passingStepDef</black>
-    <red>When</red> <red>failing step</red>  <black># formatters_print_test.go:80 -> failingStepDef</black>
+    <green>Given</green> <green>passing step</green> <black># formatters_print_test.go:65 -> passingStepDef</black>
+    <red>When</red> <red>failing step</red>  <black># formatters_print_test.go:81 -> failingStepDef</black>
     <bold-red>step failed</bold-red>
-    <cyan>Then</cyan> <cyan>passing step</cyan>  <black># formatters_print_test.go:64 -> passingStepDef</black>
+    <cyan>Then</cyan> <cyan>passing step</cyan>  <black># formatters_print_test.go:65 -> passingStepDef</black>
 
   <bold-white>Scenario:</bold-white> pending   <black># formatter-tests/features/some_scenarions_including_failing.feature:8</black>
-    <yellow>When</yellow> <yellow>pending step</yellow> <black># formatters_print_test.go:78 -> pendingStepDef</black>
+    <yellow>When</yellow> <yellow>pending step</yellow> <black># formatters_print_test.go:79 -> pendingStepDef</black>
       <yellow>TODO: write pending definition</yellow>
-    <cyan>Then</cyan> <cyan>passing step</cyan> <black># formatters_print_test.go:64 -> passingStepDef</black>
+    <cyan>Then</cyan> <cyan>passing step</cyan> <black># formatters_print_test.go:65 -> passingStepDef</black>
 
   <bold-white>Scenario:</bold-white> undefined <black># formatter-tests/features/some_scenarions_including_failing.feature:12</black>
     <yellow>When</yellow> <yellow>undefined</yellow>
-    <cyan>Then</cyan> <cyan>passing step</cyan> <black># formatters_print_test.go:64 -> passingStepDef</black>
+    <cyan>Then</cyan> <cyan>passing step</cyan> <black># formatters_print_test.go:65 -> passingStepDef</black>
 
 --- <red>Failed steps:</red>
 

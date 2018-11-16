@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"strings"
 	"testing"
 )
@@ -26,14 +27,14 @@ func TestPrintingFormatters(t *testing.T) {
 	suite.Step(`^(?:a )?failing step`, failingStepDef)
 	suite.Step(`^(?:a )?pending step$`, pendingStepDef)
 	suite.Step(`^(?:a )?passing step$`, passingStepDef)
-	suite.Step(`^is <odd> and <even> number$`, oddEvenStepDef)
+	suite.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)
 
 	pkg := os.Getenv("GODOG_TESTED_PACKAGE")
 	os.Setenv("GODOG_TESTED_PACKAGE", "github.com/DATA-DOG/godog")
 	for _, feat := range features {
 		for name := range AvailableFormatters() {
 			expectOutputPath := strings.Replace(feat.Path, "features", name, 1)
-			expectOutputPath = strings.TrimRight(expectOutputPath, ".feature")
+			expectOutputPath = strings.TrimSuffix(expectOutputPath, path.Ext(expectOutputPath))
 			if _, err := os.Stat(expectOutputPath); err != nil {
 				continue
 			}
