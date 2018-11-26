@@ -20,7 +20,7 @@ var builderFeatureFile = `Feature: eat godogs
     Then there should be 7 remaining
 `
 
-var builderTestFile = `package main
+var builderTestFile = `package godogs
 
 import (
 	"fmt"
@@ -59,7 +59,47 @@ func FeatureContext(s *godog.Suite) {
 }
 `
 
-var builderMainCodeFile = `package main
+var builderXTestFile = `package godogs_test
+
+import (
+	"fmt"
+
+	"github.com/DATA-DOG/godog"
+	"godogs"
+)
+
+func thereAreGodogs(available int) error {
+	godogs.Godogs = available
+	return nil
+}
+
+func iEat(num int) error {
+	if godogs.Godogs < num {
+		return fmt.Errorf("you cannot eat %d godogs, there are %d available", num, godogs.Godogs)
+	}
+	godogs.Godogs -= num
+	return nil
+}
+
+func thereShouldBeRemaining(remaining int) error {
+	if godogs.Godogs != remaining {
+		return fmt.Errorf("expected %d godogs to be remaining, but there is %d", remaining, godogs.Godogs)
+	}
+	return nil
+}
+
+func FeatureContext(s *godog.Suite) {
+	s.Step("^there are (\\d+) godogs$", thereAreGodogs)
+	s.Step("^I eat (\\d+)$", iEat)
+	s.Step("^there should be (\\d+) remaining$", thereShouldBeRemaining)
+
+	s.BeforeScenario(func(interface{}) {
+		godogs.Godogs = 0 // clean the state before every scenario
+	})
+}
+`
+
+var builderMainCodeFile = `package godogs
 
 // Godogs available to eat
 var Godogs int
@@ -68,7 +108,21 @@ func main() {
 }
 `
 
-func buildTestPackage(dir, feat, src, testSrc string) error {
+func buildTestPackage(dir string, files map[string]string) error {
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
+
+	for name, content := range files {
+		if err := ioutil.WriteFile(filepath.Join(dir, name), []byte(content), 0644); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func buildTestPackage2(dir, feat, src, testSrc string) error {
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
@@ -97,7 +151,11 @@ func TestGodogBuildWithSourceNotInGoPath(t *testing.T) {
 		t.SkipNow() // no command installed
 	}
 	dir := filepath.Join(os.TempDir(), "godogs")
-	err = buildTestPackage(dir, builderFeatureFile, builderMainCodeFile, builderTestFile)
+	err = buildTestPackage(dir, map[string]string{
+		"godogs.feature": builderFeatureFile,
+		"godogs.go":      builderMainCodeFile,
+		"godogs_test.go": builderTestFile,
+	})
 	if err != nil {
 		os.RemoveAll(dir)
 		t.Fatal(err)
@@ -133,7 +191,9 @@ func TestGodogBuildWithoutSourceNotInGoPath(t *testing.T) {
 		t.SkipNow() // no command installed
 	}
 	dir := filepath.Join(os.TempDir(), "godogs")
-	err = buildTestPackage(dir, builderFeatureFile, "", "")
+	err = buildTestPackage(dir, map[string]string{
+		"godogs.feature": builderFeatureFile,
+	})
 	if err != nil {
 		os.RemoveAll(dir)
 		t.Fatal(err)
@@ -169,7 +229,10 @@ func TestGodogBuildWithoutTestSourceNotInGoPath(t *testing.T) {
 		t.SkipNow() // no command installed
 	}
 	dir := filepath.Join(os.TempDir(), "godogs")
-	err = buildTestPackage(dir, builderFeatureFile, builderMainCodeFile, "")
+	err = buildTestPackage(dir, map[string]string{
+		"godogs.feature": builderFeatureFile,
+		"godogs.go":      builderMainCodeFile,
+	})
 	if err != nil {
 		os.RemoveAll(dir)
 		t.Fatal(err)
@@ -206,7 +269,11 @@ func TestGodogBuildWithinGopath(t *testing.T) {
 	}
 	gopath := filepath.Join(os.TempDir(), "_gp")
 	dir := filepath.Join(gopath, "src", "godogs")
-	err = buildTestPackage(dir, builderFeatureFile, builderMainCodeFile, builderTestFile)
+	err = buildTestPackage(dir, map[string]string{
+		"godogs.feature": builderFeatureFile,
+		"godogs.go":      builderMainCodeFile,
+		"godogs_test.go": builderTestFile,
+	})
 	if err != nil {
 		os.RemoveAll(gopath)
 		t.Fatal(err)
@@ -255,7 +322,11 @@ func TestGodogBuildWithVendoredGodog(t *testing.T) {
 	}
 	gopath := filepath.Join(os.TempDir(), "_gp")
 	dir := filepath.Join(gopath, "src", "godogs")
-	err = buildTestPackage(dir, builderFeatureFile, builderMainCodeFile, builderTestFile)
+	err = buildTestPackage(dir, map[string]string{
+		"godogs.feature": builderFeatureFile,
+		"godogs.go":      builderMainCodeFile,
+		"godogs_test.go": builderTestFile,
+	})
 	if err != nil {
 		os.RemoveAll(gopath)
 		t.Fatal(err)

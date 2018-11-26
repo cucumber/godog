@@ -33,14 +33,25 @@ var (
 import (
 	"github.com/DATA-DOG/godog"
 	{{if .Contexts}}_test "{{.ImportPath}}"{{end}}
+	{{if .XContexts}}_xtest "{{.ImportPath}}_test"{{end}}
+	{{if .XContexts}}"testing/internal/testdeps"{{end}}
 	"os"
 )
+
+{{if .XContexts}}
+func init() {
+	testdeps.ImportPath = "{{.ImportPath}}"
+}
+{{end}}
 
 func main() {
 	status := godog.Run("{{ .Name }}", func (suite *godog.Suite) {
 		os.Setenv("GODOG_TESTED_PACKAGE", "{{.ImportPath}}")
 		{{range .Contexts}}
 			_test.{{ . }}(suite)
+		{{end}}
+		{{range .XContexts}}
+			_xtest.{{ . }}(suite)
 		{{end}}
 	})
 	os.Exit(status)
@@ -349,14 +360,16 @@ func makeImportValid(r rune) rune {
 func buildTestMain(pkg *build.Package) ([]byte, bool, error) {
 	var (
 		contexts         []string
+		xcontexts        []string
 		err              error
 		name, importPath string
 	)
 	if nil != pkg {
-		contexts, err = processPackageTestFiles(
-			pkg.TestGoFiles,
-			pkg.XTestGoFiles,
-		)
+		contexts, err = processPackageTestFiles(pkg.TestGoFiles)
+		if err != nil {
+			return nil, false, err
+		}
+		xcontexts, err = processPackageTestFiles(pkg.XTestGoFiles)
 		if err != nil {
 			return nil, false, err
 		}
@@ -368,17 +381,21 @@ func buildTestMain(pkg *build.Package) ([]byte, bool, error) {
 	data := struct {
 		Name       string
 		Contexts   []string
+		XContexts  []string
 		ImportPath string
 	}{
 		Name:       name,
 		Contexts:   contexts,
+		XContexts:  xcontexts,
 		ImportPath: importPath,
 	}
+
+	hasContext := len(contexts) > 0 || len(xcontexts) > 0
 	var buf bytes.Buffer
 	if err = runnerTemplate.Execute(&buf, data); err != nil {
-		return nil, len(contexts) > 0, err
+		return nil, hasContext, err
 	}
-	return buf.Bytes(), len(contexts) > 0, nil
+	return buf.Bytes(), hasContext, nil
 }
 
 // parseImport parses the import path to deal with go module.
