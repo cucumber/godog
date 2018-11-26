@@ -2,6 +2,7 @@ package godog
 
 import (
 	"bytes"
+	"go/build"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -122,36 +123,24 @@ func buildTestPackage(dir string, files map[string]string) error {
 	return nil
 }
 
-func buildTestPackage2(dir, feat, src, testSrc string) error {
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return err
+func buildTestCommand(t *testing.T, args ...string) *exec.Cmd {
+	bin, err := filepath.Abs("godog.test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if build.Default.GOOS == "windows" {
+		bin += ".exe"
+	}
+	if err = Build(bin); err != nil {
+		t.Fatal(err)
 	}
 
-	if len(feat) > 0 {
-		if err := ioutil.WriteFile(filepath.Join(dir, "godogs.feature"), []byte(feat), 0644); err != nil {
-			return err
-		}
-	}
-	if len(src) > 0 {
-		if err := ioutil.WriteFile(filepath.Join(dir, "godogs.go"), []byte(src), 0644); err != nil {
-			return err
-		}
-	}
-	if len(testSrc) > 0 {
-		if err := ioutil.WriteFile(filepath.Join(dir, "godogs_test.go"), []byte(testSrc), 0644); err != nil {
-			return err
-		}
-	}
-	return nil
+	return exec.Command(bin, args...)
 }
 
 func TestGodogBuildWithSourceNotInGoPath(t *testing.T) {
-	_, err := exec.LookPath("godog")
-	if err != nil {
-		t.SkipNow() // no command installed
-	}
 	dir := filepath.Join(os.TempDir(), "godogs")
-	err = buildTestPackage(dir, map[string]string{
+	err := buildTestPackage(dir, map[string]string{
 		"godogs.feature": builderFeatureFile,
 		"godogs.go":      builderMainCodeFile,
 		"godogs_test.go": builderTestFile,
@@ -172,7 +161,7 @@ func TestGodogBuildWithSourceNotInGoPath(t *testing.T) {
 	}
 	defer os.Chdir(prevDir)
 
-	cmd := exec.Command("godog", "godogs.feature")
+	cmd := buildTestCommand(t, "godogs.feature")
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -186,12 +175,8 @@ func TestGodogBuildWithSourceNotInGoPath(t *testing.T) {
 }
 
 func TestGodogBuildWithoutSourceNotInGoPath(t *testing.T) {
-	_, err := exec.LookPath("godog")
-	if err != nil {
-		t.SkipNow() // no command installed
-	}
 	dir := filepath.Join(os.TempDir(), "godogs")
-	err = buildTestPackage(dir, map[string]string{
+	err := buildTestPackage(dir, map[string]string{
 		"godogs.feature": builderFeatureFile,
 	})
 	if err != nil {
@@ -210,7 +195,7 @@ func TestGodogBuildWithoutSourceNotInGoPath(t *testing.T) {
 	}
 	defer os.Chdir(prevDir)
 
-	cmd := exec.Command("godog", "godogs.feature")
+	cmd := buildTestCommand(t, "godogs.feature")
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -224,12 +209,8 @@ func TestGodogBuildWithoutSourceNotInGoPath(t *testing.T) {
 }
 
 func TestGodogBuildWithoutTestSourceNotInGoPath(t *testing.T) {
-	_, err := exec.LookPath("godog")
-	if err != nil {
-		t.SkipNow() // no command installed
-	}
 	dir := filepath.Join(os.TempDir(), "godogs")
-	err = buildTestPackage(dir, map[string]string{
+	err := buildTestPackage(dir, map[string]string{
 		"godogs.feature": builderFeatureFile,
 		"godogs.go":      builderMainCodeFile,
 	})
@@ -249,7 +230,7 @@ func TestGodogBuildWithoutTestSourceNotInGoPath(t *testing.T) {
 	}
 	defer os.Chdir(prevDir)
 
-	cmd := exec.Command("godog", "godogs.feature")
+	cmd := buildTestCommand(t, "godogs.feature")
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -263,13 +244,9 @@ func TestGodogBuildWithoutTestSourceNotInGoPath(t *testing.T) {
 }
 
 func TestGodogBuildWithinGopath(t *testing.T) {
-	_, err := exec.LookPath("godog")
-	if err != nil {
-		t.SkipNow() // no command installed
-	}
 	gopath := filepath.Join(os.TempDir(), "_gp")
 	dir := filepath.Join(gopath, "src", "godogs")
-	err = buildTestPackage(dir, map[string]string{
+	err := buildTestPackage(dir, map[string]string{
 		"godogs.feature": builderFeatureFile,
 		"godogs.go":      builderMainCodeFile,
 		"godogs_test.go": builderTestFile,
@@ -300,7 +277,7 @@ func TestGodogBuildWithinGopath(t *testing.T) {
 	}
 	defer os.Chdir(prevDir)
 
-	cmd := exec.Command("godog", "godogs.feature")
+	cmd := buildTestCommand(t, "godogs.feature")
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -316,13 +293,9 @@ func TestGodogBuildWithinGopath(t *testing.T) {
 }
 
 func TestGodogBuildWithVendoredGodog(t *testing.T) {
-	_, err := exec.LookPath("godog")
-	if err != nil {
-		t.SkipNow() // no command installed
-	}
 	gopath := filepath.Join(os.TempDir(), "_gp")
 	dir := filepath.Join(gopath, "src", "godogs")
-	err = buildTestPackage(dir, map[string]string{
+	err := buildTestPackage(dir, map[string]string{
 		"godogs.feature": builderFeatureFile,
 		"godogs.go":      builderMainCodeFile,
 		"godogs_test.go": builderTestFile,
@@ -353,7 +326,7 @@ func TestGodogBuildWithVendoredGodog(t *testing.T) {
 	}
 	defer os.Chdir(prevDir)
 
-	cmd := exec.Command("godog", "godogs.feature")
+	cmd := buildTestCommand(t, "godogs.feature")
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout

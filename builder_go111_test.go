@@ -11,13 +11,8 @@ import (
 )
 
 func TestGodogBuildWithModuleOutsideGopath(t *testing.T) {
-	_, err := exec.LookPath("godog")
-	if err != nil {
-		t.SkipNow() // no command installed
-	}
-
 	dir := filepath.Join(os.TempDir(), "godogs")
-	err = buildTestPackage(dir, map[string]string{
+	err := buildTestPackage(dir, map[string]string{
 		"godogs.feature": builderFeatureFile,
 		"godogs.go":      builderMainCodeFile,
 		"godogs_test.go": builderTestFile,
@@ -44,7 +39,7 @@ func TestGodogBuildWithModuleOutsideGopath(t *testing.T) {
 	}
 
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("godog", "godogs.feature")
+	cmd := buildTestCommand(t, "godogs.feature")
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	cmd.Env = os.Environ()
@@ -57,13 +52,8 @@ func TestGodogBuildWithModuleOutsideGopath(t *testing.T) {
 }
 
 func TestGodogBuildWithModuleOutsideGopathWithXTest(t *testing.T) {
-	_, err := exec.LookPath("godog")
-	if err != nil {
-		t.SkipNow() // no command installed
-	}
-
 	dir := filepath.Join(os.TempDir(), "godogs")
-	err = buildTestPackage(dir, map[string]string{
+	err := buildTestPackage(dir, map[string]string{
 		"godogs.feature": builderFeatureFile,
 		"godogs.go":      builderMainCodeFile,
 		"godogs_test.go": builderXTestFile,
@@ -90,7 +80,7 @@ func TestGodogBuildWithModuleOutsideGopathWithXTest(t *testing.T) {
 	}
 
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("godog", "godogs.feature")
+	cmd := buildTestCommand(t, "godogs.feature")
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	cmd.Env = os.Environ()
@@ -103,13 +93,9 @@ func TestGodogBuildWithModuleOutsideGopathWithXTest(t *testing.T) {
 }
 
 func TestGodogBuildWithModuleInsideGopath(t *testing.T) {
-	_, err := exec.LookPath("godog")
-	if err != nil {
-		t.SkipNow() // no command installed
-	}
 	gopath := filepath.Join(os.TempDir(), "_gp")
 	dir := filepath.Join(gopath, "src", "godogs")
-	err = buildTestPackage(dir, map[string]string{
+	err := buildTestPackage(dir, map[string]string{
 		"godogs.feature": builderFeatureFile,
 		"godogs.go":      builderMainCodeFile,
 		"godogs_test.go": builderTestFile,
@@ -140,7 +126,7 @@ func TestGodogBuildWithModuleInsideGopath(t *testing.T) {
 	}
 
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("godog", "godogs.feature")
+	cmd := buildTestCommand(t, "godogs.feature")
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	cmd.Env = os.Environ()
