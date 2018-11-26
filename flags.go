@@ -196,14 +196,13 @@ type randomSeed struct {
 
 // Choose randomly assigns a convenient pseudo-random seed value.
 // The resulting seed will be between `1-99999` for later ease of specification.
-func (rs *randomSeed) choose() {
-	r := rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
-	*rs.ref = r.Int63n(99998) + 1
+func makeRandomSeed() int64 {
+	return rand.New(rand.NewSource(time.Now().UTC().UnixNano())).Int63n(99998) + 1
 }
 
 func (rs *randomSeed) Set(s string) error {
 	if s == "true" {
-		rs.choose()
+		*rs.ref = makeRandomSeed()
 		return nil
 	}
 
