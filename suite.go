@@ -238,6 +238,11 @@ func (s *Suite) matchStep(step *gherkin.Step) *StepDef {
 }
 
 func (s *Suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
+	// run before step handlers
+	for _, f := range s.beforeStepHandlers {
+		f(step)
+	}
+
 	match := s.matchStep(step)
 	s.fmt.Defined(step, match)
 
@@ -293,11 +298,6 @@ func (s *Suite) runStep(step *gherkin.Step, prevStepErr error) (err error) {
 	if prevStepErr != nil {
 		s.fmt.Skipped(step, match)
 		return nil
-	}
-
-	// run before step handlers
-	for _, f := range s.beforeStepHandlers {
-		f(step)
 	}
 
 	err = s.maybeSubSteps(match.run())
