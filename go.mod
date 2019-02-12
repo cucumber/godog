@@ -1,1 +1,1 @@
-module godog
+module github.com/DATA-DOG/godog
