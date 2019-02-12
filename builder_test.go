@@ -109,6 +109,8 @@ func main() {
 }
 `
 
+var builderModFile = `module godogs`
+
 func buildTestPackage(dir string, files map[string]string) error {
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
@@ -144,6 +146,7 @@ func TestGodogBuildWithSourceNotInGoPath(t *testing.T) {
 		"godogs.feature": builderFeatureFile,
 		"godogs.go":      builderMainCodeFile,
 		"godogs_test.go": builderTestFile,
+		"go.mod":         builderModFile,
 	})
 	if err != nil {
 		os.RemoveAll(dir)
@@ -178,6 +181,7 @@ func TestGodogBuildWithoutSourceNotInGoPath(t *testing.T) {
 	dir := filepath.Join(os.TempDir(), "godogs")
 	err := buildTestPackage(dir, map[string]string{
 		"godogs.feature": builderFeatureFile,
+		"go.mod":         builderModFile,
 	})
 	if err != nil {
 		os.RemoveAll(dir)
@@ -213,6 +217,7 @@ func TestGodogBuildWithoutTestSourceNotInGoPath(t *testing.T) {
 	err := buildTestPackage(dir, map[string]string{
 		"godogs.feature": builderFeatureFile,
 		"godogs.go":      builderMainCodeFile,
+		"go.mod":         builderModFile,
 	})
 	if err != nil {
 		os.RemoveAll(dir)
@@ -250,6 +255,7 @@ func TestGodogBuildWithinGopath(t *testing.T) {
 		"godogs.feature": builderFeatureFile,
 		"godogs.go":      builderMainCodeFile,
 		"godogs_test.go": builderTestFile,
+		"go.mod":         builderModFile,
 	})
 	if err != nil {
 		os.RemoveAll(gopath)
@@ -299,6 +305,7 @@ func TestGodogBuildWithVendoredGodog(t *testing.T) {
 		"godogs.feature": builderFeatureFile,
 		"godogs.go":      builderMainCodeFile,
 		"godogs_test.go": builderTestFile,
+		"go.mod":         builderModFile,
 	})
 	if err != nil {
 		os.RemoveAll(gopath)
@@ -339,34 +346,4 @@ func TestGodogBuildWithVendoredGodog(t *testing.T) {
 		t.Log(stderr.String())
 		t.Fatal(err)
 	}
-}
-
-func TestBuildTestRunner(t *testing.T) {
-	bin := filepath.Join(os.TempDir(), "godog.test")
-	if err := Build(bin); err != nil {
-		t.Fatalf("failed to build godog test binary: %v", err)
-	}
-	os.Remove(bin)
-}
-
-func TestBuildTestRunnerWithoutGoFiles(t *testing.T) {
-	bin := filepath.Join(os.TempDir(), "godog.test")
-	pwd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("failed to get working directory: %v", err)
-	}
-
-	wd := filepath.Join(pwd, "features")
-	if err := os.Chdir(wd); err != nil {
-		t.Fatalf("failed to change working directory: %v", err)
-	}
-
-	defer func() {
-		_ = os.Chdir(pwd) // get back to current dir
-	}()
-
-	if err := Build(bin); err != nil {
-		t.Fatalf("failed to build godog test binary: %v", err)
-	}
-	os.Remove(bin)
 }

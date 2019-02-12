@@ -51,7 +51,7 @@ func TestGodogBuildWithModuleOutsideGopath(t *testing.T) {
 	}
 }
 
-func TestGodogBuildWithModuleOutsideGopathWithXTest(t *testing.T) {
+func TestGodogBuildWithModuleWithXTestOutsideGopath(t *testing.T) {
 	dir := filepath.Join(os.TempDir(), "godogs")
 	err := buildTestPackage(dir, map[string]string{
 		"godogs.feature": builderFeatureFile,
