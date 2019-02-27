@@ -245,3 +245,33 @@ func bufErrorPipe(t *testing.T) (io.ReadCloser, func()) {
 		os.Stderr = stderr
 	}
 }
+
+func TestFeatureFilePathParser(t *testing.T) {
+
+	type Case struct {
+		input string
+		path  string
+		line  int
+	}
+
+	cases := []Case{
+		{"/home/test.feature", "/home/test.feature", -1},
+		{"/home/test.feature:21", "/home/test.feature", 21},
+		{"test.feature", "test.feature", -1},
+		{"test.feature:2", "test.feature", 2},
+		{"", "", -1},
+		{"/c:/home/test.feature", "/c:/home/test.feature", -1},
+		{"/c:/home/test.feature:3", "/c:/home/test.feature", 3},
+		{"D:\\home\\test.feature:3", "D:\\home\\test.feature", 3},
+	}
+
+	for i, c := range cases {
+		p, ln := extractFeaturePathLine(c.input)
+		if p != c.path {
+			t.Fatalf(`result path "%s" != "%s" at %d`, p, c.path, i)
+		}
+		if ln != c.line {
+			t.Fatalf(`result line "%d" != "%d" at %d`, ln, c.line, i)
+		}
+	}
+}

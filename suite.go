@@ -617,21 +617,27 @@ func (s *Suite) printStepDefinitions(w io.Writer) {
 	}
 }
 
+var pathLineRe = regexp.MustCompile(`:([\d]+)$`)
+
+func extractFeaturePathLine(p string) (string, int) {
+	line := -1
+	retPath := p
+	if m := pathLineRe.FindStringSubmatch(p); len(m) > 0 {
+		if i, err := strconv.Atoi(m[1]); err == nil {
+			line = i
+			retPath = p[:strings.LastIndexByte(p, ':')]
+		}
+	}
+	return retPath, line
+}
+
 func parseFeatures(filter string, paths []string) ([]*feature, error) {
 	byPath := make(map[string]*feature)
 	var order int
 	for _, pat := range paths {
 		// check if line number is specified
-		parts := strings.Split(pat, ":")
-		path := parts[0]
-		line := -1
+		path, line := extractFeaturePathLine(pat)
 		var err error
-		if len(parts) > 1 {
-			line, err = strconv.Atoi(parts[1])
-			if err != nil {
-				return nil, fmt.Errorf("line number should follow after colon path delimiter")
-			}
-		}
 		// parse features
 		err = filepath.Walk(path, func(p string, f os.FileInfo, err error) error {
 			if err == nil && !f.IsDir() && strings.HasSuffix(p, ".feature") {
