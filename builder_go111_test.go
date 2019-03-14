@@ -10,6 +10,50 @@ import (
 	"testing"
 )
 
+func TestGodogBuildWithModuleOutsideGopathAndHavingOnlyFeature(t *testing.T) {
+	dir := filepath.Join(os.TempDir(), "godogs")
+	err := buildTestPackage(dir, map[string]string{
+		"godogs.feature": builderFeatureFile,
+	})
+	if err != nil {
+		os.RemoveAll(dir)
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	prevDir, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.Chdir(dir); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chdir(prevDir)
+
+	if out, err := exec.Command("go", "mod", "init", "godogs").CombinedOutput(); err != nil {
+		t.Log(string(out))
+		t.Fatal(err)
+	}
+
+	if out, err := exec.Command("go", "mod", "edit", "-require", "github.com/DATA-DOG/godog@v0.7.11").CombinedOutput(); err != nil {
+		t.Log(string(out))
+		t.Fatal(err)
+	}
+
+	var stdout, stderr bytes.Buffer
+	cmd := buildTestCommand(t, "godogs.feature")
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	cmd.Env = os.Environ()
+
+	if err := cmd.Run(); err != nil {
+		t.Log(stdout.String())
+		t.Log(stderr.String())
+		t.Fatal(err)
+	}
+}
+
 func TestGodogBuildWithModuleOutsideGopath(t *testing.T) {
 	dir := filepath.Join(os.TempDir(), "godogs")
 	err := buildTestPackage(dir, map[string]string{
