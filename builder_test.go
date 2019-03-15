@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -138,6 +139,17 @@ func buildTestCommand(t *testing.T, args ...string) *exec.Cmd {
 	}
 
 	return exec.Command(bin, args...)
+}
+
+func envVarsWithoutGopath() []string {
+	var env []string
+	for _, def := range os.Environ() {
+		if strings.Index(def, "GOPATH=") == 0 {
+			continue
+		}
+		env = append(env, def)
+	}
+	return env
 }
 
 func TestGodogBuildWithSourceNotInGoPath(t *testing.T) {
@@ -298,8 +310,8 @@ func TestGodogBuildWithinGopath(t *testing.T) {
 	}
 }
 
-func TestGodogBuildWithVendoredGodog(t *testing.T) {
-	gopath := filepath.Join(os.TempDir(), "_gp")
+func TestGodogBuildWithVendoredGodogAndMod(t *testing.T) {
+	gopath := filepath.Join(os.TempDir(), "_gpc")
 	dir := filepath.Join(gopath, "src", "godogs")
 	err := buildTestPackage(dir, map[string]string{
 		"godogs.feature": builderFeatureFile,
@@ -338,8 +350,53 @@ func TestGodogBuildWithVendoredGodog(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
-	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, "GOPATH="+gopath)
+	cmd.Env = append(envVarsWithoutGopath(), "GOPATH="+gopath)
+
+	if err := cmd.Run(); err != nil {
+		t.Log(stdout.String())
+		t.Log(stderr.String())
+		t.Fatal(err)
+	}
+}
+
+func TestGodogBuildWithVendoredGodogWithoutModule(t *testing.T) {
+	gopath := filepath.Join(os.TempDir(), "_gp")
+	dir := filepath.Join(gopath, "src", "godogs")
+	err := buildTestPackage(dir, map[string]string{
+		"godogs.feature": builderFeatureFile,
+	})
+	if err != nil {
+		os.RemoveAll(gopath)
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(gopath)
+
+	pkg := filepath.Join(dir, "vendor", "github.com", "DATA-DOG")
+	if err := os.MkdirAll(pkg, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	prevDir, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// symlink godog package
+	if err := os.Symlink(prevDir, filepath.Join(pkg, "godog")); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.Chdir(dir); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chdir(prevDir)
+
+	cmd := buildTestCommand(t, "godogs.feature")
+
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	cmd.Env = append(envVarsWithoutGopath(), "GOPATH="+gopath)
 
 	if err := cmd.Run(); err != nil {
 		t.Log(stdout.String())

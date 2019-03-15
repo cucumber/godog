@@ -159,13 +159,32 @@ func Build(bin string) error {
 		return err
 	}
 
+	// godog package may be vendored and may need importmap
+	vendored := maybeVendoredGodog()
+
 	// compile godog testmain package archive
 	// we do not depend on CGO so a lot of checks are not necessary
-	cfg := filepath.Join(testdir, "importcfg.link")
+	linkerCfg := filepath.Join(testdir, "importcfg.link")
+	compilerCfg := linkerCfg
+	if vendored != nil {
+		data, err := ioutil.ReadFile(linkerCfg)
+		if err != nil {
+			return err
+		}
+
+		data = append(data, []byte(fmt.Sprintf("importmap %s=%s\n", godogImportPath, vendored.ImportPath))...)
+		compilerCfg = filepath.Join(testdir, "importcfg")
+
+		err = ioutil.WriteFile(compilerCfg, data, 0644)
+		if err != nil {
+			return err
+		}
+	}
+
 	testMainPkgOut := filepath.Join(testdir, "main.a")
 	args := []string{
 		"-o", testMainPkgOut,
-		"-importcfg", cfg,
+		"-importcfg", compilerCfg,
 		"-p", "main",
 		"-complete",
 	}
@@ -181,7 +200,7 @@ func Build(bin string) error {
 	// link test suite executable
 	args = []string{
 		"-o", bin,
-		"-importcfg", cfg,
+		"-importcfg", linkerCfg,
 		"-buildmode=exe",
 	}
 	args = append(args, testMainPkgOut)
@@ -196,6 +215,26 @@ func Build(bin string) error {
 		return fmt.Errorf(msg, string(out), linker+" '"+strings.Join(args, "' '")+"'")
 	}
 
+	return nil
+}
+
+func maybeVendoredGodog() *build.Package {
+	dir, err := filepath.Abs(".")
+	if err != nil {
+		return nil
+	}
+
+	for _, gopath := range gopaths {
+		gopath = filepath.Join(gopath, "src")
+		for strings.HasPrefix(dir, gopath) && dir != gopath {
+			pkg, err := build.ImportDir(filepath.Join(dir, "vendor", godogImportPath), 0)
+			if err != nil {
+				dir = filepath.Dir(dir)
+				continue
+			}
+			return pkg
+		}
+	}
 	return nil
 }
 
