@@ -71,12 +71,17 @@ type cukeMatch struct {
 }
 
 type cukeStep struct {
-	Keyword   string         `json:"keyword"`
-	Name      string         `json:"name"`
-	Line      int            `json:"line"`
-	Docstring *cukeDocstring `json:"doc_string,omitempty"`
-	Match     cukeMatch      `json:"match"`
-	Result    cukeResult     `json:"result"`
+	Keyword   string              `json:"keyword"`
+	Name      string              `json:"name"`
+	Line      int                 `json:"line"`
+	Docstring *cukeDocstring      `json:"doc_string,omitempty"`
+	Match     cukeMatch           `json:"match"`
+	Result    cukeResult          `json:"result"`
+	DataTable []*cukeDataTableRow `json:"rows,omitempty"`
+}
+
+type cukeDataTableRow struct {
+	Cells []string `json:"cells"`
 }
 
 type cukeElement struct {
@@ -283,6 +288,19 @@ func (f *cukefmt) Defined(step *gherkin.Step, def *StepDef) {
 		f.curStep.Docstring.ContentType = strings.TrimSpace(step.Argument.(*gherkin.DocString).ContentType)
 		f.curStep.Docstring.Line = step.Argument.(*gherkin.DocString).Location.Line
 		f.curStep.Docstring.Value = step.Argument.(*gherkin.DocString).Content
+	}
+
+	if _, ok := step.Argument.(*gherkin.DataTable); ok {
+		dataTable := step.Argument.(*gherkin.DataTable)
+
+		f.curStep.DataTable = make([]*cukeDataTableRow, len(dataTable.Rows))
+		for i, row := range dataTable.Rows {
+			cells := make([]string, len(row.Cells))
+			for j, cell := range row.Cells {
+				cells[j] = cell.Value
+			}
+			f.curStep.DataTable[i] = &cukeDataTableRow{Cells: cells}
+		}
 	}
 
 	if def != nil {
