@@ -383,7 +383,7 @@ func (s *Suite) matchStepText(text string) *StepDef {
 	return nil
 }
 
-func (s *Suite) runSteps(steps []*gherkin.Step) (err error) {
+func (s *Suite) RunSteps(steps []*gherkin.Step) (err error) {
 	for _, step := range steps {
 		stepErr := s.runStep(step, err)
 		switch stepErr {
@@ -487,7 +487,7 @@ func (s *Suite) runOutline(outline *gherkin.ScenarioOutline, b *gherkin.Backgrou
 				steps = append(b.Steps, steps...)
 			}
 
-			err := s.runSteps(steps)
+			err := s.RunSteps(steps)
 
 			if !isEmptyScenario(outline) {
 				for _, f := range s.afterScenarioHandlers {
@@ -588,7 +588,7 @@ func (s *Suite) runScenario(scenario *gherkin.Scenario, b *gherkin.Background) (
 	}
 
 	// scenario
-	err = s.runSteps(steps)
+	err = s.RunSteps(steps)
 
 	// run after scenario handlers
 	for _, f := range s.afterScenarioHandlers {
