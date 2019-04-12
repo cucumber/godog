@@ -114,7 +114,7 @@ func TestProgressFormatterWhenStepPanics(t *testing.T) {
 	}
 
 	out := buf.String()
-	if idx := strings.Index(out, "github.com/DATA-DOG/godog/fmt_progress_test.go:108"); idx == -1 {
+	if idx := strings.Index(out, "godog/fmt_progress_test.go:108"); idx == -1 {
 		t.Fatalf("expected to find panic stacktrace, actual:\n%s", out)
 	}
 }
