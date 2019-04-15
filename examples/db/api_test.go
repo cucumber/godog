@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 
 	txdb "github.com/DATA-DOG/go-txdb"
@@ -71,19 +72,23 @@ func (a *apiFeature) theResponseCodeShouldBe(code int) error {
 }
 
 func (a *apiFeature) theResponseShouldMatchJSON(body *gherkin.DocString) (err error) {
-	var expected, actual []byte
-	var data interface{}
-	if err = json.Unmarshal([]byte(body.Content), &data); err != nil {
+	var expected, actual interface{}
+
+	// re-encode expected response
+	if err = json.Unmarshal([]byte(body.Content), &expected); err != nil {
 		return
 	}
-	if expected, err = json.Marshal(data); err != nil {
+
+	// re-encode actual response too
+	if err = json.Unmarshal(a.resp.Body.Bytes(), &actual); err != nil {
 		return
 	}
-	actual = a.resp.Body.Bytes()
-	if string(actual) != string(expected) {
-		err = fmt.Errorf("expected json %s, does not match actual: %s", string(expected), string(actual))
+
+	// the matching may be adapted per different requirements.
+	if !reflect.DeepEqual(expected, actual) {
+		return fmt.Errorf("expected JSON does not match actual, %v vs. %v", expected, actual)
 	}
-	return
+	return nil
 }
 
 func (a *apiFeature) thereAreUsers(users *gherkin.DataTable) error {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 
 	"github.com/DATA-DOG/godog"
 	"github.com/DATA-DOG/godog/gherkin"
@@ -51,44 +52,23 @@ func (a *apiFeature) theResponseCodeShouldBe(code int) error {
 }
 
 func (a *apiFeature) theResponseShouldMatchJSON(body *gherkin.DocString) (err error) {
-	var expected, actual []byte
-	var exp, act interface{}
+	var expected, actual interface{}
 
 	// re-encode expected response
-	if err = json.Unmarshal([]byte(body.Content), &exp); err != nil {
-		return
-	}
-	if expected, err = json.MarshalIndent(exp, "", "  "); err != nil {
+	if err = json.Unmarshal([]byte(body.Content), &expected); err != nil {
 		return
 	}
 
 	// re-encode actual response too
-	if err = json.Unmarshal(a.resp.Body.Bytes(), &act); err != nil {
-		return
-	}
-	if actual, err = json.MarshalIndent(act, "", "  "); err != nil {
+	if err = json.Unmarshal(a.resp.Body.Bytes(), &actual); err != nil {
 		return
 	}
 
 	// the matching may be adapted per different requirements.
-	if len(actual) != len(expected) {
-		return fmt.Errorf(
-			"expected json length: %d does not match actual: %d:\n%s",
-			len(expected),
-			len(actual),
-			string(actual),
-		)
+	if !reflect.DeepEqual(expected, actual) {
+		return fmt.Errorf("expected JSON does not match actual, %v vs. %v", expected, actual)
 	}
-
-	for i, b := range actual {
-		if b != expected[i] {
-			return fmt.Errorf(
-				"expected JSON does not match actual, showing up to last matched character:\n%s",
-				string(actual[:i+1]),
-			)
-		}
-	}
-	return
+	return nil
 }
 
 func FeatureContext(s *godog.Suite) {
