@@ -19,6 +19,7 @@ import (
 
 var errorInterface = reflect.TypeOf((*error)(nil)).Elem()
 var typeOfBytes = reflect.TypeOf([]byte(nil))
+var typeOfEmbedding = reflect.TypeOf([]*gherkin.Embedding{}).Elem()
 
 type feature struct {
 	*gherkin.Feature

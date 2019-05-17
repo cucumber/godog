@@ -40,10 +40,11 @@ type Steps []string
 // when step is matched and is either failed
 // or successful
 type StepDef struct {
-	args    []interface{}
-	hv      reflect.Value
-	Expr    *regexp.Regexp
-	Handler interface{}
+	args            []interface{}
+	hv              reflect.Value
+	Expr            *regexp.Regexp
+	Handler         interface{}
+	EmbeddedContent *gherkin.Embeddings
 
 	// multistep related
 	nested    bool
@@ -82,12 +83,11 @@ func (sd *StepDef) definitionID() string {
 // reflect
 func (sd *StepDef) run() interface{} {
 	typ := sd.hv.Type()
-	if len(sd.args) < typ.NumIn() {
-		return fmt.Errorf("func expects %d arguments, which is more than %d matched from step", typ.NumIn(), len(sd.args))
-	}
+
 	var values []reflect.Value
 	for i := 0; i < typ.NumIn(); i++ {
 		param := typ.In(i)
+
 		switch param.Kind() {
 		case reflect.Int:
 			s, err := sd.shouldBeString(i)
@@ -166,7 +166,11 @@ func (sd *StepDef) run() interface{} {
 			}
 			values = append(values, reflect.ValueOf(float32(v)))
 		case reflect.Ptr:
-			arg := sd.args[i]
+			var arg interface{}
+			if i < len(sd.args) {
+				arg = sd.args[i]
+			}
+
 			switch param.Elem().String() {
 			case "gherkin.DocString":
 				v, ok := arg.(*gherkin.DocString)
@@ -180,6 +184,10 @@ func (sd *StepDef) run() interface{} {
 					return fmt.Errorf(`cannot convert argument %d: "%v" of type "%T" to *gherkin.DocString`, i, arg, arg)
 				}
 				values = append(values, reflect.ValueOf(v))
+			case "gherkin.Embeddings":
+				embeddings := &gherkin.Embeddings{EmbeddedContent: make([]*gherkin.Embedding, 0)}
+				sd.EmbeddedContent = embeddings
+				values = append(values, reflect.ValueOf(embeddings))
 			default:
 				return fmt.Errorf("the argument %d type %T is not supported", i, arg)
 			}
@@ -198,6 +206,12 @@ func (sd *StepDef) run() interface{} {
 			return fmt.Errorf("the argument %d type %s is not supported", i, param.Kind())
 		}
 	}
+
+	if len(values) < typ.NumIn() {
+		fmt.Println("shit")
+		return fmt.Errorf("func expects %d arguments, which is more than %d matched from step", typ.NumIn(), len(sd.args))
+	}
+
 	return sd.hv.Call(values)[0].Interface()
 }
 

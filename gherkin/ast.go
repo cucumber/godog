@@ -77,9 +77,26 @@ type ScenarioDefinition struct {
 
 type Step struct {
 	Node
-	Keyword  string      `json:"keyword"`
-	Text     string      `json:"text"`
-	Argument interface{} `json:"argument,omitempty"`
+	Keyword    string      `json:"keyword"`
+	Text       string      `json:"text"`
+	Argument   interface{} `json:"argument,omitempty"`
+	Embeddings `json:"embeddings,omitempty"`
+}
+
+type Embeddings struct {
+	EmbeddedContent []*Embedding
+}
+
+func (e *Embeddings) AddEmbedding(mimeType string, data string) {
+	if e.EmbeddedContent == nil {
+		e.EmbeddedContent = make([]*Embedding, 0)
+	}
+	e.EmbeddedContent = append(e.EmbeddedContent, &Embedding{mimeType, data})
+}
+
+type Embedding struct {
+	MimeType string `json:"mime_type"`
+	Data     string `json:"data"`
 }
 
 type DocString struct {

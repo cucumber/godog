@@ -71,17 +71,23 @@ type cukeMatch struct {
 }
 
 type cukeStep struct {
-	Keyword   string              `json:"keyword"`
-	Name      string              `json:"name"`
-	Line      int                 `json:"line"`
-	Docstring *cukeDocstring      `json:"doc_string,omitempty"`
-	Match     cukeMatch           `json:"match"`
-	Result    cukeResult          `json:"result"`
-	DataTable []*cukeDataTableRow `json:"rows,omitempty"`
+	Keyword    string              `json:"keyword"`
+	Name       string              `json:"name"`
+	Line       int                 `json:"line"`
+	Docstring  *cukeDocstring      `json:"doc_string,omitempty"`
+	Match      cukeMatch           `json:"match"`
+	Result     cukeResult          `json:"result"`
+	DataTable  []*cukeDataTableRow `json:"rows,omitempty"`
+	Embeddings []*cukeEmbedding    `json:"embeddings,omitempty"`
 }
 
 type cukeDataTableRow struct {
 	Cells []string `json:"cells"`
+}
+
+type cukeEmbedding struct {
+	MimeType string `json:"mime_type"`
+	Data     string `json:"data"`
 }
 
 type cukeElement struct {
@@ -311,6 +317,12 @@ func (f *cukefmt) Defined(step *gherkin.Step, def *StepDef) {
 func (f *cukefmt) Passed(step *gherkin.Step, match *StepDef) {
 	f.basefmt.Passed(step, match)
 	f.stat = passed
+	if match.EmbeddedContent != nil {
+		f.curStep.Embeddings = make([]*cukeEmbedding, 0)
+		for _, next := range match.EmbeddedContent.EmbeddedContent {
+			f.curStep.Embeddings = append(f.curStep.Embeddings, &cukeEmbedding{Data: next.Data, MimeType: next.MimeType})
+		}
+	}
 	f.step(f.passed[len(f.passed)-1])
 }
 
