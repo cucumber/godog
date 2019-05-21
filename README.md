@@ -358,6 +358,55 @@ it down only in **AfterFeature** hook and share the service between all
 scenarios in that feature. It is not advisable though, because you are
 risking having a state dependency.
 
+### Support for Cucumber Embeddings
+
+**godog** has support for Cucumber's JSON Report file embeddings. To add an
+embedding during a step, add one final parameter to the step function.
+*The step definition's regex captures do not need to include a capture that*
+*corresponds to this parameter.* The parameter type must be `*gherkin.Embeddings`.
+
+The following code example demonstrates how this works:
+
+```golang
+package main
+
+import (
+    "filepath"
+
+    "github.com/DATA-DOG/godog"
+    "github.com/DATA-DOG/godog/gherkin"
+)
+
+func iTakeAScreenshot(e *gherkin.Embeddings) error {
+    now := time.Now()
+
+    // Build Filename and Filepath
+    fileName := "screenshot_" + now.Format("02Jan2006-150405.000.png")
+    filePath, _ := aferoResultsDir.RealPath(fileName)
+
+    // Use Agouti Web Driver to Take a Screenshot of the Browser and Write it to Disk
+    if err := agoutiPage.Screenshot(filePath); err != nil {
+        return fmt.Errorf("error encountered while taking screenshot: %s", err)
+    }
+
+    // Read the Image Bytes in
+    imageBytes, _ := afero.ReadFile(aferoResultsDir, fileName)
+    
+    // Add an Embedding to this Step (base64 encoding is used just as Cucumber does)
+    e.AddEmbedding("image/png", base64.StdEncoding.EncodeToString(imageBytes))
+
+    return nil
+}
+
+func FeatureContext(s *godog.Suite) {
+    suite.Step(`^(?:|I )take a screenshot$`, iTakeAScreenshot)
+
+    s.BeforeScenario(func(interface{}) {
+        Godogs = 0 // clean the state before every scenario
+    })
+}
+```
+
 ## Contributions
 
 Feel free to open a pull request. Note, if you wish to contribute an extension to public (exported methods or types) -
