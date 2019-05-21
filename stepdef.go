@@ -208,7 +208,6 @@ func (sd *StepDef) run() interface{} {
 	}
 
 	if len(values) < typ.NumIn() {
-		fmt.Println("shit")
 		return fmt.Errorf("func expects %d arguments, which is more than %d matched from step", typ.NumIn(), len(sd.args))
 	}
 
