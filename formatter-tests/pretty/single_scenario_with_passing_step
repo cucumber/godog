@@ -3,8 +3,8 @@
   a single scenario
   feature
 
-  <bold-white>Scenario:</bold-white> one step passing <black># formatter-tests/features/single_scenario_with_passing_step.feature:6</black>
-    <green>Given</green> <green>a passing step</green>     <black># formatters_print_test.go:65 -> passingStepDef</black>
+  <bold-white>Scenario:</bold-white> one step passing <bold-black># formatter-tests/features/single_scenario_with_passing_step.feature:6</bold-black>
+    <green>Given</green> <green>a passing step</green>     <bold-black># formatters_print_test.go:65 -> passingStepDef</bold-black>
 
 1 scenarios (<green>1 passed</green>)
 1 steps (<green>1 passed</green>)

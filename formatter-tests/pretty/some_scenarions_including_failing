@@ -1,24 +1,24 @@
 <bold-white>Feature:</bold-white> some scenarios
 
-  <bold-white>Scenario:</bold-white> failing    <black># formatter-tests/features/some_scenarions_including_failing.feature:3</black>
-    <green>Given</green> <green>passing step</green> <black># formatters_print_test.go:65 -> passingStepDef</black>
-    <red>When</red> <red>failing step</red>  <black># formatters_print_test.go:81 -> failingStepDef</black>
+  <bold-white>Scenario:</bold-white> failing    <bold-black># formatter-tests/features/some_scenarions_including_failing.feature:3</bold-black>
+    <green>Given</green> <green>passing step</green> <bold-black># formatters_print_test.go:65 -> passingStepDef</bold-black>
+    <red>When</red> <red>failing step</red>  <bold-black># formatters_print_test.go:81 -> failingStepDef</bold-black>
     <bold-red>step failed</bold-red>
-    <cyan>Then</cyan> <cyan>passing step</cyan>  <black># formatters_print_test.go:65 -> passingStepDef</black>
+    <cyan>Then</cyan> <cyan>passing step</cyan>  <bold-black># formatters_print_test.go:65 -> passingStepDef</bold-black>
 
-  <bold-white>Scenario:</bold-white> pending   <black># formatter-tests/features/some_scenarions_including_failing.feature:8</black>
-    <yellow>When</yellow> <yellow>pending step</yellow> <black># formatters_print_test.go:79 -> pendingStepDef</black>
+  <bold-white>Scenario:</bold-white> pending   <bold-black># formatter-tests/features/some_scenarions_including_failing.feature:8</bold-black>
+    <yellow>When</yellow> <yellow>pending step</yellow> <bold-black># formatters_print_test.go:79 -> pendingStepDef</bold-black>
       <yellow>TODO: write pending definition</yellow>
-    <cyan>Then</cyan> <cyan>passing step</cyan> <black># formatters_print_test.go:65 -> passingStepDef</black>
+    <cyan>Then</cyan> <cyan>passing step</cyan> <bold-black># formatters_print_test.go:65 -> passingStepDef</bold-black>
 
-  <bold-white>Scenario:</bold-white> undefined <black># formatter-tests/features/some_scenarions_including_failing.feature:12</black>
+  <bold-white>Scenario:</bold-white> undefined <bold-black># formatter-tests/features/some_scenarions_including_failing.feature:12</bold-black>
     <yellow>When</yellow> <yellow>undefined</yellow>
-    <cyan>Then</cyan> <cyan>passing step</cyan> <black># formatters_print_test.go:65 -> passingStepDef</black>
+    <cyan>Then</cyan> <cyan>passing step</cyan> <bold-black># formatters_print_test.go:65 -> passingStepDef</bold-black>
 
 --- <red>Failed steps:</red>
 
-  <red>Scenario: failing</red><black> # formatter-tests/features/some_scenarions_including_failing.feature:3</black>
-    <red>When failing step</red><black> # formatter-tests/features/some_scenarions_including_failing.feature:5</black>
+  <red>Scenario: failing</red><bold-black> # formatter-tests/features/some_scenarions_including_failing.feature:3</bold-black>
+    <red>When failing step</red><bold-black> # formatter-tests/features/some_scenarions_including_failing.feature:5</bold-black>
       <red>Error: </red><bold-red>step failed</bold-red>
 
 
