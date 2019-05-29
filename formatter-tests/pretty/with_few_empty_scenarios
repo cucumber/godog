@@ -1,8 +1,8 @@
 <bold-white>Feature:</bold-white> few empty scenarios
 
-  <bold-white>Scenario:</bold-white> one <black># formatter-tests/features/with_few_empty_scenarios.feature:3</black>
+  <bold-white>Scenario:</bold-white> one <bold-black># formatter-tests/features/with_few_empty_scenarios.feature:3</bold-black>
 
-  <bold-white>Scenario Outline:</bold-white> two <black># formatter-tests/features/with_few_empty_scenarios.feature:5</black>
+  <bold-white>Scenario Outline:</bold-white> two <bold-black># formatter-tests/features/with_few_empty_scenarios.feature:5</bold-black>
 
     <bold-white>Examples:</bold-white> first group
       | <cyan>one</cyan> | <cyan>two</cyan> |
@@ -13,7 +13,7 @@
       | <cyan>one</cyan> | <cyan>two</cyan> |
       | <cyan>5</cyan>   | <cyan>9</cyan>   |
 
-  <bold-white>Scenario:</bold-white> three <black># formatter-tests/features/with_few_empty_scenarios.feature:16</black>
+  <bold-white>Scenario:</bold-white> three <bold-black># formatter-tests/features/with_few_empty_scenarios.feature:16</bold-black>
 
 5 scenarios (<yellow>5 undefined</yellow>)
 No steps

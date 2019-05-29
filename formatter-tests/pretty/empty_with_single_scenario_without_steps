@@ -1,6 +1,6 @@
 <bold-white>Feature:</bold-white> empty feature
 
-  <bold-white>Scenario:</bold-white> without steps <black># formatter-tests/features/empty_with_single_scenario_without_steps.feature:3</black>
+  <bold-white>Scenario:</bold-white> without steps <bold-black># formatter-tests/features/empty_with_single_scenario_without_steps.feature:3</bold-black>
 
 1 scenarios (<yellow>1 undefined</yellow>)
 No steps

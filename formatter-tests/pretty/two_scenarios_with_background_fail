@@ -1,26 +1,26 @@
 <bold-white>Feature:</bold-white> two scenarios with background fail
 
   <bold-white>Background:</bold-white>
-    <green>Given</green> <green>passing step</green> <black># formatters_print_test.go:65 -> passingStepDef</black>
-    <red>And</red> <red>failing step</red>   <black># formatters_print_test.go:81 -> failingStepDef</black>
+    <green>Given</green> <green>passing step</green> <bold-black># formatters_print_test.go:65 -> passingStepDef</bold-black>
+    <red>And</red> <red>failing step</red>   <bold-black># formatters_print_test.go:81 -> failingStepDef</bold-black>
     <bold-red>step failed</bold-red>
 
-  <bold-white>Scenario:</bold-white> one        <black># formatter-tests/features/two_scenarios_with_background_fail.feature:7</black>
-    <cyan>When</cyan> <cyan>passing step</cyan>  <black># formatters_print_test.go:65 -> passingStepDef</black>
-    <cyan>Then</cyan> <cyan>passing step</cyan>  <black># formatters_print_test.go:65 -> passingStepDef</black>
+  <bold-white>Scenario:</bold-white> one        <bold-black># formatter-tests/features/two_scenarios_with_background_fail.feature:7</bold-black>
+    <cyan>When</cyan> <cyan>passing step</cyan>  <bold-black># formatters_print_test.go:65 -> passingStepDef</bold-black>
+    <cyan>Then</cyan> <cyan>passing step</cyan>  <bold-black># formatters_print_test.go:65 -> passingStepDef</bold-black>
 
-  <bold-white>Scenario:</bold-white> two        <black># formatter-tests/features/two_scenarios_with_background_fail.feature:11</black>
+  <bold-white>Scenario:</bold-white> two        <bold-black># formatter-tests/features/two_scenarios_with_background_fail.feature:11</bold-black>
     <bold-red>step failed</bold-red>
-    <cyan>Then</cyan> <cyan>passing step</cyan>  <black># formatters_print_test.go:65 -> passingStepDef</black>
+    <cyan>Then</cyan> <cyan>passing step</cyan>  <bold-black># formatters_print_test.go:65 -> passingStepDef</bold-black>
 
 --- <red>Failed steps:</red>
 
-  <red>Scenario: one</red><black> # formatter-tests/features/two_scenarios_with_background_fail.feature:7</black>
-    <red>And failing step</red><black> # formatter-tests/features/two_scenarios_with_background_fail.feature:5</black>
+  <red>Scenario: one</red><bold-black> # formatter-tests/features/two_scenarios_with_background_fail.feature:7</bold-black>
+    <red>And failing step</red><bold-black> # formatter-tests/features/two_scenarios_with_background_fail.feature:5</bold-black>
       <red>Error: </red><bold-red>step failed</bold-red>
 
-  <red>Scenario: two</red><black> # formatter-tests/features/two_scenarios_with_background_fail.feature:11</black>
-    <red>And failing step</red><black> # formatter-tests/features/two_scenarios_with_background_fail.feature:5</black>
+  <red>Scenario: two</red><bold-black> # formatter-tests/features/two_scenarios_with_background_fail.feature:11</bold-black>
+    <red>And failing step</red><bold-black> # formatter-tests/features/two_scenarios_with_background_fail.feature:5</bold-black>
       <red>Error: </red><bold-red>step failed</bold-red>
 
 

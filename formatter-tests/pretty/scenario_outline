@@ -1,9 +1,9 @@
 <bold-white>Feature:</bold-white> outline
 
-  <bold-white>Scenario Outline:</bold-white> outline               <black># formatter-tests/features/scenario_outline.feature:5</black>
-    <cyan>Given</cyan> <cyan>passing step</cyan>                    <black># formatters_print_test.go:65 -> passingStepDef</black>
-    <cyan>When</cyan> <cyan>passing step</cyan>                     <black># formatters_print_test.go:65 -> passingStepDef</black>
-    <cyan>Then</cyan> <cyan>odd </cyan><bold-cyan><odd></bold-cyan><cyan> and even </cyan><bold-cyan><even></bold-cyan><cyan> number</cyan> <black># formatters_print_test.go:67 -> oddEvenStepDef</black>
+  <bold-white>Scenario Outline:</bold-white> outline               <bold-black># formatter-tests/features/scenario_outline.feature:5</bold-black>
+    <cyan>Given</cyan> <cyan>passing step</cyan>                    <bold-black># formatters_print_test.go:65 -> passingStepDef</bold-black>
+    <cyan>When</cyan> <cyan>passing step</cyan>                     <bold-black># formatters_print_test.go:65 -> passingStepDef</bold-black>
+    <cyan>Then</cyan> <cyan>odd </cyan><bold-cyan><odd></bold-cyan><cyan> and even </cyan><bold-cyan><even></bold-cyan><cyan> number</cyan> <bold-black># formatters_print_test.go:67 -> oddEvenStepDef</bold-black>
 
     <bold-white>Examples:</bold-white> tagged
       | <cyan>odd</cyan> | <cyan>even</cyan> |
@@ -21,16 +21,16 @@
 
 --- <red>Failed steps:</red>
 
-  <red>Scenario Outline: outline</red><black> # formatter-tests/features/scenario_outline.feature:5</black>
-    <red>Then odd 2 and even 0 number</red><black> # formatter-tests/features/scenario_outline.feature:8</black>
+  <red>Scenario Outline: outline</red><bold-black> # formatter-tests/features/scenario_outline.feature:5</bold-black>
+    <red>Then odd 2 and even 0 number</red><bold-black> # formatter-tests/features/scenario_outline.feature:8</bold-black>
       <red>Error: </red><bold-red>2 is not odd</bold-red>
 
-  <red>Scenario Outline: outline</red><black> # formatter-tests/features/scenario_outline.feature:5</black>
-    <red>Then odd 3 and even 11 number</red><black> # formatter-tests/features/scenario_outline.feature:8</black>
+  <red>Scenario Outline: outline</red><bold-black> # formatter-tests/features/scenario_outline.feature:5</bold-black>
+    <red>Then odd 3 and even 11 number</red><bold-black> # formatter-tests/features/scenario_outline.feature:8</bold-black>
       <red>Error: </red><bold-red>11 is not even</bold-red>
 
-  <red>Scenario Outline: outline</red><black> # formatter-tests/features/scenario_outline.feature:5</black>
-    <red>Then odd 3 and even 9 number</red><black> # formatter-tests/features/scenario_outline.feature:8</black>
+  <red>Scenario Outline: outline</red><bold-black> # formatter-tests/features/scenario_outline.feature:5</bold-black>
+    <red>Then odd 3 and even 9 number</red><bold-black> # formatter-tests/features/scenario_outline.feature:8</bold-black>
       <red>Error: </red><bold-red>9 is not even</bold-red>
 
 
