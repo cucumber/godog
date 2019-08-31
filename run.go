@@ -72,30 +72,33 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 			}
 			if useFmtCopy {
 				copyLock.Lock()
-				if d, ok := r.fmt.(*progress); ok {
-					if s, ok := fmtCopy.(*progress); ok {
-						func(source *progress, dest *progress) {
-							for _, v := range source.features {
-								dest.features = append(dest.features, v)
-							}
+				dest, dOk := r.fmt.(*progress)
+				source, sOk := fmtCopy.(*progress)
 
-							for _, v := range source.failed {
-								dest.failed = append(dest.failed, v)
-							}
-							for _, v := range source.passed {
-								dest.passed = append(dest.passed, v)
-							}
-							for _, v := range source.skipped {
-								dest.skipped = append(dest.skipped, v)
-							}
-							for _, v := range source.undefined {
-								dest.undefined = append(dest.undefined, v)
-							}
-							for _, v := range source.pending {
-								dest.pending = append(dest.pending, v)
-							}
-						}(s, d)
+				if dOk && sOk {
+					for _, v := range source.features {
+						dest.features = append(dest.features, v)
 					}
+
+					for _, v := range source.failed {
+						dest.failed = append(dest.failed, v)
+					}
+					for _, v := range source.passed {
+						dest.passed = append(dest.passed, v)
+					}
+					for _, v := range source.skipped {
+						dest.skipped = append(dest.skipped, v)
+					}
+					for _, v := range source.undefined {
+						dest.undefined = append(dest.undefined, v)
+					}
+					for _, v := range source.pending {
+						dest.pending = append(dest.pending, v)
+					}
+				} else if !dOk {
+					panic("cant cast dest formatter to progress-typed")
+				} else if !sOk {
+					panic("cant cast source formatter to progress-typed")
 				}
 				copyLock.Unlock()
 			}
