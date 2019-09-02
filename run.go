@@ -61,6 +61,14 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 			if useFmtCopy {
 				fmtCopy = formatterFn()
 				suite.fmt = fmtCopy
+
+				// sync lock and steps for progress printing
+				if sf, ok := suite.fmt.(*progress); ok {
+					if rf, ok := r.fmt.(*progress); ok {
+						sf.lock = rf.lock
+						sf.steps = rf.steps
+					}
+				}
 			} else {
 				suite.fmt = r.fmt
 			}
