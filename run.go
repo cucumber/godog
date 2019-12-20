@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/DATA-DOG/godog/colors"
 )
@@ -28,11 +29,22 @@ type runner struct {
 	initializer           initializer
 }
 
-func (r *runner) concurrent(rate int) (failed bool) {
+func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool) {
+	var useFmtCopy bool
+	var copyLock sync.Mutex
+
+	// special mode for progress-formatter
+	if _, ok := r.fmt.(*progress); ok {
+		useFmtCopy = true
+	}
+
 	queue := make(chan int, rate)
 	for i, ft := range r.features {
 		queue <- i // reserve space in queue
+		ft := *ft
+
 		go func(fail *bool, feat *feature) {
+			var fmtCopy Formatter
 			defer func() {
 				<-queue // free a space in queue
 			}()
@@ -46,12 +58,59 @@ func (r *runner) concurrent(rate int) (failed bool) {
 				strict:        r.strict,
 				features:      []*feature{feat},
 			}
+			if useFmtCopy {
+				fmtCopy = formatterFn()
+				suite.fmt = fmtCopy
+
+				// sync lock and steps for progress printing
+				if sf, ok := suite.fmt.(*progress); ok {
+					if rf, ok := r.fmt.(*progress); ok {
+						sf.lock = rf.lock
+						sf.steps = rf.steps
+					}
+				}
+			} else {
+				suite.fmt = r.fmt
+			}
+
 			r.initializer(suite)
 			suite.run()
 			if suite.failed {
 				*fail = true
 			}
-		}(&failed, ft)
+			if useFmtCopy {
+				copyLock.Lock()
+				dest, dOk := r.fmt.(*progress)
+				source, sOk := fmtCopy.(*progress)
+
+				if dOk && sOk {
+					for _, v := range source.features {
+						dest.features = append(dest.features, v)
+					}
+
+					for _, v := range source.failed {
+						dest.failed = append(dest.failed, v)
+					}
+					for _, v := range source.passed {
+						dest.passed = append(dest.passed, v)
+					}
+					for _, v := range source.skipped {
+						dest.skipped = append(dest.skipped, v)
+					}
+					for _, v := range source.undefined {
+						dest.undefined = append(dest.undefined, v)
+					}
+					for _, v := range source.pending {
+						dest.pending = append(dest.pending, v)
+					}
+				} else if !dOk {
+					panic("cant cast dest formatter to progress-typed")
+				} else if !sOk {
+					panic("cant cast source formatter to progress-typed")
+				}
+				copyLock.Unlock()
+			}
+		}(&failed, &ft)
 	}
 	// wait until last are processed
 	for i := 0; i < rate; i++ {
@@ -168,7 +227,7 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 
 	var failed bool
 	if opt.Concurrency > 1 {
-		failed = r.concurrent(opt.Concurrency)
+		failed = r.concurrent(opt.Concurrency, func() Formatter { return formatter(suite, output) })
 	} else {
 		failed = r.run()
 	}
