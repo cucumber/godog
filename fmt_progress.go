@@ -122,3 +122,33 @@ func (f *progress) Pending(step *gherkin.Step, match *StepDef) {
 	f.basefmt.Pending(step, match)
 	f.step(f.pending[len(f.pending)-1])
 }
+
+func (f *progress) Sync(cf ConcurrentFormatter) {
+	if source, ok := cf.(*progress); ok {
+		f.lock = source.lock
+		f.steps = source.steps
+	}
+}
+
+func (f *progress) Copy(cf ConcurrentFormatter) {
+	if source, ok := cf.(*progress); ok {
+		for _, v := range source.features {
+			f.features = append(f.features, v)
+		}
+		for _, v := range source.failed {
+			f.failed = append(f.failed, v)
+		}
+		for _, v := range source.passed {
+			f.passed = append(f.passed, v)
+		}
+		for _, v := range source.skipped {
+			f.skipped = append(f.skipped, v)
+		}
+		for _, v := range source.undefined {
+			f.undefined = append(f.undefined, v)
+		}
+		for _, v := range source.pending {
+			f.pending = append(f.pending, v)
+		}
+	}
+}

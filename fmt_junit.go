@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/DATA-DOG/godog/gherkin"
@@ -16,147 +17,174 @@ func init() {
 
 func junitFunc(suite string, out io.Writer) Formatter {
 	return &junitFormatter{
-		suite: &junitPackageSuite{
-			Name:       suite,
-			TestSuites: make([]*junitTestSuite, 0),
+		basefmt: basefmt{
+			suiteName: suite,
+			started:   timeNowFunc(),
+			indent:    2,
+			out:       out,
 		},
-		out:     out,
-		started: timeNowFunc(),
+		lock: new(sync.Mutex),
 	}
 }
 
 type junitFormatter struct {
-	suite *junitPackageSuite
-	out   io.Writer
-
-	// timing
-	started     time.Time
-	caseStarted time.Time
-	featStarted time.Time
-
-	outline        *gherkin.ScenarioOutline
-	outlineExample int
+	basefmt
+	lock *sync.Mutex
 }
 
-func (j *junitFormatter) Feature(feature *gherkin.Feature, path string, c []byte) {
-	testSuite := &junitTestSuite{
-		TestCases: make([]*junitTestCase, 0),
-		Name:      feature.Name,
-	}
-
-	if len(j.suite.TestSuites) > 0 {
-		j.current().Time = timeNowFunc().Sub(j.featStarted).String()
-	}
-	j.featStarted = timeNowFunc()
-	j.suite.TestSuites = append(j.suite.TestSuites, testSuite)
+func (f *junitFormatter) Node(n interface{}) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+	f.basefmt.Node(n)
 }
 
-func (j *junitFormatter) Defined(*gherkin.Step, *StepDef) {
-
+func (f *junitFormatter) Feature(ft *gherkin.Feature, p string, c []byte) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+	f.basefmt.Feature(ft, p, c)
 }
 
-func (j *junitFormatter) Node(node interface{}) {
-	suite := j.current()
-	tcase := &junitTestCase{}
+func (f *junitFormatter) Summary() {
+	suite := buildJUNITPackageSuite(f.suiteName, f.started, f.features)
 
-	switch t := node.(type) {
-	case *gherkin.ScenarioOutline:
-		j.outline = t
-		j.outlineExample = 0
-		return
-	case *gherkin.Scenario:
-		tcase.Name = t.Name
-		suite.Tests++
-		j.suite.Tests++
-	case *gherkin.TableRow:
-		j.outlineExample++
-		tcase.Name = fmt.Sprintf("%s #%d", j.outline.Name, j.outlineExample)
-		suite.Tests++
-		j.suite.Tests++
-	default:
-		return
-	}
-	j.caseStarted = timeNowFunc()
-	suite.TestCases = append(suite.TestCases, tcase)
-}
-
-func (j *junitFormatter) Failed(step *gherkin.Step, match *StepDef, err error) {
-	suite := j.current()
-	suite.Failures++
-	j.suite.Failures++
-
-	tcase := suite.current()
-	tcase.Time = timeNowFunc().Sub(j.caseStarted).String()
-	tcase.Status = "failed"
-	tcase.Failure = &junitFailure{
-		Message: fmt.Sprintf("%s %s: %s", step.Type, step.Text, err.Error()),
-	}
-}
-
-func (j *junitFormatter) Passed(step *gherkin.Step, match *StepDef) {
-	suite := j.current()
-
-	tcase := suite.current()
-	tcase.Time = timeNowFunc().Sub(j.caseStarted).String()
-	tcase.Status = "passed"
-}
-
-func (j *junitFormatter) Skipped(step *gherkin.Step, match *StepDef) {
-	suite := j.current()
-
-	tcase := suite.current()
-	tcase.Time = timeNowFunc().Sub(j.caseStarted).String()
-	tcase.Error = append(tcase.Error, &junitError{
-		Type:    "skipped",
-		Message: fmt.Sprintf("%s %s", step.Type, step.Text),
-	})
-}
-
-func (j *junitFormatter) Undefined(step *gherkin.Step, match *StepDef) {
-	suite := j.current()
-	tcase := suite.current()
-	if tcase.Status != "undefined" {
-		// do not count two undefined steps as another error
-		suite.Errors++
-		j.suite.Errors++
-	}
-
-	tcase.Time = timeNowFunc().Sub(j.caseStarted).String()
-	tcase.Status = "undefined"
-	tcase.Error = append(tcase.Error, &junitError{
-		Type:    "undefined",
-		Message: fmt.Sprintf("%s %s", step.Type, step.Text),
-	})
-}
-
-func (j *junitFormatter) Pending(step *gherkin.Step, match *StepDef) {
-	suite := j.current()
-	suite.Errors++
-	j.suite.Errors++
-
-	tcase := suite.current()
-	tcase.Time = timeNowFunc().Sub(j.caseStarted).String()
-	tcase.Status = "pending"
-	tcase.Error = append(tcase.Error, &junitError{
-		Type:    "pending",
-		Message: fmt.Sprintf("%s %s: TODO: write pending definition", step.Type, step.Text),
-	})
-}
-
-func (j *junitFormatter) Summary() {
-	if j.current() != nil {
-		j.current().Time = timeNowFunc().Sub(j.featStarted).String()
-	}
-	j.suite.Time = timeNowFunc().Sub(j.started).String()
-	_, err := io.WriteString(j.out, xml.Header)
+	_, err := io.WriteString(f.out, xml.Header)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "failed to write junit string:", err)
 	}
-	enc := xml.NewEncoder(j.out)
+
+	enc := xml.NewEncoder(f.out)
 	enc.Indent("", s(2))
-	if err = enc.Encode(j.suite); err != nil {
+	if err = enc.Encode(suite); err != nil {
 		fmt.Fprintln(os.Stderr, "failed to write junit xml:", err)
 	}
+}
+
+func (f *junitFormatter) Passed(step *gherkin.Step, match *StepDef) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+	f.basefmt.Passed(step, match)
+}
+
+func (f *junitFormatter) Skipped(step *gherkin.Step, match *StepDef) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+	f.basefmt.Skipped(step, match)
+}
+
+func (f *junitFormatter) Undefined(step *gherkin.Step, match *StepDef) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+	f.basefmt.Undefined(step, match)
+}
+
+func (f *junitFormatter) Failed(step *gherkin.Step, match *StepDef, err error) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+	f.basefmt.Failed(step, match, err)
+}
+
+func (f *junitFormatter) Pending(step *gherkin.Step, match *StepDef) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+	f.basefmt.Pending(step, match)
+}
+
+func (f *junitFormatter) Sync(cf ConcurrentFormatter) {
+	if source, ok := cf.(*junitFormatter); ok {
+		f.lock = source.lock
+	}
+}
+
+func (f *junitFormatter) Copy(cf ConcurrentFormatter) {
+	if source, ok := cf.(*junitFormatter); ok {
+		for _, v := range source.features {
+			f.features = append(f.features, v)
+		}
+		for _, v := range source.failed {
+			f.failed = append(f.failed, v)
+		}
+		for _, v := range source.passed {
+			f.passed = append(f.passed, v)
+		}
+		for _, v := range source.skipped {
+			f.skipped = append(f.skipped, v)
+		}
+		for _, v := range source.undefined {
+			f.undefined = append(f.undefined, v)
+		}
+		for _, v := range source.pending {
+			f.pending = append(f.pending, v)
+		}
+	}
+}
+
+func buildJUNITPackageSuite(suiteName string, startedAt time.Time, features []*feature) junitPackageSuite {
+	suite := junitPackageSuite{
+		Name:       suiteName,
+		TestSuites: make([]*junitTestSuite, len(features)),
+		Time:       startedAt.Sub(timeNowFunc()).String(),
+	}
+
+	for idx, feat := range features {
+		ts := junitTestSuite{
+			Name:      feat.Name,
+			Time:      feat.startedAt().Sub(feat.finishedAt()).String(),
+			TestCases: make([]*junitTestCase, len(feat.Scenarios)),
+		}
+
+		for idx, scenario := range feat.Scenarios {
+			tc := junitTestCase{}
+			tc.Name = scenario.Name
+			tc.Time = scenario.startedAt().Sub(scenario.finishedAt()).String()
+
+			ts.Tests++
+			suite.Tests++
+
+			for _, step := range scenario.Steps {
+				switch step.typ {
+				case passed:
+					tc.Status = passed.String()
+				case failed:
+					tc.Status = failed.String()
+					tc.Failure = &junitFailure{
+						Message: fmt.Sprintf("%s %s: %s", step.step.Type, step.step.Text, step.err),
+					}
+				case skipped:
+					tc.Error = append(tc.Error, &junitError{
+						Type:    "skipped",
+						Message: fmt.Sprintf("%s %s", step.step.Type, step.step.Text),
+					})
+				case undefined:
+					tc.Status = undefined.String()
+					tc.Error = append(tc.Error, &junitError{
+						Type:    "undefined",
+						Message: fmt.Sprintf("%s %s", step.step.Type, step.step.Text),
+					})
+				case pending:
+					tc.Status = pending.String()
+					tc.Error = append(tc.Error, &junitError{
+						Type:    "pending",
+						Message: fmt.Sprintf("%s %s: TODO: write pending definition", step.step.Type, step.step.Text),
+					})
+				}
+			}
+
+			switch tc.Status {
+			case failed.String():
+				ts.Failures++
+				suite.Failures++
+			case undefined.String(), pending.String():
+				ts.Errors++
+				suite.Errors++
+			}
+
+			ts.TestCases[idx] = &tc
+		}
+
+		suite.TestSuites[idx] = &ts
+	}
+
+	return suite
 }
 
 type junitFailure struct {
@@ -190,10 +218,6 @@ type junitTestSuite struct {
 	TestCases []*junitTestCase
 }
 
-func (ts *junitTestSuite) current() *junitTestCase {
-	return ts.TestCases[len(ts.TestCases)-1]
-}
-
 type junitPackageSuite struct {
 	XMLName    xml.Name `xml:"testsuites"`
 	Name       string   `xml:"name,attr"`
@@ -203,8 +227,4 @@ type junitPackageSuite struct {
 	Errors     int      `xml:"errors,attr"`
 	Time       string   `xml:"time,attr"`
 	TestSuites []*junitTestSuite
-}
-
-func (j *junitFormatter) current() *junitTestSuite {
-	return j.suite.TestSuites[len(j.suite.TestSuites)-1]
 }
