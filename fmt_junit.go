@@ -122,20 +122,20 @@ func buildJUNITPackageSuite(suiteName string, startedAt time.Time, features []*f
 	suite := junitPackageSuite{
 		Name:       suiteName,
 		TestSuites: make([]*junitTestSuite, len(features)),
-		Time:       startedAt.Sub(timeNowFunc()).String(),
+		Time:       timeNowFunc().Sub(startedAt).String(),
 	}
 
 	for idx, feat := range features {
 		ts := junitTestSuite{
 			Name:      feat.Name,
-			Time:      feat.startedAt().Sub(feat.finishedAt()).String(),
+			Time:      feat.finishedAt().Sub(feat.startedAt()).String(),
 			TestCases: make([]*junitTestCase, len(feat.Scenarios)),
 		}
 
 		for idx, scenario := range feat.Scenarios {
 			tc := junitTestCase{}
 			tc.Name = scenario.Name
-			tc.Time = scenario.startedAt().Sub(scenario.finishedAt()).String()
+			tc.Time = scenario.finishedAt().Sub(scenario.startedAt()).String()
 
 			ts.Tests++
 			suite.Tests++
