@@ -33,12 +33,6 @@ type feature struct {
 }
 
 func (f feature) startedAt() time.Time {
-<<<<<<< Updated upstream
-	return f.Scenarios[0].startedAt()
-}
-
-func (f feature) finishedAt() time.Time {
-=======
 	return f.time
 }
 
@@ -47,7 +41,6 @@ func (f feature) finishedAt() time.Time {
 		return f.startedAt()
 	}
 
->>>>>>> Stashed changes
 	return f.Scenarios[len(f.Scenarios)-1].finishedAt()
 }
 
@@ -65,12 +58,6 @@ type scenario struct {
 }
 
 func (s scenario) startedAt() time.Time {
-<<<<<<< Updated upstream
-	return s.Steps[0].time
-}
-
-func (s scenario) finishedAt() time.Time {
-=======
 	return s.time
 }
 
@@ -79,7 +66,6 @@ func (s scenario) finishedAt() time.Time {
 		return s.startedAt()
 	}
 
->>>>>>> Stashed changes
 	return s.Steps[len(s.Steps)-1].time
 }
 
