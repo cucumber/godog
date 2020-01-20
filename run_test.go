@@ -275,3 +275,40 @@ func TestFeatureFilePathParser(t *testing.T) {
 		}
 	}
 }
+
+func TestSucceedWithConcurrencyOption(t *testing.T) {
+	output := new(bytes.Buffer)
+
+	opt := Options{
+		Format:      "progress",
+		NoColors:    true,
+		Paths:       []string{"features"},
+		Concurrency: 2,
+		Output:      output,
+	}
+
+	expectedOutput := `...................................................................... 70
+...................................................................... 140
+...................................................................... 210
+.......................................                                249
+
+
+60 scenarios (60 passed)
+249 steps (249 passed)
+0s`
+
+	status := RunWithOptions("succeed", func(s *Suite) { SuiteContext(s) }, opt)
+	if status != exitSuccess {
+		t.Fatalf("expected exit status to be 0, but was: %d", status)
+	}
+
+	b, err := ioutil.ReadAll(output)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	out := strings.TrimSpace(string(b))
+	if out != expectedOutput {
+		t.Fatalf("unexpected output: \"%s\"", out)
+	}
+}
