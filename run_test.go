@@ -342,14 +342,6 @@ func TestSucceedWithJunitAndConcurrencyOption(t *testing.T) {
     <testcase name="Support of Docstrings" status="passed" time="0s"></testcase>
     <testcase name="Support of Undefined, Pending and Skipped status" status="passed" time="0s"></testcase>
   </testsuite>
-  <testsuite name="event stream formatter" tests="3" skipped="0" failures="0" errors="0" time="0s">
-    <testcase name="should fire only suite events without any scenario" status="passed" time="0s"></testcase>
-    <testcase name="should process simple scenario" status="passed" time="0s"></testcase>
-    <testcase name="should process outline scenario" status="passed" time="0s"></testcase>
-  </testsuite>
-  <testsuite name="užkrauti savybes" tests="1" skipped="0" failures="0" errors="0" time="0s">
-    <testcase name="savybių užkrovimas iš aplanko" status="passed" time="0s"></testcase>
-  </testsuite>
   <testsuite name="suite events" tests="6" skipped="0" failures="0" errors="0" time="0s">
     <testcase name="triggers before scenario event" status="passed" time="0s"></testcase>
     <testcase name="triggers appropriate events for a single scenario" status="passed" time="0s"></testcase>
@@ -357,6 +349,14 @@ func TestSucceedWithJunitAndConcurrencyOption(t *testing.T) {
     <testcase name="triggers appropriate events for two feature files" status="passed" time="0s"></testcase>
     <testcase name="should not trigger events on empty feature" status="passed" time="0s"></testcase>
     <testcase name="should not trigger events on empty scenarios" status="passed" time="0s"></testcase>
+  </testsuite>
+  <testsuite name="event stream formatter" tests="3" skipped="0" failures="0" errors="0" time="0s">
+    <testcase name="should fire only suite events without any scenario" status="passed" time="0s"></testcase>
+    <testcase name="should process simple scenario" status="passed" time="0s"></testcase>
+    <testcase name="should process outline scenario" status="passed" time="0s"></testcase>
+  </testsuite>
+  <testsuite name="užkrauti savybes" tests="1" skipped="0" failures="0" errors="0" time="0s">
+    <testcase name="savybių užkrovimas iš aplanko" status="passed" time="0s"></testcase>
   </testsuite>
   <testsuite name="load features" tests="6" skipped="0" failures="0" errors="0" time="0s">
     <testcase name="load features within path" status="passed" time="0s"></testcase>
@@ -394,12 +394,6 @@ func TestSucceedWithJunitAndConcurrencyOption(t *testing.T) {
     <testcase name="should handle string argument followed by comma" status="passed" time="0s"></testcase>
     <testcase name="should handle arguments in the beggining or end of the step" status="passed" time="0s"></testcase>
   </testsuite>
-  <testsuite name="tag filters" tests="4" skipped="0" failures="0" errors="0" time="0s">
-    <testcase name="should filter outline examples by tags" status="passed" time="0s"></testcase>
-    <testcase name="should filter scenarios by X tag" status="passed" time="0s"></testcase>
-    <testcase name="should filter scenarios by X tag not having Y" status="passed" time="0s"></testcase>
-    <testcase name="should filter scenarios having Y and Z tags" status="passed" time="0s"></testcase>
-  </testsuite>
   <testsuite name="run outline" tests="6" skipped="0" failures="0" errors="0" time="0s">
     <testcase name="should run a normal outline" status="passed" time="0s"></testcase>
     <testcase name="should continue through examples on failure" status="passed" time="0s"></testcase>
@@ -407,6 +401,12 @@ func TestSucceedWithJunitAndConcurrencyOption(t *testing.T) {
     <testcase name="should translate step table body" status="passed" time="0s"></testcase>
     <testcase name="should translate step doc string argument #1" status="passed" time="0s"></testcase>
     <testcase name="should translate step doc string argument #2" status="passed" time="0s"></testcase>
+  </testsuite>
+  <testsuite name="tag filters" tests="4" skipped="0" failures="0" errors="0" time="0s">
+    <testcase name="should filter outline examples by tags" status="passed" time="0s"></testcase>
+    <testcase name="should filter scenarios by X tag" status="passed" time="0s"></testcase>
+    <testcase name="should filter scenarios by X tag not having Y" status="passed" time="0s"></testcase>
+    <testcase name="should filter scenarios having Y and Z tags" status="passed" time="0s"></testcase>
   </testsuite>
 </testsuites>`
 

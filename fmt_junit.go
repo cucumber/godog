@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"sync"
 	"time"
 
@@ -124,6 +125,8 @@ func buildJUNITPackageSuite(suiteName string, startedAt time.Time, features []*f
 		TestSuites: make([]*junitTestSuite, len(features)),
 		Time:       timeNowFunc().Sub(startedAt).String(),
 	}
+
+	sort.Sort(sortByOrderGiven(features))
 
 	for idx, feat := range features {
 		ts := junitTestSuite{

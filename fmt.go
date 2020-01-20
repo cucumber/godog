@@ -242,8 +242,7 @@ func (f *basefmt) Node(n interface{}) {
 	case *gherkin.Scenario:
 		f.owner = t
 		feature := f.features[len(f.features)-1]
-		feature.time = timeNowFunc()
-		feature.Scenarios = append(feature.Scenarios, &scenario{Name: t.Name, time: feature.time})
+		feature.Scenarios = append(feature.Scenarios, &scenario{Name: t.Name, time: timeNowFunc()})
 	case *gherkin.ScenarioOutline:
 		feature := f.features[len(f.features)-1]
 		feature.Scenarios = append(feature.Scenarios, &scenario{OutlineName: t.Name})
@@ -270,7 +269,7 @@ func (f *basefmt) Defined(*gherkin.Step, *StepDef) {
 }
 
 func (f *basefmt) Feature(ft *gherkin.Feature, p string, c []byte) {
-	f.features = append(f.features, &feature{Path: p, Feature: ft})
+	f.features = append(f.features, &feature{Path: p, Feature: ft, time: timeNowFunc()})
 }
 
 func (f *basefmt) Passed(step *gherkin.Step, match *StepDef) {
