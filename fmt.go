@@ -242,7 +242,8 @@ func (f *basefmt) Node(n interface{}) {
 	case *gherkin.Scenario:
 		f.owner = t
 		feature := f.features[len(f.features)-1]
-		feature.Scenarios = append(feature.Scenarios, &scenario{Name: t.Name})
+		feature.time = timeNowFunc()
+		feature.Scenarios = append(feature.Scenarios, &scenario{Name: t.Name, time: feature.time})
 	case *gherkin.ScenarioOutline:
 		feature := f.features[len(f.features)-1]
 		feature.Scenarios = append(feature.Scenarios, &scenario{OutlineName: t.Name})
@@ -252,7 +253,7 @@ func (f *basefmt) Node(n interface{}) {
 		feature := f.features[len(f.features)-1]
 		lastExample := feature.Scenarios[len(feature.Scenarios)-1]
 
-		newExample := scenario{OutlineName: lastExample.OutlineName, ExampleNo: lastExample.ExampleNo + 1}
+		newExample := scenario{OutlineName: lastExample.OutlineName, ExampleNo: lastExample.ExampleNo + 1, time: timeNowFunc()}
 		newExample.Name = fmt.Sprintf("%s #%d", newExample.OutlineName, newExample.ExampleNo)
 
 		const firstExample = 1
