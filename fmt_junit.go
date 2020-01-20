@@ -126,7 +126,7 @@ func buildJUNITPackageSuite(suiteName string, startedAt time.Time, features []*f
 		Time:       timeNowFunc().Sub(startedAt).String(),
 	}
 
-	sort.Sort(sortByOrderGiven(features))
+	sort.Sort(sortByName(features))
 
 	for idx, feat := range features {
 		ts := junitTestSuite{

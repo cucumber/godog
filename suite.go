@@ -49,6 +49,12 @@ func (f feature) appendStepResult(s *stepResult) {
 	scenario.Steps = append(scenario.Steps, s)
 }
 
+type sortByName []*feature
+
+func (s sortByName) Len() int           { return len(s) }
+func (s sortByName) Less(i, j int) bool { return s[i].Name < s[j].Name }
+func (s sortByName) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+
 type scenario struct {
 	Name        string
 	OutlineName string
