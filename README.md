@@ -366,9 +366,8 @@ and will be treated cautiously.
 
 ## License
 
-**Godog** is licensed under the [three clause BSD license][license]
-
-**Gherkin** is licensed under the [MIT][gherkin-license] and developed as
+**Godog** is licensed under the [MIT][license]
+**Gherkin** is licensed under the [MIT][license] and developed as
 a part of the [cucumber project][cucumber]
 
 [godoc]: http://godoc.org/github.com/DATA-DOG/godog "Documentation on godoc"
@@ -376,5 +375,4 @@ a part of the [cucumber project][cucumber]
 [behat]: http://docs.behat.org/ "Behavior driven development framework for PHP"
 [cucumber]: https://cucumber.io/ "Behavior driven development framework"
 [gherkin]: https://github.com/cucumber/gherkin-go "Gherkin3 parser for GO"
-[gherkin-license]: https://en.wikipedia.org/wiki/MIT_License "The MIT license"
-[license]: http://en.wikipedia.org/wiki/BSD_licenses "The three clause BSD license"
+[license]: https://en.wikipedia.org/wiki/MIT_License "The MIT license"
