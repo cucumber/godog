@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/DATA-DOG/godog/gherkin"
@@ -22,9 +23,56 @@ var typeOfBytes = reflect.TypeOf([]byte(nil))
 
 type feature struct {
 	*gherkin.Feature
+
+	Scenarios []*scenario
+
+	time    time.Time
 	Content []byte `json:"-"`
 	Path    string `json:"path"`
 	order   int
+}
+
+func (f feature) startedAt() time.Time {
+	return f.time
+}
+
+func (f feature) finishedAt() time.Time {
+	if len(f.Scenarios) == 0 {
+		return f.startedAt()
+	}
+
+	return f.Scenarios[len(f.Scenarios)-1].finishedAt()
+}
+
+func (f feature) appendStepResult(s *stepResult) {
+	scenario := f.Scenarios[len(f.Scenarios)-1]
+	scenario.Steps = append(scenario.Steps, s)
+}
+
+type sortByName []*feature
+
+func (s sortByName) Len() int           { return len(s) }
+func (s sortByName) Less(i, j int) bool { return s[i].Name < s[j].Name }
+func (s sortByName) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+
+type scenario struct {
+	Name        string
+	OutlineName string
+	ExampleNo   int
+	time        time.Time
+	Steps       []*stepResult
+}
+
+func (s scenario) startedAt() time.Time {
+	return s.time
+}
+
+func (s scenario) finishedAt() time.Time {
+	if len(s.Steps) == 0 {
+		return s.startedAt()
+	}
+
+	return s.Steps[len(s.Steps)-1].time
 }
 
 // ErrUndefined is returned in case if step definition was not found

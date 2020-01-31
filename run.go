@@ -33,8 +33,8 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 	var useFmtCopy bool
 	var copyLock sync.Mutex
 
-	// special mode for progress-formatter
-	if _, ok := r.fmt.(*progress); ok {
+	// special mode for concurrent-formatter
+	if _, ok := r.fmt.(ConcurrentFormatter); ok {
 		useFmtCopy = true
 	}
 
@@ -62,12 +62,11 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 				fmtCopy = formatterFn()
 				suite.fmt = fmtCopy
 
-				// sync lock and steps for progress printing
-				if sf, ok := suite.fmt.(*progress); ok {
-					if rf, ok := r.fmt.(*progress); ok {
-						sf.lock = rf.lock
-						sf.steps = rf.steps
-					}
+				concurrentDestFmt, dOk := fmtCopy.(ConcurrentFormatter)
+				concurrentSourceFmt, sOk := r.fmt.(ConcurrentFormatter)
+
+				if dOk && sOk {
+					concurrentDestFmt.Sync(concurrentSourceFmt)
 				}
 			} else {
 				suite.fmt = r.fmt
@@ -80,34 +79,18 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 			}
 			if useFmtCopy {
 				copyLock.Lock()
-				dest, dOk := r.fmt.(*progress)
-				source, sOk := fmtCopy.(*progress)
+
+				concurrentDestFmt, dOk := r.fmt.(ConcurrentFormatter)
+				concurrentSourceFmt, sOk := fmtCopy.(ConcurrentFormatter)
 
 				if dOk && sOk {
-					for _, v := range source.features {
-						dest.features = append(dest.features, v)
-					}
-
-					for _, v := range source.failed {
-						dest.failed = append(dest.failed, v)
-					}
-					for _, v := range source.passed {
-						dest.passed = append(dest.passed, v)
-					}
-					for _, v := range source.skipped {
-						dest.skipped = append(dest.skipped, v)
-					}
-					for _, v := range source.undefined {
-						dest.undefined = append(dest.undefined, v)
-					}
-					for _, v := range source.pending {
-						dest.pending = append(dest.pending, v)
-					}
+					concurrentDestFmt.Copy(concurrentSourceFmt)
 				} else if !dOk {
 					panic("cant cast dest formatter to progress-typed")
 				} else if !sOk {
 					panic("cant cast source formatter to progress-typed")
 				}
+
 				copyLock.Unlock()
 			}
 		}(&failed, &ft)
@@ -289,13 +272,11 @@ func Run(suite string, contextInitializer func(suite *Suite)) int {
 
 func supportsConcurrency(format string) bool {
 	switch format {
-	case "events":
-	case "junit":
-	case "pretty":
-	case "cucumber":
+	case "progress", "junit":
+		return true
+	case "events", "pretty", "cucumber":
+		return false
 	default:
-		return true // supports concurrency
+		return false
 	}
-
-	return false // does not support concurrency
 }
