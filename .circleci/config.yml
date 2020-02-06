@@ -14,21 +14,21 @@ executors:
 jobs:
   go1_11:
     working_directory: /go/src/github.com/cucumber/godog
-    executor: go
+    executor: go1_11
     steps:
       - checkout
       - run: go test
 
   go1_12:
     working_directory: /go/src/github.com/cucumber/godog
-    executor: go
+    executor: go1_12
     steps:
       - checkout
       - run: go test
 
   go1_13:
     working_directory: /go/src/github.com/cucumber/godog
-    executor: go1.13
+    executor: go1_13
     steps:
       - checkout
       - run: go test
