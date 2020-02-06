@@ -1,0 +1,22 @@
+version: 2.1
+executors:
+  go:
+    docker:
+    - image: circleci/go
+
+jobs:
+  test:
+    environment:
+      GO111MODULE: auto
+    executor: go
+    steps:
+      - checkout
+      - run: cd $GOPATH
+      - run: go get github.com/DATA-DOG/godog/cmd/godog
+      - run: go test
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test
