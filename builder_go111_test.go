@@ -4,6 +4,7 @@ package godog
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -36,7 +37,7 @@ func TestGodogBuildWithModuleOutsideGopathAndHavingOnlyFeature(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if out, err := exec.Command("go", "mod", "edit", "-require", "github.com/cucumber/godog@v0.7.12").CombinedOutput(); err != nil {
+	if out, err := exec.Command("go", "mod", "edit", "-require", fmt.Sprintf("github.com/cucumber/godog@%s", Version)).CombinedOutput(); err != nil {
 		t.Log(string(out))
 		t.Fatal(err)
 	}
