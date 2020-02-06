@@ -12,8 +12,6 @@ jobs:
     executor: go
     steps:
       - checkout
-      - run: cd $GOPATH
-      - run: go get github.com/cucumber/godog/cmd/godog
       - run: go test
 
 workflows:
