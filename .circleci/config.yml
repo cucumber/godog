@@ -7,8 +7,6 @@ executors:
 jobs:
   test:
     working_directory: /go/src/github.com/cucumber/godog
-    environment:
-      GO111MODULE: auto
     executor: go
     steps:
       - checkout
