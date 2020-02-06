@@ -30,7 +30,7 @@ func TestPrintingFormatters(t *testing.T) {
 	suite.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)
 
 	pkg := os.Getenv("GODOG_TESTED_PACKAGE")
-	os.Setenv("GODOG_TESTED_PACKAGE", "github.com/DATA-DOG/godog")
+	os.Setenv("GODOG_TESTED_PACKAGE", "github.com/cucumber/godog")
 	for _, feat := range features {
 		for name := range AvailableFormatters() {
 			expectOutputPath := strings.Replace(feat.Path, "features", name, 1)
