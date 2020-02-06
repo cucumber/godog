@@ -1,6 +1,6 @@
 [![CircleCI](https://circleci.com/gh/cucumber/godog/tree/master.svg?style=svg)](https://circleci.com/gh/cucumber/godog/tree/master)
-[![GoDoc](https://godoc.org/github.com/DATA-DOG/godog?status.svg)](https://godoc.org/github.com/DATA-DOG/godog)
-[![codecov.io](https://codecov.io/github/DATA-DOG/godog/branch/master/graph/badge.svg)](https://codecov.io/github/DATA-DOG/godog)
+[![GoDoc](https://godoc.org/github.com/cucumber/godog?status.svg)](https://godoc.org/github.com/cucumber/godog)
+[![codecov.io](https://codecov.io/github/cucumber/godog/branch/master/graph/badge.svg)](https://codecov.io/github/cucumber/godog)
 
 # Godog
 
@@ -12,7 +12,7 @@
 
 Please read all the README, you may find it very useful. And do not forget
 to peek into the
-[CHANGELOG](https://github.com/DATA-DOG/godog/blob/master/CHANGELOG.md)
+[CHANGELOG](https://github.com/cucumber/godog/blob/master/CHANGELOG.md)
 from time to time.
 
 Package godog is the official Cucumber BDD framework for Golang, it merges
@@ -64,7 +64,7 @@ themselves from costly regressions.
 
 ## Install
 
-    go get github.com/DATA-DOG/godog/cmd/godog
+    go get github.com/cucumber/godog/cmd/godog
 
 ## Example
 
@@ -108,7 +108,7 @@ undefined:
 If we wish to vendor godog dependency, we can do it as usual, using tools
 you prefer:
 
-    git clone https://github.com/DATA-DOG/godog.git $GOPATH/src/godogs/vendor/github.com/DATA-DOG/godog
+    git clone https://github.com/cucumber/godog.git $GOPATH/src/godogs/vendor/github.com/cucumber/godog
 
 It gives you undefined step snippets to implement in your test context.
 You may copy these snippets into your `godogs_test.go` file.
@@ -153,7 +153,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/DATA-DOG/godog"
+	"github.com/cucumber/godog"
 )
 
 func thereAreGodogs(available int) error {
@@ -213,7 +213,7 @@ composed.
   image](https://github.com/myie/cucumber-html-reporter) for usage
   details.
 - [how to use godog by semaphoreci](https://semaphoreci.com/community/tutorials/how-to-use-godog-for-behavior-driven-development-in-go)
-- see [examples](https://github.com/DATA-DOG/godog/tree/master/examples)
+- see [examples](https://github.com/cucumber/godog/tree/master/examples)
 - see extension [AssistDog](https://github.com/hellomd/assistdog), which
   may have useful **gherkin.DataTable** transformations or comparison
   methods for assertions.
@@ -372,7 +372,7 @@ and will be treated cautiously.
 **Gherkin** is licensed under the [MIT][license] and developed as
 a part of the [cucumber project][cucumber]
 
-[godoc]: http://godoc.org/github.com/DATA-DOG/godog "Documentation on godoc"
+[godoc]: http://godoc.org/github.com/cucumber/godog "Documentation on godoc"
 [golang]: https://golang.org/  "GO programming language"
 [behat]: http://docs.behat.org/ "Behavior driven development framework for PHP"
 [cucumber]: https://cucumber.io/ "Behavior driven development framework"

@@ -1,7 +1,7 @@
 # An example of API with DB
 
 The following example demonstrates steps how we describe and test our API with DB using **godog**.
-To start with, see [API example](https://github.com/DATA-DOG/godog/tree/master/examples/api) before.
+To start with, see [API example](https://github.com/cucumber/godog/tree/master/examples/api) before.
 We have extended it to be used with database.
 
 The interesting point is, that we have [go-txdb](https://github.com/DATA-DOG/go-txdb) library,
