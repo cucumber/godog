@@ -1,32 +1,32 @@
 version: 2.1
 
 executors:
-  go1.13:
+  go1_13:
     docker:
     - image: circleci/golang:1.11
-  go1.12:
+  go1_12:
     docker:
     - image: circleci/golang:1.12
-  go1.13:
+  go1_13:
     docker:
     - image: circleci/golang:1.13
 
 jobs:
-  go1.11:
+  go1_11:
     working_directory: /go/src/github.com/cucumber/godog
     executor: go
     steps:
       - checkout
       - run: go test
 
-  go1.12:
+  go1_12:
     working_directory: /go/src/github.com/cucumber/godog
     executor: go
     steps:
       - checkout
       - run: go test
 
-  go1.13:
+  go1_13:
     working_directory: /go/src/github.com/cucumber/godog
     executor: go1.13
     steps:
@@ -37,6 +37,6 @@ workflows:
   version: 2
   test:
     jobs:
-      - go1.11
-      - go1.12
-      - go1.13
+      - go1_11
+      - go1_12
+      - go1_13
