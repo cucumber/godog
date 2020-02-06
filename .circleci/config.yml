@@ -1,7 +1,7 @@
 version: 2.1
 
 executors:
-  go1_13:
+  go1_11:
     docker:
     - image: circleci/golang:1.11
   go1_12:
