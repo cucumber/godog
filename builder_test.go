@@ -27,7 +27,7 @@ var builderTestFile = `package godogs
 import (
 	"fmt"
 
-	"github.com/DATA-DOG/godog"
+	"github.com/cucumber/godog"
 )
 
 func thereAreGodogs(available int) error {
@@ -66,7 +66,7 @@ var builderXTestFile = `package godogs_test
 import (
 	"fmt"
 
-	"github.com/DATA-DOG/godog"
+	"github.com/cucumber/godog"
 	"godogs"
 )
 
@@ -275,7 +275,7 @@ func TestGodogBuildWithinGopath(t *testing.T) {
 	}
 	defer os.RemoveAll(gopath)
 
-	pkg := filepath.Join(gopath, "src", "github.com", "DATA-DOG")
+	pkg := filepath.Join(gopath, "src", "github.com", "cucumber")
 	if err := os.MkdirAll(pkg, 0755); err != nil {
 		t.Fatal(err)
 	}
@@ -325,7 +325,7 @@ func TestGodogBuildWithVendoredGodogAndMod(t *testing.T) {
 	}
 	defer os.RemoveAll(gopath)
 
-	pkg := filepath.Join(dir, "vendor", "github.com", "DATA-DOG")
+	pkg := filepath.Join(dir, "vendor", "github.com", "cucumber")
 	if err := os.MkdirAll(pkg, 0755); err != nil {
 		t.Fatal(err)
 	}
@@ -371,7 +371,7 @@ func TestGodogBuildWithVendoredGodogWithoutModule(t *testing.T) {
 	}
 	defer os.RemoveAll(gopath)
 
-	pkg := filepath.Join(dir, "vendor", "github.com", "DATA-DOG")
+	pkg := filepath.Join(dir, "vendor", "github.com", "cucumber")
 	if err := os.MkdirAll(pkg, 0755); err != nil {
 		t.Fatal(err)
 	}

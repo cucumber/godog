@@ -36,7 +36,7 @@ func TestGodogBuildWithModuleOutsideGopathAndHavingOnlyFeature(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if out, err := exec.Command("go", "mod", "edit", "-require", "github.com/DATA-DOG/godog@v0.7.12").CombinedOutput(); err != nil {
+	if out, err := exec.Command("go", "mod", "edit", "-require", "github.com/cucumber/godog@v0.7.12").CombinedOutput(); err != nil {
 		t.Log(string(out))
 		t.Fatal(err)
 	}

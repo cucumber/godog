@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	txdb "github.com/DATA-DOG/go-txdb"
-	"github.com/DATA-DOG/godog"
-	"github.com/DATA-DOG/godog/gherkin"
+	"github.com/cucumber/godog"
+	"github.com/cucumber/godog/gherkin"
 )
 
 func init() {

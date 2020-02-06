@@ -1,0 +1,23 @@
+version: 2.1
+executors:
+  go:
+    docker:
+    - image: circleci/golang:1.13
+
+jobs:
+  test:
+    working_directory: /go/src/github.com/cucumber/godog
+    environment:
+      GO111MODULE: auto
+    executor: go
+    steps:
+      - checkout
+      - run: cd $GOPATH
+      - run: go get github.com/cucumber/godog/cmd/godog
+      - run: go test
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test
