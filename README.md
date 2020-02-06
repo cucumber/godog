@@ -366,6 +366,8 @@ Feel free to open a pull request. Note, if you wish to contribute an extension t
 please open an issue before to discuss whether these changes can be accepted. All backward incompatible changes are
 and will be treated cautiously.
 
+Reach out to the Godog community on our [Discord](https://discord.gg/nSWDF9s).
+
 ## License
 
 **Godog** is licensed under the [MIT][license]
