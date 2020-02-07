@@ -1,25 +1,4 @@
-package godog
-
-import (
-	"fmt"
-	"testing"
-)
-
-func TestSucceedWithJUnit(t *testing.T) {
-	const format = "junit"
-
-	// Will test concurrency setting 0, 1, 2 and 3.
-	for concurrency := range make([]int, 4) {
-		t.Run(
-			fmt.Sprintf("%s_concurrency_%d", format, concurrency),
-			func(t *testing.T) {
-				testSucceedRun(t, format, concurrency, expectedOutputJUnit)
-			},
-		)
-	}
-}
-
-const expectedOutputJUnit = `<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <testsuites name="succeed" tests="60" skipped="0" failures="0" errors="0" time="0s">
   <testsuite name="cucumber json formatter" tests="9" skipped="0" failures="0" errors="0" time="0s">
     <testcase name="Support of Feature Plus Scenario Node" status="passed" time="0s"></testcase>
@@ -103,4 +82,4 @@ const expectedOutputJUnit = `<?xml version="1.0" encoding="UTF-8"?>
   <testsuite name="užkrauti savybes" tests="1" skipped="0" failures="0" errors="0" time="0s">
     <testcase name="savybių užkrovimas iš aplanko" status="passed" time="0s"></testcase>
   </testsuite>
-</testsuites>`
+</testsuites>

@@ -1,25 +1,4 @@
-package godog
-
-import (
-	"fmt"
-	"testing"
-)
-
-func TestSucceedWithCucumber(t *testing.T) {
-	const format = "cucumber"
-
-	// Will test concurrency setting 0 and 1, which means no concurrency.
-	for concurrency := range make([]int, 2) {
-		t.Run(
-			fmt.Sprintf("%s_concurrency_%d", format, concurrency),
-			func(t *testing.T) {
-				testSucceedRun(t, format, concurrency, expectedOutputCucumber)
-			},
-		)
-	}
-}
-
-const expectedOutputCucumber = `[
+[
     {
         "uri": "features/background.feature",
         "id": "run-background",
@@ -4023,7 +4002,7 @@ const expectedOutputCucumber = `[
                         "name": "the undefined step snippets should be:",
                         "line": 21,
                         "doc_string": {
-                            "value": "func iSendRequestTo(arg1, arg2 string) error {\n        return godog.ErrPending\n}\n\nfunc theResponseCodeShouldBe(arg1 int) error {\n        return godog.ErrPending\n}\n\nfunc FeatureContext(s *godog.Suite) {\n        s.Step(` + "`" + `^I send \"([^\"]*)\" request to \"([^\"]*)\"$` + "`" + `, iSendRequestTo)\n        s.Step(` + "`" + `^the response code should be (\\d+)$` + "`" + `, theResponseCodeShouldBe)\n}",
+                            "value": "func iSendRequestTo(arg1, arg2 string) error {\n        return godog.ErrPending\n}\n\nfunc theResponseCodeShouldBe(arg1 int) error {\n        return godog.ErrPending\n}\n\nfunc FeatureContext(s *godog.Suite) {\n        s.Step(`^I send \"([^\"]*)\" request to \"([^\"]*)\"$`, iSendRequestTo)\n        s.Step(`^the response code should be (\\d+)$`, theResponseCodeShouldBe)\n}",
                             "content_type": "",
                             "line": 22
                         },
@@ -4079,7 +4058,7 @@ const expectedOutputCucumber = `[
                         "name": "the undefined step snippets should be:",
                         "line": 49,
                         "doc_string": {
-                            "value": "func iSendRequestToWith(arg1, arg2 string, arg3 *gherkin.DataTable) error {\n        return godog.ErrPending\n}\n\nfunc theResponseCodeShouldBeAndHeaderShouldBe(arg1 int, arg2, arg3 string) error {\n        return godog.ErrPending\n}\n\nfunc FeatureContext(s *godog.Suite) {\n        s.Step(` + "`" + `^I send \"([^\"]*)\" request to \"([^\"]*)\" with:$` + "`" + `, iSendRequestToWith)\n        s.Step(` + "`" + `^the response code should be (\\d+) and header \"([^\"]*)\" should be \"([^\"]*)\"$` + "`" + `, theResponseCodeShouldBeAndHeaderShouldBe)\n}",
+                            "value": "func iSendRequestToWith(arg1, arg2 string, arg3 *gherkin.DataTable) error {\n        return godog.ErrPending\n}\n\nfunc theResponseCodeShouldBeAndHeaderShouldBe(arg1 int, arg2, arg3 string) error {\n        return godog.ErrPending\n}\n\nfunc FeatureContext(s *godog.Suite) {\n        s.Step(`^I send \"([^\"]*)\" request to \"([^\"]*)\" with:$`, iSendRequestToWith)\n        s.Step(`^the response code should be (\\d+) and header \"([^\"]*)\" should be \"([^\"]*)\"$`, theResponseCodeShouldBeAndHeaderShouldBe)\n}",
                             "content_type": "",
                             "line": 50
                         },
@@ -4152,7 +4131,7 @@ const expectedOutputCucumber = `[
                         "name": "the undefined step snippets should be:",
                         "line": 80,
                         "doc_string": {
-                            "value": "func iPullFromGithubcom() error {\n        return godog.ErrPending\n}\n\nfunc theProjectShouldBeThere() error {\n        return godog.ErrPending\n}\n\nfunc FeatureContext(s *godog.Suite) {\n        s.Step(` + "`" + `^I pull from github\\.com$` + "`" + `, iPullFromGithubcom)\n        s.Step(` + "`" + `^the project should be there$` + "`" + `, theProjectShouldBeThere)\n}",
+                            "value": "func iPullFromGithubcom() error {\n        return godog.ErrPending\n}\n\nfunc theProjectShouldBeThere() error {\n        return godog.ErrPending\n}\n\nfunc FeatureContext(s *godog.Suite) {\n        s.Step(`^I pull from github\\.com$`, iPullFromGithubcom)\n        s.Step(`^the project should be there$`, theProjectShouldBeThere)\n}",
                             "content_type": "",
                             "line": 81
                         },
@@ -4208,7 +4187,7 @@ const expectedOutputCucumber = `[
                         "name": "the undefined step snippets should be:",
                         "line": 106,
                         "doc_string": {
-                            "value": "func thereIsAWhichCosts(arg1 string, arg2 int) error {\n        return godog.ErrPending\n}\n\nfunc iAddTheToTheBasket(arg1 string) error {\n        return godog.ErrPending\n}\n\nfunc FeatureContext(s *godog.Suite) {\n        s.Step(` + "`" + `^there is a \"([^\"]*)\", which costs £(\\d+)$` + "`" + `, thereIsAWhichCosts)\n        s.Step(` + "`" + `^I add the \"([^\"]*)\" to the basket$` + "`" + `, iAddTheToTheBasket)\n}",
+                            "value": "func thereIsAWhichCosts(arg1 string, arg2 int) error {\n        return godog.ErrPending\n}\n\nfunc iAddTheToTheBasket(arg1 string) error {\n        return godog.ErrPending\n}\n\nfunc FeatureContext(s *godog.Suite) {\n        s.Step(`^there is a \"([^\"]*)\", which costs £(\\d+)$`, thereIsAWhichCosts)\n        s.Step(`^I add the \"([^\"]*)\" to the basket$`, iAddTheToTheBasket)\n}",
                             "content_type": "",
                             "line": 107
                         },
@@ -4264,7 +4243,7 @@ const expectedOutputCucumber = `[
                         "name": "the undefined step snippets should be:",
                         "line": 132,
                         "doc_string": {
-                            "value": "func whichCosts(arg1 string, arg2 int) error {\n        return godog.ErrPending\n}\n\nfunc godogs(arg1 int) error {\n        return godog.ErrPending\n}\n\nfunc FeatureContext(s *godog.Suite) {\n        s.Step(` + "`" + `^\"([^\"]*)\", which costs £(\\d+)$` + "`" + `, whichCosts)\n        s.Step(` + "`" + `^(\\d+) godogs$` + "`" + `, godogs)\n}",
+                            "value": "func whichCosts(arg1 string, arg2 int) error {\n        return godog.ErrPending\n}\n\nfunc godogs(arg1 int) error {\n        return godog.ErrPending\n}\n\nfunc FeatureContext(s *godog.Suite) {\n        s.Step(`^\"([^\"]*)\", which costs £(\\d+)$`, whichCosts)\n        s.Step(`^(\\d+) godogs$`, godogs)\n}",
                             "content_type": "",
                             "line": 133
                         },
@@ -4610,4 +4589,4 @@ const expectedOutputCucumber = `[
             }
         ]
     }
-]`
+]

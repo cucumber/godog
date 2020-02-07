@@ -276,6 +276,36 @@ func TestFeatureFilePathParser(t *testing.T) {
 	}
 }
 
+type succeedRunTestCase struct {
+	format      string // formatter to use
+	concurrency int    // concurrency option range to test
+	filename    string // expected output file
+}
+
+func TestSucceedRun(t *testing.T) {
+	testCases := []succeedRunTestCase{
+		{format: "progress", concurrency: 4, filename: "fixtures/progress_output.txt"},
+		{format: "junit", concurrency: 4, filename: "fixtures/junit_output.xml"},
+		{format: "cucumber", concurrency: 2, filename: "fixtures/cucumber_output.json"},
+	}
+
+	for _, tc := range testCases {
+		expectedOutput, err := ioutil.ReadFile(tc.filename)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for concurrency := range make([]int, tc.concurrency) {
+			t.Run(
+				fmt.Sprintf("%s/concurrency/%d", tc.format, concurrency),
+				func(t *testing.T) {
+					testSucceedRun(t, tc.format, concurrency, string(expectedOutput))
+				},
+			)
+		}
+	}
+}
+
 func testSucceedRun(t *testing.T, format string, concurrency int, expectedOutput string) {
 	output := new(bytes.Buffer)
 
