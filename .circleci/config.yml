@@ -12,15 +12,6 @@ executors:
     - image: circleci/golang:1.13
 
 commands:
-  env:
-    description: "Setup environment variables"
-    steps:
-      - run:
-          command: |
-            export GOROOT=/usr/local/go
-            export GOPATH=$HOME/go
-            export GO111MODULE=on
-            export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
   vet:
     description: "Run go vet"
     steps:
@@ -46,7 +37,6 @@ commands:
   all:
     description: "Run all commands against godog code"
     steps:
-      - env
       - vet
       - fmt
       - godog
