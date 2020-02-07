@@ -33,6 +33,7 @@ commands:
   all:
     description: "Run all commands against godog code"
     steps:
+      - checkout
       - vet
       - fmt
       - godog
