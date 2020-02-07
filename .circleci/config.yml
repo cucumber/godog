@@ -3,7 +3,11 @@ version: 2.1
 executors:
   go1_11:
     docker:
-    - image: circleci/golang:1.11
+      - image: circleci/golang:1.11
+    environment:
+      - GOROOT: /usr/local/go
+      - GOPATH: $HOME/go
+      - PATH: $GOPATH/bin:$GOROOT/bin:$PATH
   go1_12:
     docker:
     - image: circleci/golang:1.12
@@ -67,5 +71,5 @@ workflows:
   test:
     jobs:
       - go1_11
-      - go1_12
-      - go1_13
+      # - go1_12
+      # - go1_13
