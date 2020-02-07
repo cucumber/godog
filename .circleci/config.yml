@@ -11,27 +11,58 @@ executors:
     docker:
     - image: circleci/golang:1.13
 
+commands:
+  env:
+    steps:
+      - run: export GOROOT=/usr/local/go
+      - run: export GOPATH=$HOME/go
+      - run: export GO111MODULE=on
+      - run: export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+  vet:
+    steps:
+      - run: go vet github.com/cucumber/godog
+      - run: go vet github.com/cucumber/godog/gherkin
+      - run: go vet github.com/cucumber/godog/colors
+  
+  fmt:
+    steps:
+      - run: test -z "$(go fmt ./...)"
+
+  godog:
+    steps:
+      - run: godog -f progress
+
+  go_test:
+    steps:
+      - run: go test -v -race -coverprofile=coverage.txt -covermode=atomic
+
+  all:
+    steps:
+      - env
+      - vet
+      - fmt
+      - godog
+      - go_test
+
 jobs:
   go1_11:
     working_directory: /go/src/github.com/cucumber/godog
     executor: go1_11
     steps:
-      - checkout
-      - run: make test
+      - all
 
   go1_12:
     working_directory: /go/src/github.com/cucumber/godog
     executor: go1_12
     steps:
-      - checkout
-      - run: make test
+      - all
 
   go1_13:
     working_directory: /go/src/github.com/cucumber/godog
     executor: go1_13
     steps:
-      - checkout
-      - run: make test
+      - all
+      
 
 workflows:
   version: 2
