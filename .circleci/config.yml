@@ -4,8 +4,6 @@ executors:
   exec_go_1_11:
     docker:
       - image: circleci/golang:1.11.13
-    environment:
-      CGO_ENABLED: 0
 
 commands:
   vet:
@@ -19,6 +17,10 @@ commands:
     description: "Run go fmt"
     steps:
       - run: test -z "$(go fmt ./...)"
+
+  install_cmd:
+    steps:
+      - run: GO111MODULE=off go install ./cmd/godog
 
   godog:
     description: "Run godog"
@@ -34,9 +36,9 @@ commands:
     description: "Run all commands against godog code"
     steps:
       - checkout
-      # - vet
-      # - fmt
-      - run: GO111MODULE=off go install ./cmd/godog
+      - vet
+      - fmt
+      - install_cmd
       - godog
       - go_test
 
