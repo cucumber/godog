@@ -14,10 +14,11 @@ executors:
 commands:
   env:
     steps:
-      - run: export GOROOT=/usr/local/go
-      - run: export GOPATH=$HOME/go
-      - run: export GO111MODULE=on
-      - run: export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+      - run: |
+        export GOROOT=/usr/local/go
+        export GOPATH=$HOME/go
+        export GO111MODULE=on
+        export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
   vet:
     steps:
       - run: go vet github.com/cucumber/godog
