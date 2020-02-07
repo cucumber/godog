@@ -44,7 +44,6 @@ commands:
       - vet
       - fmt
       - lint
-      - install_cmd
       - godog
       - go_test
 
