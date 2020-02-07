@@ -4,6 +4,12 @@ executors:
   exec_go_1_11:
     docker:
       - image: circleci/golang:1.11.13
+  exec_go_1_12:
+    docker:
+      - image: circleci/golang:1.12.16
+  exec_go_1_13:
+    docker:
+      - image: circleci/golang:1.13.7
 
 commands:
   vet:
@@ -12,26 +18,21 @@ commands:
       - run: go vet github.com/cucumber/godog
       - run: go vet github.com/cucumber/godog/gherkin
       - run: go vet github.com/cucumber/godog/colors
-  
   fmt:
     description: "Run go fmt"
     steps:
       - run: test -z "$(go fmt ./...)"
-
   install_cmd:
     steps:
       - run: GO111MODULE=off go install ./cmd/godog
-
   godog:
     description: "Run godog"
     steps:
       - run: godog -f progress
-
   go_test:
     description: "Run go test"
     steps:
       - run: go test -v -race -coverprofile=coverage.txt -covermode=atomic
-
   all:
     description: "Run all commands against godog code"
     steps:
@@ -48,9 +49,21 @@ jobs:
     executor: exec_go_1_11
     steps:
       - all
+  go1_12:
+    working_directory: /go/src/github.com/cucumber/godog
+    executor: exec_go_1_12
+    steps:
+      - all
+  go1_13:
+    working_directory: /go/src/github.com/cucumber/godog
+    executor: exec_go1_13
+    steps:
+      - all
 
 workflows:
   version: 2
   test:
     jobs:
       - go1_11
+      - go1_12
+      - go1_13
