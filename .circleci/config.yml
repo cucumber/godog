@@ -13,31 +13,38 @@ executors:
 
 commands:
   env:
+    description: "Setup environment variables"
     steps:
-      - run: |
-        export GOROOT=/usr/local/go
-        export GOPATH=$HOME/go
-        export GO111MODULE=on
-        export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+      - run:
+          command: |
+            export GOROOT=/usr/local/go
+            export GOPATH=$HOME/go
+            export GO111MODULE=on
+            export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
   vet:
+    description: "Run go vet"
     steps:
       - run: go vet github.com/cucumber/godog
       - run: go vet github.com/cucumber/godog/gherkin
       - run: go vet github.com/cucumber/godog/colors
   
   fmt:
+    description: "Run go fmt"
     steps:
       - run: test -z "$(go fmt ./...)"
 
   godog:
+    description: "Run godog"
     steps:
       - run: godog -f progress
 
   go_test:
+    description: "Run go test"
     steps:
       - run: go test -v -race -coverprofile=coverage.txt -covermode=atomic
 
   all:
+    description: "Run all commands against godog code"
     steps:
       - env
       - vet
