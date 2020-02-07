@@ -20,6 +20,8 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Fixed
 
+- Find/Replaced references to DATA-DOG/godog -> cucumber/godog for docs. ([smikulcik])
+
 ## [0.8.0]
 
 ### Added
@@ -42,3 +44,4 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 <!-- Contributors -->
 [jaysonesmith]:     https://github.com/jaysonesmith
+[smikulcik]:        https://github.com/smikulcik
