@@ -56,7 +56,7 @@ jobs:
       - all
   go1_13:
     working_directory: /go/src/github.com/cucumber/godog
-    executor: exec_go1_13
+    executor: exec_go_1_13
     steps:
       - all
 
