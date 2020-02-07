@@ -22,12 +22,16 @@ commands:
     description: "Run go fmt"
     steps:
       - run: test -z "$(go fmt ./...)"
-  install_cmd:
+  lint:
+    description: "Run golint"
     steps:
-      - run: GO111MODULE=off go install ./cmd/godog
+      - run: go get -u golang.org/x/lint/golint
+      - run: golint ./godog
+      - run: golint ./cmd/godog/main.go
   godog:
     description: "Run godog"
     steps:
+      - run: GO111MODULE=off go install ./cmd/godog
       - run: godog -f progress
   go_test:
     description: "Run go test"
@@ -39,6 +43,7 @@ commands:
       - checkout
       - vet
       - fmt
+      - lint
       - install_cmd
       - godog
       - go_test
