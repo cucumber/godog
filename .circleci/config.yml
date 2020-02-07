@@ -34,8 +34,9 @@ commands:
     description: "Run all commands against godog code"
     steps:
       - checkout
-      - vet
-      - fmt
+      # - vet
+      # - fmt
+      - run: GO111MODULE=off go install ./cmd/godog
       - godog
       - go_test
 
