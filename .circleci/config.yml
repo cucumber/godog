@@ -1,19 +1,11 @@
 version: 2.1
 
 executors:
-  go1_11:
+  exec_go_1_11:
     docker:
-      - image: circleci/golang:1.11
+      - image: circleci/golang:1.11.13
     environment:
-      GOROOT: "/usr/local/go"
-      GOPATH: "/go"
-      PATH: $GOPATH/bin:$GOROOT/bin:$PATH
-  go1_12:
-    docker:
-    - image: circleci/golang:1.12
-  go1_13:
-    docker:
-    - image: circleci/golang:1.13
+      CGO_ENABLED: 0
 
 commands:
   vet:
@@ -49,27 +41,12 @@ commands:
 jobs:
   go1_11:
     working_directory: /go/src/github.com/cucumber/godog
-    executor: go1_11
+    executor: exec_go_1_11
     steps:
       - all
-
-  go1_12:
-    working_directory: /go/src/github.com/cucumber/godog
-    executor: go1_12
-    steps:
-      - all
-
-  go1_13:
-    working_directory: /go/src/github.com/cucumber/godog
-    executor: go1_13
-    steps:
-      - all
-      
 
 workflows:
   version: 2
   test:
     jobs:
       - go1_11
-      # - go1_12
-      # - go1_13
