@@ -366,7 +366,13 @@ Feel free to open a pull request. Note, if you wish to contribute an extension t
 please open an issue before to discuss whether these changes can be accepted. All backward incompatible changes are
 and will be treated cautiously.
 
-Reach out to the Godog community on our [Discord](https://discord.gg/nSWDF9s).
+Reach out to the community on our [Cucumber Slack Community](https://cucumberbdd.slack.com/).
+Join [here](https://cucumberbdd-slack-invite.herokuapp.com/).
+
+### Popular Cucumber Slack channels for Godog:
+- [#help-godog](https://cucumberbdd.slack.com/archives/CTNL1JCVA) - General Godog Adoption Help
+- [#committers-go](https://cucumberbdd.slack.com/archives/CA5NJPDJ4) - Golang focused Cucumber Contributors
+- [#committers](https://cucumberbdd.slack.com/archives/C62D0FK0E) - General Cucumber Contributors
 
 ## License
 
