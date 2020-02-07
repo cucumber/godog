@@ -5,9 +5,9 @@ executors:
     docker:
       - image: circleci/golang:1.11
     environment:
-      - GOROOT: /usr/local/go
-      - GOPATH: $HOME/go
-      - PATH: $GOPATH/bin:$GOROOT/bin:$PATH
+      - GOROOT: "/usr/local/go"
+      - GOPATH: "/go"
+      - PATH: ${GOPATH}/bin:${GOROOT}/bin:${PATH}
   go1_12:
     docker:
     - image: circleci/golang:1.12
