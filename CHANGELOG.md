@@ -12,6 +12,8 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Added
 
+- Link in Readme to the Slack community. ([smikulcik])
+
 ### Changed
 
 ### Deprecated
