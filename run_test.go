@@ -6,11 +6,11 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/cucumber/godog/colors"
+	"github.com/cucumber/godog/fixtures"
 	"github.com/cucumber/godog/gherkin"
 )
 
@@ -285,9 +285,9 @@ type succeedRunTestCase struct {
 
 func TestSucceedRun(t *testing.T) {
 	testCases := []succeedRunTestCase{
-		{format: "progress", concurrency: 4, filename: "fixtures/progress_output.txt"},
-		{format: "junit", concurrency: 4, filename: "fixtures/junit_output.xml"},
-		{format: "cucumber", concurrency: 2, filename: "fixtures/cucumber_output.json"},
+		{format: "progress", concurrency: 4, filename: fixtures.OutputFilenameProgress},
+		{format: "junit", concurrency: 4, filename: fixtures.OutputFilenameJUnit},
+		{format: "cucumber", concurrency: 2, filename: fixtures.OutputFilenameCucumber},
 	}
 
 	for _, tc := range testCases {
@@ -300,10 +300,6 @@ func TestSucceedRun(t *testing.T) {
 			t.Run(
 				fmt.Sprintf("%s/concurrency/%d", tc.format, concurrency),
 				func(t *testing.T) {
-					if tc.format == "cucumber" && strings.HasPrefix(runtime.Version(), "go1.11") {
-						t.Skipf("skipping due to format %q and go version: %q", tc.format, runtime.Version())
-					}
-
 					testSucceedRun(t, tc.format, concurrency, string(expectedOutput))
 				},
 			)
