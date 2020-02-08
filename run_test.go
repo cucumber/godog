@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -299,6 +300,10 @@ func TestSucceedRun(t *testing.T) {
 			t.Run(
 				fmt.Sprintf("%s/concurrency/%d", tc.format, concurrency),
 				func(t *testing.T) {
+					if tc.format == "cucumber" && strings.HasPrefix(runtime.Version(), "go1.11") {
+						t.Skipf("skipping due to format %q and go version: %q", tc.format, runtime.Version())
+					}
+
 					testSucceedRun(t, tc.format, concurrency, string(expectedOutput))
 				},
 			)
