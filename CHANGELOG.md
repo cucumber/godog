@@ -13,6 +13,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ### Added
 
 - Link in Readme to the Slack community. ([smikulcik])
+- Added run tests for Cucumber formatting. ([lonnblad])
 
 ### Changed
 
@@ -29,6 +30,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ### Added
 
 - Added initial CircleCI config. ([jaysonesmith])
+- Added concurrency support for JUnit formatting ([lonnblad])
 
 ### Changed
 
@@ -47,3 +49,4 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 <!-- Contributors -->
 [jaysonesmith]:     https://github.com/jaysonesmith
 [smikulcik]:        https://github.com/smikulcik
+[lonnblad]:         https://github.com/lonnblad
