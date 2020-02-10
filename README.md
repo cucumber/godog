@@ -1,6 +1,6 @@
 [![CircleCI](https://circleci.com/gh/cucumber/godog/tree/master.svg?style=svg)](https://circleci.com/gh/cucumber/godog/tree/master)
 [![GoDoc](https://godoc.org/github.com/cucumber/godog?status.svg)](https://godoc.org/github.com/cucumber/godog)
-[![codecov.io](https://codecov.io/github/cucumber/godog/branch/master/graph/badge.svg)](https://codecov.io/github/cucumber/godog)
+[![codecov](https://codecov.io/gh/cucumber/godog/branch/master/graph/badge.svg)](https://codecov.io/gh/cucumber/godog)
 
 # Godog
 
