@@ -58,7 +58,8 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ### Fixed
 
 <!-- Releases -->
-[Unreleased]: https://github.com/cucumber/cucumber/compare/godog/v0.8.0...master
+[Unreleased]: https://github.com/cucumber/cucumber/compare/godog/v0.8.1...master
+[0.8.0]:      https://github.com/cucumber/cucumber/compare/godog/v0.8.0...godog/v0.8.1
 [0.8.0]:      https://github.com/cucumber/cucumber/compare/godog/v0.7.13...godog/v0.8.0
 
 <!-- Contributors -->
