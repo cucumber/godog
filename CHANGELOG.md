@@ -12,6 +12,18 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+## [0.8.1]
+
+### Added
+
 - Link in Readme to the Slack community. ([210](https://github.com/cucumber/godog/pull/210) [smikulcik])
 - Added run tests for Cucumber formatting. ([214](https://github.com/cucumber/godog/pull/214), [216](https://github.com/cucumber/godog/pull/216) [lonnblad])
 
