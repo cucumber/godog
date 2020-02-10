@@ -69,7 +69,7 @@ themselves from costly regressions.
 ## Example
 
 The following example can be [found
-here](/examples/godogs).
+here](/_examples/godogs).
 
 ### Step 1
 
@@ -213,7 +213,7 @@ composed.
   image](https://github.com/myie/cucumber-html-reporter) for usage
   details.
 - [how to use godog by semaphoreci](https://semaphoreci.com/community/tutorials/how-to-use-godog-for-behavior-driven-development-in-go)
-- see [examples](https://github.com/cucumber/godog/tree/master/examples)
+- see [examples](https://github.com/cucumber/godog/tree/master/_examples)
 - see extension [AssistDog](https://github.com/hellomd/assistdog), which
   may have useful **gherkin.DataTable** transformations or comparison
   methods for assertions.
@@ -226,9 +226,9 @@ See `godog -h` for general command options.
 
 See implementation examples:
 
-- [rest API server](/examples/api)
-- [rest API with Database](/examples/db)
-- [godogs](/examples/godogs)
+- [rest API server](/_examples/api)
+- [rest API with Database](/_examples/db)
+- [godogs](/_examples/godogs)
 
 ## FAQ
 
