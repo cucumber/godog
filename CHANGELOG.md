@@ -12,12 +12,12 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Added
 
-- Link in Readme to the Slack community. ([smikulcik])
-- Added run tests for Cucumber formatting. ([lonnblad])
+- Link in Readme to the Slack community. ([210](https://github.com/cucumber/godog/pull/210) [smikulcik])
+- Added run tests for Cucumber formatting. ([214](https://github.com/cucumber/godog/pull/214), [216](https://github.com/cucumber/godog/pull/216) [lonnblad])
 
 ### Changed
 
-- Renamed the `examples` directory to `_examples`, removing dependencies from the Go module ([axw])
+- Renamed the `examples` directory to `_examples`, removing dependencies from the Go module ([218](https://github.com/cucumber/godog/pull/218) [axw])
 
 ### Deprecated
 
@@ -25,7 +25,8 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Fixed
 
-- Find/Replaced references to DATA-DOG/godog -> cucumber/godog for docs. ([smikulcik])
+- Find/Replaced references to DATA-DOG/godog -> cucumber/godog for docs. ([209](https://github.com/cucumber/godog/pull/209) [smikulcik])
+- Fixed missing links in changelog to be correctly included! ([jaysonesmith])
 
 ## [0.8.0]
 
@@ -49,6 +50,8 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 [0.8.0]:      https://github.com/cucumber/cucumber/compare/godog/v0.7.13...godog/v0.8.0
 
 <!-- Contributors -->
+[axw]:              https://github.com/axw
 [jaysonesmith]:     https://github.com/jaysonesmith
-[smikulcik]:        https://github.com/smikulcik
 [lonnblad]:         https://github.com/lonnblad
+[smikulcik]:        https://github.com/smikulcik
+
