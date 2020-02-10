@@ -40,6 +40,9 @@ commands:
     description: "Run go test"
     steps:
       - run: go test -v -race -coverprofile=coverage.txt -covermode=atomic
+  coverage:
+    description: "Report on code coverage"
+    steps:
       - codecov/upload:
           file: "coverage.txt"
   all:
@@ -51,6 +54,7 @@ commands:
       - lint
       - godog
       - go_test
+      - coverage
 
 jobs:
   go1_11:
