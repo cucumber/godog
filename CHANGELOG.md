@@ -17,6 +17,8 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Changed
 
+- Renamed the `examples` directory to `_examples`, removing dependencies from the Go module ([axw])
+
 ### Deprecated
 
 ### Removed
