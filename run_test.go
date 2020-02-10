@@ -6,11 +6,14 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/cucumber/godog/colors"
-	"github.com/cucumber/godog/fixtures"
 	"github.com/cucumber/godog/gherkin"
 )
 
@@ -52,16 +55,12 @@ func TestPrintsNoStepDefinitionsIfNoneFound(t *testing.T) {
 	s.printStepDefinitions(w)
 
 	out := strings.TrimSpace(buf.String())
-	if out != "there were no contexts registered, could not find any step definition.." {
-		t.Fatalf("expected output does not match to: %s", out)
-	}
+	assert.Equal(t, "there were no contexts registered, could not find any step definition..", out)
 }
 
 func TestFailsOrPassesBasedOnStrictModeWhenHasPendingSteps(t *testing.T) {
 	feat, err := gherkin.ParseFeature(strings.NewReader(basicGherkinFeature))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	r := runner{
 		fmt:      progressFunc("progress", ioutil.Discard),
@@ -72,21 +71,15 @@ func TestFailsOrPassesBasedOnStrictModeWhenHasPendingSteps(t *testing.T) {
 		},
 	}
 
-	if r.run() {
-		t.Fatal("the suite should have passed")
-	}
+	assert.False(t, r.run())
 
 	r.strict = true
-	if !r.run() {
-		t.Fatal("the suite should have failed")
-	}
+	assert.True(t, r.run())
 }
 
 func TestFailsOrPassesBasedOnStrictModeWhenHasUndefinedSteps(t *testing.T) {
 	feat, err := gherkin.ParseFeature(strings.NewReader(basicGherkinFeature))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	r := runner{
 		fmt:      progressFunc("progress", ioutil.Discard),
@@ -97,21 +90,15 @@ func TestFailsOrPassesBasedOnStrictModeWhenHasUndefinedSteps(t *testing.T) {
 		},
 	}
 
-	if r.run() {
-		t.Fatal("the suite should have passed")
-	}
+	assert.False(t, r.run())
 
 	r.strict = true
-	if !r.run() {
-		t.Fatal("the suite should have failed")
-	}
+	assert.True(t, r.run())
 }
 
 func TestShouldFailOnError(t *testing.T) {
 	feat, err := gherkin.ParseFeature(strings.NewReader(basicGherkinFeature))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	r := runner{
 		fmt:      progressFunc("progress", ioutil.Discard),
@@ -122,9 +109,7 @@ func TestShouldFailOnError(t *testing.T) {
 		},
 	}
 
-	if !r.run() {
-		t.Fatal("the suite should have failed")
-	}
+	assert.True(t, r.run())
 }
 
 func TestFailsWithConcurrencyOptionError(t *testing.T) {
@@ -140,20 +125,15 @@ func TestFailsWithConcurrencyOptionError(t *testing.T) {
 	}
 
 	status := RunWithOptions("fails", func(_ *Suite) {}, opt)
-	if status != exitOptionError {
-		t.Fatalf("expected exit status to be 2, but was: %d", status)
-	}
+	require.Equal(t, exitOptionError, status)
+
 	closer()
 
 	b, err := ioutil.ReadAll(stderr)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	out := strings.TrimSpace(string(b))
-	if out != `format "pretty" does not support concurrent execution` {
-		t.Fatalf("unexpected error output: \"%s\"", out)
-	}
+	assert.Equal(t, `format "pretty" does not support concurrent execution`, out)
 }
 
 func TestFailsWithUnknownFormatterOptionError(t *testing.T) {
@@ -168,20 +148,15 @@ func TestFailsWithUnknownFormatterOptionError(t *testing.T) {
 	}
 
 	status := RunWithOptions("fails", func(_ *Suite) {}, opt)
-	if status != exitOptionError {
-		t.Fatalf("expected exit status to be 2, but was: %d", status)
-	}
+	require.Equal(t, exitOptionError, status)
+
 	closer()
 
 	b, err := ioutil.ReadAll(stderr)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	out := strings.TrimSpace(string(b))
-	if !strings.Contains(out, `unregistered formatter name: "unknown", use one of`) {
-		t.Fatalf("unexpected error output: %q", out)
-	}
+	assert.Contains(t, out, `unregistered formatter name: "unknown", use one of`)
 }
 
 func TestFailsWithOptionErrorWhenLookingForFeaturesInUnavailablePath(t *testing.T) {
@@ -196,20 +171,15 @@ func TestFailsWithOptionErrorWhenLookingForFeaturesInUnavailablePath(t *testing.
 	}
 
 	status := RunWithOptions("fails", func(_ *Suite) {}, opt)
-	if status != exitOptionError {
-		t.Fatalf("expected exit status to be 2, but was: %d", status)
-	}
+	require.Equal(t, exitOptionError, status)
+
 	closer()
 
 	b, err := ioutil.ReadAll(stderr)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	out := strings.TrimSpace(string(b))
-	if out != `feature path "unavailable" is not available` {
-		t.Fatalf("unexpected error output: \"%s\"", out)
-	}
+	assert.Equal(t, `feature path "unavailable" is not available`, out)
 }
 
 func TestByDefaultRunsFeaturesPath(t *testing.T) {
@@ -221,24 +191,18 @@ func TestByDefaultRunsFeaturesPath(t *testing.T) {
 
 	status := RunWithOptions("fails", func(_ *Suite) {}, opt)
 	// should fail in strict mode due to undefined steps
-	if status != exitFailure {
-		t.Fatalf("expected exit status to be 1, but was: %d", status)
-	}
+	assert.Equal(t, exitFailure, status)
 
 	opt.Strict = false
 	status = RunWithOptions("succeeds", func(_ *Suite) {}, opt)
 	// should succeed in non strict mode due to undefined steps
-	if status != exitSuccess {
-		t.Fatalf("expected exit status to be 0, but was: %d", status)
-	}
+	assert.Equal(t, exitSuccess, status)
 }
 
 func bufErrorPipe(t *testing.T) (io.ReadCloser, func()) {
 	stderr := os.Stderr
 	r, w, err := os.Pipe()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	os.Stderr = w
 	return r, func() {
@@ -266,14 +230,10 @@ func TestFeatureFilePathParser(t *testing.T) {
 		{"D:\\home\\test.feature:3", "D:\\home\\test.feature", 3},
 	}
 
-	for i, c := range cases {
+	for _, c := range cases {
 		p, ln := extractFeaturePathLine(c.input)
-		if p != c.path {
-			t.Fatalf(`result path "%s" != "%s" at %d`, p, c.path, i)
-		}
-		if ln != c.line {
-			t.Fatalf(`result line "%d" != "%d" at %d`, ln, c.line, i)
-		}
+		assert.Equal(t, p, c.path)
+		assert.Equal(t, ln, c.line)
 	}
 }
 
@@ -285,16 +245,14 @@ type succeedRunTestCase struct {
 
 func TestSucceedRun(t *testing.T) {
 	testCases := []succeedRunTestCase{
-		{format: "progress", concurrency: 4, filename: fixtures.OutputFilenameProgress},
-		{format: "junit", concurrency: 4, filename: fixtures.OutputFilenameJUnit},
-		{format: "cucumber", concurrency: 2, filename: fixtures.OutputFilenameCucumber},
+		{format: "progress", concurrency: 4, filename: "fixtures/progress_output.txt"},
+		{format: "junit", concurrency: 4, filename: "fixtures/junit_output.xml"},
+		{format: "cucumber", concurrency: 2, filename: "fixtures/cucumber_output.json"},
 	}
 
 	for _, tc := range testCases {
 		expectedOutput, err := ioutil.ReadFile(tc.filename)
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		for concurrency := range make([]int, tc.concurrency) {
 			t.Run(
@@ -319,17 +277,16 @@ func testSucceedRun(t *testing.T, format string, concurrency int, expectedOutput
 	}
 
 	status := RunWithOptions("succeed", func(s *Suite) { SuiteContext(s) }, opt)
-	if status != exitSuccess {
-		t.Fatalf("expected exit status to be 0, but was: %d", status)
-	}
+	require.Equal(t, exitSuccess, status)
 
 	b, err := ioutil.ReadAll(output)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
-	out := strings.TrimSpace(string(b))
-	if out != expectedOutput {
-		t.Fatalf("unexpected output: \"%s\"", out)
-	}
+	actual := strings.TrimSpace(string(b))
+
+	suiteCtxReg := regexp.MustCompile(`suite_context.go:\d+`)
+	expectedOutput = suiteCtxReg.ReplaceAllString(expectedOutput, `suite_context.go:0`)
+	actual = suiteCtxReg.ReplaceAllString(actual, `suite_context.go:0`)
+
+	assert.Equalf(t, expectedOutput, actual, "[%s]", actual)
 }

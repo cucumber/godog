@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/cucumber/godog/colors"
 	"github.com/cucumber/godog/gherkin"
 )
 
@@ -74,6 +75,9 @@ func SuiteContext(s *Suite, additionalContextInitializers ...func(suite *Suite))
 	// Introduced to test formatter/cucumber.feature
 	s.Step(`^the rendered json will be as follows:$`, c.theRenderJSONWillBe)
 
+	// Introduced to test formatter/pretty.feature
+	s.Step(`^the rendered output will be as follows:$`, c.theRenderOutputWillBe)
+
 	s.Step(`^(?:a )?failing multistep$`, func() Steps {
 		return Steps{"passing step", "failing step"}
 	})
@@ -133,7 +137,8 @@ func (s *suiteContext) iRunFeatureSuiteWithFormatter(name string) error {
 	if f == nil {
 		return fmt.Errorf(`formatter "%s" is not available`, name)
 	}
-	s.testedSuite.fmt = f("godog", &s.out)
+
+	s.testedSuite.fmt = f("godog", colors.Uncolored(&s.out))
 	if err := s.parseFeatures(); err != nil {
 		return err
 	}
@@ -457,14 +462,14 @@ func (s *suiteContext) theseEventsHadToBeFiredForNumberOfTimes(tbl *gherkin.Data
 }
 
 func (s *suiteContext) theRenderJSONWillBe(docstring *gherkin.DocString) error {
-	loc := regexp.MustCompile(`"suite_context.go:\d+"`)
+	suiteCtxReg := regexp.MustCompile(`suite_context.go:\d+`)
 	var expected []cukeFeatureJSON
-	if err := json.Unmarshal([]byte(loc.ReplaceAllString(docstring.Content, `"suite_context.go:0"`)), &expected); err != nil {
+	if err := json.Unmarshal([]byte(suiteCtxReg.ReplaceAllString(docstring.Content, `suite_context.go:0`)), &expected); err != nil {
 		return err
 	}
 
 	var actual []cukeFeatureJSON
-	replaced := loc.ReplaceAllString(s.out.String(), `"suite_context.go:0"`)
+	replaced := suiteCtxReg.ReplaceAllString(s.out.String(), `suite_context.go:0`)
 	if err := json.Unmarshal([]byte(replaced), &actual); err != nil {
 		return err
 	}
@@ -472,6 +477,21 @@ func (s *suiteContext) theRenderJSONWillBe(docstring *gherkin.DocString) error {
 	if !reflect.DeepEqual(expected, actual) {
 		return fmt.Errorf("expected json does not match actual: %s", replaced)
 	}
+	return nil
+}
+
+func (s *suiteContext) theRenderOutputWillBe(docstring *gherkin.DocString) error {
+	suiteCtxReg := regexp.MustCompile(`suite_context.go:\d+`)
+
+	expected := trimAllLines(strings.TrimSpace(docstring.Content))
+	expected = suiteCtxReg.ReplaceAllString(expected, `suite_context.go:0`)
+	actual := trimAllLines(strings.TrimSpace(s.out.String()))
+	actual = suiteCtxReg.ReplaceAllString(actual, `suite_context.go:0`)
+
+	if expected != actual {
+		return fmt.Errorf("expected output\n%s\ndoes not match actual:\n%s\n", expected, actual)
+	}
+
 	return nil
 }
 
