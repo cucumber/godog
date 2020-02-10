@@ -1,5 +1,8 @@
 version: 2.1
 
+orbs:
+  codecov: codecov/codecov@1.0.5
+
 executors:
   exec_go_1_11:
     docker:
@@ -37,6 +40,8 @@ commands:
     description: "Run go test"
     steps:
       - run: go test -v -race -coverprofile=coverage.txt -covermode=atomic
+      - codecov/upload:
+          file: "coverage.txt"
   all:
     description: "Run all commands against godog code"
     steps:
