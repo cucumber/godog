@@ -26,3 +26,11 @@ func s(n int) string {
 var timeNowFunc = func() time.Time {
 	return time.Now()
 }
+
+func trimAllLines(s string) string {
+	var lines []string
+	for _, ln := range strings.Split(strings.TrimSpace(s), "\n") {
+		lines = append(lines, strings.TrimSpace(ln))
+	}
+	return strings.Join(lines, "\n")
+}

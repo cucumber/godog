@@ -76,14 +76,6 @@ func FeatureContext(s *godog.Suite) {
 	shouldMatchOutput(expected, actual, t)
 }
 
-func trimAllLines(s string) string {
-	var lines []string
-	for _, ln := range strings.Split(strings.TrimSpace(s), "\n") {
-		lines = append(lines, strings.TrimSpace(ln))
-	}
-	return strings.Join(lines, "\n")
-}
-
 var basicGherkinFeature = `
 Feature: basic
 
@@ -114,7 +106,7 @@ func TestProgressFormatterWhenStepPanics(t *testing.T) {
 	}
 
 	out := buf.String()
-	if idx := strings.Index(out, "godog/fmt_progress_test.go:108"); idx == -1 {
+	if idx := strings.Index(out, "godog/fmt_progress_test.go:100"); idx == -1 {
 		t.Fatalf("expected to find panic stacktrace, actual:\n%s", out)
 	}
 }
