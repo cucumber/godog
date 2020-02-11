@@ -177,6 +177,16 @@ func (s *Suite) Step(expr interface{}, stepFunc interface{}) {
 	s.steps = append(s.steps, def)
 }
 
+// GetFeatures permits to retrieve all parsed features for the suite
+// It can be useful to retrieve some information about those features
+func (s *Suite) GetFeatures() []*gherkin.Feature {
+	features := []*gherkin.Feature{}
+	for _, ft := range s.features {
+		features = append(features, ft.Feature)
+	}
+	return features
+}
+
 // BeforeSuite registers a function or method
 // to be run once before suite runner.
 //
