@@ -131,8 +131,8 @@ Feature: pretty formatter
         simple feature description
 
         Scenario: simple scenario # features/simple.feature:4
-          Given passing step      # suite_context.go:72 -> github.com/cucumber/godog.SuiteContext.func2
-          Then a failing step     # suite_context.go:318 -> *suiteContext
+          Given passing step      # suite_context.go:0 -> SuiteContext.func2
+          Then a failing step     # suite_context.go:0 -> *suiteContext
           intentional failure
 
       --- Failed steps:
@@ -170,7 +170,7 @@ Feature: pretty formatter
         simple feature description
 
         Scenario Outline: simple scenario # features/simple.feature:4
-          Given <status> step             # suite_context.go:72 -> github.com/cucumber/godog.SuiteContext.func2
+          Given <status> step             # suite_context.go:0 -> SuiteContext.func2
 
           Examples: simple examples
             | status  |
@@ -235,7 +235,7 @@ Feature: pretty formatter
         simple description
 
         Scenario: simple scenario # features/simple.feature:4
-          Given passing step      # suite_context.go:72 -> github.com/cucumber/godog.SuiteContext.func2
+          Given passing step      # suite_context.go:0 -> SuiteContext.func2
             \"\"\"  content type
             step doc string
             \"\"\"
@@ -266,11 +266,11 @@ Feature: pretty formatter
         simple feature description
 
         Scenario: simple scenario # features/simple.feature:4
-          Given passing step      # suite_context.go:72 -> github.com/cucumber/godog.SuiteContext.func2
-          And pending step        # suite_context.go:69 -> github.com/cucumber/godog.SuiteContext.func1
+          Given passing step      # suite_context.go:0 -> SuiteContext.func2
+          And pending step        # suite_context.go:0 -> SuiteContext.func1
             TODO: write pending definition
           And undefined
-          And passing step        # suite_context.go:72 -> github.com/cucumber/godog.SuiteContext.func2
+          And passing step        # suite_context.go:0 -> SuiteContext.func2
 
       1 scenarios (1 pending, 1 undefined)
       4 steps (1 passed, 1 pending, 1 undefined, 1 skipped)

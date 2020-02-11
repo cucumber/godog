@@ -1470,7 +1470,7 @@
                 "steps": [
                     {
                         "keyword": "Given ",
-                        "name": "a feature path \"features/load.feature:25\"",
+                        "name": "a feature path \"features/load.feature:26\"",
                         "line": 17,
                         "match": {
                             "location": "suite_context.go:0"
@@ -1521,7 +1521,7 @@
                 "steps": [
                     {
                         "keyword": "Given ",
-                        "name": "a feature path \"features/load.feature:33\"",
+                        "name": "a feature path \"features/load.feature:34\"",
                         "line": 38,
                         "match": {
                             "location": "suite_context.go:0"
@@ -1551,6 +1551,530 @@
                             "value": "  TestRunStarted\n  TestSource\n  TestCaseStarted\n  StepDefinitionFound\n  TestStepStarted\n  TestStepFinished\n  StepDefinitionFound\n  TestStepStarted\n  TestStepFinished\n  StepDefinitionFound\n  TestStepStarted\n  TestStepFinished\n  TestCaseFinished\n  TestCaseStarted\n  StepDefinitionFound\n  TestStepStarted\n  TestStepFinished\n  StepDefinitionFound\n  TestStepStarted\n  TestStepFinished\n  StepDefinitionFound\n  TestStepStarted\n  TestStepFinished\n  TestCaseFinished\n  TestCaseStarted\n  StepDefinitionFound\n  TestStepStarted\n  TestStepFinished\n  StepDefinitionFound\n  TestStepStarted\n  TestStepFinished\n  StepDefinitionFound\n  TestStepStarted\n  TestStepFinished\n  TestCaseFinished\n  TestRunFinished",
                             "content_type": "",
                             "line": 41
+                        },
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "uri": "features/formatter/junit.feature",
+        "id": "junit-xml-formatter",
+        "keyword": "Feature",
+        "name": "JUnit XML formatter",
+        "description": "  In order to support tools that import JUnit XML output\n  I need to be able to support junit formatted output",
+        "line": 1,
+        "comments": [
+            {
+                "value": "# Currently godog only supports comments on Feature and not",
+                "line": 154
+            },
+            {
+                "value": "# scenario and steps.",
+                "line": 155
+            }
+        ],
+        "elements": [
+            {
+                "id": "junit-xml-formatter;support-of-feature-plus-scenario-node",
+                "keyword": "Scenario",
+                "name": "Support of Feature Plus Scenario Node",
+                "description": "",
+                "line": 5,
+                "type": "scenario",
+                "steps": [
+                    {
+                        "keyword": "Given ",
+                        "name": "a feature \"features/simple.feature\" file:",
+                        "line": 6,
+                        "doc_string": {
+                            "value": "    Feature: simple feature\n        simple feature description\n    Scenario: simple scenario\n        simple scenario description",
+                            "content_type": "",
+                            "line": 7
+                        },
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "When ",
+                        "name": "I run feature suite with formatter \"junit\"",
+                        "line": 13,
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "Then ",
+                        "name": "the rendered xml will be as follows:",
+                        "line": 14,
+                        "doc_string": {
+                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0s\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0s\"\u003e\n      \u003ctestcase name=\"simple scenario\" status=\"\" time=\"0s\"\u003e\u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
+                            "content_type": "application/xml",
+                            "line": 15
+                        },
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "junit-xml-formatter;support-of-feature-plus-scenario-node-with-tags",
+                "keyword": "Scenario",
+                "name": "Support of Feature Plus Scenario Node With Tags",
+                "description": "",
+                "line": 24,
+                "type": "scenario",
+                "steps": [
+                    {
+                        "keyword": "Given ",
+                        "name": "a feature \"features/simple.feature\" file:",
+                        "line": 25,
+                        "doc_string": {
+                            "value": "    @TAG1\n    Feature: simple feature\n        simple feature description\n    @TAG2 @TAG3\n    Scenario: simple scenario\n        simple scenario description",
+                            "content_type": "",
+                            "line": 26
+                        },
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "When ",
+                        "name": "I run feature suite with formatter \"junit\"",
+                        "line": 34,
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "Then ",
+                        "name": "the rendered xml will be as follows:",
+                        "line": 35,
+                        "doc_string": {
+                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0s\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0s\"\u003e\n      \u003ctestcase name=\"simple scenario\" status=\"\" time=\"0s\"\u003e\u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
+                            "content_type": "application/xml",
+                            "line": 36
+                        },
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "junit-xml-formatter;support-of-feature-plus-scenario-outline",
+                "keyword": "Scenario",
+                "name": "Support of Feature Plus Scenario Outline",
+                "description": "",
+                "line": 44,
+                "type": "scenario",
+                "steps": [
+                    {
+                        "keyword": "Given ",
+                        "name": "a feature \"features/simple.feature\" file:",
+                        "line": 45,
+                        "doc_string": {
+                            "value": "    Feature: simple feature\n        simple feature description\n\n    Scenario Outline: simple scenario\n        simple scenario description\n\n    Examples: simple examples\n    | status |\n    | pass   |\n    | fail   |",
+                            "content_type": "",
+                            "line": 46
+                        },
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "When ",
+                        "name": "I run feature suite with formatter \"junit\"",
+                        "line": 58,
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "Then ",
+                        "name": "the rendered xml will be as follows:",
+                        "line": 59,
+                        "doc_string": {
+                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"2\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0s\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"2\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0s\"\u003e\n      \u003ctestcase name=\"simple scenario #1\" status=\"\" time=\"0s\"\u003e\u003c/testcase\u003e\n      \u003ctestcase name=\"simple scenario #2\" status=\"\" time=\"0s\"\u003e\u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
+                            "content_type": "application/xml",
+                            "line": 60
+                        },
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "junit-xml-formatter;support-of-feature-plus-scenario-outline-with-tags",
+                "keyword": "Scenario",
+                "name": "Support of Feature Plus Scenario Outline With Tags",
+                "description": "",
+                "line": 70,
+                "type": "scenario",
+                "steps": [
+                    {
+                        "keyword": "Given ",
+                        "name": "a feature \"features/simple.feature\" file:",
+                        "line": 71,
+                        "doc_string": {
+                            "value": "    @TAG1\n    Feature: simple feature\n        simple feature description\n\n    @TAG2\n    Scenario Outline: simple scenario\n        simple scenario description\n\n    @TAG3\n    Examples: simple examples\n    | status |\n    | pass   |\n    | fail   |",
+                            "content_type": "",
+                            "line": 72
+                        },
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "When ",
+                        "name": "I run feature suite with formatter \"junit\"",
+                        "line": 87,
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "Then ",
+                        "name": "the rendered xml will be as follows:",
+                        "line": 88,
+                        "doc_string": {
+                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"2\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0s\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"2\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0s\"\u003e\n      \u003ctestcase name=\"simple scenario #1\" status=\"\" time=\"0s\"\u003e\u003c/testcase\u003e\n      \u003ctestcase name=\"simple scenario #2\" status=\"\" time=\"0s\"\u003e\u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
+                            "content_type": "application/xml",
+                            "line": 89
+                        },
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "junit-xml-formatter;support-of-feature-plus-scenario-with-steps",
+                "keyword": "Scenario",
+                "name": "Support of Feature Plus Scenario With Steps",
+                "description": "",
+                "line": 98,
+                "type": "scenario",
+                "steps": [
+                    {
+                        "keyword": "Given ",
+                        "name": "a feature \"features/simple.feature\" file:",
+                        "line": 99,
+                        "doc_string": {
+                            "value": "    Feature: simple feature\n        simple feature description\n\n    Scenario: simple scenario\n        simple scenario description\n\n    Given passing step\n    Then a failing step\n",
+                            "content_type": "",
+                            "line": 100
+                        },
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "When ",
+                        "name": "I run feature suite with formatter \"junit\"",
+                        "line": 111,
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "Then ",
+                        "name": "the rendered xml will be as follows:",
+                        "line": 112,
+                        "doc_string": {
+                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"1\" skipped=\"0\" failures=\"1\" errors=\"0\" time=\"0s\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"1\" skipped=\"0\" failures=\"1\" errors=\"0\" time=\"0s\"\u003e\n      \u003ctestcase name=\"simple scenario\" status=\"failed\" time=\"0s\"\u003e\n        \u003cfailure message=\"Step a failing step: intentional failure\"\u003e\u003c/failure\u003e\n      \u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
+                            "content_type": "application/xml",
+                            "line": 113
+                        },
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "junit-xml-formatter;support-of-feature-plus-scenario-outline-with-steps",
+                "keyword": "Scenario",
+                "name": "Support of Feature Plus Scenario Outline With Steps",
+                "description": "",
+                "line": 123,
+                "type": "scenario",
+                "steps": [
+                    {
+                        "keyword": "Given ",
+                        "name": "a feature \"features/simple.feature\" file:",
+                        "line": 124,
+                        "doc_string": {
+                            "value": "  Feature: simple feature\n    simple feature description\n\n    Scenario Outline: simple scenario\n    simple scenario description\n\n      Given \u003cstatus\u003e step\n\n    Examples: simple examples\n    | status |\n    | passing |\n    | failing |\n",
+                            "content_type": "",
+                            "line": 125
+                        },
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "When ",
+                        "name": "I run feature suite with formatter \"junit\"",
+                        "line": 140,
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "Then ",
+                        "name": "the rendered xml will be as follows:",
+                        "line": 141,
+                        "doc_string": {
+                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"2\" skipped=\"0\" failures=\"1\" errors=\"0\" time=\"0s\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"2\" skipped=\"0\" failures=\"1\" errors=\"0\" time=\"0s\"\u003e\n      \u003ctestcase name=\"simple scenario #1\" status=\"passed\" time=\"0s\"\u003e\u003c/testcase\u003e\n      \u003ctestcase name=\"simple scenario #2\" status=\"failed\" time=\"0s\"\u003e\n        \u003cfailure message=\"Step failing step: intentional failure\"\u003e\u003c/failure\u003e\n      \u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
+                            "content_type": "application/xml",
+                            "line": 142
+                        },
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "junit-xml-formatter;support-of-comments",
+                "keyword": "Scenario",
+                "name": "Support of Comments",
+                "description": "",
+                "line": 156,
+                "type": "scenario",
+                "steps": [
+                    {
+                        "keyword": "Given ",
+                        "name": "a feature \"features/simple.feature\" file:",
+                        "line": 157,
+                        "doc_string": {
+                            "value": "    #Feature comment\n    Feature: simple feature\n      simple description\n\n      Scenario: simple scenario\n      simple feature description",
+                            "content_type": "",
+                            "line": 158
+                        },
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "When ",
+                        "name": "I run feature suite with formatter \"junit\"",
+                        "line": 166,
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "Then ",
+                        "name": "the rendered xml will be as follows:",
+                        "line": 167,
+                        "doc_string": {
+                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0s\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0s\"\u003e\n      \u003ctestcase name=\"simple scenario\" status=\"\" time=\"0s\"\u003e\u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
+                            "content_type": "application/xml",
+                            "line": 168
+                        },
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "junit-xml-formatter;support-of-docstrings",
+                "keyword": "Scenario",
+                "name": "Support of Docstrings",
+                "description": "",
+                "line": 176,
+                "type": "scenario",
+                "steps": [
+                    {
+                        "keyword": "Given ",
+                        "name": "a feature \"features/simple.feature\" file:",
+                        "line": 177,
+                        "doc_string": {
+                            "value": "    Feature: simple feature\n      simple description\n\n      Scenario: simple scenario\n      simple feature description\n\n      Given passing step\n      \"\"\" content type\n      step doc string\n      \"\"\"",
+                            "content_type": "",
+                            "line": 178
+                        },
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "When ",
+                        "name": "I run feature suite with formatter \"junit\"",
+                        "line": 190,
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "Then ",
+                        "name": "the rendered xml will be as follows:",
+                        "line": 191,
+                        "doc_string": {
+                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0s\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0s\"\u003e\n      \u003ctestcase name=\"simple scenario\" status=\"passed\" time=\"0s\"\u003e\u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
+                            "content_type": "application/xml",
+                            "line": 192
+                        },
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "junit-xml-formatter;support-of-undefined,-pending-and-skipped-status",
+                "keyword": "Scenario",
+                "name": "Support of Undefined, Pending and Skipped status",
+                "description": "",
+                "line": 200,
+                "type": "scenario",
+                "steps": [
+                    {
+                        "keyword": "Given ",
+                        "name": "a feature \"features/simple.feature\" file:",
+                        "line": 201,
+                        "doc_string": {
+                            "value": "  Feature: simple feature\n  simple feature description\n\n  Scenario: simple scenario\n  simple scenario description\n\n    Given passing step\n    And pending step\n    And undefined\n    And passing step\n",
+                            "content_type": "",
+                            "line": 202
+                        },
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "When ",
+                        "name": "I run feature suite with formatter \"junit\"",
+                        "line": 215,
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "Then ",
+                        "name": "the rendered xml will be as follows:",
+                        "line": 216,
+                        "doc_string": {
+                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"1\" time=\"0s\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"1\" time=\"0s\"\u003e\n      \u003ctestcase name=\"simple scenario\" status=\"undefined\" time=\"0s\"\u003e\n        \u003cerror message=\"Step pending step: TODO: write pending definition\" type=\"pending\"\u003e\u003c/error\u003e\n        \u003cerror message=\"Step undefined\" type=\"undefined\"\u003e\u003c/error\u003e\n        \u003cerror message=\"Step passing step\" type=\"skipped\"\u003e\u003c/error\u003e\n      \u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
+                            "content_type": "application/xml",
+                            "line": 217
                         },
                         "match": {
                             "location": "suite_context.go:0"
@@ -1848,7 +2372,7 @@
                         "name": "the rendered output will be as follows:",
                         "line": 128,
                         "doc_string": {
-                            "value": "  Feature: simple feature\n    simple feature description\n\n    Scenario: simple scenario # features/simple.feature:4\n      Given passing step      # suite_context.go:0 -\u003e github.com/cucumber/godog.SuiteContext.func2\n      Then a failing step     # suite_context.go:0 -\u003e *suiteContext\n      intentional failure\n\n  --- Failed steps:\n\n    Scenario: simple scenario # features/simple.feature:4\n      Then a failing step # features/simple.feature:8\n        Error: intentional failure\n\n\n  1 scenarios (1 failed)\n  2 steps (1 passed, 1 failed)\n  0s",
+                            "value": "  Feature: simple feature\n    simple feature description\n\n    Scenario: simple scenario # features/simple.feature:4\n      Given passing step      # suite_context.go:0 -\u003e SuiteContext.func2\n      Then a failing step     # suite_context.go:0 -\u003e *suiteContext\n      intentional failure\n\n  --- Failed steps:\n\n    Scenario: simple scenario # features/simple.feature:4\n      Then a failing step # features/simple.feature:8\n        Error: intentional failure\n\n\n  1 scenarios (1 failed)\n  2 steps (1 passed, 1 failed)\n  0s",
                             "content_type": "",
                             "line": 129
                         },
@@ -1904,7 +2428,7 @@
                         "name": "the rendered output will be as follows:",
                         "line": 167,
                         "doc_string": {
-                            "value": "  Feature: simple feature\n    simple feature description\n\n    Scenario Outline: simple scenario # features/simple.feature:4\n      Given \u003cstatus\u003e step             # suite_context.go:0 -\u003e github.com/cucumber/godog.SuiteContext.func2\n\n      Examples: simple examples\n        | status  |\n        | passing |\n        | failing |\n          intentional failure\n\n  --- Failed steps:\n\n    Scenario Outline: simple scenario # features/simple.feature:4\n      Given failing step # features/simple.feature:7\n        Error: intentional failure\n\n\n  2 scenarios (1 passed, 1 failed)\n  2 steps (1 passed, 1 failed)\n  0s",
+                            "value": "  Feature: simple feature\n    simple feature description\n\n    Scenario Outline: simple scenario # features/simple.feature:4\n      Given \u003cstatus\u003e step             # suite_context.go:0 -\u003e SuiteContext.func2\n\n      Examples: simple examples\n        | status  |\n        | passing |\n        | failing |\n          intentional failure\n\n  --- Failed steps:\n\n    Scenario Outline: simple scenario # features/simple.feature:4\n      Given failing step # features/simple.feature:7\n        Error: intentional failure\n\n\n  2 scenarios (1 passed, 1 failed)\n  2 steps (1 passed, 1 failed)\n  0s",
                             "content_type": "",
                             "line": 168
                         },
@@ -2016,7 +2540,7 @@
                         "name": "the rendered output will be as follows:",
                         "line": 232,
                         "doc_string": {
-                            "value": "  Feature: simple feature\n    simple description\n\n    Scenario: simple scenario # features/simple.feature:4\n      Given passing step      # suite_context.go:0 -\u003e github.com/cucumber/godog.SuiteContext.func2\n        \"\"\"  content type\n        step doc string\n        \"\"\"\n\n  1 scenarios (1 passed)\n  1 steps (1 passed)\n  0s",
+                            "value": "  Feature: simple feature\n    simple description\n\n    Scenario: simple scenario # features/simple.feature:4\n      Given passing step      # suite_context.go:0 -\u003e SuiteContext.func2\n        \"\"\"  content type\n        step doc string\n        \"\"\"\n\n  1 scenarios (1 passed)\n  1 steps (1 passed)\n  0s",
                             "content_type": "",
                             "line": 233
                         },
@@ -2072,7 +2596,7 @@
                         "name": "the rendered output will be as follows:",
                         "line": 263,
                         "doc_string": {
-                            "value": "  Feature: simple feature\n    simple feature description\n\n    Scenario: simple scenario # features/simple.feature:4\n      Given passing step      # suite_context.go:0 -\u003e github.com/cucumber/godog.SuiteContext.func2\n      And pending step        # suite_context.go:0 -\u003e github.com/cucumber/godog.SuiteContext.func1\n        TODO: write pending definition\n      And undefined\n      And passing step        # suite_context.go:0 -\u003e github.com/cucumber/godog.SuiteContext.func2\n\n  1 scenarios (1 pending, 1 undefined)\n  4 steps (1 passed, 1 pending, 1 undefined, 1 skipped)\n  0s\n\n  You can implement step definitions for undefined steps with these snippets:\n\n  func undefined() error {\n    return godog.ErrPending\n  }\n\n  func FeatureContext(s *godog.Suite) {\n    s.Step(`^undefined$`, undefined)\n  }",
+                            "value": "  Feature: simple feature\n    simple feature description\n\n    Scenario: simple scenario # features/simple.feature:4\n      Given passing step      # suite_context.go:0 -\u003e SuiteContext.func2\n      And pending step        # suite_context.go:0 -\u003e SuiteContext.func1\n        TODO: write pending definition\n      And undefined\n      And passing step        # suite_context.go:0 -\u003e SuiteContext.func2\n\n  1 scenarios (1 pending, 1 undefined)\n  4 steps (1 passed, 1 pending, 1 undefined, 1 skipped)\n  0s\n\n  You can implement step definitions for undefined steps with these snippets:\n\n  func undefined() error {\n    return godog.ErrPending\n  }\n\n  func FeatureContext(s *godog.Suite) {\n    s.Step(`^undefined$`, undefined)\n  }",
                             "content_type": "",
                             "line": 264
                         },
@@ -2142,10 +2666,10 @@
                     },
                     {
                         "keyword": "Tada ",
-                        "name": "aš turėčiau turėti 12 savybių failus:",
+                        "name": "aš turėčiau turėti 13 savybių failus:",
                         "line": 11,
                         "doc_string": {
-                            "value": "features/background.feature\nfeatures/events.feature\nfeatures/formatter/cucumber.feature\nfeatures/formatter/events.feature\nfeatures/formatter/pretty.feature\nfeatures/lang.feature\nfeatures/load.feature\nfeatures/multistep.feature\nfeatures/outline.feature\nfeatures/run.feature\nfeatures/snippets.feature\nfeatures/tags.feature",
+                            "value": "features/background.feature\nfeatures/events.feature\nfeatures/formatter/cucumber.feature\nfeatures/formatter/events.feature\nfeatures/formatter/junit.feature\nfeatures/formatter/pretty.feature\nfeatures/lang.feature\nfeatures/load.feature\nfeatures/multistep.feature\nfeatures/outline.feature\nfeatures/run.feature\nfeatures/snippets.feature\nfeatures/tags.feature",
                             "content_type": "",
                             "line": 12
                         },
@@ -2203,10 +2727,10 @@
                     },
                     {
                         "keyword": "Then ",
-                        "name": "I should have 12 feature files:",
+                        "name": "I should have 13 feature files:",
                         "line": 9,
                         "doc_string": {
-                            "value": "features/background.feature\nfeatures/events.feature\nfeatures/formatter/cucumber.feature\nfeatures/formatter/events.feature\nfeatures/formatter/pretty.feature\nfeatures/lang.feature\nfeatures/load.feature\nfeatures/multistep.feature\nfeatures/outline.feature\nfeatures/run.feature\nfeatures/snippets.feature\nfeatures/tags.feature",
+                            "value": "features/background.feature\nfeatures/events.feature\nfeatures/formatter/cucumber.feature\nfeatures/formatter/events.feature\nfeatures/formatter/junit.feature\nfeatures/formatter/pretty.feature\nfeatures/lang.feature\nfeatures/load.feature\nfeatures/multistep.feature\nfeatures/outline.feature\nfeatures/run.feature\nfeatures/snippets.feature\nfeatures/tags.feature",
                             "content_type": "",
                             "line": 10
                         },
@@ -2225,13 +2749,13 @@
                 "keyword": "Scenario",
                 "name": "load a specific feature file",
                 "description": "",
-                "line": 25,
+                "line": 26,
                 "type": "scenario",
                 "steps": [
                     {
                         "keyword": "Given ",
                         "name": "a feature path \"features/load.feature\"",
-                        "line": 26,
+                        "line": 27,
                         "match": {
                             "location": "suite_context.go:0"
                         },
@@ -2243,7 +2767,7 @@
                     {
                         "keyword": "When ",
                         "name": "I parse features",
-                        "line": 27,
+                        "line": 28,
                         "match": {
                             "location": "suite_context.go:0"
                         },
@@ -2255,11 +2779,11 @@
                     {
                         "keyword": "Then ",
                         "name": "I should have 1 feature file:",
-                        "line": 28,
+                        "line": 29,
                         "doc_string": {
                             "value": "features/load.feature",
                             "content_type": "",
-                            "line": 29
+                            "line": 30
                         },
                         "match": {
                             "location": "suite_context.go:0"
@@ -2276,13 +2800,13 @@
                 "keyword": "Scenario Outline",
                 "name": "loaded feature should have a number of scenarios",
                 "description": "",
-                "line": 40,
+                "line": 41,
                 "type": "scenario",
                 "steps": [
                     {
                         "keyword": "Given ",
                         "name": "a feature path \"features/load.feature:3\"",
-                        "line": 40,
+                        "line": 41,
                         "match": {
                             "location": "suite_context.go:0"
                         },
@@ -2294,7 +2818,7 @@
                     {
                         "keyword": "When ",
                         "name": "I parse features",
-                        "line": 40,
+                        "line": 41,
                         "match": {
                             "location": "suite_context.go:0"
                         },
@@ -2306,7 +2830,7 @@
                     {
                         "keyword": "Then ",
                         "name": "I should have 0 scenario registered",
-                        "line": 40,
+                        "line": 41,
                         "match": {
                             "location": "suite_context.go:0"
                         },
@@ -2322,13 +2846,13 @@
                 "keyword": "Scenario Outline",
                 "name": "loaded feature should have a number of scenarios",
                 "description": "",
-                "line": 41,
+                "line": 42,
                 "type": "scenario",
                 "steps": [
                     {
                         "keyword": "Given ",
                         "name": "a feature path \"features/load.feature:6\"",
-                        "line": 41,
+                        "line": 42,
                         "match": {
                             "location": "suite_context.go:0"
                         },
@@ -2340,7 +2864,7 @@
                     {
                         "keyword": "When ",
                         "name": "I parse features",
-                        "line": 41,
+                        "line": 42,
                         "match": {
                             "location": "suite_context.go:0"
                         },
@@ -2352,7 +2876,7 @@
                     {
                         "keyword": "Then ",
                         "name": "I should have 1 scenario registered",
-                        "line": 41,
+                        "line": 42,
                         "match": {
                             "location": "suite_context.go:0"
                         },
@@ -2368,13 +2892,13 @@
                 "keyword": "Scenario Outline",
                 "name": "loaded feature should have a number of scenarios",
                 "description": "",
-                "line": 42,
+                "line": 43,
                 "type": "scenario",
                 "steps": [
                     {
                         "keyword": "Given ",
                         "name": "a feature path \"features/load.feature\"",
-                        "line": 42,
+                        "line": 43,
                         "match": {
                             "location": "suite_context.go:0"
                         },
@@ -2386,7 +2910,7 @@
                     {
                         "keyword": "When ",
                         "name": "I parse features",
-                        "line": 42,
+                        "line": 43,
                         "match": {
                             "location": "suite_context.go:0"
                         },
@@ -2398,7 +2922,7 @@
                     {
                         "keyword": "Then ",
                         "name": "I should have 4 scenario registered",
-                        "line": 42,
+                        "line": 43,
                         "match": {
                             "location": "suite_context.go:0"
                         },
@@ -2414,13 +2938,13 @@
                 "keyword": "Scenario",
                 "name": "load a number of feature files",
                 "description": "",
-                "line": 44,
+                "line": 45,
                 "type": "scenario",
                 "steps": [
                     {
                         "keyword": "Given ",
                         "name": "a feature path \"features/load.feature\"",
-                        "line": 45,
+                        "line": 46,
                         "match": {
                             "location": "suite_context.go:0"
                         },
@@ -2432,7 +2956,7 @@
                     {
                         "keyword": "And ",
                         "name": "a feature path \"features/events.feature\"",
-                        "line": 46,
+                        "line": 47,
                         "match": {
                             "location": "suite_context.go:0"
                         },
@@ -2444,7 +2968,7 @@
                     {
                         "keyword": "When ",
                         "name": "I parse features",
-                        "line": 47,
+                        "line": 48,
                         "match": {
                             "location": "suite_context.go:0"
                         },
@@ -2456,11 +2980,11 @@
                     {
                         "keyword": "Then ",
                         "name": "I should have 2 feature files:",
-                        "line": 48,
+                        "line": 49,
                         "doc_string": {
                             "value": "features/events.feature\nfeatures/load.feature",
                             "content_type": "",
-                            "line": 49
+                            "line": 50
                         },
                         "match": {
                             "location": "suite_context.go:0"

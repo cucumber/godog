@@ -6,12 +6,13 @@ Feature: load features
   Scenario: load features within path
     Given a feature path "features"
     When I parse features
-    Then I should have 12 feature files:
+    Then I should have 13 feature files:
       """
       features/background.feature
       features/events.feature
       features/formatter/cucumber.feature
       features/formatter/events.feature
+      features/formatter/junit.feature
       features/formatter/pretty.feature
       features/lang.feature
       features/load.feature
