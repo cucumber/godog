@@ -197,7 +197,7 @@ state before each scenario. You may hook into more events, like
 **BeforeSuite** to prepare a database.
 
 By now, you should have figured out, how to use **godog**. Another advice
-is to make steps orthogonal, small and simple to read for an user. Whether
+is to make steps orthogonal, small and simple to read for a user. Whether
 the user is a dumb website user or an API developer, who may understand
 a little more technical context - it should target that user.
 
