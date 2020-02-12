@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="succeed" tests="69" skipped="0" failures="0" errors="0" time="0s">
+<testsuites name="succeed" tests="78" skipped="0" failures="0" errors="0" time="0s">
+  <testsuite name="JUnit XML formatter" tests="9" skipped="0" failures="0" errors="0" time="0s">
+    <testcase name="Support of Feature Plus Scenario Node" status="passed" time="0s"></testcase>
+    <testcase name="Support of Feature Plus Scenario Node With Tags" status="passed" time="0s"></testcase>
+    <testcase name="Support of Feature Plus Scenario Outline" status="passed" time="0s"></testcase>
+    <testcase name="Support of Feature Plus Scenario Outline With Tags" status="passed" time="0s"></testcase>
+    <testcase name="Support of Feature Plus Scenario With Steps" status="passed" time="0s"></testcase>
+    <testcase name="Support of Feature Plus Scenario Outline With Steps" status="passed" time="0s"></testcase>
+    <testcase name="Support of Comments" status="passed" time="0s"></testcase>
+    <testcase name="Support of Docstrings" status="passed" time="0s"></testcase>
+    <testcase name="Support of Undefined, Pending and Skipped status" status="passed" time="0s"></testcase>
+  </testsuite>
   <testsuite name="cucumber json formatter" tests="9" skipped="0" failures="0" errors="0" time="0s">
     <testcase name="Support of Feature Plus Scenario Node" status="passed" time="0s"></testcase>
     <testcase name="Support of Feature Plus Scenario Node With Tags" status="passed" time="0s"></testcase>

@@ -15,6 +15,10 @@ executors:
       - image: circleci/golang:1.13.7
 
 commands:
+  install:
+    description: "Install dependencies"
+    steps:
+      - run: GO111MODULE=on go mod vendor -v
   vet:
     description: "Run go vet"
     steps:
@@ -34,7 +38,7 @@ commands:
   godog:
     description: "Run godog"
     steps:
-      - run: GO111MODULE=off go install ./cmd/godog
+      - run: go install ./cmd/godog
       - run: godog -f progress
   go_test:
     description: "Run go test"
@@ -49,6 +53,7 @@ commands:
     description: "Run all commands against godog code"
     steps:
       - checkout
+      - install
       - vet
       - fmt
       - lint

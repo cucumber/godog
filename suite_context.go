@@ -3,6 +3,7 @@ package godog
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"path/filepath"
@@ -77,6 +78,9 @@ func SuiteContext(s *Suite, additionalContextInitializers ...func(suite *Suite))
 
 	// Introduced to test formatter/pretty.feature
 	s.Step(`^the rendered output will be as follows:$`, c.theRenderOutputWillBe)
+
+	// Introduced to test formatter/junit.feature
+	s.Step(`^the rendered xml will be as follows:$`, c.theRenderXMLWillBe)
 
 	s.Step(`^(?:a )?failing multistep$`, func() Steps {
 		return Steps{"passing step", "failing step"}
@@ -463,35 +467,64 @@ func (s *suiteContext) theseEventsHadToBeFiredForNumberOfTimes(tbl *gherkin.Data
 
 func (s *suiteContext) theRenderJSONWillBe(docstring *gherkin.DocString) error {
 	suiteCtxReg := regexp.MustCompile(`suite_context.go:\d+`)
+
+	expectedString := docstring.Content
+	expectedString = suiteCtxReg.ReplaceAllString(expectedString, `suite_context.go:0`)
+	actualString := s.out.String()
+	actualString = suiteCtxReg.ReplaceAllString(actualString, `suite_context.go:0`)
+
 	var expected []cukeFeatureJSON
-	if err := json.Unmarshal([]byte(suiteCtxReg.ReplaceAllString(docstring.Content, `suite_context.go:0`)), &expected); err != nil {
+	if err := json.Unmarshal([]byte(expectedString), &expected); err != nil {
 		return err
 	}
 
 	var actual []cukeFeatureJSON
-	replaced := suiteCtxReg.ReplaceAllString(s.out.String(), `suite_context.go:0`)
-	if err := json.Unmarshal([]byte(replaced), &actual); err != nil {
+	if err := json.Unmarshal([]byte(actualString), &actual); err != nil {
 		return err
 	}
 
 	if !reflect.DeepEqual(expected, actual) {
-		return fmt.Errorf("expected json does not match actual: %s", replaced)
+		return fmt.Errorf("expected json does not match actual: %s", actualString)
 	}
 	return nil
 }
 
 func (s *suiteContext) theRenderOutputWillBe(docstring *gherkin.DocString) error {
 	suiteCtxReg := regexp.MustCompile(`suite_context.go:\d+`)
+	suiteCtxFuncReg := regexp.MustCompile(`github.com/cucumber/godog.SuiteContext.func(\d+)`)
 
 	expected := trimAllLines(strings.TrimSpace(docstring.Content))
-	expected = suiteCtxReg.ReplaceAllString(expected, `suite_context.go:0`)
-	actual := trimAllLines(strings.TrimSpace(s.out.String()))
-	actual = suiteCtxReg.ReplaceAllString(actual, `suite_context.go:0`)
+	expected = suiteCtxReg.ReplaceAllString(expected, "suite_context.go:0")
+	expected = suiteCtxFuncReg.ReplaceAllString(expected, "SuiteContext.func$1")
 
-	if expected != actual {
-		return fmt.Errorf("expected output\n%s\ndoes not match actual:\n%s\n", expected, actual)
+	actual := trimAllLines(strings.TrimSpace(s.out.String()))
+	actual = suiteCtxReg.ReplaceAllString(actual, "suite_context.go:0")
+	actual = suiteCtxFuncReg.ReplaceAllString(actual, "SuiteContext.func$1")
+
+	if err := match(expected, actual); err != nil {
+		return err
 	}
 
+	return nil
+}
+
+func (s *suiteContext) theRenderXMLWillBe(docstring *gherkin.DocString) error {
+	expectedString := docstring.Content
+	actualString := s.out.String()
+
+	var expected junitPackageSuite
+	if err := xml.Unmarshal([]byte(expectedString), &expected); err != nil {
+		return err
+	}
+
+	var actual junitPackageSuite
+	if err := xml.Unmarshal([]byte(actualString), &actual); err != nil {
+		return err
+	}
+
+	if !reflect.DeepEqual(expected, actual) {
+		return fmt.Errorf("expected xml does not match actual: %s", actualString)
+	}
 	return nil
 }
 
@@ -521,3 +554,32 @@ func (f *testFormatter) Node(node interface{}) {
 }
 
 func (f *testFormatter) Summary() {}
+
+func match(expected, actual string) error {
+	act := []byte(actual)
+	exp := []byte(expected)
+
+	if len(act) != len(exp) {
+		return fmt.Errorf("content lengths do not match, expected: %d, actual %d, expected output:\n%s, actual output:\n%s", len(exp), len(act), expected, actual)
+	}
+
+	for i := 0; i < len(exp); i++ {
+		if act[i] == exp[i] {
+			continue
+		}
+
+		cpe := make([]byte, len(exp))
+		copy(cpe, exp)
+		e := append(exp[:i], '^')
+		e = append(e, cpe[i:]...)
+
+		cpa := make([]byte, len(act))
+		copy(cpa, act)
+		a := append(act[:i], '^')
+		a = append(a, cpa[i:]...)
+
+		return fmt.Errorf("expected output does not match:\n%s\n\n%s", string(a), string(e))
+	}
+
+	return nil
+}

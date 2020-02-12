@@ -277,7 +277,7 @@ func testSucceedRun(t *testing.T, format string, concurrency int, expectedOutput
 	}
 
 	status := RunWithOptions("succeed", func(s *Suite) { SuiteContext(s) }, opt)
-	require.Equal(t, exitSuccess, status)
+	assert.Equal(t, exitSuccess, status)
 
 	b, err := ioutil.ReadAll(output)
 	require.NoError(t, err)
