@@ -11,7 +11,7 @@ import (
 
 	txdb "github.com/DATA-DOG/go-txdb"
 	"github.com/cucumber/godog"
-	"github.com/cucumber/godog/gherkin"
+	"github.com/cucumber/messages-go/v9"
 )
 
 func init() {
@@ -71,7 +71,7 @@ func (a *apiFeature) theResponseCodeShouldBe(code int) error {
 	return nil
 }
 
-func (a *apiFeature) theResponseShouldMatchJSON(body *gherkin.DocString) (err error) {
+func (a *apiFeature) theResponseShouldMatchJSON(body *messages.PickleStepArgument_PickleDocString) (err error) {
 	var expected, actual interface{}
 
 	// re-encode expected response
@@ -91,10 +91,10 @@ func (a *apiFeature) theResponseShouldMatchJSON(body *gherkin.DocString) (err er
 	return nil
 }
 
-func (a *apiFeature) thereAreUsers(users *gherkin.DataTable) error {
+func (a *apiFeature) thereAreUsers(users *messages.PickleStepArgument_DataTable) error {
 	var fields []string
 	var marks []string
-	head := users.Rows[0].Cells
+	head := users.DataTable.Rows[0].Cells
 	for _, cell := range head {
 		fields = append(fields, cell.Value)
 		marks = append(marks, "?")
@@ -104,9 +104,9 @@ func (a *apiFeature) thereAreUsers(users *gherkin.DataTable) error {
 	if err != nil {
 		return err
 	}
-	for i := 1; i < len(users.Rows); i++ {
+	for i := 1; i < len(users.DataTable.Rows); i++ {
 		var vals []interface{}
-		for n, cell := range users.Rows[i].Cells {
+		for n, cell := range users.DataTable.Rows[i].Cells {
 			switch head[n].Value {
 			case "username":
 				vals = append(vals, cell.Value)

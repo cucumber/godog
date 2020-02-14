@@ -8,9 +8,9 @@ func TestShouldFindFormatter(t *testing.T) {
 		"unknown":  false,
 		"junit":    true,
 		"cucumber": true,
-		"pretty":   true,
-		"custom":   true, // is available for test purposes only
-		"undef":    false,
+		// "pretty":   true,
+		"custom": true, // is available for test purposes only
+		"undef":  false,
 	}
 
 	for name, shouldFind := range cases {

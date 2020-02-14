@@ -3,13 +3,13 @@ package godog
 import (
 	"fmt"
 	"io"
-	"math"
 	"regexp"
 	"strings"
 	"unicode/utf8"
 
+	"github.com/cucumber/messages-go/v9"
+
 	"github.com/cucumber/godog/colors"
-	"github.com/cucumber/godog/gherkin"
 )
 
 func init() {
@@ -32,77 +32,69 @@ var outlinePlaceholderRegexp = regexp.MustCompile("<[^>]+>")
 type pretty struct {
 	basefmt
 
-	// currently processed
-	feature  *gherkin.Feature
-	scenario *gherkin.Scenario
-	outline  *gherkin.ScenarioOutline
-
-	// state
-	bgSteps      int
-	totalBgSteps int
-	steps        int
-	commentPos   int
-
-	// whether scenario or scenario outline keyword was printed
-	scenarioKeyword bool
-
-	// outline
-	outlineSteps       []*stepResult
-	outlineNumExample  int
-	outlineNumExamples int
+	scenarioID      string
+	scenarioExample int
 }
 
-func (f *pretty) Feature(ft *gherkin.Feature, p string, c []byte) {
-	if len(f.features) != 0 {
-		// not a first feature, add a newline
-		fmt.Fprintln(f.out, "")
+func (f *pretty) Feature(gd *messages.GherkinDocument, p string, c []byte) {
+	f.basefmt.Feature(gd, p, c)
+	f.printFeature(gd.Feature)
+}
+
+// Pickle takes a gherkin node for formatting
+func (f *pretty) Pickle(pickle *messages.Pickle) {
+	f.basefmt.Pickle(pickle)
+
+	astScenario := f.findScenario(pickle.AstNodeIds[0])
+
+	if f.scenarioID != astScenario.Id {
+		f.scenarioID = astScenario.Id
+		f.scenarioExample = 0
+	} else {
+		f.scenarioExample++
 	}
-	f.features = append(f.features, &feature{Path: p, Feature: ft})
-	fmt.Fprintln(f.out, keywordAndName(ft.Keyword, ft.Name))
-	if strings.TrimSpace(ft.Description) != "" {
-		for _, line := range strings.Split(ft.Description, "\n") {
+
+	if len(pickle.Steps) == 0 {
+		f.printUndefinedPickle(pickle)
+		return
+	}
+}
+
+func (f *pretty) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
+	f.basefmt.Passed(pickle, step, match)
+	f.printStep(f.lastStepResult())
+}
+
+func (f *pretty) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
+	f.basefmt.Skipped(pickle, step, match)
+	f.printStep(f.lastStepResult())
+}
+
+func (f *pretty) Undefined(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
+	f.basefmt.Undefined(pickle, step, match)
+	f.printStep(f.lastStepResult())
+}
+
+func (f *pretty) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition, err error) {
+	f.basefmt.Failed(pickle, step, match, err)
+	f.printStep(f.lastStepResult())
+}
+
+func (f *pretty) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
+	f.basefmt.Pending(pickle, step, match)
+	f.printStep(f.lastStepResult())
+}
+
+func (f *pretty) printFeature(feature *messages.GherkinDocument_Feature) {
+	if len(f.features) != 0 {
+		fmt.Fprintln(f.out, "") // not a first feature, add a newline
+	}
+
+	fmt.Fprintln(f.out, keywordAndName(feature.Keyword, feature.Name))
+	if strings.TrimSpace(feature.Description) != "" {
+		for _, line := range strings.Split(feature.Description, "\n") {
 			fmt.Fprintln(f.out, s(f.indent)+strings.TrimSpace(line))
 		}
-	}
-
-	f.feature = ft
-	f.scenario = nil
-	f.outline = nil
-	f.bgSteps = 0
-	f.totalBgSteps = 0
-	if ft.Background != nil {
-		f.bgSteps = len(ft.Background.Steps)
-		f.totalBgSteps = len(ft.Background.Steps)
-	}
-}
-
-// Node takes a gherkin node for formatting
-func (f *pretty) Node(node interface{}) {
-	f.basefmt.Node(node)
-
-	switch t := node.(type) {
-	case *gherkin.Examples:
-		f.outlineNumExamples = len(t.TableBody)
-		f.outlineNumExample++
-	case *gherkin.Scenario:
-		f.scenario = t
-		f.outline = nil
-		f.steps = len(t.Steps) + f.totalBgSteps
-		f.scenarioKeyword = false
-		if isEmptyScenario(t) {
-			f.printUndefinedScenario(t)
-		}
-	case *gherkin.ScenarioOutline:
-		f.outline = t
-		f.scenario = nil
-		f.outlineNumExample = -1
-		f.scenarioKeyword = false
-		if isEmptyScenario(t) {
-			f.printUndefinedScenario(t)
-		}
-	case *gherkin.TableRow:
-		f.steps = len(f.outline.Steps) + f.totalBgSteps
-		f.outlineSteps = []*stepResult{}
 	}
 }
 
@@ -114,117 +106,195 @@ func keywordAndName(keyword, name string) string {
 	return title
 }
 
-func (f *pretty) printUndefinedScenario(sc interface{}) {
-	if f.bgSteps > 0 {
-		bg := f.feature.Background
-		f.commentPos = f.longestStep(bg.Steps, f.length(bg))
-		fmt.Fprintln(f.out, "\n"+s(f.indent)+keywordAndName(bg.Keyword, bg.Name))
+func (f *pretty) scenarioLengths(scenarioAstID string) (scenarioHeaderLength int, maxLength int) {
+	astScenario := f.findScenario(scenarioAstID)
+	astBackground := f.findBackground(scenarioAstID)
 
-		for _, step := range bg.Steps {
-			f.bgSteps--
-			f.printStep(step, nil, colors.Cyan)
+	scenarioHeaderLength = f.lengthPickle(astScenario.Keyword, astScenario.Name)
+	maxLength = f.longestStep(astScenario.Steps, scenarioHeaderLength)
+
+	if astBackground != nil {
+		maxLength = f.longestStep(astBackground.Steps, maxLength)
+	}
+
+	return scenarioHeaderLength, maxLength
+}
+
+func (f *pretty) printUndefinedPickle(pickle *messages.Pickle) {
+	astScenario := f.findScenario(pickle.AstNodeIds[0])
+	astBackground := f.findBackground(pickle.AstNodeIds[0])
+
+	scenarioHeaderLength, maxLength := f.scenarioLengths(pickle.AstNodeIds[0])
+
+	if astBackground != nil {
+		fmt.Fprintln(f.out, "\n"+s(f.indent)+keywordAndName(astBackground.Keyword, astBackground.Name))
+		for _, step := range astBackground.Steps {
+			text := s(f.indent) + cyan(strings.TrimSpace(step.Keyword)) + " " + cyan(step.Text)
+			fmt.Fprintln(f.out, text)
 		}
 	}
 
-	switch t := sc.(type) {
-	case *gherkin.Scenario:
-		f.commentPos = f.longestStep(t.Steps, f.length(sc))
-		text := s(f.indent) + keywordAndName(t.Keyword, t.Name)
-		text += s(f.commentPos-f.length(t)+1) + f.line(t.Location)
-		fmt.Fprintln(f.out, "\n"+text)
-	case *gherkin.ScenarioOutline:
-		f.commentPos = f.longestStep(t.Steps, f.length(sc))
-		text := s(f.indent) + keywordAndName(t.Keyword, t.Name)
-		text += s(f.commentPos-f.length(t)+1) + f.line(t.Location)
-		fmt.Fprintln(f.out, "\n"+text)
+	if len(astScenario.Examples) > 0 && f.scenarioExample > 0 {
+		return
+	}
 
-		for _, example := range t.Examples {
-			max := longest(example, cyan)
-			f.printExampleHeader(example, max)
-			for _, row := range example.TableBody {
-				f.printExampleRow(row, max, cyan)
-			}
+	text := s(f.indent) + keywordAndName(astScenario.Keyword, astScenario.Name)
+	text += s(maxLength - scenarioHeaderLength)
+	text += f.line(astScenario.Location)
+	fmt.Fprintln(f.out, "\n"+text)
+
+	for _, examples := range astScenario.Examples {
+		max := longestExample(examples, cyan, cyan)
+
+		fmt.Fprintln(f.out, "")
+		fmt.Fprintln(f.out, s(f.indent*2)+keywordAndName(examples.Keyword, examples.Name))
+
+		f.printTableHeader(examples.TableHeader, max)
+
+		for _, row := range examples.TableBody {
+			f.printTableRow(row, max, cyan)
 		}
 	}
 }
 
 // Summary sumarize the feature formatter output
 func (f *pretty) Summary() {
-	if len(f.failed) > 0 {
+	failedStepResults := f.findStepResults(failed)
+	if len(failedStepResults) > 0 {
 		fmt.Fprintln(f.out, "\n--- "+red("Failed steps:")+"\n")
-		for _, fail := range f.failed {
-			fmt.Fprintln(f.out, s(2)+red(fail.scenarioDesc())+blackb(" # "+fail.scenarioLine()))
-			fmt.Fprintln(f.out, s(4)+red(strings.TrimSpace(fail.step.Keyword)+" "+fail.step.Text)+blackb(" # "+fail.line()))
+		for _, fail := range failedStepResults {
+			astScenario := f.findScenario(fail.owner.AstNodeIds[0])
+			scenarioDesc := fmt.Sprintf("%s: %s", astScenario.Keyword, fail.owner.Name)
+
+			astStep := f.findStep(fail.step.AstNodeIds[0])
+			stepDesc := strings.TrimSpace(astStep.Keyword) + " " + fail.step.Text
+
+			fmt.Fprintln(f.out, s(2)+red(scenarioDesc)+f.line(astScenario.Location))
+			fmt.Fprintln(f.out, s(4)+red(stepDesc)+f.line(astStep.Location))
 			fmt.Fprintln(f.out, s(6)+red("Error: ")+redb(fmt.Sprintf("%+v", fail.err))+"\n")
 		}
 	}
+
 	f.basefmt.Summary()
 }
 
-func (f *pretty) printOutlineExample(outline *gherkin.ScenarioOutline) {
+func (f *pretty) printOutlineExample(pickle *messages.Pickle) {
 	var msg string
 	var clr colors.ColorFunc
 
-	ex := outline.Examples[f.outlineNumExample]
-	example, hasExamples := examples(ex)
-	if !hasExamples {
+	astScenario := f.findScenario(pickle.AstNodeIds[0])
+	astBackground := f.findBackground(pickle.AstNodeIds[0])
+
+	if len(astScenario.Examples) == 0 {
+		scenarioHeaderLength, maxLength := f.scenarioLengths(pickle.AstNodeIds[0])
+
+		var astBackgroundSteps int
+		if astBackground != nil {
+			astBackgroundSteps = len(astBackground.Steps)
+		}
+
+		firstExecutedScenarioStep := len(f.lastFeature().lastPickleResult().stepResults) == astBackgroundSteps+1
+
+		if firstExecutedScenarioStep {
+			text := s(f.indent) + keywordAndName(astScenario.Keyword, astScenario.Name)
+			text += s(maxLength - scenarioHeaderLength)
+			text += f.line(astScenario.Location)
+			fmt.Fprintln(f.out, "\n"+text)
+		}
+
+		return
+	}
+
+	var example *messages.GherkinDocument_Feature_Scenario_Examples
+	var exampleRow *messages.GherkinDocument_Feature_TableRow
+	var firstExample bool
+	var idx int
+
+	for _, examples := range astScenario.Examples {
+		if idx+len(examples.TableBody) > f.scenarioExample {
+			example = examples
+			exampleRow = examples.TableBody[f.scenarioExample-idx]
+			firstExample = idx == f.scenarioExample
+			break
+		}
+
+		idx += len(examples.TableBody)
+	}
+
+	if firstExample {
+		scenarioHeaderLength, maxLength := f.scenarioLengths(pickle.AstNodeIds[0])
+
+		var astBackgroundSteps = 0
+		if astBackground != nil {
+			astBackgroundSteps = len(astBackground.Steps)
+		}
+		firstExecutedScenarioStep := len(f.lastFeature().lastPickleResult().stepResults) == astBackgroundSteps+1
+
+		if firstExecutedScenarioStep && idx == 0 {
+			text := s(f.indent) + keywordAndName(astScenario.Keyword, astScenario.Name)
+			text += s(maxLength - scenarioHeaderLength)
+			text += f.line(astScenario.Location)
+			fmt.Fprintln(f.out, "\n"+text)
+		}
+	}
+
+	if len(example.TableBody) == 0 {
 		// do not print empty examples
 		return
 	}
 
-	firstExample := f.outlineNumExamples == len(example.TableBody)
-	printSteps := firstExample && f.outlineNumExample == 0
+	lastStep := len(f.lastFeature().lastPickleResult().stepResults) == len(pickle.Steps)
 
-	for i, res := range f.outlineSteps {
+	for _, res := range f.lastFeature().lastPickleResult().stepResults {
 		// determine example row status
 		switch {
-		case res.typ == failed:
+		case res.status == failed:
 			msg = res.err.Error()
-			clr = res.typ.clr()
-		case res.typ == undefined || res.typ == pending:
-			clr = res.typ.clr()
-		case res.typ == skipped && clr == nil:
+			clr = res.status.clr()
+		case res.status == undefined || res.status == pending:
+			clr = res.status.clr()
+		case res.status == skipped && clr == nil:
 			clr = cyan
 		}
-		if printSteps && i >= f.totalBgSteps {
+
+		if firstExample && lastStep && idx == 0 {
 			// in first example, we need to print steps
 			var text string
-			ostep := outline.Steps[i-f.totalBgSteps]
+			pickleStep := res.step
+
+			astStep := f.findStep(pickleStep.AstNodeIds[0])
+
 			if res.def != nil {
-				if m := outlinePlaceholderRegexp.FindAllStringIndex(ostep.Text, -1); len(m) > 0 {
+				if m := outlinePlaceholderRegexp.FindAllStringIndex(astStep.Text, -1); len(m) > 0 {
 					var pos int
 					for i := 0; i < len(m); i++ {
 						pair := m[i]
-						text += cyan(ostep.Text[pos:pair[0]])
-						text += cyanb(ostep.Text[pair[0]:pair[1]])
+						text += cyan(astStep.Text[pos:pair[0]])
+						text += cyanb(astStep.Text[pair[0]:pair[1]])
 						pos = pair[1]
 					}
-					text += cyan(ostep.Text[pos:len(ostep.Text)])
+					text += cyan(astStep.Text[pos:len(astStep.Text)])
 				} else {
-					text = cyan(ostep.Text)
+					text = cyan(astStep.Text)
 				}
-				text += s(f.commentPos-f.length(ostep)+1) + blackb(fmt.Sprintf("# %s", res.def.definitionID()))
+
+				_, maxLength := f.scenarioLengths(res.owner.AstNodeIds[0])
+				stepLength := f.lengthPickleStep(astStep.Keyword, astStep.Text)
+
+				text += s(maxLength - stepLength)
+				text += " " + blackb("# "+res.def.definitionID())
 			} else {
-				text = cyan(ostep.Text)
+				text = cyan(astStep.Text)
 			}
 			// print the step outline
-			fmt.Fprintln(f.out, s(f.indent*2)+cyan(strings.TrimSpace(ostep.Keyword))+" "+text)
+			fmt.Fprintln(f.out, s(f.indent*2)+cyan(strings.TrimSpace(astStep.Keyword))+" "+text)
 
-			// print step argument
-			// @TODO: need to make example header cells bold
-			switch t := ostep.Argument.(type) {
-			case *gherkin.DataTable:
-				f.printTable(t, cyan)
-			case *gherkin.DocString:
-				var ct string
-				if len(t.ContentType) > 0 {
-					ct = " " + cyan(t.ContentType)
-				}
-				fmt.Fprintln(f.out, s(f.indent*3)+cyan(t.Delimitter)+ct)
-				for _, ln := range strings.Split(t.Content, "\n") {
-					fmt.Fprintln(f.out, s(f.indent*3)+cyan(ln))
-				}
-				fmt.Fprintln(f.out, s(f.indent*3)+cyan(t.Delimitter))
+			if table := pickleStep.Argument.GetDataTable(); table != nil {
+				f.printTable(table, cyan)
+			}
+
+			if docString := astStep.GetDocString(); docString != nil {
+				f.printDocString(docString)
 			}
 		}
 	}
@@ -233,223 +303,199 @@ func (f *pretty) printOutlineExample(outline *gherkin.ScenarioOutline) {
 		clr = green
 	}
 
-	max := longest(example, clr, cyan)
-	// an example table header
-	if firstExample {
-		f.printExampleHeader(example, max)
-	}
+	if lastStep {
+		max := longestExample(example, clr, cyan)
 
-	// an example table row
-	row := example.TableBody[len(example.TableBody)-f.outlineNumExamples]
-	f.printExampleRow(row, max, clr)
+		// an example table header
+		if firstExample {
+			fmt.Fprintln(f.out, "")
+			fmt.Fprintln(f.out, s(f.indent*2)+keywordAndName(example.Keyword, example.Name))
 
-	// if there is an error
-	if msg != "" {
-		fmt.Fprintln(f.out, s(f.indent*4)+redb(msg))
+			f.printTableHeader(example.TableHeader, max)
+		}
+
+		f.printTableRow(exampleRow, max, clr)
+
+		// if there is an error
+		if msg != "" {
+			fmt.Fprintln(f.out, s(f.indent*4)+redb(msg))
+		}
 	}
 }
 
-func (f *pretty) printExampleRow(row *gherkin.TableRow, max []int, clr colors.ColorFunc) {
+func (f *pretty) printExample(example *messages.GherkinDocument_Feature_Scenario_Examples, printHeaders bool, clr colors.ColorFunc) {
+	max := longestExample(example, clr, cyan)
+
+	// an example table header
+	if printHeaders {
+		fmt.Fprintln(f.out, "")
+		fmt.Fprintln(f.out, s(f.indent*2)+keywordAndName(example.Keyword, example.Name))
+
+		f.printTableHeader(example.TableHeader, max)
+	}
+
+	// an example table row
+	row := example.TableBody[f.scenarioExample]
+	f.printTableRow(row, max, clr)
+}
+
+func (f *pretty) printTableRow(row *messages.GherkinDocument_Feature_TableRow, max []int, clr colors.ColorFunc) {
 	cells := make([]string, len(row.Cells))
+
 	for i, cell := range row.Cells {
 		val := clr(cell.Value)
 		ln := utf8.RuneCountInString(val)
 		cells[i] = val + s(max[i]-ln)
 	}
+
 	fmt.Fprintln(f.out, s(f.indent*3)+"| "+strings.Join(cells, " | ")+" |")
 }
 
-func (f *pretty) printExampleHeader(example *gherkin.Examples, max []int) {
-	cells := make([]string, len(example.TableHeader.Cells))
-	// an example table header
-	fmt.Fprintln(f.out, "")
-	fmt.Fprintln(f.out, s(f.indent*2)+keywordAndName(example.Keyword, example.Name))
-
-	for i, cell := range example.TableHeader.Cells {
-		val := cyan(cell.Value)
-		ln := utf8.RuneCountInString(val)
-		cells[i] = val + s(max[i]-ln)
-	}
-	fmt.Fprintln(f.out, s(f.indent*3)+"| "+strings.Join(cells, " | ")+" |")
+func (f *pretty) printTableHeader(row *messages.GherkinDocument_Feature_TableRow, max []int) {
+	f.printTableRow(row, max, cyan)
 }
 
-func (f *pretty) printStep(step *gherkin.Step, def *StepDef, c colors.ColorFunc) {
-	text := s(f.indent*2) + c(strings.TrimSpace(step.Keyword)) + " "
-	switch {
-	case def != nil:
-		if m := def.Expr.FindStringSubmatchIndex(step.Text)[2:]; len(m) > 0 {
-			var pos, i int
-			for pos, i = 0, 0; i < len(m); i++ {
-				if m[i] == -1 {
-					continue // no index for this match
-				}
-				if math.Mod(float64(i), 2) == 0 {
-					text += c(step.Text[pos:m[i]])
-				} else {
-					text += colors.Bold(c)(step.Text[pos:m[i]])
-				}
-				pos = m[i]
-			}
-			text += c(step.Text[pos:len(step.Text)])
-		} else {
-			text += c(step.Text)
-		}
-		text += s(f.commentPos-f.length(step)+1) + blackb(fmt.Sprintf("# %s", def.definitionID()))
-	default:
-		text += c(step.Text)
+func (f *pretty) printStep(res *stepResult) {
+
+	astBackground := f.findBackground(res.owner.AstNodeIds[0])
+	astScenario := f.findScenario(res.owner.AstNodeIds[0])
+	astStep := f.findStep(res.step.AstNodeIds[0])
+
+	var backgroundSteps int
+
+	if astBackground != nil {
+		backgroundSteps = len(astBackground.Steps)
 	}
 
-	fmt.Fprintln(f.out, text)
-	switch t := step.Argument.(type) {
-	case *gherkin.DataTable:
-		f.printTable(t, c)
-	case *gherkin.DocString:
-		var ct string
-		if len(t.ContentType) > 0 {
-			ct = " " + c(t.ContentType)
-		}
-		fmt.Fprintln(f.out, s(f.indent*3)+c(t.Delimitter)+ct)
-		for _, ln := range strings.Split(t.Content, "\n") {
-			fmt.Fprintln(f.out, s(f.indent*3)+c(ln))
-		}
-		fmt.Fprintln(f.out, s(f.indent*3)+c(t.Delimitter))
-	}
-}
+	firstExecutedBackgroundStep := astBackground != nil && len(f.lastFeature().lastPickleResult().stepResults) == 1
+	astBackgroundStep := backgroundSteps > 0 && backgroundSteps >= len(f.lastFeature().lastPickleResult().stepResults)
 
-func (f *pretty) printStepKind(res *stepResult) {
-	f.steps--
-	if f.outline != nil {
-		f.outlineSteps = append(f.outlineSteps, res)
-	}
-	var bgStep bool
-	bg := f.feature.Background
+	if astBackgroundStep {
+		if len(f.lastFeature().pickleResults) > 1 {
+			return
+		}
 
-	// if has not printed background yet
-	switch {
-	// first background step
-	case f.bgSteps > 0 && f.bgSteps == len(bg.Steps):
-		f.commentPos = f.longestStep(bg.Steps, f.length(bg))
-		fmt.Fprintln(f.out, "\n"+s(f.indent)+keywordAndName(bg.Keyword, bg.Name))
-		f.bgSteps--
-		bgStep = true
-	// subsequent background steps
-	case f.bgSteps > 0:
-		f.bgSteps--
-		bgStep = true
-	// first step of scenario, print header and calculate comment position
-	case f.scenario != nil:
-		// print scenario keyword and value if first example
-		if !f.scenarioKeyword {
-			f.commentPos = f.longestStep(f.scenario.Steps, f.length(f.scenario))
-			if bg != nil {
-				if bgLen := f.longestStep(bg.Steps, f.length(bg)); bgLen > f.commentPos {
-					f.commentPos = bgLen
-				}
-			}
-			text := s(f.indent) + keywordAndName(f.scenario.Keyword, f.scenario.Name)
-			text += s(f.commentPos-f.length(f.scenario)+1) + f.line(f.scenario.Location)
-			fmt.Fprintln(f.out, "\n"+text)
-			f.scenarioKeyword = true
+		backgroundHeaderLength := f.lengthPickle(astBackground.Keyword, astBackground.Name)
+		maxLength := f.longestStep(astScenario.Steps, backgroundHeaderLength)
+		maxLength = f.longestStep(astBackground.Steps, maxLength)
+		stepLength := f.lengthPickleStep(astStep.Keyword, astStep.Text)
+
+		if firstExecutedBackgroundStep {
+			fmt.Fprintln(f.out, "\n"+s(f.indent)+keywordAndName(astBackground.Keyword, astBackground.Name))
 		}
-	// first step of outline scenario, print header and calculate comment position
-	case f.outline != nil:
-		// print scenario keyword and value if first example
-		if !f.scenarioKeyword {
-			f.commentPos = f.longestStep(f.outline.Steps, f.length(f.outline))
-			if bg != nil {
-				if bgLen := f.longestStep(bg.Steps, f.length(bg)); bgLen > f.commentPos {
-					f.commentPos = bgLen
-				}
-			}
-			text := s(f.indent) + keywordAndName(f.outline.Keyword, f.outline.Name)
-			text += s(f.commentPos-f.length(f.outline)+1) + f.line(f.outline.Location)
-			fmt.Fprintln(f.out, "\n"+text)
-			f.scenarioKeyword = true
+
+		text := s(f.indent) + res.status.clr()(strings.TrimSpace(astStep.Keyword)) + " " + res.status.clr()(astStep.Text)
+		if res.def != nil {
+			text += s(maxLength - stepLength + 1)
+			text += blackb("# " + res.def.definitionID())
 		}
-		if len(f.outlineSteps) == len(f.outline.Steps)+f.totalBgSteps {
-			// an outline example steps has went through
-			f.printOutlineExample(f.outline)
-			f.outlineNumExamples--
+		fmt.Fprintln(f.out, text)
+
+		if table := res.step.Argument.GetDataTable(); table != nil {
+			f.printTable(table, cyan)
 		}
+
+		if docString := astStep.GetDocString(); docString != nil {
+			f.printDocString(docString)
+		}
+
+		// if res.err != nil {
+		// 	fmt.Fprintln(f.out, s(f.indent*2)+redb(fmt.Sprintf("%+v", res.err)))
+		// }
+
+		if res.status == pending {
+			fmt.Fprintln(f.out, s(f.indent*3)+yellow("TODO: write pending definition"))
+		}
+
 		return
 	}
 
-	if !f.isBackgroundStep(res.step) || bgStep {
-		f.printStep(res.step, res.def, res.typ.clr())
+	if len(astScenario.Examples) > 0 {
+		f.printOutlineExample(res.owner)
+		return
 	}
+
+	scenarioHeaderLength, maxLength := f.scenarioLengths(res.owner.AstNodeIds[0])
+	stepLength := f.lengthPickleStep(astStep.Keyword, astStep.Text)
+
+	firstExecutedScenarioStep := len(f.lastFeature().lastPickleResult().stepResults) == backgroundSteps+1
+
+	if firstExecutedScenarioStep {
+		text := s(f.indent) + keywordAndName(astScenario.Keyword, astScenario.Name)
+		text += s(maxLength - scenarioHeaderLength)
+		text += f.line(astScenario.Location)
+		fmt.Fprintln(f.out, "\n"+text)
+	}
+
+	text := s(f.indent) + res.status.clr()(strings.TrimSpace(astStep.Keyword)) + " " + res.status.clr()(astStep.Text)
+	if res.def != nil {
+		if maxLength-stepLength < 0 {
+			text += fmt.Sprintf(" lonn: %d, %d ", maxLength, stepLength)
+		} else {
+			text += s(maxLength - stepLength + 1)
+		}
+		text += blackb("# " + res.def.definitionID())
+	}
+	fmt.Fprintln(f.out, text)
+
+	if table := res.step.Argument.GetDataTable(); table != nil {
+		f.printTable(table, cyan)
+	}
+
+	if docString := astStep.GetDocString(); docString != nil {
+		f.printDocString(docString)
+	}
+
 	if res.err != nil {
 		fmt.Fprintln(f.out, s(f.indent*2)+redb(fmt.Sprintf("%+v", res.err)))
 	}
-	if res.typ == pending {
+
+	if res.status == pending {
 		fmt.Fprintln(f.out, s(f.indent*3)+yellow("TODO: write pending definition"))
 	}
 }
 
-func (f *pretty) isBackgroundStep(step *gherkin.Step) bool {
-	if f.feature.Background == nil {
-		return false
+func (f *pretty) printDocString(docString *messages.GherkinDocument_Feature_Step_DocString) {
+	var ct string
+
+	if len(docString.MediaType) > 0 {
+		ct = " " + cyan(docString.MediaType)
 	}
 
-	for _, bstep := range f.feature.Background.Steps {
-		if bstep.Location.Line == step.Location.Line {
-			return true
-		}
+	fmt.Fprintln(f.out, s(f.indent*3)+cyan(docString.Delimiter)+ct)
+
+	for _, ln := range strings.Split(docString.Content, "\n") {
+		fmt.Fprintln(f.out, s(f.indent*3)+cyan(ln))
 	}
-	return false
+
+	fmt.Fprintln(f.out, s(f.indent*3)+cyan(docString.Delimiter))
 }
 
 // print table with aligned table cells
-func (f *pretty) printTable(t *gherkin.DataTable, c colors.ColorFunc) {
-	var l = longest(t, c)
+// @TODO: need to make example header cells bold
+func (f *pretty) printTable(t *messages.PickleStepArgument_PickleTable, c colors.ColorFunc) {
+	maxColLengths := maxColLengths(t, c)
 	var cols = make([]string, len(t.Rows[0].Cells))
+
 	for _, row := range t.Rows {
 		for i, cell := range row.Cells {
 			val := c(cell.Value)
-			ln := utf8.RuneCountInString(val)
-			cols[i] = val + s(l[i]-ln)
+			colLength := utf8.RuneCountInString(val)
+			cols[i] = val + s(maxColLengths[i]-colLength)
 		}
+
 		fmt.Fprintln(f.out, s(f.indent*3)+"| "+strings.Join(cols, " | ")+" |")
 	}
 }
 
-func (f *pretty) Passed(step *gherkin.Step, match *StepDef) {
-	f.basefmt.Passed(step, match)
-	f.printStepKind(f.passed[len(f.passed)-1])
-}
-
-func (f *pretty) Skipped(step *gherkin.Step, match *StepDef) {
-	f.basefmt.Skipped(step, match)
-	f.printStepKind(f.skipped[len(f.skipped)-1])
-}
-
-func (f *pretty) Undefined(step *gherkin.Step, match *StepDef) {
-	f.basefmt.Undefined(step, match)
-	f.printStepKind(f.undefined[len(f.undefined)-1])
-}
-
-func (f *pretty) Failed(step *gherkin.Step, match *StepDef, err error) {
-	f.basefmt.Failed(step, match, err)
-	f.printStepKind(f.failed[len(f.failed)-1])
-}
-
-func (f *pretty) Pending(step *gherkin.Step, match *StepDef) {
-	f.basefmt.Pending(step, match)
-	f.printStepKind(f.pending[len(f.pending)-1])
-}
-
 // longest gives a list of longest columns of all rows in Table
-func longest(tbl interface{}, clrs ...colors.ColorFunc) []int {
-	var rows []*gherkin.TableRow
-	switch t := tbl.(type) {
-	case *gherkin.Examples:
-		rows = append(rows, t.TableHeader)
-		rows = append(rows, t.TableBody...)
-	case *gherkin.DataTable:
-		rows = append(rows, t.Rows...)
+func maxColLengths(t *messages.PickleStepArgument_PickleTable, clrs ...colors.ColorFunc) []int {
+	if t == nil {
+		return []int{}
 	}
 
-	longest := make([]int, len(rows[0].Cells))
-	for _, row := range rows {
+	longest := make([]int, len(t.Rows[0].Cells))
+	for _, row := range t.Rows {
 		for i, cell := range row.Cells {
 			for _, c := range clrs {
 				ln := utf8.RuneCountInString(c(cell.Value))
@@ -464,35 +510,71 @@ func longest(tbl interface{}, clrs ...colors.ColorFunc) []int {
 			}
 		}
 	}
+
 	return longest
 }
 
-func (f *pretty) longestStep(steps []*gherkin.Step, base int) int {
-	ret := base
-	for _, step := range steps {
-		length := f.length(step)
-		if length > ret {
-			ret = length
+func longestExample(t *messages.GherkinDocument_Feature_Scenario_Examples, clrs ...colors.ColorFunc) []int {
+	if t == nil {
+		return []int{}
+	}
+
+	longest := make([]int, len(t.TableHeader.Cells))
+	for i, cell := range t.TableHeader.Cells {
+		for _, c := range clrs {
+			ln := utf8.RuneCountInString(c(cell.Value))
+			if longest[i] < ln {
+				longest[i] = ln
+			}
+		}
+
+		ln := utf8.RuneCountInString(cell.Value)
+		if longest[i] < ln {
+			longest[i] = ln
 		}
 	}
-	return ret
+
+	for _, row := range t.TableBody {
+		for i, cell := range row.Cells {
+			for _, c := range clrs {
+				ln := utf8.RuneCountInString(c(cell.Value))
+				if longest[i] < ln {
+					longest[i] = ln
+				}
+			}
+
+			ln := utf8.RuneCountInString(cell.Value)
+			if longest[i] < ln {
+				longest[i] = ln
+			}
+		}
+	}
+
+	return longest
+}
+
+func (f *pretty) longestStep(steps []*messages.GherkinDocument_Feature_Step, pickleLength int) int {
+	max := pickleLength
+
+	for _, step := range steps {
+		length := f.lengthPickleStep(step.Keyword, step.Text)
+		if length > max {
+			max = length
+		}
+	}
+
+	return max
 }
 
 // a line number representation in feature file
-func (f *pretty) line(loc *gherkin.Location) string {
-	return blackb(fmt.Sprintf("# %s:%d", f.features[len(f.features)-1].Path, loc.Line))
+func (f *pretty) line(loc *messages.Location) string {
+	return " " + blackb(fmt.Sprintf("# %s:%d", f.lastFeature().Path, loc.Line))
 }
 
-func (f *pretty) length(node interface{}) int {
-	switch t := node.(type) {
-	case *gherkin.Background:
-		return f.indent + utf8.RuneCountInString(strings.TrimSpace(t.Keyword)+": "+t.Name)
-	case *gherkin.Step:
-		return f.indent*2 + utf8.RuneCountInString(strings.TrimSpace(t.Keyword)+" "+t.Text)
-	case *gherkin.Scenario:
-		return f.indent + utf8.RuneCountInString(strings.TrimSpace(t.Keyword)+": "+t.Name)
-	case *gherkin.ScenarioOutline:
-		return f.indent + utf8.RuneCountInString(strings.TrimSpace(t.Keyword)+": "+t.Name)
-	}
-	panic(fmt.Sprintf("unexpected node %T to determine length", node))
+func (f *pretty) lengthPickleStep(keyword, text string) int {
+	return f.indent*2 + utf8.RuneCountInString(strings.TrimSpace(keyword)+" "+text)
+}
+
+func (f *pretty) lengthPickle(keyword, name string) int {
+	return f.indent + utf8.RuneCountInString(strings.TrimSpace(keyword)+": "+name)
 }

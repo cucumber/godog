@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cucumber/godog/gherkin"
+	"github.com/cucumber/messages-go/v9"
 )
 
 func init() {
@@ -33,13 +33,13 @@ type junitFormatter struct {
 	lock *sync.Mutex
 }
 
-func (f *junitFormatter) Node(n interface{}) {
+func (f *junitFormatter) Pickle(pickle *messages.Pickle) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
-	f.basefmt.Node(n)
+	f.basefmt.Pickle(pickle)
 }
 
-func (f *junitFormatter) Feature(ft *gherkin.Feature, p string, c []byte) {
+func (f *junitFormatter) Feature(ft *messages.GherkinDocument, p string, c []byte) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
 	f.basefmt.Feature(ft, p, c)
@@ -60,34 +60,34 @@ func (f *junitFormatter) Summary() {
 	}
 }
 
-func (f *junitFormatter) Passed(step *gherkin.Step, match *StepDef) {
+func (f *junitFormatter) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
-	f.basefmt.Passed(step, match)
+	f.basefmt.Passed(pickle, step, match)
 }
 
-func (f *junitFormatter) Skipped(step *gherkin.Step, match *StepDef) {
+func (f *junitFormatter) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
-	f.basefmt.Skipped(step, match)
+	f.basefmt.Skipped(pickle, step, match)
 }
 
-func (f *junitFormatter) Undefined(step *gherkin.Step, match *StepDef) {
+func (f *junitFormatter) Undefined(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
-	f.basefmt.Undefined(step, match)
+	f.basefmt.Undefined(pickle, step, match)
 }
 
-func (f *junitFormatter) Failed(step *gherkin.Step, match *StepDef, err error) {
+func (f *junitFormatter) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition, err error) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
-	f.basefmt.Failed(step, match, err)
+	f.basefmt.Failed(pickle, step, match, err)
 }
 
-func (f *junitFormatter) Pending(step *gherkin.Step, match *StepDef) {
+func (f *junitFormatter) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
-	f.basefmt.Pending(step, match)
+	f.basefmt.Pending(pickle, step, match)
 }
 
 func (f *junitFormatter) Sync(cf ConcurrentFormatter) {
@@ -100,21 +100,6 @@ func (f *junitFormatter) Copy(cf ConcurrentFormatter) {
 	if source, ok := cf.(*junitFormatter); ok {
 		for _, v := range source.features {
 			f.features = append(f.features, v)
-		}
-		for _, v := range source.failed {
-			f.failed = append(f.failed, v)
-		}
-		for _, v := range source.passed {
-			f.passed = append(f.passed, v)
-		}
-		for _, v := range source.skipped {
-			f.skipped = append(f.skipped, v)
-		}
-		for _, v := range source.undefined {
-			f.undefined = append(f.undefined, v)
-		}
-		for _, v := range source.pending {
-			f.pending = append(f.pending, v)
 		}
 	}
 }
@@ -130,44 +115,55 @@ func buildJUNITPackageSuite(suiteName string, startedAt time.Time, features []*f
 
 	for idx, feat := range features {
 		ts := junitTestSuite{
-			Name:      feat.Name,
+			Name:      feat.GherkinDocument.Feature.Name,
 			Time:      feat.finishedAt().Sub(feat.startedAt()).String(),
-			TestCases: make([]*junitTestCase, len(feat.Scenarios)),
+			TestCases: make([]*junitTestCase, len(feat.pickleResults)),
 		}
 
-		for idx, scenario := range feat.Scenarios {
+		var testcaseNames = make(map[string]int)
+		for _, pickleResult := range feat.pickleResults {
+			testcaseNames[pickleResult.Name] = testcaseNames[pickleResult.Name] + 1
+		}
+
+		var outlineNo = make(map[string]int)
+		for idx, pickleResult := range feat.pickleResults {
 			tc := junitTestCase{}
-			tc.Name = scenario.Name
-			tc.Time = scenario.finishedAt().Sub(scenario.startedAt()).String()
+			tc.Time = pickleResult.finishedAt().Sub(pickleResult.startedAt()).String()
+
+			tc.Name = pickleResult.Name
+			if testcaseNames[tc.Name] > 1 {
+				outlineNo[tc.Name] = outlineNo[tc.Name] + 1
+				tc.Name += fmt.Sprintf(" #%d", outlineNo[tc.Name])
+			}
 
 			ts.Tests++
 			suite.Tests++
 
-			for _, step := range scenario.Steps {
-				switch step.typ {
+			for _, stepResult := range pickleResult.stepResults {
+				switch stepResult.status {
 				case passed:
 					tc.Status = passed.String()
 				case failed:
 					tc.Status = failed.String()
 					tc.Failure = &junitFailure{
-						Message: fmt.Sprintf("%s %s: %s", step.step.Type, step.step.Text, step.err),
+						Message: fmt.Sprintf("Step %s: %s", stepResult.step.Text, stepResult.err),
 					}
 				case skipped:
 					tc.Error = append(tc.Error, &junitError{
 						Type:    "skipped",
-						Message: fmt.Sprintf("%s %s", step.step.Type, step.step.Text),
+						Message: fmt.Sprintf("Step %s", stepResult.step.Text),
 					})
 				case undefined:
 					tc.Status = undefined.String()
 					tc.Error = append(tc.Error, &junitError{
 						Type:    "undefined",
-						Message: fmt.Sprintf("%s %s", step.step.Type, step.step.Text),
+						Message: fmt.Sprintf("Step %s", stepResult.step.Text),
 					})
 				case pending:
 					tc.Status = pending.String()
 					tc.Error = append(tc.Error, &junitError{
 						Type:    "pending",
-						Message: fmt.Sprintf("%s %s: TODO: write pending definition", step.step.Type, step.step.Text),
+						Message: fmt.Sprintf("Step %s: TODO: write pending definition", stepResult.step.Text),
 					})
 				}
 			}

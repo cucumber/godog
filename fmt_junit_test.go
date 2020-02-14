@@ -9,8 +9,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cucumber/gherkin-go/v9"
+	"github.com/cucumber/messages-go/v9"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/cucumber/godog/colors"
-	"github.com/cucumber/godog/gherkin"
 )
 
 var sampleGherkinFeature = `
@@ -50,19 +54,22 @@ Feature: junit formatter
 `
 
 func TestJUnitFormatterOutput(t *testing.T) {
-	feat, err := gherkin.ParseFeature(strings.NewReader(sampleGherkinFeature))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	const path = "any.feature"
+
+	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(sampleGherkinFeature), (&messages.Incrementing{}).NewId)
+	require.NoError(t, err)
+
+	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
 
 	var buf bytes.Buffer
 	w := colors.Uncolored(&buf)
 	s := &Suite{
 		fmt: junitFunc("junit", w),
-		features: []*feature{&feature{
-			Path:    "any.feature",
-			Feature: feat,
-			Content: []byte(sampleGherkinFeature),
+		features: []*feature{{
+			GherkinDocument: gd,
+			pickles:         pickles,
+			Path:            path,
+			Content:         []byte(sampleGherkinFeature),
 		}},
 	}
 
@@ -152,19 +159,18 @@ func TestJUnitFormatterOutput(t *testing.T) {
 			},
 		}},
 	}
+
 	s.run()
 	s.fmt.Summary()
 
 	var exp bytes.Buffer
-	if _, err = io.WriteString(&exp, xml.Header); err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	_, err = io.WriteString(&exp, xml.Header)
+	require.NoError(t, err)
+
 	enc := xml.NewEncoder(&exp)
 	enc.Indent("", "  ")
-	if err = enc.Encode(expected); err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if buf.String() != exp.String() {
-		t.Fatalf("expected output does not match: %s", buf.String())
-	}
+	err = enc.Encode(expected)
+	require.NoError(t, err)
+
+	assert.Equal(t, exp.String(), buf.String())
 }

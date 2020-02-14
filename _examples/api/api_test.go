@@ -8,7 +8,7 @@ import (
 	"reflect"
 
 	"github.com/cucumber/godog"
-	"github.com/cucumber/godog/gherkin"
+	"github.com/cucumber/messages-go/v9"
 )
 
 type apiFeature struct {
@@ -51,7 +51,7 @@ func (a *apiFeature) theResponseCodeShouldBe(code int) error {
 	return nil
 }
 
-func (a *apiFeature) theResponseShouldMatchJSON(body *gherkin.DocString) (err error) {
+func (a *apiFeature) theResponseShouldMatchJSON(body *messages.PickleStepArgument_PickleDocString) (err error) {
 	var expected, actual interface{}
 
 	// re-encode expected response
