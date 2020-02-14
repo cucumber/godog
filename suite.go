@@ -163,10 +163,10 @@ type Suite struct {
 	// suite event handlers
 	beforeSuiteHandlers    []func()
 	beforeFeatureHandlers  []func(*messages.GherkinDocument)
-	beforeScenarioHandlers []func(interface{})
+	beforeScenarioHandlers []func(*messages.Pickle)
 	beforeStepHandlers     []func(*messages.Pickle_PickleStep)
 	afterStepHandlers      []func(*messages.Pickle_PickleStep, error)
-	afterScenarioHandlers  []func(interface{}, error)
+	afterScenarioHandlers  []func(*messages.Pickle, error)
 	afterFeatureHandlers   []func(*messages.GherkinDocument)
 	afterSuiteHandlers     []func()
 }

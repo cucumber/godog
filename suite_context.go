@@ -114,7 +114,7 @@ type suiteContext struct {
 	out         bytes.Buffer
 }
 
-func (s *suiteContext) ResetBeforeEachScenario(interface{}) {
+func (s *suiteContext) ResetBeforeEachScenario(*messages.Pickle) {
 	// reset whole suite with the state
 	s.out.Reset()
 	s.paths = []string{}
@@ -310,11 +310,11 @@ func (s *suiteContext) iAmListeningToSuiteEvents() error {
 	s.testedSuite.AfterFeature(func(ft *messages.GherkinDocument) {
 		s.events = append(s.events, &firedEvent{"AfterFeature", []interface{}{ft}})
 	})
-	s.testedSuite.BeforeScenario(func(scenario interface{}) {
-		s.events = append(s.events, &firedEvent{"BeforeScenario", []interface{}{scenario}})
+	s.testedSuite.BeforeScenario(func(pickle *messages.Pickle) {
+		s.events = append(s.events, &firedEvent{"BeforeScenario", []interface{}{pickle}})
 	})
-	s.testedSuite.AfterScenario(func(scenario interface{}, err error) {
-		s.events = append(s.events, &firedEvent{"AfterScenario", []interface{}{scenario, err}})
+	s.testedSuite.AfterScenario(func(pickle *messages.Pickle, err error) {
+		s.events = append(s.events, &firedEvent{"AfterScenario", []interface{}{pickle, err}})
 	})
 	s.testedSuite.BeforeStep(func(step *messages.Pickle_PickleStep) {
 		s.events = append(s.events, &firedEvent{"BeforeStep", []interface{}{step}})
