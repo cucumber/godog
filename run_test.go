@@ -281,24 +281,9 @@ func testSucceedRun(t *testing.T, format string, concurrency int, expected strin
 	output := new(bytes.Buffer)
 
 	opt := Options{
-		// StopOnFailure: true,
-		Format:   format,
-		NoColors: true,
-		Paths: []string{
-			"features/formatter/cucumber.feature",
-			"features/formatter/events.feature",
-			"features/formatter/junit.feature",
-			"features/formatter/pretty.feature",
-			"features/background.feature",
-			"features/events.feature",
-			"features/lang.feature",
-			"features/load.feature",
-			"features/multistep.feature",
-			"features/outline.feature",
-			"features/run.feature",
-			"features/snippets.feature",
-			"features/tags.feature",
-		},
+		Format:      format,
+		NoColors:    true,
+		Paths:       []string{"features"},
 		Concurrency: concurrency,
 		Output:      output,
 	}

@@ -207,7 +207,7 @@ func (sd *StepDefinition) run() interface{} {
 				return fmt.Errorf("the slice argument %d type %s is not supported", i, param.Kind())
 			}
 		default:
-			return fmt.Errorf("a the argument %d type %s is not supported", i, param.Kind())
+			return fmt.Errorf("the argument %d type %s is not supported", i, param.Kind())
 		}
 	}
 

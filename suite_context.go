@@ -194,7 +194,7 @@ func (s *suiteContext) theUndefinedStepSnippetsShouldBe(body *messages.PickleSte
 	actual := s.cleanupSnippet(f.snippets())
 	expected := s.cleanupSnippet(body.Content)
 	if actual != expected {
-		return fmt.Errorf("expected snippets [%s] do not match actual: [%s]", expected, actual)
+		return fmt.Errorf("snippets do not match actual: %s", f.snippets())
 	}
 	return nil
 }
@@ -407,9 +407,6 @@ func (s *suiteContext) numScenariosRegistered(expected int) (err error) {
 	var num int
 	for _, ft := range s.testedSuite.features {
 		num += len(ft.pickles)
-		// for _, pickle := range ft.pickles {
-		// 	fmt.Printf("%+v\n%+v\n\n", ft.GherkinDocument.Feature.Name, pickle.Name)
-		// }
 	}
 	if num != expected {
 		err = fmt.Errorf("expected %d scenarios to be registered, but got %d", expected, num)
@@ -492,12 +489,7 @@ func (s *suiteContext) theRenderJSONWillBe(docstring *messages.PickleStepArgumen
 	}
 
 	if !reflect.DeepEqual(expected, actual) {
-		exp, err := json.MarshalIndent(expected, "", "    ")
-		if err != nil {
-			return err
-		}
-
-		return fmt.Errorf("expected json: [\n%s\n] does not match actual: [\n%s\n]", string(exp), actualString)
+		return fmt.Errorf("expected json does not match actual: %s", actualString)
 	}
 	return nil
 }

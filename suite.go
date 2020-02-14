@@ -93,8 +93,6 @@ func (f feature) finishedAt() time.Time {
 }
 
 func (f feature) appendStepResult(s *stepResult) {
-	// fmt.Printf("%s\n%+v\n%+v\n%+v\n%+v\n\n", s.status, s.owner, s.step, s.def, s.err)
-
 	pickles := f.pickleResults[len(f.pickleResults)-1]
 	pickles.stepResults = append(pickles.stepResults, s)
 }

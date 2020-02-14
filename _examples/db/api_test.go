@@ -91,10 +91,10 @@ func (a *apiFeature) theResponseShouldMatchJSON(body *messages.PickleStepArgumen
 	return nil
 }
 
-func (a *apiFeature) thereAreUsers(users *messages.PickleStepArgument_DataTable) error {
+func (a *apiFeature) thereAreUsers(users *messages.PickleStepArgument_PickleTable) error {
 	var fields []string
 	var marks []string
-	head := users.DataTable.Rows[0].Cells
+	head := users.Rows[0].Cells
 	for _, cell := range head {
 		fields = append(fields, cell.Value)
 		marks = append(marks, "?")
@@ -104,9 +104,9 @@ func (a *apiFeature) thereAreUsers(users *messages.PickleStepArgument_DataTable)
 	if err != nil {
 		return err
 	}
-	for i := 1; i < len(users.DataTable.Rows); i++ {
+	for i := 1; i < len(users.Rows); i++ {
 		var vals []interface{}
-		for n, cell := range users.DataTable.Rows[i].Cells {
+		for n, cell := range users.Rows[i].Cells {
 			switch head[n].Value {
 			case "username":
 				vals = append(vals, cell.Value)
