@@ -120,6 +120,12 @@ func (f *pretty) scenarioLengths(scenarioAstID string) (scenarioHeaderLength int
 	return scenarioHeaderLength, maxLength
 }
 
+func (f *pretty) printScenarioHeader(astScenario *messages.GherkinDocument_Feature_Scenario, spaceFilling int) {
+	text := s(f.indent) + keywordAndName(astScenario.Keyword, astScenario.Name)
+	text += s(spaceFilling) + f.line(astScenario.Location)
+	fmt.Fprintln(f.out, "\n"+text)
+}
+
 func (f *pretty) printUndefinedPickle(pickle *messages.Pickle) {
 	astScenario := f.findScenario(pickle.AstNodeIds[0])
 	astBackground := f.findBackground(pickle.AstNodeIds[0])
@@ -138,10 +144,7 @@ func (f *pretty) printUndefinedPickle(pickle *messages.Pickle) {
 		return
 	}
 
-	text := s(f.indent) + keywordAndName(astScenario.Keyword, astScenario.Name)
-	text += s(maxLength - scenarioHeaderLength)
-	text += f.line(astScenario.Location)
-	fmt.Fprintln(f.out, "\n"+text)
+	f.printScenarioHeader(astScenario, maxLength-scenarioHeaderLength)
 
 	for _, examples := range astScenario.Examples {
 		max := longestExample(examples, cyan, cyan)
@@ -178,64 +181,33 @@ func (f *pretty) Summary() {
 	f.basefmt.Summary()
 }
 
-func (f *pretty) printOutlineExample(pickle *messages.Pickle) {
-	var msg string
-	var clr colors.ColorFunc
+func (f *pretty) printOutlineExample(pickle *messages.Pickle, backgroundSteps int) {
+	var errorMsg string
+	var clr = green
 
 	astScenario := f.findScenario(pickle.AstNodeIds[0])
-	astBackground := f.findBackground(pickle.AstNodeIds[0])
-
-	if len(astScenario.Examples) == 0 {
-		scenarioHeaderLength, maxLength := f.scenarioLengths(pickle.AstNodeIds[0])
-
-		var astBackgroundSteps int
-		if astBackground != nil {
-			astBackgroundSteps = len(astBackground.Steps)
-		}
-
-		firstExecutedScenarioStep := len(f.lastFeature().lastPickleResult().stepResults) == astBackgroundSteps+1
-
-		if firstExecutedScenarioStep {
-			text := s(f.indent) + keywordAndName(astScenario.Keyword, astScenario.Name)
-			text += s(maxLength - scenarioHeaderLength)
-			text += f.line(astScenario.Location)
-			fmt.Fprintln(f.out, "\n"+text)
-		}
-
-		return
-	}
+	scenarioHeaderLength, maxLength := f.scenarioLengths(pickle.AstNodeIds[0])
 
 	var example *messages.GherkinDocument_Feature_Scenario_Examples
 	var exampleRow *messages.GherkinDocument_Feature_TableRow
-	var firstExample bool
+	var printExampleHeader bool
 	var idx int
 
 	for _, examples := range astScenario.Examples {
 		if idx+len(examples.TableBody) > f.scenarioExample {
 			example = examples
 			exampleRow = examples.TableBody[f.scenarioExample-idx]
-			firstExample = idx == f.scenarioExample
+			printExampleHeader = idx == f.scenarioExample
 			break
 		}
 
 		idx += len(examples.TableBody)
 	}
 
-	if firstExample {
-		scenarioHeaderLength, maxLength := f.scenarioLengths(pickle.AstNodeIds[0])
-
-		var astBackgroundSteps = 0
-		if astBackground != nil {
-			astBackgroundSteps = len(astBackground.Steps)
-		}
-		firstExecutedScenarioStep := len(f.lastFeature().lastPickleResult().stepResults) == astBackgroundSteps+1
-
-		if firstExecutedScenarioStep && idx == 0 {
-			text := s(f.indent) + keywordAndName(astScenario.Keyword, astScenario.Name)
-			text += s(maxLength - scenarioHeaderLength)
-			text += f.line(astScenario.Location)
-			fmt.Fprintln(f.out, "\n"+text)
-		}
+	firstExamplesTable := idx == 0
+	firstExecutedScenarioStep := len(f.lastFeature().lastPickleResult().stepResults) == backgroundSteps+1
+	if firstExamplesTable && printExampleHeader && firstExecutedScenarioStep {
+		f.printScenarioHeader(astScenario, maxLength-scenarioHeaderLength)
 	}
 
 	if len(example.TableBody) == 0 {
@@ -244,27 +216,30 @@ func (f *pretty) printOutlineExample(pickle *messages.Pickle) {
 	}
 
 	lastStep := len(f.lastFeature().lastPickleResult().stepResults) == len(pickle.Steps)
+	if !lastStep {
+		// do not print examples unless all steps has finished
+		return
+	}
 
-	for _, res := range f.lastFeature().lastPickleResult().stepResults {
+	for _, result := range f.lastFeature().lastPickleResult().stepResults {
 		// determine example row status
 		switch {
-		case res.status == failed:
-			msg = res.err.Error()
-			clr = res.status.clr()
-		case res.status == undefined || res.status == pending:
-			clr = res.status.clr()
-		case res.status == skipped && clr == nil:
+		case result.status == failed:
+			errorMsg = result.err.Error()
+			clr = result.status.clr()
+		case result.status == undefined || result.status == pending:
+			clr = result.status.clr()
+		case result.status == skipped && clr == nil:
 			clr = cyan
 		}
 
-		if firstExample && lastStep && idx == 0 {
+		if firstExamplesTable && printExampleHeader {
 			// in first example, we need to print steps
 			var text string
-			pickleStep := res.step
 
-			astStep := f.findStep(pickleStep.AstNodeIds[0])
+			astStep := f.findStep(result.step.AstNodeIds[0])
 
-			if res.def != nil {
+			if result.def != nil {
 				if m := outlinePlaceholderRegexp.FindAllStringIndex(astStep.Text, -1); len(m) > 0 {
 					var pos int
 					for i := 0; i < len(m); i++ {
@@ -278,18 +253,18 @@ func (f *pretty) printOutlineExample(pickle *messages.Pickle) {
 					text = cyan(astStep.Text)
 				}
 
-				_, maxLength := f.scenarioLengths(res.owner.AstNodeIds[0])
+				_, maxLength := f.scenarioLengths(result.owner.AstNodeIds[0])
 				stepLength := f.lengthPickleStep(astStep.Keyword, astStep.Text)
 
 				text += s(maxLength - stepLength)
-				text += " " + blackb("# "+res.def.definitionID())
+				text += " " + blackb("# "+result.def.definitionID())
 			} else {
 				text = cyan(astStep.Text)
 			}
 			// print the step outline
 			fmt.Fprintln(f.out, s(f.indent*2)+cyan(strings.TrimSpace(astStep.Keyword))+" "+text)
 
-			if table := pickleStep.Argument.GetDataTable(); table != nil {
+			if table := result.step.Argument.GetDataTable(); table != nil {
 				f.printTable(table, cyan)
 			}
 
@@ -299,44 +274,21 @@ func (f *pretty) printOutlineExample(pickle *messages.Pickle) {
 		}
 	}
 
-	if clr == nil {
-		clr = green
-	}
-
-	if lastStep {
-		max := longestExample(example, clr, cyan)
-
-		// an example table header
-		if firstExample {
-			fmt.Fprintln(f.out, "")
-			fmt.Fprintln(f.out, s(f.indent*2)+keywordAndName(example.Keyword, example.Name))
-
-			f.printTableHeader(example.TableHeader, max)
-		}
-
-		f.printTableRow(exampleRow, max, clr)
-
-		// if there is an error
-		if msg != "" {
-			fmt.Fprintln(f.out, s(f.indent*4)+redb(msg))
-		}
-	}
-}
-
-func (f *pretty) printExample(example *messages.GherkinDocument_Feature_Scenario_Examples, printHeaders bool, clr colors.ColorFunc) {
 	max := longestExample(example, clr, cyan)
 
 	// an example table header
-	if printHeaders {
+	if printExampleHeader {
 		fmt.Fprintln(f.out, "")
 		fmt.Fprintln(f.out, s(f.indent*2)+keywordAndName(example.Keyword, example.Name))
 
 		f.printTableHeader(example.TableHeader, max)
 	}
 
-	// an example table row
-	row := example.TableBody[f.scenarioExample]
-	f.printTableRow(row, max, clr)
+	f.printTableRow(exampleRow, max, clr)
+
+	if errorMsg != "" {
+		fmt.Fprintln(f.out, s(f.indent*4)+redb(errorMsg))
+	}
 }
 
 func (f *pretty) printTableRow(row *messages.GherkinDocument_Feature_TableRow, max []int, clr colors.ColorFunc) {
@@ -355,19 +307,16 @@ func (f *pretty) printTableHeader(row *messages.GherkinDocument_Feature_TableRow
 	f.printTableRow(row, max, cyan)
 }
 
-func (f *pretty) printStep(res *stepResult) {
-
-	astBackground := f.findBackground(res.owner.AstNodeIds[0])
-	astScenario := f.findScenario(res.owner.AstNodeIds[0])
-	astStep := f.findStep(res.step.AstNodeIds[0])
+func (f *pretty) printStep(result *stepResult) {
+	astBackground := f.findBackground(result.owner.AstNodeIds[0])
+	astScenario := f.findScenario(result.owner.AstNodeIds[0])
+	astStep := f.findStep(result.step.AstNodeIds[0])
 
 	var backgroundSteps int
-
 	if astBackground != nil {
 		backgroundSteps = len(astBackground.Steps)
 	}
 
-	firstExecutedBackgroundStep := astBackground != nil && len(f.lastFeature().lastPickleResult().stepResults) == 1
 	astBackgroundStep := backgroundSteps > 0 && backgroundSteps >= len(f.lastFeature().lastPickleResult().stepResults)
 
 	if astBackgroundStep {
@@ -375,70 +324,33 @@ func (f *pretty) printStep(res *stepResult) {
 			return
 		}
 
-		backgroundHeaderLength := f.lengthPickle(astBackground.Keyword, astBackground.Name)
-		maxLength := f.longestStep(astScenario.Steps, backgroundHeaderLength)
-		maxLength = f.longestStep(astBackground.Steps, maxLength)
-		stepLength := f.lengthPickleStep(astStep.Keyword, astStep.Text)
-
+		firstExecutedBackgroundStep := astBackground != nil && len(f.lastFeature().lastPickleResult().stepResults) == 1
 		if firstExecutedBackgroundStep {
 			fmt.Fprintln(f.out, "\n"+s(f.indent)+keywordAndName(astBackground.Keyword, astBackground.Name))
 		}
+	}
 
-		text := s(f.indent) + res.status.clr()(strings.TrimSpace(astStep.Keyword)) + " " + res.status.clr()(astStep.Text)
-		if res.def != nil {
-			text += s(maxLength - stepLength + 1)
-			text += blackb("# " + res.def.definitionID())
-		}
-		fmt.Fprintln(f.out, text)
-
-		if table := res.step.Argument.GetDataTable(); table != nil {
-			f.printTable(table, cyan)
-		}
-
-		if docString := astStep.GetDocString(); docString != nil {
-			f.printDocString(docString)
-		}
-
-		// if res.err != nil {
-		// 	fmt.Fprintln(f.out, s(f.indent*2)+redb(fmt.Sprintf("%+v", res.err)))
-		// }
-
-		if res.status == pending {
-			fmt.Fprintln(f.out, s(f.indent*3)+yellow("TODO: write pending definition"))
-		}
-
+	if !astBackgroundStep && len(astScenario.Examples) > 0 {
+		f.printOutlineExample(result.owner, backgroundSteps)
 		return
 	}
 
-	if len(astScenario.Examples) > 0 {
-		f.printOutlineExample(res.owner)
-		return
-	}
-
-	scenarioHeaderLength, maxLength := f.scenarioLengths(res.owner.AstNodeIds[0])
+	scenarioHeaderLength, maxLength := f.scenarioLengths(result.owner.AstNodeIds[0])
 	stepLength := f.lengthPickleStep(astStep.Keyword, astStep.Text)
 
 	firstExecutedScenarioStep := len(f.lastFeature().lastPickleResult().stepResults) == backgroundSteps+1
-
-	if firstExecutedScenarioStep {
-		text := s(f.indent) + keywordAndName(astScenario.Keyword, astScenario.Name)
-		text += s(maxLength - scenarioHeaderLength)
-		text += f.line(astScenario.Location)
-		fmt.Fprintln(f.out, "\n"+text)
+	if !astBackgroundStep && firstExecutedScenarioStep {
+		f.printScenarioHeader(astScenario, maxLength-scenarioHeaderLength)
 	}
 
-	text := s(f.indent) + res.status.clr()(strings.TrimSpace(astStep.Keyword)) + " " + res.status.clr()(astStep.Text)
-	if res.def != nil {
-		if maxLength-stepLength < 0 {
-			text += fmt.Sprintf(" lonn: %d, %d ", maxLength, stepLength)
-		} else {
-			text += s(maxLength - stepLength + 1)
-		}
-		text += blackb("# " + res.def.definitionID())
+	text := s(f.indent) + result.status.clr()(strings.TrimSpace(astStep.Keyword)) + " " + result.status.clr()(astStep.Text)
+	if result.def != nil {
+		text += s(maxLength - stepLength + 1)
+		text += blackb("# " + result.def.definitionID())
 	}
 	fmt.Fprintln(f.out, text)
 
-	if table := res.step.Argument.GetDataTable(); table != nil {
+	if table := result.step.Argument.GetDataTable(); table != nil {
 		f.printTable(table, cyan)
 	}
 
@@ -446,11 +358,11 @@ func (f *pretty) printStep(res *stepResult) {
 		f.printDocString(docString)
 	}
 
-	if res.err != nil {
-		fmt.Fprintln(f.out, s(f.indent*2)+redb(fmt.Sprintf("%+v", res.err)))
+	if result.err != nil {
+		fmt.Fprintln(f.out, s(f.indent*2)+redb(fmt.Sprintf("%+v", result.err)))
 	}
 
-	if res.status == pending {
+	if result.status == pending {
 		fmt.Fprintln(f.out, s(f.indent*3)+yellow("TODO: write pending definition"))
 	}
 }

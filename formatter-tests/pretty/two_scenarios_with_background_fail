@@ -3,6 +3,7 @@
   <bold-white>Background:</bold-white>
     <green>Given</green> <green>passing step</green> <bold-black># formatters_print_test.go:65 -> passingStepDef</bold-black>
     <red>And</red> <red>failing step</red>   <bold-black># formatters_print_test.go:81 -> failingStepDef</bold-black>
+    <bold-red>step failed</bold-red>
 
   <bold-white>Scenario:</bold-white> one        <bold-black># formatter-tests/features/two_scenarios_with_background_fail.feature:7</bold-black>
     <cyan>When</cyan> <cyan>passing step</cyan>  <bold-black># formatters_print_test.go:65 -> passingStepDef</bold-black>
