@@ -213,6 +213,16 @@ func (f *basefmt) findBackground(scenarioAstID string) *messages.GherkinDocument
 	return nil
 }
 
+func (f *basefmt) findExample(exampleAstID string) (*messages.GherkinDocument_Feature_Scenario_Examples, *messages.GherkinDocument_Feature_TableRow) {
+	for _, ft := range f.features {
+		if es, rs := ft.findExample(exampleAstID); es != nil && rs != nil {
+			return es, rs
+		}
+	}
+
+	return nil, nil
+}
+
 func (f *basefmt) findStep(stepAstID string) *messages.GherkinDocument_Feature_Step {
 	for _, ft := range f.features {
 		if st := ft.findStep(stepAstID); st != nil {

@@ -58,6 +58,22 @@ func (f feature) findBackground(astScenarioID string) *messages.GherkinDocument_
 	return nil
 }
 
+func (f feature) findExample(exampleAstID string) (*messages.GherkinDocument_Feature_Scenario_Examples, *messages.GherkinDocument_Feature_TableRow) {
+	for _, child := range f.GherkinDocument.Feature.Children {
+		if sc := child.GetScenario(); sc != nil {
+			for _, example := range sc.Examples {
+				for _, row := range example.TableBody {
+					if row.Id == exampleAstID {
+						return example, row
+					}
+				}
+			}
+		}
+	}
+
+	return nil, nil
+}
+
 func (f feature) findStep(astStepID string) *messages.GherkinDocument_Feature_Step {
 	for _, child := range f.GherkinDocument.Feature.Children {
 		if sc := child.GetScenario(); sc != nil {

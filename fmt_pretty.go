@@ -31,9 +31,6 @@ var outlinePlaceholderRegexp = regexp.MustCompile("<[^>]+>")
 // a built in default pretty formatter
 type pretty struct {
 	basefmt
-
-	scenarioID      string
-	scenarioExample int
 }
 
 func (f *pretty) Feature(gd *messages.GherkinDocument, p string, c []byte) {
@@ -44,15 +41,6 @@ func (f *pretty) Feature(gd *messages.GherkinDocument, p string, c []byte) {
 // Pickle takes a gherkin node for formatting
 func (f *pretty) Pickle(pickle *messages.Pickle) {
 	f.basefmt.Pickle(pickle)
-
-	astScenario := f.findScenario(pickle.AstNodeIds[0])
-
-	if f.scenarioID != astScenario.Id {
-		f.scenarioID = astScenario.Id
-		f.scenarioExample = 0
-	} else {
-		f.scenarioExample++
-	}
 
 	if len(pickle.Steps) == 0 {
 		f.printUndefinedPickle(pickle)
@@ -140,14 +128,21 @@ func (f *pretty) printUndefinedPickle(pickle *messages.Pickle) {
 		}
 	}
 
-	if len(astScenario.Examples) > 0 && f.scenarioExample > 0 {
-		return
+	//  do not print scenario headers and examples multiple times
+	if len(astScenario.Examples) > 0 {
+		exampleTable, exampleRow := f.findExample(pickle.AstNodeIds[1])
+		firstExampleRow := exampleTable.TableBody[0].Id == exampleRow.Id
+		firstExamplesTable := astScenario.Examples[0].Location.Line == exampleTable.Location.Line
+
+		if !(firstExamplesTable && firstExampleRow) {
+			return
+		}
 	}
 
 	f.printScenarioHeader(astScenario, maxLength-scenarioHeaderLength)
 
 	for _, examples := range astScenario.Examples {
-		max := longestExample(examples, cyan, cyan)
+		max := longestExampleRow(examples, cyan, cyan)
 
 		fmt.Fprintln(f.out, "")
 		fmt.Fprintln(f.out, s(f.indent*2)+keywordAndName(examples.Keyword, examples.Name))
@@ -188,29 +183,16 @@ func (f *pretty) printOutlineExample(pickle *messages.Pickle, backgroundSteps in
 	astScenario := f.findScenario(pickle.AstNodeIds[0])
 	scenarioHeaderLength, maxLength := f.scenarioLengths(pickle.AstNodeIds[0])
 
-	var example *messages.GherkinDocument_Feature_Scenario_Examples
-	var exampleRow *messages.GherkinDocument_Feature_TableRow
-	var printExampleHeader bool
-	var idx int
+	exampleTable, exampleRow := f.findExample(pickle.AstNodeIds[1])
+	printExampleHeader := exampleTable.TableBody[0].Id == exampleRow.Id
+	firstExamplesTable := astScenario.Examples[0].Location.Line == exampleTable.Location.Line
 
-	for _, examples := range astScenario.Examples {
-		if idx+len(examples.TableBody) > f.scenarioExample {
-			example = examples
-			exampleRow = examples.TableBody[f.scenarioExample-idx]
-			printExampleHeader = idx == f.scenarioExample
-			break
-		}
-
-		idx += len(examples.TableBody)
-	}
-
-	firstExamplesTable := idx == 0
 	firstExecutedScenarioStep := len(f.lastFeature().lastPickleResult().stepResults) == backgroundSteps+1
 	if firstExamplesTable && printExampleHeader && firstExecutedScenarioStep {
 		f.printScenarioHeader(astScenario, maxLength-scenarioHeaderLength)
 	}
 
-	if len(example.TableBody) == 0 {
+	if len(exampleTable.TableBody) == 0 {
 		// do not print empty examples
 		return
 	}
@@ -274,14 +256,14 @@ func (f *pretty) printOutlineExample(pickle *messages.Pickle, backgroundSteps in
 		}
 	}
 
-	max := longestExample(example, clr, cyan)
+	max := longestExampleRow(exampleTable, clr, cyan)
 
 	// an example table header
 	if printExampleHeader {
 		fmt.Fprintln(f.out, "")
-		fmt.Fprintln(f.out, s(f.indent*2)+keywordAndName(example.Keyword, example.Name))
+		fmt.Fprintln(f.out, s(f.indent*2)+keywordAndName(exampleTable.Keyword, exampleTable.Name))
 
-		f.printTableHeader(example.TableHeader, max)
+		f.printTableHeader(exampleTable.TableHeader, max)
 	}
 
 	f.printTableRow(exampleRow, max, clr)
@@ -426,7 +408,7 @@ func maxColLengths(t *messages.PickleStepArgument_PickleTable, clrs ...colors.Co
 	return longest
 }
 
-func longestExample(t *messages.GherkinDocument_Feature_Scenario_Examples, clrs ...colors.ColorFunc) []int {
+func longestExampleRow(t *messages.GherkinDocument_Feature_Scenario_Examples, clrs ...colors.ColorFunc) []int {
 	if t == nil {
 		return []int{}
 	}
