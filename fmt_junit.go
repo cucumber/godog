@@ -123,7 +123,7 @@ func buildJUNITPackageSuite(suiteName string, startedAt time.Time, features []*f
 	suite := junitPackageSuite{
 		Name:       suiteName,
 		TestSuites: make([]*junitTestSuite, len(features)),
-		Time:       timeNowFunc().Sub(startedAt).String(),
+		Time:       fmt.Sprintf("%.f", timeNowFunc().Sub(startedAt).Seconds()),
 	}
 
 	sort.Sort(sortByName(features))
@@ -131,14 +131,14 @@ func buildJUNITPackageSuite(suiteName string, startedAt time.Time, features []*f
 	for idx, feat := range features {
 		ts := junitTestSuite{
 			Name:      feat.Name,
-			Time:      feat.finishedAt().Sub(feat.startedAt()).String(),
+			Time:      fmt.Sprintf("%.f", feat.finishedAt().Sub(feat.startedAt()).Seconds()),
 			TestCases: make([]*junitTestCase, len(feat.Scenarios)),
 		}
 
 		for idx, scenario := range feat.Scenarios {
 			tc := junitTestCase{}
 			tc.Name = scenario.Name
-			tc.Time = scenario.finishedAt().Sub(scenario.startedAt()).String()
+			tc.Time = fmt.Sprintf("%.f", scenario.finishedAt().Sub(scenario.startedAt()).Seconds())
 
 			ts.Tests++
 			suite.Tests++

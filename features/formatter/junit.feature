@@ -14,9 +14,9 @@ Feature: JUnit XML formatter
     Then the rendered xml will be as follows:
     """ application/xml
       <?xml version="1.0" encoding="UTF-8"?>
-      <testsuites name="godog" tests="1" skipped="0" failures="0" errors="0" time="0s">
-        <testsuite name="simple feature" tests="1" skipped="0" failures="0" errors="0" time="0s">
-          <testcase name="simple scenario" status="" time="0s"></testcase>
+      <testsuites name="godog" tests="1" skipped="0" failures="0" errors="0" time="0">
+        <testsuite name="simple feature" tests="1" skipped="0" failures="0" errors="0" time="0">
+          <testcase name="simple scenario" status="" time="0"></testcase>
         </testsuite>
       </testsuites>
     """
@@ -35,9 +35,9 @@ Feature: JUnit XML formatter
     Then the rendered xml will be as follows:
     """ application/xml
       <?xml version="1.0" encoding="UTF-8"?>
-      <testsuites name="godog" tests="1" skipped="0" failures="0" errors="0" time="0s">
-        <testsuite name="simple feature" tests="1" skipped="0" failures="0" errors="0" time="0s">
-          <testcase name="simple scenario" status="" time="0s"></testcase>
+      <testsuites name="godog" tests="1" skipped="0" failures="0" errors="0" time="0">
+        <testsuite name="simple feature" tests="1" skipped="0" failures="0" errors="0" time="0">
+          <testcase name="simple scenario" status="" time="0"></testcase>
         </testsuite>
       </testsuites>
     """
@@ -59,10 +59,10 @@ Feature: JUnit XML formatter
     Then the rendered xml will be as follows:
     """ application/xml
       <?xml version="1.0" encoding="UTF-8"?>
-      <testsuites name="godog" tests="2" skipped="0" failures="0" errors="0" time="0s">
-        <testsuite name="simple feature" tests="2" skipped="0" failures="0" errors="0" time="0s">
-          <testcase name="simple scenario #1" status="" time="0s"></testcase>
-          <testcase name="simple scenario #2" status="" time="0s"></testcase>
+      <testsuites name="godog" tests="2" skipped="0" failures="0" errors="0" time="0">
+        <testsuite name="simple feature" tests="2" skipped="0" failures="0" errors="0" time="0">
+          <testcase name="simple scenario #1" status="" time="0"></testcase>
+          <testcase name="simple scenario #2" status="" time="0"></testcase>
         </testsuite>
       </testsuites>
     """
@@ -88,10 +88,10 @@ Feature: JUnit XML formatter
     Then the rendered xml will be as follows:
     """ application/xml
       <?xml version="1.0" encoding="UTF-8"?>
-      <testsuites name="godog" tests="2" skipped="0" failures="0" errors="0" time="0s">
-        <testsuite name="simple feature" tests="2" skipped="0" failures="0" errors="0" time="0s">
-          <testcase name="simple scenario #1" status="" time="0s"></testcase>
-          <testcase name="simple scenario #2" status="" time="0s"></testcase>
+      <testsuites name="godog" tests="2" skipped="0" failures="0" errors="0" time="0">
+        <testsuite name="simple feature" tests="2" skipped="0" failures="0" errors="0" time="0">
+          <testcase name="simple scenario #1" status="" time="0"></testcase>
+          <testcase name="simple scenario #2" status="" time="0"></testcase>
         </testsuite>
       </testsuites>
     """
@@ -112,9 +112,9 @@ Feature: JUnit XML formatter
     Then the rendered xml will be as follows:
     """ application/xml
       <?xml version="1.0" encoding="UTF-8"?>
-      <testsuites name="godog" tests="1" skipped="0" failures="1" errors="0" time="0s">
-        <testsuite name="simple feature" tests="1" skipped="0" failures="1" errors="0" time="0s">
-          <testcase name="simple scenario" status="failed" time="0s">
+      <testsuites name="godog" tests="1" skipped="0" failures="1" errors="0" time="0">
+        <testsuite name="simple feature" tests="1" skipped="0" failures="1" errors="0" time="0">
+          <testcase name="simple scenario" status="failed" time="0">
             <failure message="Step a failing step: intentional failure"></failure>
           </testcase>
         </testsuite>
@@ -141,10 +141,10 @@ Feature: JUnit XML formatter
     Then the rendered xml will be as follows:
     """ application/xml
       <?xml version="1.0" encoding="UTF-8"?>
-      <testsuites name="godog" tests="2" skipped="0" failures="1" errors="0" time="0s">
-        <testsuite name="simple feature" tests="2" skipped="0" failures="1" errors="0" time="0s">
-          <testcase name="simple scenario #1" status="passed" time="0s"></testcase>
-          <testcase name="simple scenario #2" status="failed" time="0s">
+      <testsuites name="godog" tests="2" skipped="0" failures="1" errors="0" time="0">
+        <testsuite name="simple feature" tests="2" skipped="0" failures="1" errors="0" time="0">
+          <testcase name="simple scenario #1" status="passed" time="0"></testcase>
+          <testcase name="simple scenario #2" status="failed" time="0">
             <failure message="Step failing step: intentional failure"></failure>
           </testcase>
         </testsuite>
@@ -167,9 +167,9 @@ Feature: JUnit XML formatter
     Then the rendered xml will be as follows:
     """ application/xml
       <?xml version="1.0" encoding="UTF-8"?>
-      <testsuites name="godog" tests="1" skipped="0" failures="0" errors="0" time="0s">
-        <testsuite name="simple feature" tests="1" skipped="0" failures="0" errors="0" time="0s">
-          <testcase name="simple scenario" status="" time="0s"></testcase>
+      <testsuites name="godog" tests="1" skipped="0" failures="0" errors="0" time="0">
+        <testsuite name="simple feature" tests="1" skipped="0" failures="0" errors="0" time="0">
+          <testcase name="simple scenario" status="" time="0"></testcase>
         </testsuite>
       </testsuites>
     """
@@ -191,9 +191,9 @@ Feature: JUnit XML formatter
     Then the rendered xml will be as follows:
     """ application/xml
       <?xml version="1.0" encoding="UTF-8"?>
-      <testsuites name="godog" tests="1" skipped="0" failures="0" errors="0" time="0s">
-        <testsuite name="simple feature" tests="1" skipped="0" failures="0" errors="0" time="0s">
-          <testcase name="simple scenario" status="passed" time="0s"></testcase>
+      <testsuites name="godog" tests="1" skipped="0" failures="0" errors="0" time="0">
+        <testsuite name="simple feature" tests="1" skipped="0" failures="0" errors="0" time="0">
+          <testcase name="simple scenario" status="passed" time="0"></testcase>
         </testsuite>
       </testsuites>
     """
@@ -216,9 +216,9 @@ Feature: JUnit XML formatter
     Then the rendered xml will be as follows:
     """ application/xml
       <?xml version="1.0" encoding="UTF-8"?>
-      <testsuites name="godog" tests="1" skipped="0" failures="0" errors="1" time="0s">
-        <testsuite name="simple feature" tests="1" skipped="0" failures="0" errors="1" time="0s">
-          <testcase name="simple scenario" status="undefined" time="0s">
+      <testsuites name="godog" tests="1" skipped="0" failures="0" errors="1" time="0">
+        <testsuite name="simple feature" tests="1" skipped="0" failures="0" errors="1" time="0">
+          <testcase name="simple scenario" status="undefined" time="0">
             <error message="Step pending step: TODO: write pending definition" type="pending"></error>
             <error message="Step undefined" type="undefined"></error>
             <error message="Step passing step" type="skipped"></error>
