@@ -19,6 +19,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ### Removed
 
 ### Fixed
+- Fixed the time attributes in the JUnit formatter. ([232](https://github.com/cucumber/godog/pull/232) [lonnblad])
 
 ## [0.8.1]
 
