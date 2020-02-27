@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"sort"
+	"strconv"
 	"sync"
 	"time"
 
@@ -119,11 +120,15 @@ func (f *junitFormatter) Copy(cf ConcurrentFormatter) {
 	}
 }
 
+func junitTimeDuration(from, to time.Time) string {
+	return strconv.FormatFloat(to.Sub(from).Seconds(), 'f', -1, 64)
+}
+
 func buildJUNITPackageSuite(suiteName string, startedAt time.Time, features []*feature) junitPackageSuite {
 	suite := junitPackageSuite{
 		Name:       suiteName,
 		TestSuites: make([]*junitTestSuite, len(features)),
-		Time:       timeNowFunc().Sub(startedAt).String(),
+		Time:       junitTimeDuration(startedAt, timeNowFunc()),
 	}
 
 	sort.Sort(sortByName(features))
@@ -131,14 +136,15 @@ func buildJUNITPackageSuite(suiteName string, startedAt time.Time, features []*f
 	for idx, feat := range features {
 		ts := junitTestSuite{
 			Name:      feat.Name,
-			Time:      feat.finishedAt().Sub(feat.startedAt()).String(),
+			Time:      junitTimeDuration(feat.startedAt(), feat.finishedAt()),
 			TestCases: make([]*junitTestCase, len(feat.Scenarios)),
 		}
 
 		for idx, scenario := range feat.Scenarios {
-			tc := junitTestCase{}
-			tc.Name = scenario.Name
-			tc.Time = scenario.finishedAt().Sub(scenario.startedAt()).String()
+			tc := junitTestCase{
+				Name: scenario.Name,
+				Time: junitTimeDuration(scenario.startedAt(), scenario.finishedAt()),
+			}
 
 			ts.Tests++
 			suite.Tests++

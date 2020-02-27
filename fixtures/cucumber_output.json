@@ -1624,7 +1624,7 @@
                         "name": "the rendered xml will be as follows:",
                         "line": 14,
                         "doc_string": {
-                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0s\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0s\"\u003e\n      \u003ctestcase name=\"simple scenario\" status=\"\" time=\"0s\"\u003e\u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
+                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0\"\u003e\n      \u003ctestcase name=\"simple scenario\" status=\"\" time=\"0\"\u003e\u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
                             "content_type": "application/xml",
                             "line": 15
                         },
@@ -1680,7 +1680,7 @@
                         "name": "the rendered xml will be as follows:",
                         "line": 35,
                         "doc_string": {
-                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0s\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0s\"\u003e\n      \u003ctestcase name=\"simple scenario\" status=\"\" time=\"0s\"\u003e\u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
+                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0\"\u003e\n      \u003ctestcase name=\"simple scenario\" status=\"\" time=\"0\"\u003e\u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
                             "content_type": "application/xml",
                             "line": 36
                         },
@@ -1736,7 +1736,7 @@
                         "name": "the rendered xml will be as follows:",
                         "line": 59,
                         "doc_string": {
-                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"2\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0s\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"2\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0s\"\u003e\n      \u003ctestcase name=\"simple scenario #1\" status=\"\" time=\"0s\"\u003e\u003c/testcase\u003e\n      \u003ctestcase name=\"simple scenario #2\" status=\"\" time=\"0s\"\u003e\u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
+                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"2\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"2\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0\"\u003e\n      \u003ctestcase name=\"simple scenario #1\" status=\"\" time=\"0\"\u003e\u003c/testcase\u003e\n      \u003ctestcase name=\"simple scenario #2\" status=\"\" time=\"0\"\u003e\u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
                             "content_type": "application/xml",
                             "line": 60
                         },
@@ -1792,7 +1792,7 @@
                         "name": "the rendered xml will be as follows:",
                         "line": 88,
                         "doc_string": {
-                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"2\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0s\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"2\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0s\"\u003e\n      \u003ctestcase name=\"simple scenario #1\" status=\"\" time=\"0s\"\u003e\u003c/testcase\u003e\n      \u003ctestcase name=\"simple scenario #2\" status=\"\" time=\"0s\"\u003e\u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
+                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"2\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"2\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0\"\u003e\n      \u003ctestcase name=\"simple scenario #1\" status=\"\" time=\"0\"\u003e\u003c/testcase\u003e\n      \u003ctestcase name=\"simple scenario #2\" status=\"\" time=\"0\"\u003e\u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
                             "content_type": "application/xml",
                             "line": 89
                         },
@@ -1848,7 +1848,7 @@
                         "name": "the rendered xml will be as follows:",
                         "line": 112,
                         "doc_string": {
-                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"1\" skipped=\"0\" failures=\"1\" errors=\"0\" time=\"0s\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"1\" skipped=\"0\" failures=\"1\" errors=\"0\" time=\"0s\"\u003e\n      \u003ctestcase name=\"simple scenario\" status=\"failed\" time=\"0s\"\u003e\n        \u003cfailure message=\"Step a failing step: intentional failure\"\u003e\u003c/failure\u003e\n      \u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
+                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"1\" skipped=\"0\" failures=\"1\" errors=\"0\" time=\"0\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"1\" skipped=\"0\" failures=\"1\" errors=\"0\" time=\"0\"\u003e\n      \u003ctestcase name=\"simple scenario\" status=\"failed\" time=\"0\"\u003e\n        \u003cfailure message=\"Step a failing step: intentional failure\"\u003e\u003c/failure\u003e\n      \u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
                             "content_type": "application/xml",
                             "line": 113
                         },
@@ -1904,7 +1904,7 @@
                         "name": "the rendered xml will be as follows:",
                         "line": 141,
                         "doc_string": {
-                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"2\" skipped=\"0\" failures=\"1\" errors=\"0\" time=\"0s\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"2\" skipped=\"0\" failures=\"1\" errors=\"0\" time=\"0s\"\u003e\n      \u003ctestcase name=\"simple scenario #1\" status=\"passed\" time=\"0s\"\u003e\u003c/testcase\u003e\n      \u003ctestcase name=\"simple scenario #2\" status=\"failed\" time=\"0s\"\u003e\n        \u003cfailure message=\"Step failing step: intentional failure\"\u003e\u003c/failure\u003e\n      \u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
+                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"2\" skipped=\"0\" failures=\"1\" errors=\"0\" time=\"0\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"2\" skipped=\"0\" failures=\"1\" errors=\"0\" time=\"0\"\u003e\n      \u003ctestcase name=\"simple scenario #1\" status=\"passed\" time=\"0\"\u003e\u003c/testcase\u003e\n      \u003ctestcase name=\"simple scenario #2\" status=\"failed\" time=\"0\"\u003e\n        \u003cfailure message=\"Step failing step: intentional failure\"\u003e\u003c/failure\u003e\n      \u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
                             "content_type": "application/xml",
                             "line": 142
                         },
@@ -1960,7 +1960,7 @@
                         "name": "the rendered xml will be as follows:",
                         "line": 167,
                         "doc_string": {
-                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0s\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0s\"\u003e\n      \u003ctestcase name=\"simple scenario\" status=\"\" time=\"0s\"\u003e\u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
+                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0\"\u003e\n      \u003ctestcase name=\"simple scenario\" status=\"\" time=\"0\"\u003e\u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
                             "content_type": "application/xml",
                             "line": 168
                         },
@@ -2016,7 +2016,7 @@
                         "name": "the rendered xml will be as follows:",
                         "line": 191,
                         "doc_string": {
-                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0s\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0s\"\u003e\n      \u003ctestcase name=\"simple scenario\" status=\"passed\" time=\"0s\"\u003e\u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
+                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"0\" time=\"0\"\u003e\n      \u003ctestcase name=\"simple scenario\" status=\"passed\" time=\"0\"\u003e\u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
                             "content_type": "application/xml",
                             "line": 192
                         },
@@ -2072,7 +2072,7 @@
                         "name": "the rendered xml will be as follows:",
                         "line": 216,
                         "doc_string": {
-                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"1\" time=\"0s\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"1\" time=\"0s\"\u003e\n      \u003ctestcase name=\"simple scenario\" status=\"undefined\" time=\"0s\"\u003e\n        \u003cerror message=\"Step pending step: TODO: write pending definition\" type=\"pending\"\u003e\u003c/error\u003e\n        \u003cerror message=\"Step undefined\" type=\"undefined\"\u003e\u003c/error\u003e\n        \u003cerror message=\"Step passing step\" type=\"skipped\"\u003e\u003c/error\u003e\n      \u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
+                            "value": "  \u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n  \u003ctestsuites name=\"godog\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"1\" time=\"0\"\u003e\n    \u003ctestsuite name=\"simple feature\" tests=\"1\" skipped=\"0\" failures=\"0\" errors=\"1\" time=\"0\"\u003e\n      \u003ctestcase name=\"simple scenario\" status=\"undefined\" time=\"0\"\u003e\n        \u003cerror message=\"Step pending step: TODO: write pending definition\" type=\"pending\"\u003e\u003c/error\u003e\n        \u003cerror message=\"Step undefined\" type=\"undefined\"\u003e\u003c/error\u003e\n        \u003cerror message=\"Step passing step\" type=\"skipped\"\u003e\u003c/error\u003e\n      \u003c/testcase\u003e\n    \u003c/testsuite\u003e\n  \u003c/testsuites\u003e",
                             "content_type": "application/xml",
                             "line": 217
                         },
