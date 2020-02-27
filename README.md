@@ -221,7 +221,7 @@ composed.
 ### Documentation
 
 See [godoc][godoc] for general API details.
-See **.travis.yml** for supported **go** versions.
+See **[Circle Config](/.circleci/config.yml)** for supported **go** versions.
 See `godog -h` for general command options.
 
 See implementation examples:
