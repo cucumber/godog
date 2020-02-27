@@ -38,8 +38,7 @@ commands:
   godog:
     description: "Run godog"
     steps:
-      - run: go install ./cmd/godog
-      - run: godog -f progress
+      - run: ./cmd/godog -f progress
   go_test:
     description: "Run go test"
     steps:
