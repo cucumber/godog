@@ -2,15 +2,16 @@ version: 2.1
 
 orbs:
   codecov: codecov/codecov@1.0.5
+  win: golang:1.14.0-nanoserver-1809 
 
 executors:
-  exec_go_1_12:
+  exec_linux_go_1_12:
     docker:
       - image: circleci/golang:1.12.16
-  exec_go_1_13:
+  exec_linux_go_1_13:
     docker:
       - image: circleci/golang:1.13.8
-  exec_go_1_14:
+  exec_linux_go_1_14:
     docker:
       - image: circleci/golang:1.14.0
 
@@ -62,19 +63,24 @@ commands:
       - coverage
 
 jobs:
-  go1_12:
+  go_linux_1_12:
     working_directory: /go/src/github.com/cucumber/godog
-    executor: exec_go_1_12
+    executor: exec_linux_go_1_12
     steps:
       - all
-  go1_13:
+  go_linux_1_13:
     working_directory: /go/src/github.com/cucumber/godog
-    executor: exec_go_1_13
+    executor: exec_linux_go_1_13
     steps:
       - all
-  go1_14:
+  go_linux_1_14:
     working_directory: /go/src/github.com/cucumber/godog
-    executor: exec_go_1_14
+    executor: exec_linux_go_1_14
+    steps:
+      - all
+  go_nanoserver_1_14:
+    working_directory: /go/src/github.com/cucumber/godog
+    executor: win/default
     steps:
       - all
 
@@ -82,6 +88,7 @@ workflows:
   version: 2
   test:
     jobs:
-      - go1_12
-      - go1_13
-      - go1_14
+      - go_linux_1_12
+      - go_linux_1_13
+      - go_linux_1_14
+      - go_nanoserver_1_14
