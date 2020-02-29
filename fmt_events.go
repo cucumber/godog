@@ -16,13 +16,7 @@ func init() {
 }
 
 func eventsFunc(suite string, out io.Writer) Formatter {
-	formatter := &events{
-		basefmt: basefmt{
-			started: timeNowFunc(),
-			indent:  2,
-			out:     out,
-		},
-	}
+	formatter := &events{basefmt: newBaseFmt(suite, out)}
 
 	formatter.event(&struct {
 		Event     string `json:"event"`
@@ -40,7 +34,7 @@ func eventsFunc(suite string, out io.Writer) Formatter {
 }
 
 type events struct {
-	basefmt
+	*basefmt
 
 	// currently running feature path, to be part of id.
 	// this is sadly not passed by gherkin nodes.

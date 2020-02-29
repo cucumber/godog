@@ -26,15 +26,7 @@ func init() {
 }
 
 func cucumberFunc(suite string, out io.Writer) Formatter {
-	formatter := &cukefmt{
-		basefmt: basefmt{
-			started: timeNowFunc(),
-			indent:  2,
-			out:     out,
-		},
-	}
-
-	return formatter
+	return &cukefmt{basefmt: newBaseFmt(suite, out)}
 }
 
 // Replace spaces with - This function is used to create the "id" fields of the cucumber output.
@@ -107,7 +99,7 @@ type cukeFeatureJSON struct {
 }
 
 type cukefmt struct {
-	basefmt
+	*basefmt
 
 	// currently running feature path, to be part of id.
 	// this is sadly not passed by gherkin nodes.

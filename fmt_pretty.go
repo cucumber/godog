@@ -17,20 +17,14 @@ func init() {
 }
 
 func prettyFunc(suite string, out io.Writer) Formatter {
-	return &pretty{
-		basefmt: basefmt{
-			started: timeNowFunc(),
-			indent:  2,
-			out:     out,
-		},
-	}
+	return &pretty{basefmt: newBaseFmt(suite, out)}
 }
 
 var outlinePlaceholderRegexp = regexp.MustCompile("<[^>]+>")
 
 // a built in default pretty formatter
 type pretty struct {
-	basefmt
+	*basefmt
 }
 
 func (f *pretty) Feature(gd *messages.GherkinDocument, p string, c []byte) {

@@ -5,7 +5,6 @@ import (
 	"io"
 	"math"
 	"strings"
-	"sync"
 
 	"github.com/cucumber/messages-go/v9"
 )
@@ -17,34 +16,16 @@ func init() {
 func progressFunc(suite string, out io.Writer) Formatter {
 	steps := 0
 	return &progress{
-		basefmt: basefmt{
-			started: timeNowFunc(),
-			indent:  2,
-			out:     out,
-		},
+		basefmt:     newBaseFmt(suite, out),
 		stepsPerRow: 70,
-		lock:        new(sync.Mutex),
 		steps:       &steps,
 	}
 }
 
 type progress struct {
-	basefmt
-	lock        *sync.Mutex
+	*basefmt
 	stepsPerRow int
 	steps       *int
-}
-
-func (f *progress) Pickle(pickle *messages.Pickle) {
-	f.lock.Lock()
-	defer f.lock.Unlock()
-	f.basefmt.Pickle(pickle)
-}
-
-func (f *progress) Feature(gd *messages.GherkinDocument, p string, c []byte) {
-	f.lock.Lock()
-	defer f.lock.Unlock()
-	f.basefmt.Feature(gd, p, c)
 }
 
 func (f *progress) Summary() {
@@ -100,63 +81,68 @@ func (f *progress) step(res *stepResult) {
 	case pending:
 		fmt.Fprint(f.out, yellow("P"))
 	}
+
 	*f.steps++
+
 	if math.Mod(float64(*f.steps), float64(f.stepsPerRow)) == 0 {
 		fmt.Fprintf(f.out, " %d\n", *f.steps)
 	}
 }
 
 func (f *progress) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
+	f.basefmt.Passed(pickle, step, match)
+
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
-	f.basefmt.Passed(pickle, step, match)
 	f.step(f.lastStepResult())
 }
 
 func (f *progress) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
+	f.basefmt.Skipped(pickle, step, match)
+
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
-	f.basefmt.Skipped(pickle, step, match)
 	f.step(f.lastStepResult())
 }
 
 func (f *progress) Undefined(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
+	f.basefmt.Undefined(pickle, step, match)
+
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
-	f.basefmt.Undefined(pickle, step, match)
 	f.step(f.lastStepResult())
 }
 
 func (f *progress) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition, err error) {
+	f.basefmt.Failed(pickle, step, match, err)
+
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
-	f.basefmt.Failed(pickle, step, match, err)
 	f.step(f.lastStepResult())
 }
 
 func (f *progress) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
+	f.basefmt.Pending(pickle, step, match)
+
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
-	f.basefmt.Pending(pickle, step, match)
 	f.step(f.lastStepResult())
 }
 
 func (f *progress) Sync(cf ConcurrentFormatter) {
 	if source, ok := cf.(*progress); ok {
-		f.lock = source.lock
+		f.basefmt.Sync(source.basefmt)
 		f.steps = source.steps
 	}
 }
 
 func (f *progress) Copy(cf ConcurrentFormatter) {
 	if source, ok := cf.(*progress); ok {
-		for _, v := range source.features {
-			f.features = append(f.features, v)
-		}
+		f.basefmt.Copy(source.basefmt)
 	}
 }

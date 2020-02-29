@@ -7,10 +7,7 @@ import (
 	"os"
 	"sort"
 	"strconv"
-	"sync"
 	"time"
-
-	"github.com/cucumber/messages-go/v9"
 )
 
 func init() {
@@ -18,32 +15,11 @@ func init() {
 }
 
 func junitFunc(suite string, out io.Writer) Formatter {
-	return &junitFormatter{
-		basefmt: basefmt{
-			suiteName: suite,
-			started:   timeNowFunc(),
-			indent:    2,
-			out:       out,
-		},
-		lock: new(sync.Mutex),
-	}
+	return &junitFormatter{basefmt: newBaseFmt(suite, out)}
 }
 
 type junitFormatter struct {
-	basefmt
-	lock *sync.Mutex
-}
-
-func (f *junitFormatter) Pickle(pickle *messages.Pickle) {
-	f.lock.Lock()
-	defer f.lock.Unlock()
-	f.basefmt.Pickle(pickle)
-}
-
-func (f *junitFormatter) Feature(ft *messages.GherkinDocument, p string, c []byte) {
-	f.lock.Lock()
-	defer f.lock.Unlock()
-	f.basefmt.Feature(ft, p, c)
+	*basefmt
 }
 
 func (f *junitFormatter) Summary() {
@@ -61,47 +37,15 @@ func (f *junitFormatter) Summary() {
 	}
 }
 
-func (f *junitFormatter) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
-	f.lock.Lock()
-	defer f.lock.Unlock()
-	f.basefmt.Passed(pickle, step, match)
-}
-
-func (f *junitFormatter) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
-	f.lock.Lock()
-	defer f.lock.Unlock()
-	f.basefmt.Skipped(pickle, step, match)
-}
-
-func (f *junitFormatter) Undefined(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
-	f.lock.Lock()
-	defer f.lock.Unlock()
-	f.basefmt.Undefined(pickle, step, match)
-}
-
-func (f *junitFormatter) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition, err error) {
-	f.lock.Lock()
-	defer f.lock.Unlock()
-	f.basefmt.Failed(pickle, step, match, err)
-}
-
-func (f *junitFormatter) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
-	f.lock.Lock()
-	defer f.lock.Unlock()
-	f.basefmt.Pending(pickle, step, match)
-}
-
 func (f *junitFormatter) Sync(cf ConcurrentFormatter) {
 	if source, ok := cf.(*junitFormatter); ok {
-		f.lock = source.lock
+		f.basefmt.Sync(source.basefmt)
 	}
 }
 
 func (f *junitFormatter) Copy(cf ConcurrentFormatter) {
 	if source, ok := cf.(*junitFormatter); ok {
-		for _, v := range source.features {
-			f.features = append(f.features, v)
-		}
+		f.basefmt.Copy(source.basefmt)
 	}
 }
 

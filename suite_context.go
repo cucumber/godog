@@ -534,18 +534,12 @@ func (s *suiteContext) theRenderXMLWillBe(docstring *messages.PickleStepArgument
 }
 
 type testFormatter struct {
-	basefmt
+	*basefmt
 	pickles []*messages.Pickle
 }
 
 func testFormatterFunc(suite string, out io.Writer) Formatter {
-	return &testFormatter{
-		basefmt: basefmt{
-			started: timeNowFunc(),
-			indent:  2,
-			out:     out,
-		},
-	}
+	return &testFormatter{basefmt: newBaseFmt(suite, out)}
 }
 
 func (f *testFormatter) Pickle(p *messages.Pickle) {

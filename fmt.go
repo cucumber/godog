@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"text/template"
 	"time"
 	"unicode"
@@ -174,6 +175,16 @@ func newStepResult(pickle *messages.Pickle, step *messages.Pickle_PickleStep, ma
 	return &stepResult{time: timeNowFunc(), owner: pickle, step: step, def: match}
 }
 
+func newBaseFmt(suite string, out io.Writer) *basefmt {
+	return &basefmt{
+		suiteName: suite,
+		started:   timeNowFunc(),
+		indent:    2,
+		out:       out,
+		lock:      new(sync.Mutex),
+	}
+}
+
 type basefmt struct {
 	suiteName string
 
@@ -183,6 +194,8 @@ type basefmt struct {
 
 	started  time.Time
 	features []*feature
+
+	lock *sync.Mutex
 }
 
 func (f *basefmt) lastFeature() *feature {
@@ -234,37 +247,53 @@ func (f *basefmt) findStep(stepAstID string) *messages.GherkinDocument_Feature_S
 }
 
 func (f *basefmt) Pickle(p *messages.Pickle) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	feature := f.features[len(f.features)-1]
 	feature.pickleResults = append(feature.pickleResults, &pickleResult{Name: p.Name, time: timeNowFunc()})
 }
 
-func (f *basefmt) Defined(*messages.Pickle, *messages.Pickle_PickleStep, *StepDefinition) {
-
-}
+func (f *basefmt) Defined(*messages.Pickle, *messages.Pickle_PickleStep, *StepDefinition) {}
 
 func (f *basefmt) Feature(ft *messages.GherkinDocument, p string, c []byte) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	f.features = append(f.features, &feature{Path: p, GherkinDocument: ft, time: timeNowFunc()})
 }
 
 func (f *basefmt) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	s := newStepResult(pickle, step, match)
 	s.status = passed
 	f.lastFeature().appendStepResult(s)
 }
 
 func (f *basefmt) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	s := newStepResult(pickle, step, match)
 	s.status = skipped
 	f.lastFeature().appendStepResult(s)
 }
 
 func (f *basefmt) Undefined(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	s := newStepResult(pickle, step, match)
 	s.status = undefined
 	f.lastFeature().appendStepResult(s)
 }
 
 func (f *basefmt) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition, err error) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	s := newStepResult(pickle, step, match)
 	s.status = failed
 	s.err = err
@@ -272,6 +301,9 @@ func (f *basefmt) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleSt
 }
 
 func (f *basefmt) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	s := newStepResult(pickle, step, match)
 	s.status = pending
 	f.lastFeature().appendStepResult(s)
@@ -379,6 +411,20 @@ func (f *basefmt) Summary() {
 		fmt.Fprintln(f.out, "")
 		fmt.Fprintln(f.out, yellow("You can implement step definitions for undefined steps with these snippets:"))
 		fmt.Fprintln(f.out, yellow(text))
+	}
+}
+
+func (f *basefmt) Sync(cf ConcurrentFormatter) {
+	if source, ok := cf.(*basefmt); ok {
+		f.lock = source.lock
+	}
+}
+
+func (f *basefmt) Copy(cf ConcurrentFormatter) {
+	if source, ok := cf.(*basefmt); ok {
+		for _, v := range source.features {
+			f.features = append(f.features, v)
+		}
 	}
 }
 
