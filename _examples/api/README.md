@@ -56,8 +56,8 @@ need to store state within steps (a response), we should introduce a structure w
 package main
 
 import (
+	"github.com/cucumber/gherkin-go/v9"
 	"github.com/cucumber/godog"
-	"github.com/cucumber/godog/gherkin"
 )
 
 type apiFeature struct {
@@ -71,7 +71,7 @@ func (a *apiFeature) theResponseCodeShouldBe(code int) error {
 	return godog.ErrPending
 }
 
-func (a *apiFeature) theResponseShouldMatchJSON(body *gherkin.DocString) error {
+func (a *apiFeature) theResponseShouldMatchJSON(body *messages.PickleStepArgument_PickleDocString) error {
 	return godog.ErrPending
 }
 
@@ -98,8 +98,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 
+	"github.com/cucumber/gherkin-go/v9"
 	"github.com/cucumber/godog"
-	"github.com/cucumber/godog/gherkin"
 )
 
 type apiFeature struct {
@@ -142,7 +142,7 @@ func (a *apiFeature) theResponseCodeShouldBe(code int) error {
 	return nil
 }
 
-func (a *apiFeature) theResponseShouldMatchJSON(body *gherkin.DocString) (err error) {
+func (a *apiFeature) theResponseShouldMatchJSON(body *messages.PickleStepArgument_PickleDocString) error {
 	var expected, actual []byte
 	var data interface{}
 	if err = json.Unmarshal([]byte(body.Content), &data); err != nil {

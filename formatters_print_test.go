@@ -8,13 +8,14 @@ import (
 	"path"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPrintingFormatters(t *testing.T) {
 	features, err := parseFeatures("", []string{"formatter-tests"})
-	if err != nil {
-		t.Fatalf("failed to parse formatter features: %v", err)
-	}
+	require.NoError(t, err)
 
 	var buf bytes.Buffer
 	out := &tagColorWriter{w: &buf}
@@ -44,19 +45,18 @@ func TestPrintingFormatters(t *testing.T) {
 			suite.features = []*feature{feat}    // set the feature
 
 			expectedOutput, err := ioutil.ReadFile(expectOutputPath)
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			suite.run()
 			suite.fmt.Summary()
 
 			expected := string(expectedOutput)
-			actual := buf.String()
+			expected = trimAllLines(expected)
 
-			if actual != expected {
-				t.Fatalf("%s does not match to:\n%s", expectOutputPath, actual)
-			}
+			actual := buf.String()
+			actual = trimAllLines(actual)
+
+			assert.Equalf(t, expected, actual, "expected: [%s], actual: [%s]", expected, actual)
 		}
 	}
 	os.Setenv("GODOG_TESTED_PACKAGE", pkg)

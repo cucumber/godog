@@ -48,7 +48,7 @@ Feature: undefined step snippets
     When I run feature suite
     Then the undefined step snippets should be:
       """
-      func iSendRequestToWith(arg1, arg2 string, arg3 *gherkin.DataTable) error {
+      func iSendRequestToWith(arg1, arg2 string, arg3 *messages.PickleStepArgument_PickleTable) error {
               return godog.ErrPending
       }
 
