@@ -20,6 +20,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Fixed
 - Fixed the time attributes in the JUnit formatter. ([232](https://github.com/cucumber/godog/pull/232) [lonnblad])
+- Re enable custom formatters. ([238](https://github.com/cucumber/godog/pull/238) [ericmcbride])
 
 ## [0.8.1]
 
@@ -68,4 +69,4 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 [jaysonesmith]:     https://github.com/jaysonesmith
 [lonnblad]:         https://github.com/lonnblad
 [smikulcik]:        https://github.com/smikulcik
-
+[ericmcbride]:      https://github.com/ericmcbride
