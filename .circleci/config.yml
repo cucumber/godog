@@ -15,10 +15,15 @@ executors:
       - image: circleci/golang:1.14.0
 
 commands:
+  install:
+    description: "Install dependencies"
+    steps:
+      - run: GO111MODULE=on go mod vendor -v
   vet:
     description: "Run go vet"
     steps:
-      - run: go vet ./...
+      - run: go vet github.com/cucumber/godog
+      - run: go vet github.com/cucumber/godog/colors
   fmt:
     description: "Run go fmt"
     steps:
@@ -27,7 +32,13 @@ commands:
     description: "Run golint"
     steps:
       - run: go get -u golang.org/x/lint/golint
-      - run: golint ./...
+      - run: golint ./godog
+      - run: golint ./cmd/godog/main.go
+  godog:
+    description: "Run godog"
+    steps:
+      - run: go install ./cmd/godog
+      - run: godog -f progress
   go_test:
     description: "Run go test"
     steps:
@@ -37,35 +48,31 @@ commands:
     steps:
       - codecov/upload:
           file: "coverage.txt"
-  godog:
-    description: "Run godog"
-    steps:
-      - run: go install ./cmd/godog
-      - run: godog -f progress
   all:
     description: "Run all commands against godog code"
     steps:
       - checkout
+      - install
       - vet
       - fmt
       - lint
+      - godog
       - go_test
       - coverage
-      - godog
 
 jobs:
   go1_12:
-    working_directory: godog
+    working_directory: /go/src/github.com/cucumber/godog
     executor: exec_go_1_12
     steps:
       - all
   go1_13:
-    working_directory: godog
+    working_directory: /go/src/github.com/cucumber/godog
     executor: exec_go_1_13
     steps:
       - all
   go1_14:
-    working_directory: godog
+    working_directory: /go/src/github.com/cucumber/godog
     executor: exec_go_1_14
     steps:
       - all
