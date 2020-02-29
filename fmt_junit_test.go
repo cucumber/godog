@@ -7,7 +7,6 @@ import (
 	"io"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/cucumber/gherkin-go/v9"
 	"github.com/cucumber/messages-go/v9"
@@ -77,31 +76,31 @@ func TestJUnitFormatterOutput(t *testing.T) {
 	s.Step(`^failing$`, func() error { return fmt.Errorf("errored") })
 	s.Step(`^pending$`, func() error { return ErrPending })
 
-	var zeroDuration time.Duration
+	const zeroDuration = "0"
 	expected := junitPackageSuite{
 		Name:     "junit",
 		Tests:    8,
 		Skipped:  0,
 		Failures: 2,
 		Errors:   4,
-		Time:     zeroDuration.String(),
+		Time:     zeroDuration,
 		TestSuites: []*junitTestSuite{{
 			Name:     "junit formatter",
 			Tests:    8,
 			Skipped:  0,
 			Failures: 2,
 			Errors:   4,
-			Time:     zeroDuration.String(),
+			Time:     zeroDuration,
 			TestCases: []*junitTestCase{
 				{
 					Name:   "passing scenario",
 					Status: "passed",
-					Time:   zeroDuration.String(),
+					Time:   zeroDuration,
 				},
 				{
 					Name:   "failing scenario",
 					Status: "failed",
-					Time:   zeroDuration.String(),
+					Time:   zeroDuration,
 					Failure: &junitFailure{
 						Message: "Step failing: errored",
 					},
@@ -112,7 +111,7 @@ func TestJUnitFormatterOutput(t *testing.T) {
 				{
 					Name:   "pending scenario",
 					Status: "pending",
-					Time:   zeroDuration.String(),
+					Time:   zeroDuration,
 					Error: []*junitError{
 						{Message: "Step pending: TODO: write pending definition", Type: "pending"},
 						{Message: "Step passing", Type: "skipped"},
@@ -121,7 +120,7 @@ func TestJUnitFormatterOutput(t *testing.T) {
 				{
 					Name:   "undefined scenario",
 					Status: "undefined",
-					Time:   zeroDuration.String(),
+					Time:   zeroDuration,
 					Error: []*junitError{
 						{Message: "Step undefined", Type: "undefined"},
 						{Message: "Step next undefined", Type: "undefined"},
@@ -130,12 +129,12 @@ func TestJUnitFormatterOutput(t *testing.T) {
 				{
 					Name:   "outline #1",
 					Status: "passed",
-					Time:   zeroDuration.String(),
+					Time:   zeroDuration,
 				},
 				{
 					Name:   "outline #2",
 					Status: "failed",
-					Time:   zeroDuration.String(),
+					Time:   zeroDuration,
 					Failure: &junitFailure{
 						Message: "Step failing: errored",
 					},
@@ -143,7 +142,7 @@ func TestJUnitFormatterOutput(t *testing.T) {
 				{
 					Name:   "outline #3",
 					Status: "pending",
-					Time:   zeroDuration.String(),
+					Time:   zeroDuration,
 					Error: []*junitError{
 						{Message: "Step pending: TODO: write pending definition", Type: "pending"},
 					},
@@ -151,7 +150,7 @@ func TestJUnitFormatterOutput(t *testing.T) {
 				{
 					Name:   "outline #4",
 					Status: "undefined",
-					Time:   zeroDuration.String(),
+					Time:   zeroDuration,
 					Error: []*junitError{
 						{Message: "Step undefined", Type: "undefined"},
 					},

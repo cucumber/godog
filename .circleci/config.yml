@@ -4,15 +4,15 @@ orbs:
   codecov: codecov/codecov@1.0.5
 
 executors:
-  exec_go_1_11:
-    docker:
-      - image: circleci/golang:1.11.13
   exec_go_1_12:
     docker:
       - image: circleci/golang:1.12.16
   exec_go_1_13:
     docker:
-      - image: circleci/golang:1.13.7
+      - image: circleci/golang:1.13.8
+  exec_go_1_14:
+    docker:
+      - image: circleci/golang:1.14.0
 
 commands:
   install:
@@ -61,11 +61,6 @@ commands:
       - coverage
 
 jobs:
-  go1_11:
-    working_directory: /go/src/github.com/cucumber/godog
-    executor: exec_go_1_11
-    steps:
-      - all
   go1_12:
     working_directory: /go/src/github.com/cucumber/godog
     executor: exec_go_1_12
@@ -76,11 +71,16 @@ jobs:
     executor: exec_go_1_13
     steps:
       - all
+  go1_14:
+    working_directory: /go/src/github.com/cucumber/godog
+    executor: exec_go_1_14
+    steps:
+      - all
 
 workflows:
   version: 2
   test:
     jobs:
-      - go1_11
       - go1_12
       - go1_13
+      - go1_14

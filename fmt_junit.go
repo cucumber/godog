@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"sort"
+	"strconv"
 	"sync"
 	"time"
 
@@ -104,11 +105,15 @@ func (f *junitFormatter) Copy(cf ConcurrentFormatter) {
 	}
 }
 
+func junitTimeDuration(from, to time.Time) string {
+	return strconv.FormatFloat(to.Sub(from).Seconds(), 'f', -1, 64)
+}
+
 func buildJUNITPackageSuite(suiteName string, startedAt time.Time, features []*feature) junitPackageSuite {
 	suite := junitPackageSuite{
 		Name:       suiteName,
 		TestSuites: make([]*junitTestSuite, len(features)),
-		Time:       timeNowFunc().Sub(startedAt).String(),
+		Time:       junitTimeDuration(startedAt, timeNowFunc()),
 	}
 
 	sort.Sort(sortByName(features))
@@ -116,7 +121,7 @@ func buildJUNITPackageSuite(suiteName string, startedAt time.Time, features []*f
 	for idx, feat := range features {
 		ts := junitTestSuite{
 			Name:      feat.GherkinDocument.Feature.Name,
-			Time:      feat.finishedAt().Sub(feat.startedAt()).String(),
+			Time:      junitTimeDuration(feat.startedAt(), feat.finishedAt()),
 			TestCases: make([]*junitTestCase, len(feat.pickleResults)),
 		}
 
@@ -128,7 +133,7 @@ func buildJUNITPackageSuite(suiteName string, startedAt time.Time, features []*f
 		var outlineNo = make(map[string]int)
 		for idx, pickleResult := range feat.pickleResults {
 			tc := junitTestCase{}
-			tc.Time = pickleResult.finishedAt().Sub(pickleResult.startedAt()).String()
+			tc.Time = junitTimeDuration(pickleResult.startedAt(), pickleResult.finishedAt())
 
 			tc.Name = pickleResult.Name
 			if testcaseNames[tc.Name] > 1 {
