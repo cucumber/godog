@@ -28,6 +28,7 @@ import (
 	"fmt"
 
 	"github.com/cucumber/godog"
+	"github.com/cucumber/messages-go/v9"
 )
 
 func thereAreGodogs(available int) error {
@@ -55,7 +56,7 @@ func FeatureContext(s *godog.Suite) {
 	s.Step("^I eat (\\d+)$", iEat)
 	s.Step("^there should be (\\d+) remaining$", thereShouldBeRemaining)
 
-	s.BeforeScenario(func(interface{}) {
+	s.BeforeScenario(func(*messages.Pickle) {
 		Godogs = 0 // clean the state before every scenario
 	})
 }
@@ -67,6 +68,8 @@ import (
 	"fmt"
 
 	"github.com/cucumber/godog"
+	"github.com/cucumber/messages-go/v9"
+
 	"godogs"
 )
 
@@ -95,7 +98,7 @@ func FeatureContext(s *godog.Suite) {
 	s.Step("^I eat (\\d+)$", iEat)
 	s.Step("^there should be (\\d+) remaining$", thereShouldBeRemaining)
 
-	s.BeforeScenario(func(interface{}) {
+	s.BeforeScenario(func(*messages.Pickle) {
 		godogs.Godogs = 0 // clean the state before every scenario
 	})
 }
