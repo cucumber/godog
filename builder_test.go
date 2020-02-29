@@ -28,7 +28,6 @@ import (
 	"fmt"
 
 	"github.com/cucumber/godog"
-	"github.com/cucumber/messages-go/v9"
 )
 
 func thereAreGodogs(available int) error {
@@ -56,7 +55,7 @@ func FeatureContext(s *godog.Suite) {
 	s.Step("^I eat (\\d+)$", iEat)
 	s.Step("^there should be (\\d+) remaining$", thereShouldBeRemaining)
 
-	s.BeforeScenario(func(*messages.Pickle) {
+	s.BeforeScenario(func(interface{}) {
 		Godogs = 0 // clean the state before every scenario
 	})
 }
@@ -68,8 +67,6 @@ import (
 	"fmt"
 
 	"github.com/cucumber/godog"
-	"github.com/cucumber/messages-go/v9"
-
 	"godogs"
 )
 
@@ -98,7 +95,7 @@ func FeatureContext(s *godog.Suite) {
 	s.Step("^I eat (\\d+)$", iEat)
 	s.Step("^there should be (\\d+) remaining$", thereShouldBeRemaining)
 
-	s.BeforeScenario(func(*messages.Pickle) {
+	s.BeforeScenario(func(interface{}) {
 		godogs.Godogs = 0 // clean the state before every scenario
 	})
 }
@@ -328,18 +325,12 @@ func TestGodogBuildWithVendoredGodogAndMod(t *testing.T) {
 	}
 	defer os.RemoveAll(gopath)
 
-	pkg := filepath.Join(dir, "vendor", "github.com", "cucumber")
-	if err := os.MkdirAll(pkg, 0755); err != nil {
-		t.Fatal(err)
-	}
-
 	prevDir, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// symlink godog package
-	if err := os.Symlink(prevDir, filepath.Join(pkg, "godog")); err != nil {
+	if err = exec.Command("go", "mod", "vendor").Run(); err != nil {
 		t.Fatal(err)
 	}
 
