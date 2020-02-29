@@ -529,18 +529,12 @@ func (s *suiteContext) theRenderXMLWillBe(docstring *gherkin.DocString) error {
 }
 
 type testFormatter struct {
-	basefmt
+	*basefmt
 	scenarios []interface{}
 }
 
 func testFormatterFunc(suite string, out io.Writer) Formatter {
-	return &testFormatter{
-		basefmt: basefmt{
-			started: timeNowFunc(),
-			indent:  2,
-			out:     out,
-		},
-	}
+	return &testFormatter{basefmt: newBaseFmt(suite, out)}
 }
 
 func (f *testFormatter) Node(node interface{}) {

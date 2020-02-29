@@ -7,10 +7,7 @@ import (
 	"os"
 	"sort"
 	"strconv"
-	"sync"
 	"time"
-
-	"github.com/cucumber/godog/gherkin"
 )
 
 func init() {
@@ -18,32 +15,11 @@ func init() {
 }
 
 func junitFunc(suite string, out io.Writer) Formatter {
-	return &junitFormatter{
-		basefmt: basefmt{
-			suiteName: suite,
-			started:   timeNowFunc(),
-			indent:    2,
-			out:       out,
-		},
-		lock: new(sync.Mutex),
-	}
+	return &junitFormatter{basefmt: newBaseFmt(suite, out)}
 }
 
 type junitFormatter struct {
-	basefmt
-	lock *sync.Mutex
-}
-
-func (f *junitFormatter) Node(n interface{}) {
-	f.lock.Lock()
-	defer f.lock.Unlock()
-	f.basefmt.Node(n)
-}
-
-func (f *junitFormatter) Feature(ft *gherkin.Feature, p string, c []byte) {
-	f.lock.Lock()
-	defer f.lock.Unlock()
-	f.basefmt.Feature(ft, p, c)
+	*basefmt
 }
 
 func (f *junitFormatter) Summary() {
@@ -61,62 +37,15 @@ func (f *junitFormatter) Summary() {
 	}
 }
 
-func (f *junitFormatter) Passed(step *gherkin.Step, match *StepDef) {
-	f.lock.Lock()
-	defer f.lock.Unlock()
-	f.basefmt.Passed(step, match)
-}
-
-func (f *junitFormatter) Skipped(step *gherkin.Step, match *StepDef) {
-	f.lock.Lock()
-	defer f.lock.Unlock()
-	f.basefmt.Skipped(step, match)
-}
-
-func (f *junitFormatter) Undefined(step *gherkin.Step, match *StepDef) {
-	f.lock.Lock()
-	defer f.lock.Unlock()
-	f.basefmt.Undefined(step, match)
-}
-
-func (f *junitFormatter) Failed(step *gherkin.Step, match *StepDef, err error) {
-	f.lock.Lock()
-	defer f.lock.Unlock()
-	f.basefmt.Failed(step, match, err)
-}
-
-func (f *junitFormatter) Pending(step *gherkin.Step, match *StepDef) {
-	f.lock.Lock()
-	defer f.lock.Unlock()
-	f.basefmt.Pending(step, match)
-}
-
 func (f *junitFormatter) Sync(cf ConcurrentFormatter) {
 	if source, ok := cf.(*junitFormatter); ok {
-		f.lock = source.lock
+		f.basefmt.Sync(source.basefmt)
 	}
 }
 
 func (f *junitFormatter) Copy(cf ConcurrentFormatter) {
 	if source, ok := cf.(*junitFormatter); ok {
-		for _, v := range source.features {
-			f.features = append(f.features, v)
-		}
-		for _, v := range source.failed {
-			f.failed = append(f.failed, v)
-		}
-		for _, v := range source.passed {
-			f.passed = append(f.passed, v)
-		}
-		for _, v := range source.skipped {
-			f.skipped = append(f.skipped, v)
-		}
-		for _, v := range source.undefined {
-			f.undefined = append(f.undefined, v)
-		}
-		for _, v := range source.pending {
-			f.pending = append(f.pending, v)
-		}
+		f.basefmt.Copy(source.basefmt)
 	}
 }
 
