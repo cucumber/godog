@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"text/template"
 	"time"
 	"unicode"
@@ -221,6 +222,16 @@ func (f stepResult) scenarioLine() string {
 	return f.line() // was not expecting different owner
 }
 
+func newBaseFmt(suite string, out io.Writer) *basefmt {
+	return &basefmt{
+		suiteName: suite,
+		started:   timeNowFunc(),
+		indent:    2,
+		out:       out,
+		lock:      new(sync.Mutex),
+	}
+}
+
 type basefmt struct {
 	suiteName string
 
@@ -235,9 +246,14 @@ type basefmt struct {
 	skipped   []*stepResult
 	undefined []*stepResult
 	pending   []*stepResult
+
+	lock *sync.Mutex
 }
 
 func (f *basefmt) Node(n interface{}) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	switch t := n.(type) {
 	case *gherkin.Scenario:
 		f.owner = t
@@ -265,14 +281,21 @@ func (f *basefmt) Node(n interface{}) {
 }
 
 func (f *basefmt) Defined(*gherkin.Step, *StepDef) {
-
+	f.lock.Lock()
+	defer f.lock.Unlock()
 }
 
 func (f *basefmt) Feature(ft *gherkin.Feature, p string, c []byte) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	f.features = append(f.features, &feature{Path: p, Feature: ft, time: timeNowFunc()})
 }
 
 func (f *basefmt) Passed(step *gherkin.Step, match *StepDef) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	s := &stepResult{
 		owner:   f.owner,
 		feature: f.features[len(f.features)-1],
@@ -287,6 +310,9 @@ func (f *basefmt) Passed(step *gherkin.Step, match *StepDef) {
 }
 
 func (f *basefmt) Skipped(step *gherkin.Step, match *StepDef) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	s := &stepResult{
 		owner:   f.owner,
 		feature: f.features[len(f.features)-1],
@@ -301,6 +327,9 @@ func (f *basefmt) Skipped(step *gherkin.Step, match *StepDef) {
 }
 
 func (f *basefmt) Undefined(step *gherkin.Step, match *StepDef) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	s := &stepResult{
 		owner:   f.owner,
 		feature: f.features[len(f.features)-1],
@@ -315,6 +344,9 @@ func (f *basefmt) Undefined(step *gherkin.Step, match *StepDef) {
 }
 
 func (f *basefmt) Failed(step *gherkin.Step, match *StepDef, err error) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	s := &stepResult{
 		owner:   f.owner,
 		feature: f.features[len(f.features)-1],
@@ -330,6 +362,9 @@ func (f *basefmt) Failed(step *gherkin.Step, match *StepDef, err error) {
 }
 
 func (f *basefmt) Pending(step *gherkin.Step, match *StepDef) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	s := &stepResult{
 		owner:   f.owner,
 		feature: f.features[len(f.features)-1],
@@ -435,6 +470,35 @@ func (f *basefmt) Summary() {
 		fmt.Fprintln(f.out, "")
 		fmt.Fprintln(f.out, yellow("You can implement step definitions for undefined steps with these snippets:"))
 		fmt.Fprintln(f.out, yellow(text))
+	}
+}
+
+func (f *basefmt) Sync(cf ConcurrentFormatter) {
+	if source, ok := cf.(*basefmt); ok {
+		f.lock = source.lock
+	}
+}
+
+func (f *basefmt) Copy(cf ConcurrentFormatter) {
+	if source, ok := cf.(*basefmt); ok {
+		for _, v := range source.features {
+			f.features = append(f.features, v)
+		}
+		for _, v := range source.failed {
+			f.failed = append(f.failed, v)
+		}
+		for _, v := range source.passed {
+			f.passed = append(f.passed, v)
+		}
+		for _, v := range source.skipped {
+			f.skipped = append(f.skipped, v)
+		}
+		for _, v := range source.undefined {
+			f.undefined = append(f.undefined, v)
+		}
+		for _, v := range source.pending {
+			f.pending = append(f.pending, v)
+		}
 	}
 }
 
