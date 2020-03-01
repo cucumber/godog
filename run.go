@@ -272,9 +272,9 @@ func Run(suite string, contextInitializer func(suite *Suite)) int {
 
 func supportsConcurrency(format string) bool {
 	switch format {
-	case "progress", "junit", "pretty":
+	case "events", "progress", "junit", "pretty":
 		return true
-	case "events", "cucumber":
+	case "cucumber":
 		return false
 	default:
 		return true // enables concurrent custom formatters to work
