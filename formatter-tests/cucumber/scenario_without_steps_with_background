@@ -1,0 +1,20 @@
+[
+    {
+        "uri": "formatter-tests/features/scenario_without_steps_with_background.feature",
+        "id": "empty-feature",
+        "keyword": "Feature",
+        "name": "empty feature",
+        "description": "",
+        "line": 1,
+        "elements": [
+            {
+                "id": "empty-feature;without-steps",
+                "keyword": "Scenario",
+                "name": "without steps",
+                "description": "",
+                "line": 6,
+                "type": "scenario"
+            }
+        ]
+    }
+]

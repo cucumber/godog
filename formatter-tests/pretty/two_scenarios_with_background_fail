@@ -1,16 +1,17 @@
 <bold-white>Feature:</bold-white> two scenarios with background fail
 
   <bold-white>Background:</bold-white>
-    <green>Given</green> <green>passing step</green> <bold-black># formatters_print_test.go:65 -> passingStepDef</bold-black>
-    <red>And</red> <red>failing step</red>   <bold-black># formatters_print_test.go:81 -> failingStepDef</bold-black>
+    <green>Given</green> <green>passing step</green> <bold-black># formatters_print_test.go:63 -> passingStepDef</bold-black>
+    <red>And</red> <red>failing step</red>   <bold-black># formatters_print_test.go:79 -> failingStepDef</bold-black>
     <bold-red>step failed</bold-red>
 
   <bold-white>Scenario:</bold-white> one        <bold-black># formatter-tests/features/two_scenarios_with_background_fail.feature:7</bold-black>
-    <cyan>When</cyan> <cyan>passing step</cyan>  <bold-black># formatters_print_test.go:65 -> passingStepDef</bold-black>
-    <cyan>Then</cyan> <cyan>passing step</cyan>  <bold-black># formatters_print_test.go:65 -> passingStepDef</bold-black>
+    <cyan>When</cyan> <cyan>passing step</cyan>  <bold-black># formatters_print_test.go:63 -> passingStepDef</bold-black>
+    <cyan>Then</cyan> <cyan>passing step</cyan>  <bold-black># formatters_print_test.go:63 -> passingStepDef</bold-black>
 
   <bold-white>Scenario:</bold-white> two        <bold-black># formatter-tests/features/two_scenarios_with_background_fail.feature:11</bold-black>
-    <cyan>Then</cyan> <cyan>passing step</cyan>  <bold-black># formatters_print_test.go:65 -> passingStepDef</bold-black>
+    <bold-red>step failed</bold-red>
+    <cyan>Then</cyan> <cyan>passing step</cyan>  <bold-black># formatters_print_test.go:63 -> passingStepDef</bold-black>
 
 --- <red>Failed steps:</red>
 
