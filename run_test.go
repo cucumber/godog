@@ -6,7 +6,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -250,56 +249,68 @@ func TestFeatureFilePathParser(t *testing.T) {
 	}
 }
 
-type succeedRunTestCase struct {
-	format      string // formatter to use
-	concurrency int    // concurrency option range to test
-	filename    string // expected output file
+func TestAllFeaturesRun(t *testing.T) {
+	const concurrency = 10
+	const format = "progress"
+
+	const expected = `...................................................................... 70
+...................................................................... 140
+...................................................................... 210
+...................................................................... 280
+.......................                                                303
+
+
+78 scenarios (78 passed)
+303 steps (303 passed)
+0s
+`
+
+	actual := testSucceedRun(t, format, concurrency, []string{"features"}, exitSuccess)
+	assert.Equalf(t, expected, actual, "[%s]", actual)
 }
 
-func TestConcurrencyRun(t *testing.T) {
-	testCases := []succeedRunTestCase{
-		{format: "progress", concurrency: 4, filename: "fixtures/progress_output.txt"},
-		{format: "junit", concurrency: 4, filename: "fixtures/junit_output.xml"},
+func TestFormatterConcurrencyRun(t *testing.T) {
+	formatters := map[string]int{
+		"progress": exitSuccess,
+		"junit":    exitSuccess,
+		"pretty":   exitSuccess,
+		"events":   exitOptionError,
+		"cucumber": exitOptionError,
 	}
 
-	for _, tc := range testCases {
-		expectedOutput, err := ioutil.ReadFile(tc.filename)
-		require.NoError(t, err)
+	featurePaths := []string{
+		"formatter-tests/features/scenario_outline.feature",
+		"formatter-tests/features/single_scenario_with_passing_step.feature",
+	}
 
-		for concurrency := range make([]int, tc.concurrency) {
-			t.Run(
-				fmt.Sprintf("%s/concurrency/%d", tc.format, concurrency),
-				func(t *testing.T) {
-					testSucceedRun(t, tc.format, concurrency, string(expectedOutput))
-				},
-			)
-		}
+	const concurrency = 4
+
+	for formatter, expectedRunStatus := range formatters {
+		t.Run(
+			fmt.Sprintf("%s/concurrency/%d", formatter, concurrency),
+			func(t *testing.T) {
+				testSucceedRun(t, formatter, concurrency, featurePaths, expectedRunStatus)
+			},
+		)
 	}
 }
 
-func testSucceedRun(t *testing.T, format string, concurrency int, expected string) {
+func testSucceedRun(t *testing.T, format string, concurrency int, featurePaths []string, expectedRunStatus int) string {
 	output := new(bytes.Buffer)
 
 	opt := Options{
 		Format:      format,
 		NoColors:    true,
-		Paths:       []string{"features"},
+		Paths:       featurePaths,
 		Concurrency: concurrency,
 		Output:      output,
 	}
 
 	status := RunWithOptions("succeed", func(s *Suite) { SuiteContext(s) }, opt)
-	assert.Equal(t, exitSuccess, status)
+	assert.Equal(t, expectedRunStatus, status)
 
-	b, err := ioutil.ReadAll(output)
+	actual, err := ioutil.ReadAll(output)
 	require.NoError(t, err)
 
-	suiteCtxReg := regexp.MustCompile(`suite_context.go:\d+`)
-
-	expected = suiteCtxReg.ReplaceAllString(expected, `suite_context.go:0`)
-
-	actual := strings.TrimSpace(string(b))
-	actual = suiteCtxReg.ReplaceAllString(actual, `suite_context.go:0`)
-
-	assert.Equalf(t, expected, actual, "[%s]", actual)
+	return string(actual)
 }
