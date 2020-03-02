@@ -274,7 +274,7 @@ func TestFormatterConcurrencyRun(t *testing.T) {
 		"progress": exitSuccess,
 		"junit":    exitSuccess,
 		"pretty":   exitSuccess,
-		"events":   exitSuccess,
+		// "events":   exitSuccess,
 		"cucumber": exitOptionError,
 	}
 

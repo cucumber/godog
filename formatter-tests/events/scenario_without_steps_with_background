@@ -1,0 +1,5 @@
+{"event":"TestRunStarted","version":"0.1.0","timestamp":-6795364578871,"suite":"events"}
+{"event":"TestSource","location":"formatter-tests/features/scenario_without_steps_with_background.feature:1","source":"Feature: empty feature\n\n  Background:\n    Given passing step\n\n  Scenario: without steps\n"}
+{"event":"TestCaseStarted","location":"formatter-tests/features/scenario_without_steps_with_background.feature:6","timestamp":-6795364578871}
+{"event":"TestCaseFinished","location":"formatter-tests/features/scenario_without_steps_with_background.feature:6","timestamp":-6795364578871,"status":"undefined"}
+{"event":"TestRunFinished","status":"pending","timestamp":-6795364578871,"snippets":"","memory":""}

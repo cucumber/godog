@@ -1,0 +1,345 @@
+[
+    {
+        "uri": "formatter-tests/features/scenario_outline.feature",
+        "id": "outline",
+        "keyword": "Feature",
+        "name": "outline",
+        "description": "",
+        "line": 2,
+        "tags": [
+            {
+                "name": "@outline",
+                "line": 1
+            },
+            {
+                "name": "@tag",
+                "line": 1
+            }
+        ],
+        "elements": [
+            {
+                "id": "outline;outline;tagged;2",
+                "keyword": "Scenario Outline",
+                "name": "outline",
+                "description": "",
+                "line": 13,
+                "type": "scenario",
+                "tags": [
+                    {
+                        "name": "@outline",
+                        "line": 1
+                    },
+                    {
+                        "name": "@tag",
+                        "line": 1
+                    },
+                    {
+                        "name": "@scenario",
+                        "line": 4
+                    },
+                    {
+                        "name": "@tagged",
+                        "line": 10
+                    }
+                ],
+                "steps": [
+                    {
+                        "keyword": "Given ",
+                        "name": "passing step",
+                        "line": 13,
+                        "match": {
+                            "location": "formatters_print_test.go:63"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "When ",
+                        "name": "passing step",
+                        "line": 13,
+                        "match": {
+                            "location": "formatters_print_test.go:63"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "Then ",
+                        "name": "odd 1 and even 2 number",
+                        "line": 13,
+                        "match": {
+                            "location": "formatters_print_test.go:65"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "outline;outline;tagged;3",
+                "keyword": "Scenario Outline",
+                "name": "outline",
+                "description": "",
+                "line": 14,
+                "type": "scenario",
+                "tags": [
+                    {
+                        "name": "@outline",
+                        "line": 1
+                    },
+                    {
+                        "name": "@tag",
+                        "line": 1
+                    },
+                    {
+                        "name": "@scenario",
+                        "line": 4
+                    },
+                    {
+                        "name": "@tagged",
+                        "line": 10
+                    }
+                ],
+                "steps": [
+                    {
+                        "keyword": "Given ",
+                        "name": "passing step",
+                        "line": 14,
+                        "match": {
+                            "location": "formatters_print_test.go:63"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "When ",
+                        "name": "passing step",
+                        "line": 14,
+                        "match": {
+                            "location": "formatters_print_test.go:63"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "Then ",
+                        "name": "odd 2 and even 0 number",
+                        "line": 14,
+                        "match": {
+                            "location": "formatters_print_test.go:65"
+                        },
+                        "result": {
+                            "status": "failed",
+                            "error_message": "2 is not odd",
+                            "duration": 0
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "outline;outline;tagged;4",
+                "keyword": "Scenario Outline",
+                "name": "outline",
+                "description": "",
+                "line": 15,
+                "type": "scenario",
+                "tags": [
+                    {
+                        "name": "@outline",
+                        "line": 1
+                    },
+                    {
+                        "name": "@tag",
+                        "line": 1
+                    },
+                    {
+                        "name": "@scenario",
+                        "line": 4
+                    },
+                    {
+                        "name": "@tagged",
+                        "line": 10
+                    }
+                ],
+                "steps": [
+                    {
+                        "keyword": "Given ",
+                        "name": "passing step",
+                        "line": 15,
+                        "match": {
+                            "location": "formatters_print_test.go:63"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "When ",
+                        "name": "passing step",
+                        "line": 15,
+                        "match": {
+                            "location": "formatters_print_test.go:63"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "Then ",
+                        "name": "odd 3 and even 11 number",
+                        "line": 15,
+                        "match": {
+                            "location": "formatters_print_test.go:65"
+                        },
+                        "result": {
+                            "status": "failed",
+                            "error_message": "11 is not even",
+                            "duration": 0
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "outline;outline;;2",
+                "keyword": "Scenario Outline",
+                "name": "outline",
+                "description": "",
+                "line": 20,
+                "type": "scenario",
+                "tags": [
+                    {
+                        "name": "@outline",
+                        "line": 1
+                    },
+                    {
+                        "name": "@tag",
+                        "line": 1
+                    },
+                    {
+                        "name": "@scenario",
+                        "line": 4
+                    },
+                    {
+                        "name": "@tag2",
+                        "line": 17
+                    }
+                ],
+                "steps": [
+                    {
+                        "keyword": "Given ",
+                        "name": "passing step",
+                        "line": 20,
+                        "match": {
+                            "location": "formatters_print_test.go:63"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "When ",
+                        "name": "passing step",
+                        "line": 20,
+                        "match": {
+                            "location": "formatters_print_test.go:63"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "Then ",
+                        "name": "odd 1 and even 14 number",
+                        "line": 20,
+                        "match": {
+                            "location": "formatters_print_test.go:65"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "outline;outline;;3",
+                "keyword": "Scenario Outline",
+                "name": "outline",
+                "description": "",
+                "line": 21,
+                "type": "scenario",
+                "tags": [
+                    {
+                        "name": "@outline",
+                        "line": 1
+                    },
+                    {
+                        "name": "@tag",
+                        "line": 1
+                    },
+                    {
+                        "name": "@scenario",
+                        "line": 4
+                    },
+                    {
+                        "name": "@tag2",
+                        "line": 17
+                    }
+                ],
+                "steps": [
+                    {
+                        "keyword": "Given ",
+                        "name": "passing step",
+                        "line": 21,
+                        "match": {
+                            "location": "formatters_print_test.go:63"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "When ",
+                        "name": "passing step",
+                        "line": 21,
+                        "match": {
+                            "location": "formatters_print_test.go:63"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "Then ",
+                        "name": "odd 3 and even 9 number",
+                        "line": 21,
+                        "match": {
+                            "location": "formatters_print_test.go:65"
+                        },
+                        "result": {
+                            "status": "failed",
+                            "error_message": "9 is not even",
+                            "duration": 0
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+]

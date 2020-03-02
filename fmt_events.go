@@ -54,21 +54,17 @@ func (f *events) Pickle(pickle *messages.Pickle) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
-	scenario := f.findScenario(pickle.AstNodeIds[0])
-	id := fmt.Sprintf("%s:%d", pickle.GetUri(), scenario.Location.Line)
-	undefined := len(pickle.Steps) == 0
-
 	f.event(&struct {
 		Event     string `json:"event"`
 		Location  string `json:"location"`
 		Timestamp int64  `json:"timestamp"`
 	}{
 		"TestCaseStarted",
-		id,
+		f.scenarioLocation(pickle),
 		timeNowFunc().UnixNano() / nanoSec,
 	})
 
-	if undefined {
+	if len(pickle.Steps) == 0 {
 		// @TODO: is status undefined or passed? when there are no steps
 		// for this scenario
 		f.event(&struct {
@@ -78,7 +74,7 @@ func (f *events) Pickle(pickle *messages.Pickle) {
 			Status    string `json:"status"`
 		}{
 			"TestCaseFinished",
-			id,
+			f.scenarioLocation(pickle),
 			timeNowFunc().UnixNano() / nanoSec,
 			"undefined",
 		})
@@ -168,11 +164,7 @@ func (f *events) step(res *stepResult) {
 		errMsg,
 	})
 
-	scenario := f.findScenario(res.owner.AstNodeIds[0])
-	line := scenario.Location.Line
-	finished := isLastStep(res.owner, res.step)
-
-	if finished {
+	if isLastStep(res.owner, res.step) {
 		var status string
 
 		for _, stepResult := range f.lastFeature().lastPickleResult().stepResults {
@@ -195,7 +187,7 @@ func (f *events) step(res *stepResult) {
 			Status    string `json:"status"`
 		}{
 			"TestCaseFinished",
-			fmt.Sprintf("%s:%d", res.owner.Uri, line),
+			f.scenarioLocation(res.owner),
 			timeNowFunc().UnixNano() / nanoSec,
 			status,
 		})
@@ -292,4 +284,15 @@ func (f *events) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleSt
 	defer f.lock.Unlock()
 
 	f.step(f.lastStepResult())
+}
+
+func (f *events) scenarioLocation(pickle *messages.Pickle) string {
+	scenario := f.findScenario(pickle.AstNodeIds[0])
+	line := scenario.Location.Line
+	if len(pickle.AstNodeIds) == 2 {
+		_, row := f.findExample(pickle.AstNodeIds[1])
+		line = row.Location.Line
+	}
+
+	return fmt.Sprintf("%s:%d", pickle.Uri, line)
 }

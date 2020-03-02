@@ -1,0 +1,122 @@
+[
+    {
+        "uri": "formatter-tests/features/some_scenarions_including_failing.feature",
+        "id": "some-scenarios",
+        "keyword": "Feature",
+        "name": "some scenarios",
+        "description": "",
+        "line": 1,
+        "elements": [
+            {
+                "id": "some-scenarios;failing",
+                "keyword": "Scenario",
+                "name": "failing",
+                "description": "",
+                "line": 3,
+                "type": "scenario",
+                "steps": [
+                    {
+                        "keyword": "Given ",
+                        "name": "passing step",
+                        "line": 4,
+                        "match": {
+                            "location": "formatters_print_test.go:63"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "When ",
+                        "name": "failing step",
+                        "line": 5,
+                        "match": {
+                            "location": "formatters_print_test.go:79"
+                        },
+                        "result": {
+                            "status": "failed",
+                            "error_message": "step failed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "Then ",
+                        "name": "passing step",
+                        "line": 6,
+                        "match": {
+                            "location": "formatters_print_test.go:63"
+                        },
+                        "result": {
+                            "status": "skipped"
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "some-scenarios;pending",
+                "keyword": "Scenario",
+                "name": "pending",
+                "description": "",
+                "line": 8,
+                "type": "scenario",
+                "steps": [
+                    {
+                        "keyword": "When ",
+                        "name": "pending step",
+                        "line": 9,
+                        "match": {
+                            "location": "formatter-tests/features/some_scenarions_including_failing.feature:9"
+                        },
+                        "result": {
+                            "status": "pending"
+                        }
+                    },
+                    {
+                        "keyword": "Then ",
+                        "name": "passing step",
+                        "line": 10,
+                        "match": {
+                            "location": "formatters_print_test.go:63"
+                        },
+                        "result": {
+                            "status": "skipped"
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "some-scenarios;undefined",
+                "keyword": "Scenario",
+                "name": "undefined",
+                "description": "",
+                "line": 12,
+                "type": "scenario",
+                "steps": [
+                    {
+                        "keyword": "When ",
+                        "name": "undefined",
+                        "line": 13,
+                        "match": {
+                            "location": "formatter-tests/features/some_scenarions_including_failing.feature:13"
+                        },
+                        "result": {
+                            "status": "undefined"
+                        }
+                    },
+                    {
+                        "keyword": "Then ",
+                        "name": "passing step",
+                        "line": 14,
+                        "match": {
+                            "location": "formatters_print_test.go:63"
+                        },
+                        "result": {
+                            "status": "skipped"
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+]

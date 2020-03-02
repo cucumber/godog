@@ -1,0 +1,21 @@
+<green>.</green><green>.</green><green>.</green><green>.</green><green>.</green><red>F</red><green>.</green><green>.</green><red>F</red><green>.</green><green>.</green><green>.</green><green>.</green><green>.</green><red>F</red> 15
+
+
+--- <red>Failed steps:</red>
+
+  <red>Scenario Outline: outline</red><bold-black> # formatter-tests/features/scenario_outline.feature:5</bold-black>
+    <red>Then odd 2 and even 0 number</red><bold-black> # formatter-tests/features/scenario_outline.feature:8</bold-black>
+      <red>Error: </red><bold-red>2 is not odd</bold-red>
+
+  <red>Scenario Outline: outline</red><bold-black> # formatter-tests/features/scenario_outline.feature:5</bold-black>
+    <red>Then odd 3 and even 11 number</red><bold-black> # formatter-tests/features/scenario_outline.feature:8</bold-black>
+      <red>Error: </red><bold-red>11 is not even</bold-red>
+
+  <red>Scenario Outline: outline</red><bold-black> # formatter-tests/features/scenario_outline.feature:5</bold-black>
+    <red>Then odd 3 and even 9 number</red><bold-black> # formatter-tests/features/scenario_outline.feature:8</bold-black>
+      <red>Error: </red><bold-red>9 is not even</bold-red>
+
+
+5 scenarios (<green>2 passed</green>, <red>3 failed</red>)
+15 steps (<green>12 passed</green>, <red>3 failed</red>)
+0s

@@ -51,14 +51,12 @@ func TestPrintingFormatters(t *testing.T) {
 			suite.fmt.Summary()
 
 			expected := string(expectedOutput)
-			expected = trimAllLines(expected)
-
 			actual := buf.String()
-			actual = trimAllLines(actual)
 
-			assert.Equalf(t, expected, actual, "expected: [%s], actual: [%s]", expected, actual)
+			assert.Equalf(t, expected, actual, "path: %s", expectOutputPath)
 		}
 	}
+
 	os.Setenv("GODOG_TESTED_PACKAGE", pkg)
 }
 

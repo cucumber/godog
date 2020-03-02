@@ -323,7 +323,7 @@ Feature: cucumber json formatter
                 {
                   "keyword": "Given ",
                   "name": "passing step",
-                  "line": 7,
+                  "line": 11,
                   "match": {
                     "location": "suite_context.go:0"
                   },
@@ -345,7 +345,7 @@ Feature: cucumber json formatter
                 {
                   "keyword": "Given ",
                   "name": "failing step",
-                  "line": 7,
+                  "line": 12,
                   "match": {
                     "location": "suite_context.go:0"
                   },

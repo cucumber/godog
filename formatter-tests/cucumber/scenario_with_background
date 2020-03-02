@@ -1,0 +1,70 @@
+[
+    {
+        "uri": "formatter-tests/features/scenario_with_background.feature",
+        "id": "single-scenario-with-background",
+        "keyword": "Feature",
+        "name": "single scenario with background",
+        "description": "",
+        "line": 1,
+        "elements": [
+            {
+                "id": "single-scenario-with-background;scenario",
+                "keyword": "Scenario",
+                "name": "scenario",
+                "description": "",
+                "line": 7,
+                "type": "scenario",
+                "steps": [
+                    {
+                        "keyword": "Given ",
+                        "name": "passing step",
+                        "line": 4,
+                        "match": {
+                            "location": "formatters_print_test.go:63"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "And ",
+                        "name": "passing step",
+                        "line": 5,
+                        "match": {
+                            "location": "formatters_print_test.go:63"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "When ",
+                        "name": "passing step",
+                        "line": 8,
+                        "match": {
+                            "location": "formatters_print_test.go:63"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "Then ",
+                        "name": "passing step",
+                        "line": 9,
+                        "match": {
+                            "location": "formatters_print_test.go:63"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+]
