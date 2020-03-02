@@ -18,6 +18,9 @@ func init() {
 func eventsFunc(suite string, out io.Writer) Formatter {
 	formatter := &events{basefmt: newBaseFmt(suite, out)}
 
+	formatter.lock.Lock()
+	defer formatter.lock.Unlock()
+
 	formatter.event(&struct {
 		Event     string `json:"event"`
 		Version   string `json:"version"`
