@@ -68,7 +68,7 @@ func (f *pretty) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleSt
 }
 
 func (f *pretty) printFeature(feature *messages.GherkinDocument_Feature) {
-	if len(f.features) != 0 {
+	if len(f.features) > 1 {
 		fmt.Fprintln(f.out, "") // not a first feature, add a newline
 	}
 
@@ -117,7 +117,7 @@ func (f *pretty) printUndefinedPickle(pickle *messages.Pickle) {
 	if astBackground != nil {
 		fmt.Fprintln(f.out, "\n"+s(f.indent)+keywordAndName(astBackground.Keyword, astBackground.Name))
 		for _, step := range astBackground.Steps {
-			text := s(f.indent) + cyan(strings.TrimSpace(step.Keyword)) + " " + cyan(step.Text)
+			text := s(f.indent*2) + cyan(strings.TrimSpace(step.Keyword)) + " " + cyan(step.Text)
 			fmt.Fprintln(f.out, text)
 		}
 	}
@@ -161,9 +161,9 @@ func (f *pretty) Summary() {
 			astStep := f.findStep(fail.step.AstNodeIds[0])
 			stepDesc := strings.TrimSpace(astStep.Keyword) + " " + fail.step.Text
 
-			fmt.Fprintln(f.out, s(2)+red(scenarioDesc)+f.line(astScenario.Location))
-			fmt.Fprintln(f.out, s(4)+red(stepDesc)+f.line(astStep.Location))
-			fmt.Fprintln(f.out, s(6)+red("Error: ")+redb(fmt.Sprintf("%+v", fail.err))+"\n")
+			fmt.Fprintln(f.out, s(f.indent)+red(scenarioDesc)+f.line(astScenario.Location))
+			fmt.Fprintln(f.out, s(f.indent*2)+red(stepDesc)+f.line(astStep.Location))
+			fmt.Fprintln(f.out, s(f.indent*3)+red("Error: ")+redb(fmt.Sprintf("%+v", fail.err))+"\n")
 		}
 	}
 
@@ -319,7 +319,7 @@ func (f *pretty) printStep(result *stepResult) {
 		f.printScenarioHeader(astScenario, maxLength-scenarioHeaderLength)
 	}
 
-	text := s(f.indent) + result.status.clr()(strings.TrimSpace(astStep.Keyword)) + " " + result.status.clr()(astStep.Text)
+	text := s(f.indent*2) + result.status.clr()(strings.TrimSpace(astStep.Keyword)) + " " + result.status.clr()(astStep.Text)
 	if result.def != nil {
 		text += s(maxLength - stepLength + 1)
 		text += blackb("# " + result.def.definitionID())

@@ -56,21 +56,17 @@ func (f *events) event(ev interface{}) {
 func (f *events) Pickle(pickle *messages.Pickle) {
 	f.basefmt.Pickle(pickle)
 
-	scenario := f.findScenario(pickle.AstNodeIds[0])
-	id := fmt.Sprintf("%s:%d", f.path, scenario.Location.Line)
-	undefined := len(pickle.Steps) == 0
-
 	f.event(&struct {
 		Event     string `json:"event"`
 		Location  string `json:"location"`
 		Timestamp int64  `json:"timestamp"`
 	}{
 		"TestCaseStarted",
-		id,
+		f.scenarioLocation(pickle.AstNodeIds),
 		timeNowFunc().UnixNano() / nanoSec,
 	})
 
-	if undefined {
+	if len(pickle.Steps) == 0 {
 		// @TODO: is status undefined or passed? when there are no steps
 		// for this scenario
 		f.event(&struct {
@@ -80,7 +76,7 @@ func (f *events) Pickle(pickle *messages.Pickle) {
 			Status    string `json:"status"`
 		}{
 			"TestCaseFinished",
-			id,
+			f.scenarioLocation(pickle.AstNodeIds),
 			timeNowFunc().UnixNano() / nanoSec,
 			"undefined",
 		})
@@ -155,11 +151,7 @@ func (f *events) step(res *stepResult) {
 		errMsg,
 	})
 
-	scenario := f.findScenario(res.owner.AstNodeIds[0])
-	line := scenario.Location.Line
-	finished := isLastStep(res.owner, res.step)
-
-	if finished {
+	if isLastStep(res.owner, res.step) {
 		f.event(&struct {
 			Event     string `json:"event"`
 			Location  string `json:"location"`
@@ -167,7 +159,7 @@ func (f *events) step(res *stepResult) {
 			Status    string `json:"status"`
 		}{
 			"TestCaseFinished",
-			fmt.Sprintf("%s:%d", f.path, line),
+			f.scenarioLocation(res.owner.AstNodeIds),
 			timeNowFunc().UnixNano() / nanoSec,
 			f.status.String(),
 		})
@@ -248,4 +240,15 @@ func (f *events) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleSt
 
 	f.status = pending
 	f.step(f.lastStepResult())
+}
+
+func (f *events) scenarioLocation(astNodeIds []string) string {
+	scenario := f.findScenario(astNodeIds[0])
+	line := scenario.Location.Line
+	if len(astNodeIds) == 2 {
+		_, row := f.findExample(astNodeIds[1])
+		line = row.Location.Line
+	}
+
+	return fmt.Sprintf("%s:%d", f.path, line)
 }

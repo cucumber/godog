@@ -51,10 +51,7 @@ func TestPrintingFormatters(t *testing.T) {
 			suite.fmt.Summary()
 
 			expected := string(expectedOutput)
-			expected = trimAllLines(expected)
-
 			actual := buf.String()
-			actual = trimAllLines(actual)
 
 			assert.Equalf(t, expected, actual, "path: %s", expectOutputPath)
 		}
