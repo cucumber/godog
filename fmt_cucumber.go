@@ -135,6 +135,7 @@ func (f *cukefmt) Pickle(pickle *messages.Pickle) {
 	f.curElement.Keyword = scenario.Keyword
 	f.curElement.ID = f.curFeature.ID + ";" + makeID(pickle.Name)
 	f.curElement.Type = "scenario"
+
 	f.curElement.Tags = make([]cukeTag, len(scenario.Tags)+len(f.curFeature.Tags))
 
 	if len(f.curElement.Tags) > 0 {
@@ -148,17 +149,22 @@ func (f *cukefmt) Pickle(pickle *messages.Pickle) {
 		}
 	}
 
+	if len(pickle.AstNodeIds) == 1 {
+		return
+	}
+
+	example, _ := f.findExample(pickle.AstNodeIds[1])
+	// apply example level tags.
+	for _, tag := range example.Tags {
+		tag := cukeTag{Line: int(tag.Location.Line), Name: tag.Name}
+		f.curElement.Tags = append(f.curElement.Tags, tag)
+	}
+
 	examples := scenario.GetExamples()
 	if len(examples) > 0 {
 		rowID := pickle.AstNodeIds[1]
 
 		for _, example := range examples {
-			// apply example level tags.
-			for _, element := range example.Tags {
-				tag := cukeTag{Line: int(element.Location.Line), Name: element.Name}
-				f.curElement.Tags = append(f.curElement.Tags, tag)
-			}
-
 			for idx, row := range example.TableBody {
 				if rowID == row.Id {
 					f.curElement.ID += fmt.Sprintf(";%s;%d", makeID(example.Name), idx+2)
@@ -223,8 +229,14 @@ func (f *cukefmt) Defined(pickle *messages.Pickle, pickleStep *messages.Pickle_P
 
 	step := f.findStep(pickleStep.AstNodeIds[0])
 
+	line := step.Location.Line
+	if len(pickle.AstNodeIds) == 2 {
+		_, row := f.findExample(pickle.AstNodeIds[1])
+		line = row.Location.Line
+	}
+
 	f.curStep.Name = pickleStep.Text
-	f.curStep.Line = int(step.Location.Line)
+	f.curStep.Line = int(line)
 	f.curStep.Keyword = step.Keyword
 
 	arg := pickleStep.Argument

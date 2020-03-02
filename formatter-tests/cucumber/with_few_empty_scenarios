@@ -1,0 +1,52 @@
+[
+    {
+        "uri": "formatter-tests/features/with_few_empty_scenarios.feature",
+        "id": "few-empty-scenarios",
+        "keyword": "Feature",
+        "name": "few empty scenarios",
+        "description": "",
+        "line": 1,
+        "elements": [
+            {
+                "id": "few-empty-scenarios;one",
+                "keyword": "Scenario",
+                "name": "one",
+                "description": "",
+                "line": 3,
+                "type": "scenario"
+            },
+            {
+                "id": "few-empty-scenarios;two;first-group;2",
+                "keyword": "Scenario Outline",
+                "name": "two",
+                "description": "",
+                "line": 9,
+                "type": "scenario"
+            },
+            {
+                "id": "few-empty-scenarios;two;first-group;3",
+                "keyword": "Scenario Outline",
+                "name": "two",
+                "description": "",
+                "line": 10,
+                "type": "scenario"
+            },
+            {
+                "id": "few-empty-scenarios;two;second-group;2",
+                "keyword": "Scenario Outline",
+                "name": "two",
+                "description": "",
+                "line": 14,
+                "type": "scenario"
+            },
+            {
+                "id": "few-empty-scenarios;three",
+                "keyword": "Scenario",
+                "name": "three",
+                "description": "",
+                "line": 16,
+                "type": "scenario"
+            }
+        ]
+    }
+]

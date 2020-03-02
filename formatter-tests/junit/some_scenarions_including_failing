@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="junit" tests="3" skipped="0" failures="1" errors="2" time="0">
+  <testsuite name="some scenarios" tests="3" skipped="0" failures="1" errors="2" time="0">
+    <testcase name="failing" status="failed" time="0">
+      <failure message="Step failing step: step failed"></failure>
+      <error message="Step passing step" type="skipped"></error>
+    </testcase>
+    <testcase name="pending" status="pending" time="0">
+      <error message="Step pending step: TODO: write pending definition" type="pending"></error>
+      <error message="Step passing step" type="skipped"></error>
+    </testcase>
+    <testcase name="undefined" status="undefined" time="0">
+      <error message="Step undefined" type="undefined"></error>
+      <error message="Step passing step" type="skipped"></error>
+    </testcase>
+  </testsuite>
+</testsuites>

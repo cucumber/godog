@@ -1,0 +1,13 @@
+{"event":"TestRunStarted","version":"0.1.0","timestamp":-6795364578871,"suite":"events"}
+{"event":"TestSource","location":"formatter-tests/features/with_few_empty_scenarios.feature:1","source":"Feature: few empty scenarios\n\n  Scenario: one\n\n  Scenario Outline: two\n\n    Examples: first group\n      | one | two |\n      | 1   | 2   |\n      | 4   | 7   |\n\n    Examples: second group\n      | one | two |\n      | 5   | 9   |\n\n  Scenario: three\n"}
+{"event":"TestCaseStarted","location":"formatter-tests/features/with_few_empty_scenarios.feature:3","timestamp":-6795364578871}
+{"event":"TestCaseFinished","location":"formatter-tests/features/with_few_empty_scenarios.feature:3","timestamp":-6795364578871,"status":"undefined"}
+{"event":"TestCaseStarted","location":"formatter-tests/features/with_few_empty_scenarios.feature:9","timestamp":-6795364578871}
+{"event":"TestCaseFinished","location":"formatter-tests/features/with_few_empty_scenarios.feature:9","timestamp":-6795364578871,"status":"undefined"}
+{"event":"TestCaseStarted","location":"formatter-tests/features/with_few_empty_scenarios.feature:10","timestamp":-6795364578871}
+{"event":"TestCaseFinished","location":"formatter-tests/features/with_few_empty_scenarios.feature:10","timestamp":-6795364578871,"status":"undefined"}
+{"event":"TestCaseStarted","location":"formatter-tests/features/with_few_empty_scenarios.feature:14","timestamp":-6795364578871}
+{"event":"TestCaseFinished","location":"formatter-tests/features/with_few_empty_scenarios.feature:14","timestamp":-6795364578871,"status":"undefined"}
+{"event":"TestCaseStarted","location":"formatter-tests/features/with_few_empty_scenarios.feature:16","timestamp":-6795364578871}
+{"event":"TestCaseFinished","location":"formatter-tests/features/with_few_empty_scenarios.feature:16","timestamp":-6795364578871,"status":"undefined"}
+{"event":"TestRunFinished","status":"pending","timestamp":-6795364578871,"snippets":"","memory":""}

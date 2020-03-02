@@ -1,0 +1,5 @@
+{"event":"TestRunStarted","version":"0.1.0","timestamp":-6795364578871,"suite":"events"}
+{"event":"TestSource","location":"formatter-tests/features/empty_with_single_scenario_without_steps.feature:1","source":"Feature: empty feature\n\n  Scenario: without steps\n"}
+{"event":"TestCaseStarted","location":"formatter-tests/features/empty_with_single_scenario_without_steps.feature:3","timestamp":-6795364578871}
+{"event":"TestCaseFinished","location":"formatter-tests/features/empty_with_single_scenario_without_steps.feature:3","timestamp":-6795364578871,"status":"undefined"}
+{"event":"TestRunFinished","status":"pending","timestamp":-6795364578871,"snippets":"","memory":""}

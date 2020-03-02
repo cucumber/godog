@@ -1,0 +1,34 @@
+[
+    {
+        "uri": "formatter-tests/features/single_scenario_with_passing_step.feature",
+        "id": "single-passing-scenario",
+        "keyword": "Feature",
+        "name": "single passing scenario",
+        "description": "  describes\n  a single scenario\n  feature",
+        "line": 1,
+        "elements": [
+            {
+                "id": "single-passing-scenario;one-step-passing",
+                "keyword": "Scenario",
+                "name": "one step passing",
+                "description": "",
+                "line": 6,
+                "type": "scenario",
+                "steps": [
+                    {
+                        "keyword": "Given ",
+                        "name": "a passing step",
+                        "line": 7,
+                        "match": {
+                            "location": "formatters_print_test.go:63"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+]
