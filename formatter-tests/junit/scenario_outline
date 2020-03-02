@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="junit" tests="5" skipped="0" failures="3" errors="0" time="0">
+  <testsuite name="outline" tests="5" skipped="0" failures="3" errors="0" time="0">
+    <testcase name="outline #1" status="passed" time="0"></testcase>
+    <testcase name="outline #2" status="failed" time="0">
+      <failure message="Step odd 2 and even 0 number: 2 is not odd"></failure>
+    </testcase>
+    <testcase name="outline #3" status="failed" time="0">
+      <failure message="Step odd 3 and even 11 number: 11 is not even"></failure>
+    </testcase>
+    <testcase name="outline #4" status="passed" time="0"></testcase>
+    <testcase name="outline #5" status="failed" time="0">
+      <failure message="Step odd 3 and even 9 number: 9 is not even"></failure>
+    </testcase>
+  </testsuite>
+</testsuites>
