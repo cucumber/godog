@@ -1,0 +1,17 @@
+<green>.</green><red>F</red><cyan>-</cyan><cyan>-</cyan><green>.</green><red>F</red><cyan>-</cyan> 7
+
+
+--- <red>Failed steps:</red>
+
+  <red>Scenario: one</red><bold-black> # formatter-tests/features/two_scenarios_with_background_fail.feature:7</bold-black>
+    <red>And failing step</red><bold-black> # formatter-tests/features/two_scenarios_with_background_fail.feature:5</bold-black>
+      <red>Error: </red><bold-red>step failed</bold-red>
+
+  <red>Scenario: two</red><bold-black> # formatter-tests/features/two_scenarios_with_background_fail.feature:11</bold-black>
+    <red>And failing step</red><bold-black> # formatter-tests/features/two_scenarios_with_background_fail.feature:5</bold-black>
+      <red>Error: </red><bold-red>step failed</bold-red>
+
+
+2 scenarios (<red>2 failed</red>)
+7 steps (<green>2 passed</green>, <red>2 failed</red>, <cyan>3 skipped</cyan>)
+0s

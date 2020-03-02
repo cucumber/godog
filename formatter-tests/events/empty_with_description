@@ -1,0 +1,3 @@
+{"event":"TestRunStarted","version":"0.1.0","timestamp":-6795364578871,"suite":"events"}
+{"event":"TestSource","location":"formatter-tests/features/empty_with_description.feature:1","source":"Feature: empty feature\n  describes\n  an empty\n  feature\n"}
+{"event":"TestRunFinished","status":"pending","timestamp":-6795364578871,"snippets":"","memory":""}
