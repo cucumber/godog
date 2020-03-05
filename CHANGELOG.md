@@ -15,6 +15,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ### Changed
 
 - Run godog features in CircleCI in strict mode ([jaysonesmith])
+- Removed TestMain call in `suite_test.go` for CI. ([jaysonesmith])
 
 ### Deprecated
 
