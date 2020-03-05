@@ -8,14 +8,14 @@ import (
 	"reflect"
 
 	"github.com/cucumber/godog"
-	"github.com/cucumber/messages-go/v9"
+	"github.com/cucumber/godog/gherkin"
 )
 
 type apiFeature struct {
 	resp *httptest.ResponseRecorder
 }
 
-func (a *apiFeature) resetResponse(*messages.Pickle) {
+func (a *apiFeature) resetResponse(interface{}) {
 	a.resp = httptest.NewRecorder()
 }
 
@@ -51,7 +51,7 @@ func (a *apiFeature) theResponseCodeShouldBe(code int) error {
 	return nil
 }
 
-func (a *apiFeature) theResponseShouldMatchJSON(body *messages.PickleStepArgument_PickleDocString) (err error) {
+func (a *apiFeature) theResponseShouldMatchJSON(body *gherkin.DocString) (err error) {
 	var expected, actual interface{}
 
 	// re-encode expected response

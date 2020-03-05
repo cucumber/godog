@@ -10,12 +10,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cucumber/gherkin-go/v9"
-	"github.com/cucumber/messages-go/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/cucumber/godog/colors"
+	"github.com/cucumber/godog/gherkin"
 )
 
 func okStep() error {
@@ -60,16 +59,12 @@ func TestPrintsNoStepDefinitionsIfNoneFound(t *testing.T) {
 }
 
 func TestFailsOrPassesBasedOnStrictModeWhenHasPendingSteps(t *testing.T) {
-	const path = "any.feature"
-
-	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(basicGherkinFeature), (&messages.Incrementing{}).NewId)
+	feat, err := gherkin.ParseFeature(strings.NewReader(basicGherkinFeature))
 	require.NoError(t, err)
-
-	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
 
 	r := runner{
 		fmt:      progressFunc("progress", ioutil.Discard),
-		features: []*feature{{GherkinDocument: gd, pickles: pickles}},
+		features: []*feature{&feature{Feature: feat}},
 		initializer: func(s *Suite) {
 			s.Step(`^one$`, func() error { return nil })
 			s.Step(`^two$`, func() error { return ErrPending })
@@ -83,16 +78,12 @@ func TestFailsOrPassesBasedOnStrictModeWhenHasPendingSteps(t *testing.T) {
 }
 
 func TestFailsOrPassesBasedOnStrictModeWhenHasUndefinedSteps(t *testing.T) {
-	const path = "any.feature"
-
-	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(basicGherkinFeature), (&messages.Incrementing{}).NewId)
+	feat, err := gherkin.ParseFeature(strings.NewReader(basicGherkinFeature))
 	require.NoError(t, err)
-
-	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
 
 	r := runner{
 		fmt:      progressFunc("progress", ioutil.Discard),
-		features: []*feature{{GherkinDocument: gd, pickles: pickles}},
+		features: []*feature{&feature{Feature: feat}},
 		initializer: func(s *Suite) {
 			s.Step(`^one$`, func() error { return nil })
 			// two - is undefined
@@ -106,16 +97,12 @@ func TestFailsOrPassesBasedOnStrictModeWhenHasUndefinedSteps(t *testing.T) {
 }
 
 func TestShouldFailOnError(t *testing.T) {
-	const path = "any.feature"
-
-	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(basicGherkinFeature), (&messages.Incrementing{}).NewId)
+	feat, err := gherkin.ParseFeature(strings.NewReader(basicGherkinFeature))
 	require.NoError(t, err)
-
-	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
 
 	r := runner{
 		fmt:      progressFunc("progress", ioutil.Discard),
-		features: []*feature{{GherkinDocument: gd, pickles: pickles}},
+		features: []*feature{&feature{Feature: feat}},
 		initializer: func(s *Suite) {
 			s.Step(`^one$`, func() error { return nil })
 			s.Step(`^two$`, func() error { return fmt.Errorf("error") })
@@ -256,10 +243,11 @@ type succeedRunTestCase struct {
 	filename    string // expected output file
 }
 
-func TestConcurrencyRun(t *testing.T) {
+func TestSucceedRun(t *testing.T) {
 	testCases := []succeedRunTestCase{
 		{format: "progress", concurrency: 4, filename: "fixtures/progress_output.txt"},
 		{format: "junit", concurrency: 4, filename: "fixtures/junit_output.xml"},
+		{format: "cucumber", concurrency: 2, filename: "fixtures/cucumber_output.json"},
 	}
 
 	for _, tc := range testCases {
@@ -277,7 +265,7 @@ func TestConcurrencyRun(t *testing.T) {
 	}
 }
 
-func testSucceedRun(t *testing.T, format string, concurrency int, expected string) {
+func testSucceedRun(t *testing.T, format string, concurrency int, expectedOutput string) {
 	output := new(bytes.Buffer)
 
 	opt := Options{
@@ -294,12 +282,11 @@ func testSucceedRun(t *testing.T, format string, concurrency int, expected strin
 	b, err := ioutil.ReadAll(output)
 	require.NoError(t, err)
 
-	suiteCtxReg := regexp.MustCompile(`suite_context.go:\d+`)
-
-	expected = suiteCtxReg.ReplaceAllString(expected, `suite_context.go:0`)
-
 	actual := strings.TrimSpace(string(b))
+
+	suiteCtxReg := regexp.MustCompile(`suite_context.go:\d+`)
+	expectedOutput = suiteCtxReg.ReplaceAllString(expectedOutput, `suite_context.go:0`)
 	actual = suiteCtxReg.ReplaceAllString(actual, `suite_context.go:0`)
 
-	assert.Equalf(t, expected, actual, "[%s]", actual)
+	assert.Equalf(t, expectedOutput, actual, "[%s]", actual)
 }
