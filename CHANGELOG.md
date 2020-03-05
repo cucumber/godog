@@ -23,20 +23,21 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Fixed
 
-- Fixed the time attributes in the JUnit formatter. ([232](https://github.com/cucumber/godog/pull/232) [lonnblad])
-- Re enable custom formatters. ([238](https://github.com/cucumber/godog/pull/238) [ericmcbride])
+- Fixed the time attributes in the JUnit formatter. ([232](https://github.com/cucumber/godog/pull/232) - [lonnblad])
+- Re enable custom formatters. ([238](https://github.com/cucumber/godog/pull/238) - [ericmcbride])
 - Added back suite_test.go ([jaysonesmith])
+- Normalise module paths for use on Windows ([242](https://github.com/cucumber/godog/pull/242) - [gjtaylor])
 
 ## [0.8.1]
 
 ### Added
 
-- Link in Readme to the Slack community. ([210](https://github.com/cucumber/godog/pull/210) [smikulcik])
-- Added run tests for Cucumber formatting. ([214](https://github.com/cucumber/godog/pull/214), [216](https://github.com/cucumber/godog/pull/216) [lonnblad])
+- Link in Readme to the Slack community. ([210](https://github.com/cucumber/godog/pull/210) - [smikulcik])
+- Added run tests for Cucumber formatting. ([214](https://github.com/cucumber/godog/pull/214), [216](https://github.com/cucumber/godog/pull/216) - [lonnblad])
 
 ### Changed
 
-- Renamed the `examples` directory to `_examples`, removing dependencies from the Go module ([218](https://github.com/cucumber/godog/pull/218) [axw])
+- Renamed the `examples` directory to `_examples`, removing dependencies from the Go module ([218](https://github.com/cucumber/godog/pull/218) - [axw])
 
 ### Deprecated
 
@@ -44,7 +45,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Fixed
 
-- Find/Replaced references to DATA-DOG/godog -> cucumber/godog for docs. ([209](https://github.com/cucumber/godog/pull/209) [smikulcik])
+- Find/Replaced references to DATA-DOG/godog -> cucumber/godog for docs. ([209](https://github.com/cucumber/godog/pull/209) - [smikulcik])
 - Fixed missing links in changelog to be correctly included! ([jaysonesmith])
 
 ## [0.8.0]
@@ -75,3 +76,4 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 [lonnblad]:         https://github.com/lonnblad
 [smikulcik]:        https://github.com/smikulcik
 [ericmcbride]:      https://github.com/ericmcbride
+[gjtaylor]:         https://github.com/gjtaylor
