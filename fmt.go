@@ -213,7 +213,7 @@ func (f *basefmt) findScenario(scenarioAstID string) *messages.GherkinDocument_F
 		}
 	}
 
-	return nil
+	panic("Couldn't find scenario for AST ID: " + scenarioAstID)
 }
 
 func (f *basefmt) findBackground(scenarioAstID string) *messages.GherkinDocument_Feature_Background {
@@ -243,7 +243,7 @@ func (f *basefmt) findStep(stepAstID string) *messages.GherkinDocument_Feature_S
 		}
 	}
 
-	return nil
+	panic("Couldn't find step for AST ID: " + stepAstID)
 }
 
 func (f *basefmt) Pickle(p *messages.Pickle) {
