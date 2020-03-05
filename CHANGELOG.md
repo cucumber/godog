@@ -14,13 +14,17 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Changed
 
+- Run godog features in CircleCI in strict mode ([jaysonesmith])
+
 ### Deprecated
 
 ### Removed
 
 ### Fixed
+
 - Fixed the time attributes in the JUnit formatter. ([232](https://github.com/cucumber/godog/pull/232) [lonnblad])
 - Re enable custom formatters. ([238](https://github.com/cucumber/godog/pull/238) [ericmcbride])
+- Added back suite_test.go ([jaysonesmith])
 
 ## [0.8.1]
 
