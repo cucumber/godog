@@ -257,7 +257,7 @@ Feature: cucumber json formatter
                   "name": "passing step",
                   "line": 7,
                   "match": {
-                    "location": "suite_context.go:0"
+                    "location": "suite_context.go:64"
                   },
                   "result": {
                     "status": "passed",
@@ -269,7 +269,7 @@ Feature: cucumber json formatter
                   "name": "a failing step",
                   "line": 8,
                   "match": {
-                    "location": "suite_context.go:0"
+                    "location": "suite_context.go:47"
                   },
                   "result": {
                     "status": "failed",
@@ -325,7 +325,7 @@ Feature: cucumber json formatter
                   "name": "passing step",
                   "line": 11,
                   "match": {
-                    "location": "suite_context.go:0"
+                    "location": "suite_context.go:64"
                   },
                   "result": {
                     "status": "passed",
@@ -347,7 +347,7 @@ Feature: cucumber json formatter
                   "name": "failing step",
                   "line": 12,
                   "match": {
-                    "location": "suite_context.go:0"
+                    "location": "suite_context.go:47"
                   },
                   "result": {
                     "status": "failed",
@@ -448,7 +448,7 @@ Feature: cucumber json formatter
                   "line": 8
                 },
                 "match": {
-                  "location": "suite_context.go:0"
+                  "location": "suite_context.go:64"
                 },
                 "result": {
                   "status": "passed",
@@ -501,7 +501,7 @@ Feature: cucumber json formatter
                   "name": "passing step",
                   "line": 7,
                   "match": {
-                    "location": "suite_context.go:0"
+                    "location": "suite_context.go:64"
                   },
                   "result": {
                     "status": "passed",
@@ -535,7 +535,7 @@ Feature: cucumber json formatter
                   "name": "passing step",
                   "line": 10,
                   "match": {
-                    "location": "suite_context.go:0"
+                    "location": "suite_context.go:64"
                   },
                   "result": {
                     "status": "skipped"
