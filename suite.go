@@ -621,7 +621,7 @@ func extractFeaturePathLine(p string) (string, int) {
 	return retPath, line
 }
 
-func parseFeatureFile(path string, newIdFunc func() string) (*feature, error) {
+func parseFeatureFile(path string, newIDFunc func() string) (*feature, error) {
 	reader, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -629,12 +629,12 @@ func parseFeatureFile(path string, newIdFunc func() string) (*feature, error) {
 	defer reader.Close()
 
 	var buf bytes.Buffer
-	gherkinDocument, err := gherkin.ParseGherkinDocument(io.TeeReader(reader, &buf), newIdFunc)
+	gherkinDocument, err := gherkin.ParseGherkinDocument(io.TeeReader(reader, &buf), newIDFunc)
 	if err != nil {
 		return nil, fmt.Errorf("%s - %v", path, err)
 	}
 
-	pickles := gherkin.Pickles(*gherkinDocument, path, newIdFunc)
+	pickles := gherkin.Pickles(*gherkinDocument, path, newIDFunc)
 
 	return &feature{
 		GherkinDocument: gherkinDocument,
@@ -644,7 +644,7 @@ func parseFeatureFile(path string, newIdFunc func() string) (*feature, error) {
 	}, nil
 }
 
-func parseFeatureDir(dir string, newIdFunc func() string) ([]*feature, error) {
+func parseFeatureDir(dir string, newIDFunc func() string) ([]*feature, error) {
 	var features []*feature
 	return features, filepath.Walk(dir, func(p string, f os.FileInfo, err error) error {
 		if err != nil {
@@ -659,7 +659,7 @@ func parseFeatureDir(dir string, newIdFunc func() string) ([]*feature, error) {
 			return nil
 		}
 
-		feat, err := parseFeatureFile(p, newIdFunc)
+		feat, err := parseFeatureFile(p, newIDFunc)
 		if err != nil {
 			return err
 		}
@@ -678,13 +678,13 @@ func parsePath(path string) ([]*feature, error) {
 		return features, err
 	}
 
-	newIdFunc := (&messages.Incrementing{}).NewId
+	newIDFunc := (&messages.Incrementing{}).NewId
 
 	if fi.IsDir() {
-		return parseFeatureDir(path, newIdFunc)
+		return parseFeatureDir(path, newIDFunc)
 	}
 
-	ft, err := parseFeatureFile(path, newIdFunc)
+	ft, err := parseFeatureFile(path, newIDFunc)
 	if err != nil {
 		return features, err
 	}
