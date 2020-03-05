@@ -3,42 +3,28 @@ package godog
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"strings"
 	"testing"
 
-	"github.com/cucumber/gherkin-go/v9"
-	"github.com/cucumber/messages-go/v9"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/cucumber/godog/colors"
+	"github.com/cucumber/godog/gherkin"
 )
 
-var basicGherkinFeature = `
-Feature: basic
-
-  Scenario: passing scenario
-	When one
-	Then two
-`
-
 func TestProgressFormatterOutput(t *testing.T) {
-	const path = "any.feature"
-
-	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(sampleGherkinFeature), (&messages.Incrementing{}).NewId)
-	require.NoError(t, err)
-
-	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
+	feat, err := gherkin.ParseFeature(strings.NewReader(sampleGherkinFeature))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	var buf bytes.Buffer
 	w := colors.Uncolored(&buf)
 	r := runner{
 		fmt: progressFunc("progress", w),
-		features: []*feature{{
-			GherkinDocument: gd,
-			pickles:         pickles,
-			Path:            path,
-			Content:         []byte(sampleGherkinFeature),
+		features: []*feature{&feature{
+			Path:    "any.feature",
+			Feature: feat,
+			Content: []byte(sampleGherkinFeature),
 		}},
 		initializer: func(s *Suite) {
 			s.Step(`^passing$`, func() error { return nil })
@@ -81,52 +67,61 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(` + "`^next undefined$`" + `, nextUndefined)
 }`
 
-	require.True(t, r.run())
-
 	expected = trimAllLines(expected)
+
+	r.run()
+
 	actual := trimAllLines(buf.String())
 
-	assert.Equal(t, expected, actual)
+	shouldMatchOutput(expected, actual, t)
 }
 
+var basicGherkinFeature = `
+Feature: basic
+
+  Scenario: passing scenario
+	When one
+	Then two
+`
+
 func TestProgressFormatterWhenStepPanics(t *testing.T) {
-	const path = "any.feature"
-
-	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(basicGherkinFeature), (&messages.Incrementing{}).NewId)
-	require.NoError(t, err)
-
-	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
+	feat, err := gherkin.ParseFeature(strings.NewReader(basicGherkinFeature))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	var buf bytes.Buffer
 	w := colors.Uncolored(&buf)
 	r := runner{
 		fmt:      progressFunc("progress", w),
-		features: []*feature{{GherkinDocument: gd, pickles: pickles}},
+		features: []*feature{&feature{Feature: feat}},
 		initializer: func(s *Suite) {
 			s.Step(`^one$`, func() error { return nil })
 			s.Step(`^two$`, func() error { panic("omg") })
 		},
 	}
 
-	require.True(t, r.run())
+	if !r.run() {
+		t.Fatal("the suite should have failed")
+	}
 
-	actual := buf.String()
-	assert.Contains(t, actual, "godog/fmt_progress_test.go:107")
+	out := buf.String()
+	if idx := strings.Index(out, "godog/fmt_progress_test.go:100"); idx == -1 {
+		t.Fatalf("expected to find panic stacktrace, actual:\n%s", out)
+	}
 }
 
 func TestProgressFormatterWithPassingMultisteps(t *testing.T) {
-	const path = "any.feature"
-
-	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(basicGherkinFeature), (&messages.Incrementing{}).NewId)
-	require.NoError(t, err)
-
-	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
+	feat, err := gherkin.ParseFeature(strings.NewReader(basicGherkinFeature))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	var buf bytes.Buffer
 	w := colors.Uncolored(&buf)
 	r := runner{
 		fmt:      progressFunc("progress", w),
-		features: []*feature{{GherkinDocument: gd, pickles: pickles}},
+		features: []*feature{&feature{Feature: feat}},
 		initializer: func(s *Suite) {
 			s.Step(`^sub1$`, func() error { return nil })
 			s.Step(`^sub-sub$`, func() error { return nil })
@@ -136,22 +131,22 @@ func TestProgressFormatterWithPassingMultisteps(t *testing.T) {
 		},
 	}
 
-	assert.False(t, r.run())
+	if r.run() {
+		t.Fatal("the suite should have passed")
+	}
 }
 
 func TestProgressFormatterWithFailingMultisteps(t *testing.T) {
-	const path = "some.feature"
-
-	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(basicGherkinFeature), (&messages.Incrementing{}).NewId)
-	require.NoError(t, err)
-
-	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
+	feat, err := gherkin.ParseFeature(strings.NewReader(basicGherkinFeature))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	var buf bytes.Buffer
 	w := colors.Uncolored(&buf)
 	r := runner{
 		fmt:      progressFunc("progress", w),
-		features: []*feature{{GherkinDocument: gd, pickles: pickles, Path: path}},
+		features: []*feature{&feature{Feature: feat, Path: "some.feature"}},
 		initializer: func(s *Suite) {
 			s.Step(`^sub1$`, func() error { return nil })
 			s.Step(`^sub-sub$`, func() error { return fmt.Errorf("errored") })
@@ -161,7 +156,9 @@ func TestProgressFormatterWithFailingMultisteps(t *testing.T) {
 		},
 	}
 
-	require.True(t, r.run())
+	if !r.run() {
+		t.Fatal("the suite should have failed")
+	}
 
 	expected := `
 .F 2
@@ -181,21 +178,48 @@ Error: sub2: sub-sub: errored
 
 	expected = trimAllLines(expected)
 	actual := trimAllLines(buf.String())
-	assert.Equal(t, expected, actual)
+
+	shouldMatchOutput(expected, actual, t)
+}
+
+func shouldMatchOutput(expected, actual string, t *testing.T) {
+	act := []byte(actual)
+	exp := []byte(expected)
+
+	if len(act) != len(exp) {
+		t.Fatalf("content lengths do not match, expected: %d, actual %d, actual output:\n%s", len(exp), len(act), actual)
+	}
+
+	for i := 0; i < len(exp); i++ {
+		if act[i] == exp[i] {
+			continue
+		}
+
+		cpe := make([]byte, len(exp))
+		copy(cpe, exp)
+		e := append(exp[:i], '^')
+		e = append(e, cpe[i:]...)
+
+		cpa := make([]byte, len(act))
+		copy(cpa, act)
+		a := append(act[:i], '^')
+		a = append(a, cpa[i:]...)
+
+		t.Fatalf("expected output does not match:\n%s\n\n%s", string(a), string(e))
+	}
 }
 
 func TestProgressFormatterWithPanicInMultistep(t *testing.T) {
-	const path = "any.feature"
+	feat, err := gherkin.ParseFeature(strings.NewReader(basicGherkinFeature))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
-	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(basicGherkinFeature), (&messages.Incrementing{}).NewId)
-	require.NoError(t, err)
-
-	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
 	var buf bytes.Buffer
 	w := colors.Uncolored(&buf)
 	r := runner{
 		fmt:      progressFunc("progress", w),
-		features: []*feature{{GherkinDocument: gd, pickles: pickles}},
+		features: []*feature{&feature{Feature: feat}},
 		initializer: func(s *Suite) {
 			s.Step(`^sub1$`, func() error { return nil })
 			s.Step(`^sub-sub$`, func() error { return nil })
@@ -205,22 +229,22 @@ func TestProgressFormatterWithPanicInMultistep(t *testing.T) {
 		},
 	}
 
-	assert.True(t, r.run())
+	if !r.run() {
+		t.Fatal("the suite should have failed")
+	}
 }
 
 func TestProgressFormatterMultistepTemplates(t *testing.T) {
-	const path = "any.feature"
-
-	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(basicGherkinFeature), (&messages.Incrementing{}).NewId)
-	require.NoError(t, err)
-
-	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
+	feat, err := gherkin.ParseFeature(strings.NewReader(basicGherkinFeature))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	var buf bytes.Buffer
 	w := colors.Uncolored(&buf)
 	r := runner{
 		fmt:      progressFunc("progress", w),
-		features: []*feature{{GherkinDocument: gd, pickles: pickles}},
+		features: []*feature{&feature{Feature: feat}},
 		initializer: func(s *Suite) {
 			s.Step(`^sub-sub$`, func() error { return nil })
 			s.Step(`^substep$`, func() Steps { return Steps{"sub-sub", `unavailable "John" cost 5`, "one", "three"} })
@@ -229,7 +253,9 @@ func TestProgressFormatterMultistepTemplates(t *testing.T) {
 		},
 	}
 
-	require.False(t, r.run())
+	if r.run() {
+		t.Fatal("the suite should have passed")
+	}
 
 	expected := `
 .U 2
@@ -261,13 +287,14 @@ func FeatureContext(s *godog.Suite) {
 `
 
 	expected = trimAllLines(expected)
-	actual := trimAllLines(buf.String())
 
-	assert.Equal(t, expected, actual)
+	actual := trimAllLines(buf.String())
+	if actual != expected {
+		t.Fatalf("expected output does not match: %s", actual)
+	}
 }
 
 func TestProgressFormatterWhenMultiStepHasArgument(t *testing.T) {
-	const path = "any.feature"
 
 	var featureSource = `
 Feature: basic
@@ -279,28 +306,26 @@ Feature: basic
 	text
 	"""
 `
+	feat, err := gherkin.ParseFeature(strings.NewReader(featureSource))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
-	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(featureSource), (&messages.Incrementing{}).NewId)
-	require.NoError(t, err)
-
-	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
-
-	var buf bytes.Buffer
-	w := colors.Uncolored(&buf)
 	r := runner{
-		fmt:      progressFunc("progress", w),
-		features: []*feature{{GherkinDocument: gd, pickles: pickles}},
+		fmt:      progressFunc("progress", ioutil.Discard),
+		features: []*feature{&feature{Feature: feat}},
 		initializer: func(s *Suite) {
 			s.Step(`^one$`, func() error { return nil })
-			s.Step(`^two:$`, func(doc *messages.PickleStepArgument_PickleDocString) Steps { return Steps{"one"} })
+			s.Step(`^two:$`, func(doc *gherkin.DocString) Steps { return Steps{"one"} })
 		},
 	}
 
-	assert.False(t, r.run())
+	if r.run() {
+		t.Fatal("the suite should have passed")
+	}
 }
 
 func TestProgressFormatterWhenMultiStepHasStepWithArgument(t *testing.T) {
-	const path = "any.feature"
 
 	var featureSource = `
 Feature: basic
@@ -309,10 +334,10 @@ Feature: basic
 	When one
 	Then two`
 
-	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(featureSource), (&messages.Incrementing{}).NewId)
-	require.NoError(t, err)
-
-	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
+	feat, err := gherkin.ParseFeature(strings.NewReader(featureSource))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	var subStep = `three:
 	"""
@@ -323,15 +348,17 @@ Feature: basic
 	w := colors.Uncolored(&buf)
 	r := runner{
 		fmt:      progressFunc("progress", w),
-		features: []*feature{{GherkinDocument: gd, pickles: pickles}},
+		features: []*feature{&feature{Feature: feat}},
 		initializer: func(s *Suite) {
 			s.Step(`^one$`, func() error { return nil })
 			s.Step(`^two$`, func() Steps { return Steps{subStep} })
-			s.Step(`^three:$`, func(doc *messages.PickleStepArgument_PickleDocString) error { return nil })
+			s.Step(`^three:$`, func(doc *gherkin.DocString) error { return nil })
 		},
 	}
 
-	require.True(t, r.run())
+	if !r.run() {
+		t.Fatal("the suite should have failed")
+	}
 
 	expected := `
 .F 2
@@ -339,8 +366,8 @@ Feature: basic
 
 --- Failed steps:
 
-  Scenario: passing scenario # any.feature:4
-    Then two # any.feature:6
+  Scenario: passing scenario # :4
+    Then two # :6
       Error: nested steps cannot be multiline and have table or content body argument
 
 
@@ -351,6 +378,7 @@ Feature: basic
 
 	expected = trimAllLines(expected)
 	actual := trimAllLines(buf.String())
-
-	assert.Equal(t, expected, actual)
+	if actual != expected {
+		t.Fatalf("expected output does not match: %s", actual)
+	}
 }

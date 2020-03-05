@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cucumber/messages-go/v9"
+	"github.com/cucumber/godog/gherkin"
 )
 
 var matchFuncDefRef = regexp.MustCompile(`\(([^\)]+)\)`)
@@ -31,7 +31,7 @@ var matchFuncDefRef = regexp.MustCompile(`\(([^\)]+)\)`)
 // will result in main step failure.
 type Steps []string
 
-// StepDefinition is a registered step definition
+// StepDef is a registered step definition
 // contains a StepHandler and regexp which
 // is used to match a step. Args which
 // were matched by last executed step
@@ -39,7 +39,7 @@ type Steps []string
 // This structure is passed to the formatter
 // when step is matched and is either failed
 // or successful
-type StepDefinition struct {
+type StepDef struct {
 	args    []interface{}
 	hv      reflect.Value
 	Expr    *regexp.Regexp
@@ -50,7 +50,7 @@ type StepDefinition struct {
 	undefined []string
 }
 
-func (sd *StepDefinition) definitionID() string {
+func (sd *StepDef) definitionID() string {
 	ptr := sd.hv.Pointer()
 	f := runtime.FuncForPC(ptr)
 	file, line := f.FileLine(ptr)
@@ -80,7 +80,7 @@ func (sd *StepDefinition) definitionID() string {
 
 // run a step with the matched arguments using
 // reflect
-func (sd *StepDefinition) run() interface{} {
+func (sd *StepDef) run() interface{} {
 	typ := sd.hv.Type()
 	if len(sd.args) < typ.NumIn() {
 		return fmt.Errorf("func expects %d arguments, which is more than %d matched from step", typ.NumIn(), len(sd.args))
@@ -168,32 +168,20 @@ func (sd *StepDefinition) run() interface{} {
 		case reflect.Ptr:
 			arg := sd.args[i]
 			switch param.Elem().String() {
-			case "messages.PickleStepArgument_PickleDocString":
-				if v, ok := arg.(*messages.PickleStepArgument); ok {
-					values = append(values, reflect.ValueOf(v.GetDocString()))
-					break
+			case "gherkin.DocString":
+				v, ok := arg.(*gherkin.DocString)
+				if !ok {
+					return fmt.Errorf(`cannot convert argument %d: "%v" of type "%T" to *gherkin.DocString`, i, arg, arg)
 				}
-
-				if v, ok := arg.(*messages.PickleStepArgument_PickleDocString); ok {
-					values = append(values, reflect.ValueOf(v))
-					break
+				values = append(values, reflect.ValueOf(v))
+			case "gherkin.DataTable":
+				v, ok := arg.(*gherkin.DataTable)
+				if !ok {
+					return fmt.Errorf(`cannot convert argument %d: "%v" of type "%T" to *gherkin.DocString`, i, arg, arg)
 				}
-
-				return fmt.Errorf(`cannot convert argument %d: "%v" of type "%T" to *messages.PickleStepArgument_PickleDocString`, i, arg, arg)
-			case "messages.PickleStepArgument_PickleTable":
-				if v, ok := arg.(*messages.PickleStepArgument); ok {
-					values = append(values, reflect.ValueOf(v.GetDataTable()))
-					break
-				}
-
-				if v, ok := arg.(*messages.PickleStepArgument_PickleTable); ok {
-					values = append(values, reflect.ValueOf(v))
-					break
-				}
-
-				return fmt.Errorf(`cannot convert argument %d: "%v" of type "%T" to *messages.PickleStepArgument_PickleTable`, i, arg, arg)
+				values = append(values, reflect.ValueOf(v))
 			default:
-				return fmt.Errorf("the argument %d type %T is not supported %s", i, arg, param.Elem().String())
+				return fmt.Errorf("the argument %d type %T is not supported", i, arg)
 			}
 		case reflect.Slice:
 			switch param {
@@ -210,11 +198,10 @@ func (sd *StepDefinition) run() interface{} {
 			return fmt.Errorf("the argument %d type %s is not supported", i, param.Kind())
 		}
 	}
-
 	return sd.hv.Call(values)[0].Interface()
 }
 
-func (sd *StepDefinition) shouldBeString(idx int) (string, error) {
+func (sd *StepDef) shouldBeString(idx int) (string, error) {
 	arg := sd.args[idx]
 	s, ok := arg.(string)
 	if !ok {
