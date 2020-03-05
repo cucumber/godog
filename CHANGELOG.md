@@ -16,6 +16,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 - Run godog features in CircleCI in strict mode ([jaysonesmith])
 - Removed TestMain call in `suite_test.go` for CI. ([jaysonesmith])
+- Migrated to [gherkin-go - v9.2.0](https://github.com/cucumber/gherkin-go/releases/tag/v9.2.0). ([240](https://github.com/cucumber/godog/pull/240) - [lonnblad])
 
 ### Deprecated
 
