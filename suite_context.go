@@ -16,6 +16,10 @@ import (
 	"github.com/cucumber/godog/gherkin"
 )
 
+var (
+	allowInjection = true
+)
+
 // SuiteContext provides steps for godog suite execution and
 // can be used for meta-testing of godog features/steps themselves.
 //
@@ -43,6 +47,7 @@ func SuiteContext(s *Suite, additionalContextInitializers ...func(suite *Suite))
 	s.Step(`^I run feature suite$`, c.iRunFeatureSuite)
 	s.Step(`^I run feature suite with tags "([^"]*)"$`, c.iRunFeatureSuiteWithTags)
 	s.Step(`^I run feature suite with formatter "([^"]*)"$`, c.iRunFeatureSuiteWithFormatter)
+	s.Step(`^(?:I )(allow|disable) variable injection`, c.iSetVariableInjectionTo)
 	s.Step(`^(?:a )?feature "([^"]*)"(?: file)?:$`, c.aFeatureFile)
 	s.Step(`^the suite should have (passed|failed)$`, c.theSuiteShouldHave)
 
@@ -97,6 +102,44 @@ func SuiteContext(s *Suite, additionalContextInitializers ...func(suite *Suite))
 	s.Step(`^(?:a )?failing nested multistep$`, func() Steps {
 		return Steps{"passing step", "passing multistep", "failing multistep"}
 	})
+	// Default recovery step
+	s.Step(`Ignore.*`, func() error {
+		return nil
+	})
+
+	s.BeforeStep(func(step *gherkin.Step) {
+		if !allowInjection {
+			return
+		}
+		step.Text = injectAll(step.Text)
+		args := step.Argument
+		if args != nil {
+			switch arg := args.(type) {
+			case *gherkin.DataTable:
+				for i := 0; i < len(arg.Rows); i++ {
+					for n, cell := range arg.Rows[i].Cells {
+						arg.Rows[i].Cells[n].Value = injectAll(cell.Value)
+					}
+				}
+			case *gherkin.DocString:
+				arg.Content = injectAll(arg.Content)
+			}
+		}
+	})
+}
+
+func injectAll(inTo string) string {
+	re := regexp.MustCompile(`{{[^{}]+}}`)
+	return re.ReplaceAllStringFunc(
+		inTo,
+		func(key string) string {
+			injectRegex := regexp.MustCompile(`^{{.+}}$`)
+			if injectRegex.MatchString(key) {
+				return "someverylonginjectionsoweacanbesureitsurpasstheinitiallongeststeplenghtanditwillhelptestsmethodsafety"
+			}
+			return key
+		},
+	)
 }
 
 type firedEvent struct {
@@ -121,6 +164,11 @@ func (s *suiteContext) ResetBeforeEachScenario(interface{}) {
 	SuiteContext(s.testedSuite, s.extraCIs...)
 	// reset all fired events
 	s.events = []*firedEvent{}
+}
+
+func (s *suiteContext) iSetVariableInjectionTo(to string) error {
+	allowInjection = to == "allow"
+	return nil
 }
 
 func (s *suiteContext) iRunFeatureSuiteWithTags(tags string) error {

@@ -20,6 +20,9 @@ var (
 
 // repeats a space n times
 func s(n int) string {
+	if n <= 0 {
+		n = 1
+	}
 	return strings.Repeat(" ", n)
 }
 

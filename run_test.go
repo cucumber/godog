@@ -251,14 +251,14 @@ func TestSucceedRun(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		expectedOutput, err := ioutil.ReadFile(tc.filename)
+		expectedOutputNoConcurrency, err := ioutil.ReadFile(tc.filename)
 		require.NoError(t, err)
 
 		for concurrency := range make([]int, tc.concurrency) {
 			t.Run(
 				fmt.Sprintf("%s/concurrency/%d", tc.format, concurrency),
 				func(t *testing.T) {
-					testSucceedRun(t, tc.format, concurrency, string(expectedOutput))
+					testSucceedRun(t, tc.format, concurrency, string(expectedOutputNoConcurrency))
 				},
 			)
 		}

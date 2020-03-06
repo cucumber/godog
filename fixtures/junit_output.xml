@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="succeed" tests="78" skipped="0" failures="0" errors="0" time="0">
+<testsuites name="succeed" tests="79" skipped="0" failures="0" errors="0" time="0">
   <testsuite name="JUnit XML formatter" tests="9" skipped="0" failures="0" errors="0" time="0">
     <testcase name="Support of Feature Plus Scenario Node" status="passed" time="0"></testcase>
     <testcase name="Support of Feature Plus Scenario Node With Tags" status="passed" time="0"></testcase>
@@ -35,7 +35,7 @@
     <testcase name="loaded feature should have a number of scenarios #3" status="passed" time="0"></testcase>
     <testcase name="load a number of feature files" status="passed" time="0"></testcase>
   </testsuite>
-  <testsuite name="pretty formatter" tests="9" skipped="0" failures="0" errors="0" time="0">
+  <testsuite name="pretty formatter" tests="10" skipped="0" failures="0" errors="0" time="0">
     <testcase name="Support of Feature Plus Scenario Node" status="passed" time="0"></testcase>
     <testcase name="Support of Feature Plus Scenario Node With Tags" status="passed" time="0"></testcase>
     <testcase name="Support of Feature Plus Scenario Outline" status="passed" time="0"></testcase>
@@ -45,6 +45,7 @@
     <testcase name="Support of Comments" status="passed" time="0"></testcase>
     <testcase name="Support of Docstrings" status="passed" time="0"></testcase>
     <testcase name="Support of Undefined, Pending and Skipped status" status="passed" time="0"></testcase>
+    <testcase name="Support data injection in BeforeStep" status="passed" time="0"></testcase>
   </testsuite>
   <testsuite name="run background" tests="3" skipped="0" failures="0" errors="0" time="0">
     <testcase name="should run background steps" status="passed" time="0"></testcase>

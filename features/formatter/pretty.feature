@@ -45,6 +45,7 @@ Feature: pretty formatter
       No steps
       0s
     """
+
   Scenario: Support of Feature Plus Scenario Outline
     Given a feature "features/simple.feature" file:
     """
@@ -111,6 +112,7 @@ Feature: pretty formatter
       No steps
       0s
     """
+
   Scenario: Support of Feature Plus Scenario With Steps
     Given a feature "features/simple.feature" file:
     """
@@ -146,6 +148,7 @@ Feature: pretty formatter
       2 steps (1 passed, 1 failed)
       0s
     """
+
   Scenario: Support of Feature Plus Scenario Outline With Steps
     Given a feature "features/simple.feature" file:
     """
@@ -214,6 +217,7 @@ Feature: pretty formatter
       No steps
       0s
     """
+
   Scenario: Support of Docstrings
     Given a feature "features/simple.feature" file:
     """
@@ -244,6 +248,7 @@ Feature: pretty formatter
       1 steps (1 passed)
       0s
     """
+
   Scenario: Support of Undefined, Pending and Skipped status
     Given a feature "features/simple.feature" file:
     """
@@ -285,4 +290,31 @@ Feature: pretty formatter
       func FeatureContext(s *godog.Suite) {
         s.Step(`^undefined$`, undefined)
       }
+    """
+
+  # Ensure s will not break when injecting data from BeforeStep
+  Scenario: Support data injection in BeforeStep
+    Given a feature "features/inject.feature" file:
+    """
+      Feature: inject long value
+
+      Scenario: test scenario
+        Given Ignore I save some value X under key Y
+        When Ignore I use value {{Y}}
+        Then Ignore Godog rendering should not break
+    """
+    And I allow variable injection
+    When I run feature suite with formatter "pretty"
+    Then the rendered output will be as follows:
+    """
+      Feature: inject long value
+
+        Scenario: test scenario                                                                                                         # features/inject.feature:3
+          Given Ignore I save some value X under key Y                                                                                  # suite_context.go:0 -> SuiteContext.func7
+          When Ignore I use value someverylonginjectionsoweacanbesureitsurpasstheinitiallongeststeplenghtanditwillhelptestsmethodsafety # suite_context.go:0 -> SuiteContext.func7
+          Then Ignore Godog rendering should not break                                                                                  # suite_context.go:0 -> SuiteContext.func7
+
+      1 scenarios (1 passed)
+      3 steps (3 passed)
+      0s
     """
