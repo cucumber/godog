@@ -61,8 +61,15 @@ When automated testing is this much fun, teams can easily protect
 themselves from costly regressions.
 
 ## Install
+```
+go get github.com/cucumber/godog/cmd/godog@v0.8.1
+```
+Adding `@v0.8.1` will install v0.8.1 specifically instead of master.
 
-    go get github.com/cucumber/godog/cmd/godog
+Running `within the $GOPATH`, you would also need to set `GO111MODULE=on`, like this:
+```
+GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.8.1
+```
 
 ## Example
 
