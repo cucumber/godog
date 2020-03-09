@@ -6,7 +6,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/cucumber/messages-go/v9"
+	"github.com/cucumber/godog/gherkin"
 )
 
 func init() {
@@ -37,39 +37,21 @@ func (f *progress) Summary() {
 			fmt.Fprintf(f.out, " %d\n", *f.steps)
 		}
 	}
-
-	var failedStepsOutput []string
-	for _, sr := range f.findStepResults(failed) {
-		if sr.status == failed {
-			sc := f.findScenario(sr.owner.AstNodeIds[0])
-			scenarioDesc := fmt.Sprintf("%s: %s", sc.Keyword, sr.owner.Name)
-			scenarioLine := fmt.Sprintf("%s:%d", sr.owner.Uri, sc.Location.Line)
-
-			step := f.findStep(sr.step.AstNodeIds[0])
-			stepDesc := strings.TrimSpace(step.Keyword) + " " + sr.step.Text
-			stepLine := fmt.Sprintf("%s:%d", sr.owner.Uri, step.Location.Line)
-
-			failedStepsOutput = append(
-				failedStepsOutput,
-				s(2)+red(scenarioDesc)+blackb(" # "+scenarioLine),
-				s(4)+red(stepDesc)+blackb(" # "+stepLine),
-				s(6)+red("Error: ")+redb(fmt.Sprintf("%+v", sr.err)),
-				"",
-			)
-		}
-	}
-
-	if len(failedStepsOutput) > 0 {
-		fmt.Fprintln(f.out, "\n\n--- "+red("Failed steps:")+"\n")
-		fmt.Fprint(f.out, strings.Join(failedStepsOutput, "\n"))
-	}
 	fmt.Fprintln(f.out, "")
 
+	if len(f.failed) > 0 {
+		fmt.Fprintln(f.out, "\n--- "+red("Failed steps:")+"\n")
+		for _, fail := range f.failed {
+			fmt.Fprintln(f.out, s(2)+red(fail.scenarioDesc())+blackb(" # "+fail.scenarioLine()))
+			fmt.Fprintln(f.out, s(4)+red(strings.TrimSpace(fail.step.Keyword)+" "+fail.step.Text)+blackb(" # "+fail.line()))
+			fmt.Fprintln(f.out, s(6)+red("Error: ")+redb(fmt.Sprintf("%+v", fail.err))+"\n")
+		}
+	}
 	f.basefmt.Summary()
 }
 
 func (f *progress) step(res *stepResult) {
-	switch res.status {
+	switch res.typ {
 	case passed:
 		fmt.Fprint(f.out, green("."))
 	case skipped:
@@ -89,49 +71,44 @@ func (f *progress) step(res *stepResult) {
 	}
 }
 
-func (f *progress) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
-	f.basefmt.Passed(pickle, step, match)
+func (f *progress) Passed(step *gherkin.Step, match *StepDef) {
+	f.basefmt.Passed(step, match)
 
 	f.lock.Lock()
 	defer f.lock.Unlock()
-
-	f.step(f.lastStepResult())
+	f.step(f.passed[len(f.passed)-1])
 }
 
-func (f *progress) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
-	f.basefmt.Skipped(pickle, step, match)
+func (f *progress) Skipped(step *gherkin.Step, match *StepDef) {
+	f.basefmt.Skipped(step, match)
 
 	f.lock.Lock()
 	defer f.lock.Unlock()
-
-	f.step(f.lastStepResult())
+	f.step(f.skipped[len(f.skipped)-1])
 }
 
-func (f *progress) Undefined(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
-	f.basefmt.Undefined(pickle, step, match)
+func (f *progress) Undefined(step *gherkin.Step, match *StepDef) {
+	f.basefmt.Undefined(step, match)
 
 	f.lock.Lock()
 	defer f.lock.Unlock()
-
-	f.step(f.lastStepResult())
+	f.step(f.undefined[len(f.undefined)-1])
 }
 
-func (f *progress) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition, err error) {
-	f.basefmt.Failed(pickle, step, match, err)
+func (f *progress) Failed(step *gherkin.Step, match *StepDef, err error) {
+	f.basefmt.Failed(step, match, err)
 
 	f.lock.Lock()
 	defer f.lock.Unlock()
-
-	f.step(f.lastStepResult())
+	f.step(f.failed[len(f.failed)-1])
 }
 
-func (f *progress) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
-	f.basefmt.Pending(pickle, step, match)
+func (f *progress) Pending(step *gherkin.Step, match *StepDef) {
+	f.basefmt.Pending(step, match)
 
 	f.lock.Lock()
 	defer f.lock.Unlock()
-
-	f.step(f.lastStepResult())
+	f.step(f.pending[len(f.pending)-1])
 }
 
 func (f *progress) Sync(cf ConcurrentFormatter) {

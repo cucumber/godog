@@ -156,35 +156,11 @@ console output snippets in order to test our feature requirements:
 package main
 
 import (
-	"flag"
 	"fmt"
-	"os"
-	"testing"
 
 	"github.com/cucumber/godog"
-	"github.com/cucumber/godog/colors"
 	messages "github.com/cucumber/messages-go/v9"
 )
-
-var opt = godog.Options{Output: colors.Colored(os.Stdout)}
-
-func init() {
-	godog.BindFlags("godog.", flag.CommandLine, &opt)
-}
-
-func TestMain(m *testing.M) {
-	flag.Parse()
-	opt.Paths = flag.Args()
-
-	status := godog.RunWithOptions("godogs", func(s *godog.Suite) {
-		FeatureContext(s)
-	}, opt)
-
-	if st := m.Run(); st > status {
-		status = st
-	}
-	os.Exit(status)
-}
 
 func thereAreGodogs(available int) error {
 	Godogs = available
@@ -353,6 +329,17 @@ func TestMain(m *testing.M) {
 ```
 
 Now when running `go test -v` it will use **pretty** format.
+
+### Tags
+
+If you want to filter scenarios by tags, you can use the
+`-t=<expression>` or `--tags=<expression>` where `<expression>`
+is one of the following:
+
+- `@wip` - run all scenarios with wip tag
+- `~@wip` - exclude all scenarios with wip tag
+- `@wip && ~@new` - run wip scenarios, but exclude new
+- `@wip,@undone` - run wip or undone scenarios
 
 ### Configure common options for godog CLI
 
