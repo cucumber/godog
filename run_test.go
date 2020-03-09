@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"regexp"
 	"strings"
@@ -251,14 +252,14 @@ func TestSucceedRun(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		expectedOutputNoConcurrency, err := ioutil.ReadFile(tc.filename)
+		expectedOutput, err := ioutil.ReadFile(tc.filename)
 		require.NoError(t, err)
 
 		for concurrency := range make([]int, tc.concurrency) {
 			t.Run(
 				fmt.Sprintf("%s/concurrency/%d", tc.format, concurrency),
 				func(t *testing.T) {
-					testSucceedRun(t, tc.format, concurrency, string(expectedOutputNoConcurrency))
+					testSucceedRun(t, tc.format, concurrency, string(expectedOutput))
 				},
 			)
 		}
@@ -286,7 +287,9 @@ func testSucceedRun(t *testing.T, format string, concurrency int, expectedOutput
 
 	suiteCtxReg := regexp.MustCompile(`suite_context.go:\d+`)
 	expectedOutput = suiteCtxReg.ReplaceAllString(expectedOutput, `suite_context.go:0`)
+	log.Println("expected clean: " + expectedOutput)
 	actual = suiteCtxReg.ReplaceAllString(actual, `suite_context.go:0`)
+	log.Println("actual clean: " + actual)
 
 	assert.Equalf(t, expectedOutput, actual, "[%s]", actual)
 }
