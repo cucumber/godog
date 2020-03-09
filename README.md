@@ -323,6 +323,17 @@ func TestMain(m *testing.M) {
 
 Now when running `go test -v` it will use **pretty** format.
 
+### Tags
+
+If you want to filter scenarios by tags, you can use the
+`-t=<expression>` or `--tags=<expression>` where `<expression>`
+is one of the following:
+
+- `@wip` - run all scenarios with wip tag
+- `~@wip` - exclude all scenarios with wip tag
+- `@wip && ~@new` - run wip scenarios, but exclude new
+- `@wip,@undone` - run wip or undone scenarios
+
 ### Configure common options for godog CLI
 
 There are no global options or configuration files. Alias your common or
