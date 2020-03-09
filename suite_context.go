@@ -16,10 +16,6 @@ import (
 	"github.com/cucumber/godog/gherkin"
 )
 
-var (
-	allowInjection = true
-)
-
 // SuiteContext provides steps for godog suite execution and
 // can be used for meta-testing of godog features/steps themselves.
 //
@@ -107,25 +103,27 @@ func SuiteContext(s *Suite, additionalContextInitializers ...func(suite *Suite))
 		return nil
 	})
 
-	s.BeforeStep(func(step *gherkin.Step) {
-		if !allowInjection {
-			return
-		}
-		step.Text = injectAll(step.Text)
-		args := step.Argument
-		if args != nil {
-			switch arg := args.(type) {
-			case *gherkin.DataTable:
-				for i := 0; i < len(arg.Rows); i++ {
-					for n, cell := range arg.Rows[i].Cells {
-						arg.Rows[i].Cells[n].Value = injectAll(cell.Value)
-					}
+	s.BeforeStep(c.inject)
+}
+func (s *suiteContext) inject(step *gherkin.Step) {
+	if !s.allowInjection {
+		return
+	}
+
+	step.Text = injectAll(step.Text)
+	args := step.Argument
+	if args != nil {
+		switch arg := args.(type) {
+		case *gherkin.DataTable:
+			for i := 0; i < len(arg.Rows); i++ {
+				for n, cell := range arg.Rows[i].Cells {
+					arg.Rows[i].Cells[n].Value = injectAll(cell.Value)
 				}
-			case *gherkin.DocString:
-				arg.Content = injectAll(arg.Content)
 			}
+		case *gherkin.DocString:
+			arg.Content = injectAll(arg.Content)
 		}
-	})
+	}
 }
 
 func injectAll(inTo string) string {
@@ -148,11 +146,12 @@ type firedEvent struct {
 }
 
 type suiteContext struct {
-	paths       []string
-	testedSuite *Suite
-	extraCIs    []func(suite *Suite)
-	events      []*firedEvent
-	out         bytes.Buffer
+	paths          []string
+	testedSuite    *Suite
+	extraCIs       []func(suite *Suite)
+	events         []*firedEvent
+	out            bytes.Buffer
+	allowInjection bool
 }
 
 func (s *suiteContext) ResetBeforeEachScenario(interface{}) {
@@ -164,10 +163,11 @@ func (s *suiteContext) ResetBeforeEachScenario(interface{}) {
 	SuiteContext(s.testedSuite, s.extraCIs...)
 	// reset all fired events
 	s.events = []*firedEvent{}
+	s.allowInjection = false
 }
 
 func (s *suiteContext) iSetVariableInjectionTo(to string) error {
-	allowInjection = to == "allow"
+	s.allowInjection = to == "allow"
 	return nil
 }
 
@@ -189,7 +189,6 @@ func (s *suiteContext) iRunFeatureSuiteWithFormatter(name string) error {
 	if f == nil {
 		return fmt.Errorf(`formatter "%s" is not available`, name)
 	}
-
 	s.testedSuite.fmt = f("godog", colors.Uncolored(&s.out))
 	if err := s.parseFeatures(); err != nil {
 		return err

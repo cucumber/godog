@@ -124,13 +124,12 @@ func (f *pretty) printUndefinedScenario(sc interface{}) {
 	case *gherkin.Scenario:
 		f.commentPos = f.longestStep(t.Steps, f.length(sc))
 		text := s(f.indent) + keywordAndName(t.Keyword, t.Name)
-		text += s(f.commentPos-f.length(t)) + f.line(t.Location)
+		text += s(f.commentPos-f.length(t)+1) + f.line(t.Location)
 		fmt.Fprintln(f.out, "\n"+text)
 	case *gherkin.ScenarioOutline:
 		f.commentPos = f.longestStep(t.Steps, f.length(sc))
 		text := s(f.indent) + keywordAndName(t.Keyword, t.Name)
-		text += s(f.commentPos-f.length(t)) + f.line(t.Location)
-
+		text += s(f.commentPos-f.length(t)+1) + f.line(t.Location)
 		fmt.Fprintln(f.out, "\n"+text)
 
 		for _, example := range t.Examples {
@@ -249,9 +248,9 @@ func (f *pretty) printExampleRow(row *gherkin.TableRow, max []int, clr colors.Co
 	for i, cell := range row.Cells {
 		val := clr(cell.Value)
 		ln := utf8.RuneCountInString(val)
-		cells[i] = val + s(max[i]-ln+1)
+		cells[i] = val + s(max[i]-ln)
 	}
-	fmt.Fprintln(f.out, s(f.indent*3)+"| "+strings.Join(cells, "| ")+"|")
+	fmt.Fprintln(f.out, s(f.indent*3)+"| "+strings.Join(cells, " | ")+" |")
 }
 
 func (f *pretty) printExampleHeader(example *gherkin.Examples, max []int) {
@@ -263,9 +262,9 @@ func (f *pretty) printExampleHeader(example *gherkin.Examples, max []int) {
 	for i, cell := range example.TableHeader.Cells {
 		val := cyan(cell.Value)
 		ln := utf8.RuneCountInString(val)
-		cells[i] = val + s(max[i]-ln+1)
+		cells[i] = val + s(max[i]-ln)
 	}
-	fmt.Fprintln(f.out, s(f.indent*3)+"| "+strings.Join(cells, "| ")+"|")
+	fmt.Fprintln(f.out, s(f.indent*3)+"| "+strings.Join(cells, " | ")+" |")
 }
 
 func (f *pretty) printStep(step *gherkin.Step, def *StepDef, c colors.ColorFunc) {
@@ -290,7 +289,6 @@ func (f *pretty) printStep(step *gherkin.Step, def *StepDef, c colors.ColorFunc)
 			text += c(step.Text)
 		}
 		text += s(f.commentPos-f.length(step)+1) + blackb(fmt.Sprintf("# %s", def.definitionID()))
-
 	default:
 		text += c(step.Text)
 	}
@@ -344,7 +342,6 @@ func (f *pretty) printStepKind(res *stepResult) {
 			}
 			text := s(f.indent) + keywordAndName(f.scenario.Keyword, f.scenario.Name)
 			text += s(f.commentPos-f.length(f.scenario)+1) + f.line(f.scenario.Location)
-
 			fmt.Fprintln(f.out, "\n"+text)
 			f.scenarioKeyword = true
 		}
@@ -360,7 +357,6 @@ func (f *pretty) printStepKind(res *stepResult) {
 			}
 			text := s(f.indent) + keywordAndName(f.outline.Keyword, f.outline.Name)
 			text += s(f.commentPos-f.length(f.outline)+1) + f.line(f.outline.Location)
-
 			fmt.Fprintln(f.out, "\n"+text)
 			f.scenarioKeyword = true
 		}
@@ -404,9 +400,9 @@ func (f *pretty) printTable(t *gherkin.DataTable, c colors.ColorFunc) {
 		for i, cell := range row.Cells {
 			val := c(cell.Value)
 			ln := utf8.RuneCountInString(val)
-			cols[i] = val + s(l[i]-ln+1)
+			cols[i] = val + s(l[i]-ln)
 		}
-		fmt.Fprintln(f.out, s(f.indent*3)+"| "+strings.Join(cols, "| ")+"|")
+		fmt.Fprintln(f.out, s(f.indent*3)+"| "+strings.Join(cols, " | ")+" |")
 	}
 }
 

@@ -2627,7 +2627,7 @@
                         "name": "a feature \"features/inject.feature\" file:",
                         "line": 297,
                         "doc_string": {
-                            "value": "  Feature: inject long value\n\n  Scenario: test scenario\n    Given Ignore I save some value X under key Y\n    When Ignore I use value someverylonginjectionsoweacanbesureitsurpasstheinitiallongeststeplenghtanditwillhelptestsmethodsafety\n    Then Ignore Godog rendering should not break",
+                            "value": "  Feature: inject long value\n\n  Scenario: test scenario\n    Given Ignore I save some value X under key Y\n    And I allow variable injection\n    When Ignore I use value {{Y}}\n    Then Ignore Godog rendering should not break\n    And Ignore test\n      | key | val |\n      | 1   | 2   |\n      | 3   | 4   |\n    And I disable variable injection",
                             "content_type": "",
                             "line": 298
                         },
@@ -2640,21 +2640,9 @@
                         }
                     },
                     {
-                        "keyword": "And ",
-                        "name": "I allow variable injection",
-                        "line": 306,
-                        "match": {
-                            "location": "suite_context.go:0"
-                        },
-                        "result": {
-                            "status": "passed",
-                            "duration": 0
-                        }
-                    },
-                    {
                         "keyword": "When ",
                         "name": "I run feature suite with formatter \"pretty\"",
-                        "line": 307,
+                        "line": 312,
                         "match": {
                             "location": "suite_context.go:0"
                         },
@@ -2666,11 +2654,11 @@
                     {
                         "keyword": "Then ",
                         "name": "the rendered output will be as follows:",
-                        "line": 308,
+                        "line": 313,
                         "doc_string": {
-                            "value": "  Feature: inject long value\n\n    Scenario: test scenario                                                                                                         # features/inject.feature:3\n      Given Ignore I save some value X under key Y                                                                                  # suite_context.go:0 -\u003e SuiteContext.func7\n      When Ignore I use value someverylonginjectionsoweacanbesureitsurpasstheinitiallongeststeplenghtanditwillhelptestsmethodsafety # suite_context.go:0 -\u003e SuiteContext.func7\n      Then Ignore Godog rendering should not break                                                                                  # suite_context.go:0 -\u003e SuiteContext.func7\n\n  1 scenarios (1 passed)\n  3 steps (3 passed)\n  0s",
+                            "value": "  Feature: inject long value\n\n    Scenario: test scenario                        # features/inject.feature:3\n      Given Ignore I save some value X under key Y # suite_context.go:0 -\u003e SuiteContext.func7\n      And I allow variable injection               # suite_context.go:0 -\u003e *suiteContext\n      When Ignore I use value someverylonginjectionsoweacanbesureitsurpasstheinitiallongeststeplenghtanditwillhelptestsmethodsafety # suite_context.go:0 -\u003e SuiteContext.func7\n      Then Ignore Godog rendering should not break # suite_context.go:0 -\u003e SuiteContext.func7\n      And Ignore test                              # suite_context.go:0 -\u003e SuiteContext.func7\n        | key | val |\n        | 1   | 2   |\n        | 3   | 4   |\n      And I disable variable injection             # suite_context.go:0 -\u003e *suiteContext\n\n  1 scenarios (1 passed)\n  6 steps (6 passed)\n  0s",
                             "content_type": "",
-                            "line": 309
+                            "line": 314
                         },
                         "match": {
                             "location": "suite_context.go:0"

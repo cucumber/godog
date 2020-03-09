@@ -300,21 +300,32 @@ Feature: pretty formatter
 
       Scenario: test scenario
         Given Ignore I save some value X under key Y
+        And I allow variable injection
         When Ignore I use value {{Y}}
         Then Ignore Godog rendering should not break
+        And Ignore test
+          | key | val |
+          | 1   | 2   |
+          | 3   | 4   |
+        And I disable variable injection
     """
-    And I allow variable injection
     When I run feature suite with formatter "pretty"
     Then the rendered output will be as follows:
     """
       Feature: inject long value
 
-        Scenario: test scenario                                                                                                         # features/inject.feature:3
-          Given Ignore I save some value X under key Y                                                                                  # suite_context.go:0 -> SuiteContext.func7
+        Scenario: test scenario                        # features/inject.feature:3
+          Given Ignore I save some value X under key Y # suite_context.go:0 -> SuiteContext.func7
+          And I allow variable injection               # suite_context.go:0 -> *suiteContext
           When Ignore I use value someverylonginjectionsoweacanbesureitsurpasstheinitiallongeststeplenghtanditwillhelptestsmethodsafety # suite_context.go:0 -> SuiteContext.func7
-          Then Ignore Godog rendering should not break                                                                                  # suite_context.go:0 -> SuiteContext.func7
+          Then Ignore Godog rendering should not break # suite_context.go:0 -> SuiteContext.func7
+          And Ignore test                              # suite_context.go:0 -> SuiteContext.func7
+            | key | val |
+            | 1   | 2   |
+            | 3   | 4   |
+          And I disable variable injection             # suite_context.go:0 -> *suiteContext
 
       1 scenarios (1 passed)
-      3 steps (3 passed)
+      6 steps (6 passed)
       0s
     """
