@@ -38,6 +38,23 @@ So in general there are no vendor dependencies needed for installation.
 The following about section was taken from
 [cucumber](https://cucumber.io/) homepage.
 
+## Notice:
+
+**If your project depend on the master version of godog instead of a specific release, please read this.**
+
+Due to dependency changes in a coming merge to master, including breaking changes, you should update how you install or depend on godog so that you have a version specified.
+
+### Install
+```
+go get github.com/cucumber/godog/cmd/godog@v0.8.1
+```
+Adding `@v0.8.1` will install v0.8.1 specifically instead of master.
+
+Running `within the $GOPATH`, you would also need to set `GO111MODULE=on`, like this:
+```
+GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.8.1
+```
+
 ## About
 
 #### A single source of truth
