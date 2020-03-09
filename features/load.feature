@@ -40,7 +40,7 @@ Feature: load features
       | feature                 | number |
       | features/load.feature:3 | 0      |
       | features/load.feature:6 | 1      |
-      | features/load.feature   | 4      |
+      | features/load.feature   | 6      |
 
   Scenario: load a number of feature files
     Given a feature path "features/load.feature"
