@@ -2098,11 +2098,15 @@
         "comments": [
             {
                 "value": "# Currently godog only supports comments on Feature and not",
-                "line": 193
+                "line": 196
             },
             {
                 "value": "# scenario and steps.",
-                "line": 194
+                "line": 197
+            },
+            {
+                "value": "# Ensure s will not break when injecting data from BeforeStep",
+                "line": 295
             }
         ],
         "elements": [
@@ -2223,17 +2227,17 @@
                 "keyword": "Scenario",
                 "name": "Support of Feature Plus Scenario Outline",
                 "description": "",
-                "line": 48,
+                "line": 49,
                 "type": "scenario",
                 "steps": [
                     {
                         "keyword": "Given ",
                         "name": "a feature \"features/simple.feature\" file:",
-                        "line": 49,
+                        "line": 50,
                         "doc_string": {
                             "value": "    Feature: simple feature\n        simple feature description\n\n    Scenario Outline: simple scenario\n        simple scenario description\n\n    Examples: simple examples\n    | status |\n    | pass   |\n    | fail   |",
                             "content_type": "",
-                            "line": 50
+                            "line": 51
                         },
                         "match": {
                             "location": "suite_context.go:0"
@@ -2246,7 +2250,7 @@
                     {
                         "keyword": "When ",
                         "name": "I run feature suite with formatter \"pretty\"",
-                        "line": 62,
+                        "line": 63,
                         "match": {
                             "location": "suite_context.go:0"
                         },
@@ -2258,11 +2262,11 @@
                     {
                         "keyword": "Then ",
                         "name": "the rendered output will be as follows:",
-                        "line": 63,
+                        "line": 64,
                         "doc_string": {
                             "value": "  Feature: simple feature\n    simple feature description\n\n    Scenario Outline: simple scenario # features/simple.feature:4\n\n      Examples: simple examples\n        | status |\n        | pass   |\n        | fail   |\n\n  2 scenarios (2 undefined)\n  No steps\n  0s",
                             "content_type": "",
-                            "line": 64
+                            "line": 65
                         },
                         "match": {
                             "location": "suite_context.go:0"
@@ -2279,17 +2283,17 @@
                 "keyword": "Scenario",
                 "name": "Support of Feature Plus Scenario Outline With Tags",
                 "description": "",
-                "line": 80,
+                "line": 81,
                 "type": "scenario",
                 "steps": [
                     {
                         "keyword": "Given ",
                         "name": "a feature \"features/simple.feature\" file:",
-                        "line": 81,
+                        "line": 82,
                         "doc_string": {
                             "value": "    @TAG1\n    Feature: simple feature\n        simple feature description\n\n    @TAG2\n    Scenario Outline: simple scenario\n        simple scenario description\n\n    @TAG3\n    Examples: simple examples\n    | status |\n    | pass   |\n    | fail   |",
                             "content_type": "",
-                            "line": 82
+                            "line": 83
                         },
                         "match": {
                             "location": "suite_context.go:0"
@@ -2302,7 +2306,7 @@
                     {
                         "keyword": "When ",
                         "name": "I run feature suite with formatter \"pretty\"",
-                        "line": 97,
+                        "line": 98,
                         "match": {
                             "location": "suite_context.go:0"
                         },
@@ -2314,11 +2318,11 @@
                     {
                         "keyword": "Then ",
                         "name": "the rendered output will be as follows:",
-                        "line": 98,
+                        "line": 99,
                         "doc_string": {
                             "value": "  Feature: simple feature\n    simple feature description\n\n    Scenario Outline: simple scenario # features/simple.feature:6\n\n      Examples: simple examples\n        | status |\n        | pass   |\n        | fail   |\n\n  2 scenarios (2 undefined)\n  No steps\n  0s",
                             "content_type": "",
-                            "line": 99
+                            "line": 100
                         },
                         "match": {
                             "location": "suite_context.go:0"
@@ -2335,17 +2339,17 @@
                 "keyword": "Scenario",
                 "name": "Support of Feature Plus Scenario With Steps",
                 "description": "",
-                "line": 114,
+                "line": 116,
                 "type": "scenario",
                 "steps": [
                     {
                         "keyword": "Given ",
                         "name": "a feature \"features/simple.feature\" file:",
-                        "line": 115,
+                        "line": 117,
                         "doc_string": {
                             "value": "    Feature: simple feature\n        simple feature description\n\n    Scenario: simple scenario\n        simple scenario description\n\n    Given passing step\n    Then a failing step\n",
                             "content_type": "",
-                            "line": 116
+                            "line": 118
                         },
                         "match": {
                             "location": "suite_context.go:0"
@@ -2358,7 +2362,7 @@
                     {
                         "keyword": "When ",
                         "name": "I run feature suite with formatter \"pretty\"",
-                        "line": 127,
+                        "line": 129,
                         "match": {
                             "location": "suite_context.go:0"
                         },
@@ -2370,11 +2374,11 @@
                     {
                         "keyword": "Then ",
                         "name": "the rendered output will be as follows:",
-                        "line": 128,
+                        "line": 130,
                         "doc_string": {
                             "value": "  Feature: simple feature\n    simple feature description\n\n    Scenario: simple scenario # features/simple.feature:4\n      Given passing step      # suite_context.go:0 -\u003e SuiteContext.func2\n      Then a failing step     # suite_context.go:0 -\u003e *suiteContext\n      intentional failure\n\n  --- Failed steps:\n\n    Scenario: simple scenario # features/simple.feature:4\n      Then a failing step # features/simple.feature:8\n        Error: intentional failure\n\n\n  1 scenarios (1 failed)\n  2 steps (1 passed, 1 failed)\n  0s",
                             "content_type": "",
-                            "line": 129
+                            "line": 131
                         },
                         "match": {
                             "location": "suite_context.go:0"
@@ -2391,17 +2395,17 @@
                 "keyword": "Scenario",
                 "name": "Support of Feature Plus Scenario Outline With Steps",
                 "description": "",
-                "line": 149,
+                "line": 152,
                 "type": "scenario",
                 "steps": [
                     {
                         "keyword": "Given ",
                         "name": "a feature \"features/simple.feature\" file:",
-                        "line": 150,
+                        "line": 153,
                         "doc_string": {
                             "value": "  Feature: simple feature\n    simple feature description\n\n    Scenario Outline: simple scenario\n    simple scenario description\n\n      Given \u003cstatus\u003e step\n\n    Examples: simple examples\n    | status |\n    | passing |\n    | failing |\n",
                             "content_type": "",
-                            "line": 151
+                            "line": 154
                         },
                         "match": {
                             "location": "suite_context.go:0"
@@ -2414,7 +2418,7 @@
                     {
                         "keyword": "When ",
                         "name": "I run feature suite with formatter \"pretty\"",
-                        "line": 166,
+                        "line": 169,
                         "match": {
                             "location": "suite_context.go:0"
                         },
@@ -2426,11 +2430,11 @@
                     {
                         "keyword": "Then ",
                         "name": "the rendered output will be as follows:",
-                        "line": 167,
+                        "line": 170,
                         "doc_string": {
                             "value": "  Feature: simple feature\n    simple feature description\n\n    Scenario Outline: simple scenario # features/simple.feature:4\n      Given \u003cstatus\u003e step             # suite_context.go:0 -\u003e SuiteContext.func2\n\n      Examples: simple examples\n        | status  |\n        | passing |\n        | failing |\n          intentional failure\n\n  --- Failed steps:\n\n    Scenario Outline: simple scenario # features/simple.feature:4\n      Given failing step # features/simple.feature:7\n        Error: intentional failure\n\n\n  2 scenarios (1 passed, 1 failed)\n  2 steps (1 passed, 1 failed)\n  0s",
                             "content_type": "",
-                            "line": 168
+                            "line": 171
                         },
                         "match": {
                             "location": "suite_context.go:0"
@@ -2447,17 +2451,17 @@
                 "keyword": "Scenario",
                 "name": "Support of Comments",
                 "description": "",
-                "line": 195,
+                "line": 198,
                 "type": "scenario",
                 "steps": [
                     {
                         "keyword": "Given ",
                         "name": "a feature \"features/simple.feature\" file:",
-                        "line": 196,
+                        "line": 199,
                         "doc_string": {
                             "value": "    #Feature comment\n    Feature: simple feature\n      simple description\n\n      Scenario: simple scenario\n      simple feature description",
                             "content_type": "",
-                            "line": 197
+                            "line": 200
                         },
                         "match": {
                             "location": "suite_context.go:0"
@@ -2470,7 +2474,7 @@
                     {
                         "keyword": "When ",
                         "name": "I run feature suite with formatter \"pretty\"",
-                        "line": 205,
+                        "line": 208,
                         "match": {
                             "location": "suite_context.go:0"
                         },
@@ -2482,11 +2486,11 @@
                     {
                         "keyword": "Then ",
                         "name": "the rendered output will be as follows:",
-                        "line": 206,
+                        "line": 209,
                         "doc_string": {
                             "value": "  Feature: simple feature\n    simple description\n\n    Scenario: simple scenario # features/simple.feature:5\n\n  1 scenarios (1 undefined)\n  No steps\n  0s",
                             "content_type": "",
-                            "line": 207
+                            "line": 210
                         },
                         "match": {
                             "location": "suite_context.go:0"
@@ -2503,17 +2507,17 @@
                 "keyword": "Scenario",
                 "name": "Support of Docstrings",
                 "description": "",
-                "line": 217,
+                "line": 221,
                 "type": "scenario",
                 "steps": [
                     {
                         "keyword": "Given ",
                         "name": "a feature \"features/simple.feature\" file:",
-                        "line": 218,
+                        "line": 222,
                         "doc_string": {
                             "value": "    Feature: simple feature\n      simple description\n\n      Scenario: simple scenario\n      simple feature description\n\n      Given passing step\n      \"\"\" content type\n      step doc string\n      \"\"\"",
                             "content_type": "",
-                            "line": 219
+                            "line": 223
                         },
                         "match": {
                             "location": "suite_context.go:0"
@@ -2526,7 +2530,7 @@
                     {
                         "keyword": "When ",
                         "name": "I run feature suite with formatter \"pretty\"",
-                        "line": 231,
+                        "line": 235,
                         "match": {
                             "location": "suite_context.go:0"
                         },
@@ -2538,11 +2542,11 @@
                     {
                         "keyword": "Then ",
                         "name": "the rendered output will be as follows:",
-                        "line": 232,
+                        "line": 236,
                         "doc_string": {
                             "value": "  Feature: simple feature\n    simple description\n\n    Scenario: simple scenario # features/simple.feature:4\n      Given passing step      # suite_context.go:0 -\u003e SuiteContext.func2\n        \"\"\"  content type\n        step doc string\n        \"\"\"\n\n  1 scenarios (1 passed)\n  1 steps (1 passed)\n  0s",
                             "content_type": "",
-                            "line": 233
+                            "line": 237
                         },
                         "match": {
                             "location": "suite_context.go:0"
@@ -2559,17 +2563,17 @@
                 "keyword": "Scenario",
                 "name": "Support of Undefined, Pending and Skipped status",
                 "description": "",
-                "line": 247,
+                "line": 252,
                 "type": "scenario",
                 "steps": [
                     {
                         "keyword": "Given ",
                         "name": "a feature \"features/simple.feature\" file:",
-                        "line": 248,
+                        "line": 253,
                         "doc_string": {
                             "value": "  Feature: simple feature\n  simple feature description\n\n  Scenario: simple scenario\n  simple scenario description\n\n    Given passing step\n    And pending step\n    And undefined\n    And passing step\n",
                             "content_type": "",
-                            "line": 249
+                            "line": 254
                         },
                         "match": {
                             "location": "suite_context.go:0"
@@ -2582,7 +2586,7 @@
                     {
                         "keyword": "When ",
                         "name": "I run feature suite with formatter \"pretty\"",
-                        "line": 262,
+                        "line": 267,
                         "match": {
                             "location": "suite_context.go:0"
                         },
@@ -2594,11 +2598,67 @@
                     {
                         "keyword": "Then ",
                         "name": "the rendered output will be as follows:",
-                        "line": 263,
+                        "line": 268,
                         "doc_string": {
                             "value": "  Feature: simple feature\n    simple feature description\n\n    Scenario: simple scenario # features/simple.feature:4\n      Given passing step      # suite_context.go:0 -\u003e SuiteContext.func2\n      And pending step        # suite_context.go:0 -\u003e SuiteContext.func1\n        TODO: write pending definition\n      And undefined\n      And passing step        # suite_context.go:0 -\u003e SuiteContext.func2\n\n  1 scenarios (1 pending, 1 undefined)\n  4 steps (1 passed, 1 pending, 1 undefined, 1 skipped)\n  0s\n\n  You can implement step definitions for undefined steps with these snippets:\n\n  func undefined() error {\n    return godog.ErrPending\n  }\n\n  func FeatureContext(s *godog.Suite) {\n    s.Step(`^undefined$`, undefined)\n  }",
                             "content_type": "",
-                            "line": 264
+                            "line": 269
+                        },
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "pretty-formatter;support-data-injection-in-beforestep",
+                "keyword": "Scenario",
+                "name": "Support data injection in BeforeStep",
+                "description": "",
+                "line": 296,
+                "type": "scenario",
+                "steps": [
+                    {
+                        "keyword": "Given ",
+                        "name": "a feature \"features/inject.feature\" file:",
+                        "line": 297,
+                        "doc_string": {
+                            "value": "  Feature: inject long value\n\n  Scenario: test scenario\n    Given Ignore I save some value X under key Y\n    And I allow variable injection\n    When Ignore I use value {{Y}}\n    Then Ignore Godog rendering should not break\n    And Ignore test\n      | key | val |\n      | 1   | 2   |\n      | 3   | 4   |\n    And I disable variable injection",
+                            "content_type": "",
+                            "line": 298
+                        },
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "When ",
+                        "name": "I run feature suite with formatter \"pretty\"",
+                        "line": 312,
+                        "match": {
+                            "location": "suite_context.go:0"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "Then ",
+                        "name": "the rendered output will be as follows:",
+                        "line": 313,
+                        "doc_string": {
+                            "value": "  Feature: inject long value\n\n    Scenario: test scenario                        # features/inject.feature:3\n      Given Ignore I save some value X under key Y # suite_context.go:0 -\u003e SuiteContext.func7\n      And I allow variable injection               # suite_context.go:0 -\u003e *suiteContext\n      When Ignore I use value someverylonginjectionsoweacanbesureitsurpasstheinitiallongeststeplenghtanditwillhelptestsmethodsafety # suite_context.go:0 -\u003e SuiteContext.func7\n      Then Ignore Godog rendering should not break # suite_context.go:0 -\u003e SuiteContext.func7\n      And Ignore test                              # suite_context.go:0 -\u003e SuiteContext.func7\n        | key | val |\n        | 1   | 2   |\n        | 3   | 4   |\n      And I disable variable injection             # suite_context.go:0 -\u003e *suiteContext\n\n  1 scenarios (1 passed)\n  6 steps (6 passed)\n  0s",
+                            "content_type": "",
+                            "line": 314
                         },
                         "match": {
                             "location": "suite_context.go:0"
