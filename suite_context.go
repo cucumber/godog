@@ -45,6 +45,7 @@ func SuiteContext(s *Suite, additionalContextInitializers ...func(suite *Suite))
 	s.Step(`^I run feature suite$`, c.iRunFeatureSuite)
 	s.Step(`^I run feature suite with tags "([^"]*)"$`, c.iRunFeatureSuiteWithTags)
 	s.Step(`^I run feature suite with formatter "([^"]*)"$`, c.iRunFeatureSuiteWithFormatter)
+	s.Step(`^(?:I )(allow|disable) variable injection`, c.iSetVariableInjectionTo)
 	s.Step(`^(?:a )?feature "([^"]*)"(?: file)?:$`, c.aFeatureFile)
 	s.Step(`^the suite should have (passed|failed)$`, c.theSuiteShouldHave)
 
@@ -99,6 +100,46 @@ func SuiteContext(s *Suite, additionalContextInitializers ...func(suite *Suite))
 	s.Step(`^(?:a )?failing nested multistep$`, func() Steps {
 		return Steps{"passing step", "passing multistep", "failing multistep"}
 	})
+	// Default recovery step
+	s.Step(`Ignore.*`, func() error {
+		return nil
+	})
+
+	s.BeforeStep(c.inject)
+}
+
+func (s *suiteContext) inject(step *messages.Pickle_PickleStep) {
+	if !s.allowInjection {
+		return
+	}
+
+	step.Text = injectAll(step.Text)
+
+	if table := step.Argument.GetDataTable(); table != nil {
+		for i := 0; i < len(table.Rows); i++ {
+			for n, cell := range table.Rows[i].Cells {
+				table.Rows[i].Cells[n].Value = injectAll(cell.Value)
+			}
+		}
+	}
+
+	if doc := step.Argument.GetDocString(); doc != nil {
+		doc.Content = injectAll(doc.Content)
+	}
+}
+
+func injectAll(src string) string {
+	re := regexp.MustCompile(`{{[^{}]+}}`)
+	return re.ReplaceAllStringFunc(
+		src,
+		func(key string) string {
+			injectRegex := regexp.MustCompile(`^{{.+}}$`)
+			if injectRegex.MatchString(key) {
+				return "someverylonginjectionsoweacanbesureitsurpasstheinitiallongeststeplenghtanditwillhelptestsmethodsafety"
+			}
+			return key
+		},
+	)
 }
 
 type firedEvent struct {
@@ -107,11 +148,12 @@ type firedEvent struct {
 }
 
 type suiteContext struct {
-	paths       []string
-	testedSuite *Suite
-	extraCIs    []func(suite *Suite)
-	events      []*firedEvent
-	out         bytes.Buffer
+	paths          []string
+	testedSuite    *Suite
+	extraCIs       []func(suite *Suite)
+	events         []*firedEvent
+	out            bytes.Buffer
+	allowInjection bool
 }
 
 func (s *suiteContext) ResetBeforeEachScenario(*messages.Pickle) {
@@ -123,6 +165,12 @@ func (s *suiteContext) ResetBeforeEachScenario(*messages.Pickle) {
 	SuiteContext(s.testedSuite, s.extraCIs...)
 	// reset all fired events
 	s.events = []*firedEvent{}
+	s.allowInjection = false
+}
+
+func (s *suiteContext) iSetVariableInjectionTo(to string) error {
+	s.allowInjection = to == "allow"
+	return nil
 }
 
 func (s *suiteContext) iRunFeatureSuiteWithTags(tags string) error {
@@ -143,7 +191,6 @@ func (s *suiteContext) iRunFeatureSuiteWithFormatter(name string) error {
 	if f == nil {
 		return fmt.Errorf(`formatter "%s" is not available`, name)
 	}
-
 	s.testedSuite.fmt = f("godog", colors.Uncolored(&s.out))
 	if err := s.parseFeatures(); err != nil {
 		return err
