@@ -31,9 +31,7 @@ contexts need to be exported the same way as **Test** functions for go
 tests. Note, that if you use **godog** command tool, it will use `go`
 executable to determine compiler and linker.
 
-**Godog** ships gherkin parser dependency as a subpackage. This will
-ensure that it is always compatible with the installed version of godog.
-So in general there are no vendor dependencies needed for installation.
+**Godog** depends on [gherkin-go](https://github.com/cucumber/gherkin-go) and [messages-go](https://github.com/cucumber/messages-go).
 
 The following about section was taken from
 [cucumber](https://cucumber.io/) homepage.
