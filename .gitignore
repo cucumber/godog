@@ -5,3 +5,4 @@ Gopkg.lock
 Gopkg.toml
 
 .DS_Store
+.idea

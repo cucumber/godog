@@ -16,7 +16,6 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 - Run godog features in CircleCI in strict mode ([jaysonesmith])
 - Removed TestMain call in `suite_test.go` for CI. ([jaysonesmith])
-- Migrated to [gherkin-go - v9.2.0](https://github.com/cucumber/gherkin-go/releases/tag/v9.2.0). ([240](https://github.com/cucumber/godog/pull/240) - [lonnblad])
 
 ### Deprecated
 
@@ -28,6 +27,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 - Re enable custom formatters. ([238](https://github.com/cucumber/godog/pull/238) - [ericmcbride])
 - Added back suite_test.go ([jaysonesmith])
 - Normalise module paths for use on Windows ([242](https://github.com/cucumber/godog/pull/242) - [gjtaylor])
+- Fixed panic in indenting function `s`([247](https://github.com/cucumber/godog/pull/247) - [titouanfreville])
 
 ## [0.8.1]
 
@@ -78,3 +78,4 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 [smikulcik]:        https://github.com/smikulcik
 [ericmcbride]:      https://github.com/ericmcbride
 [gjtaylor]:         https://github.com/gjtaylor
+[titouanfreville]:  https://github.com/titouanfreville
