@@ -31,12 +31,27 @@ contexts need to be exported the same way as **Test** functions for go
 tests. Note, that if you use **godog** command tool, it will use `go`
 executable to determine compiler and linker.
 
-**Godog** ships gherkin parser dependency as a subpackage. This will
-ensure that it is always compatible with the installed version of godog.
-So in general there are no vendor dependencies needed for installation.
+**Godog** depends on [gherkin-go](https://github.com/cucumber/gherkin-go) and [messages-go](https://github.com/cucumber/messages-go).
 
 The following about section was taken from
 [cucumber](https://cucumber.io/) homepage.
+
+## Notice:
+
+**If your project depend on the master version of godog instead of a specific release, please read this.**
+
+Due to dependency changes in a coming merge to master, including breaking changes, you should update how you install or depend on godog so that you have a version specified.
+
+### Install
+```
+go get github.com/cucumber/godog/cmd/godog@v0.8.1
+```
+Adding `@v0.8.1` will install v0.8.1 specifically instead of master.
+
+Running `within the $GOPATH`, you would also need to set `GO111MODULE=on`, like this:
+```
+GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.8.1
+```
 
 ## About
 
@@ -61,8 +76,15 @@ When automated testing is this much fun, teams can easily protect
 themselves from costly regressions.
 
 ## Install
+```
+go get github.com/cucumber/godog/cmd/godog@v0.9.0-rc1
+```
+Adding `@v0.9.0-rc1` will install v0.9.0-rc1 specifically instead of master.
 
-    go get github.com/cucumber/godog/cmd/godog
+Running `within the $GOPATH`, you would also need to set `GO111MODULE=on`, like this:
+```
+GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.9.0-rc1
+```
 
 ## Example
 
@@ -152,6 +174,7 @@ import (
 	"fmt"
 
 	"github.com/cucumber/godog"
+	messages "github.com/cucumber/messages-go/v9"
 )
 
 func thereAreGodogs(available int) error {
@@ -179,7 +202,7 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(`^I eat (\d+)$`, iEat)
 	s.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
 
-	s.BeforeScenario(func(interface{}) {
+	s.BeforeScenario(func(*messages.Pickle) {
 		Godogs = 0 // clean the state before every scenario
 	})
 }
@@ -322,6 +345,17 @@ func TestMain(m *testing.M) {
 
 Now when running `go test -v` it will use **pretty** format.
 
+### Tags
+
+If you want to filter scenarios by tags, you can use the
+`-t=<expression>` or `--tags=<expression>` where `<expression>`
+is one of the following:
+
+- `@wip` - run all scenarios with wip tag
+- `~@wip` - exclude all scenarios with wip tag
+- `@wip && ~@new` - run wip scenarios, but exclude new
+- `@wip,@undone` - run wip or undone scenarios
+
 ### Configure common options for godog CLI
 
 There are no global options or configuration files. Alias your common or
@@ -373,9 +407,8 @@ Join [here](https://cucumberbdd-slack-invite.herokuapp.com/).
 - [#committers](https://cucumberbdd.slack.com/archives/C62D0FK0E) - General Cucumber Contributors
 
 ## License
-
-**Godog** is licensed under the [MIT][license]
-**Gherkin** is licensed under the [MIT][license] and developed as
+- **Godog** is licensed under the [MIT][license]
+- **Gherkin** is licensed under the [MIT][license] and developed as
 a part of the [cucumber project][cucumber]
 
 [godoc]: http://godoc.org/github.com/cucumber/godog "Documentation on godoc"
