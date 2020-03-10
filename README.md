@@ -62,13 +62,13 @@ themselves from costly regressions.
 
 ## Install
 ```
-go get github.com/cucumber/godog/cmd/godog@v0.8.1
+go get github.com/cucumber/godog/cmd/godog@v0.9.0-rc1
 ```
-Adding `@v0.8.1` will install v0.8.1 specifically instead of master.
+Adding `@v0.9.0-rc1` will install v0.9.0-rc1 specifically instead of master.
 
 Running `within the $GOPATH`, you would also need to set `GO111MODULE=on`, like this:
 ```
-GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.8.1
+GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.9.0-rc1
 ```
 
 ## Example

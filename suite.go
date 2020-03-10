@@ -271,6 +271,9 @@ func (s *Suite) BeforeSuite(fn func()) {
 // scenario to restart it.
 //
 // Use it wisely and avoid sharing state between scenarios.
+//
+// Deprecated: BeforeFeature will be removed. Depending on
+// your usecase, do setup in BeforeSuite or BeforeScenario.
 func (s *Suite) BeforeFeature(fn func(*messages.GherkinDocument)) {
 	s.beforeFeatureHandlers = append(s.beforeFeatureHandlers, fn)
 }
@@ -312,6 +315,10 @@ func (s *Suite) AfterScenario(fn func(*messages.Pickle, error)) {
 
 // AfterFeature registers a function or method
 // to be run once after feature executed all scenarios.
+//
+// Deprecated: AfterFeature will be removed. Depending on
+// your usecase, do cleanup and teardowns in AfterScenario
+// or AfterSuite.
 func (s *Suite) AfterFeature(fn func(*messages.GherkinDocument)) {
 	s.afterFeatureHandlers = append(s.afterFeatureHandlers, fn)
 }
