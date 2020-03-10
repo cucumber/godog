@@ -107,31 +107,31 @@ func SuiteContext(s *Suite, additionalContextInitializers ...func(suite *Suite))
 
 	s.BeforeStep(c.inject)
 }
-func (s *suiteContext) inject(step *gherkin.Step) {
+
+func (s *suiteContext) inject(step *messages.Pickle_PickleStep) {
 	if !s.allowInjection {
 		return
 	}
 
 	step.Text = injectAll(step.Text)
-	args := step.Argument
-	if args != nil {
-		switch arg := args.(type) {
-		case *gherkin.DataTable:
-			for i := 0; i < len(arg.Rows); i++ {
-				for n, cell := range arg.Rows[i].Cells {
-					arg.Rows[i].Cells[n].Value = injectAll(cell.Value)
-				}
+
+	if table := step.Argument.GetDataTable(); table != nil {
+		for i := 0; i < len(table.Rows); i++ {
+			for n, cell := range table.Rows[i].Cells {
+				table.Rows[i].Cells[n].Value = injectAll(cell.Value)
 			}
-		case *gherkin.DocString:
-			arg.Content = injectAll(arg.Content)
 		}
+	}
+
+	if doc := step.Argument.GetDocString(); doc != nil {
+		doc.Content = injectAll(doc.Content)
 	}
 }
 
-func injectAll(inTo string) string {
+func injectAll(src string) string {
 	re := regexp.MustCompile(`{{[^{}]+}}`)
 	return re.ReplaceAllStringFunc(
-		inTo,
+		src,
 		func(key string) string {
 			injectRegex := regexp.MustCompile(`^{{.+}}$`)
 			if injectRegex.MatchString(key) {

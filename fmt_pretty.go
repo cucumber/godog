@@ -312,14 +312,14 @@ func (f *pretty) printStep(result *stepResult) {
 	}
 
 	scenarioHeaderLength, maxLength := f.scenarioLengths(result.owner.AstNodeIds[0])
-	stepLength := f.lengthPickleStep(astStep.Keyword, astStep.Text)
+	stepLength := f.lengthPickleStep(astStep.Keyword, result.step.Text)
 
 	firstExecutedScenarioStep := len(f.lastFeature().lastPickleResult().stepResults) == backgroundSteps+1
 	if !astBackgroundStep && firstExecutedScenarioStep {
 		f.printScenarioHeader(astScenario, maxLength-scenarioHeaderLength)
 	}
 
-	text := s(f.indent*2) + result.status.clr()(strings.TrimSpace(astStep.Keyword)) + " " + result.status.clr()(astStep.Text)
+	text := s(f.indent*2) + result.status.clr()(strings.TrimSpace(astStep.Keyword)) + " " + result.status.clr()(result.step.Text)
 	if result.def != nil {
 		text += s(maxLength - stepLength + 1)
 		text += blackb("# " + result.def.definitionID())
