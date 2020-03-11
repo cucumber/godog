@@ -38,6 +38,8 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 		useFmtCopy = true
 	}
 
+	r.fmt.TestRunStarted()
+
 	queue := make(chan int, rate)
 	for i, ft := range r.features {
 		queue <- i // reserve space in queue
@@ -115,9 +117,11 @@ func (r *runner) run() bool {
 		features:      r.features,
 	}
 	r.initializer(suite)
-	suite.run()
 
+	r.fmt.TestRunStarted()
+	suite.run()
 	r.fmt.Summary()
+
 	return suite.failed
 }
 

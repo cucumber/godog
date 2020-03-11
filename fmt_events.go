@@ -16,24 +16,7 @@ func init() {
 }
 
 func eventsFunc(suite string, out io.Writer) Formatter {
-	formatter := &events{basefmt: newBaseFmt(suite, out)}
-
-	formatter.lock.Lock()
-	defer formatter.lock.Unlock()
-
-	formatter.event(&struct {
-		Event     string `json:"event"`
-		Version   string `json:"version"`
-		Timestamp int64  `json:"timestamp"`
-		Suite     string `json:"suite"`
-	}{
-		"TestRunStarted",
-		spec,
-		timeNowFunc().UnixNano() / nanoSec,
-		suite,
-	})
-
-	return formatter
+	return &events{basefmt: newBaseFmt(suite, out)}
 }
 
 type events struct {
@@ -79,6 +62,25 @@ func (f *events) Pickle(pickle *messages.Pickle) {
 			"undefined",
 		})
 	}
+}
+
+func (f *events) TestRunStarted() {
+	f.basefmt.TestRunStarted()
+
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
+	f.event(&struct {
+		Event     string `json:"event"`
+		Version   string `json:"version"`
+		Timestamp int64  `json:"timestamp"`
+		Suite     string `json:"suite"`
+	}{
+		"TestRunStarted",
+		spec,
+		timeNowFunc().UnixNano() / nanoSec,
+		f.suiteName,
+	})
 }
 
 func (f *events) Feature(ft *messages.GherkinDocument, p string, c []byte) {

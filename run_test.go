@@ -274,7 +274,7 @@ func TestFormatterConcurrencyRun(t *testing.T) {
 		"progress": exitSuccess,
 		"junit":    exitSuccess,
 		"pretty":   exitSuccess,
-		// "events":   exitSuccess,
+		"events":   exitSuccess,
 		"cucumber": exitOptionError,
 	}
 
@@ -283,7 +283,7 @@ func TestFormatterConcurrencyRun(t *testing.T) {
 		"formatter-tests/features/single_scenario_with_passing_step.feature",
 	}
 
-	const concurrency = 4
+	const concurrency = 2
 
 	for formatter, expectedRunStatus := range formatters {
 		t.Run(

@@ -181,8 +181,11 @@ func (s *suiteContext) iRunFeatureSuiteWithTags(tags string) error {
 		applyTagFilter(tags, feat)
 	}
 	s.testedSuite.fmt = testFormatterFunc("godog", &s.out)
+
+	s.testedSuite.fmt.TestRunStarted()
 	s.testedSuite.run()
 	s.testedSuite.fmt.Summary()
+
 	return nil
 }
 
@@ -195,8 +198,11 @@ func (s *suiteContext) iRunFeatureSuiteWithFormatter(name string) error {
 	if err := s.parseFeatures(); err != nil {
 		return err
 	}
+
+	s.testedSuite.fmt.TestRunStarted()
 	s.testedSuite.run()
 	s.testedSuite.fmt.Summary()
+
 	return nil
 }
 
@@ -444,6 +450,8 @@ func (s *suiteContext) iRunFeatureSuite() error {
 		return err
 	}
 	s.testedSuite.fmt = testFormatterFunc("godog", &s.out)
+
+	s.testedSuite.fmt.TestRunStarted()
 	s.testedSuite.run()
 	s.testedSuite.fmt.Summary()
 
