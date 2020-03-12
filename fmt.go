@@ -16,7 +16,7 @@ import (
 
 	"github.com/cucumber/godog/colors"
 
-	"github.com/cucumber/messages-go/v9"
+	"github.com/cucumber/messages-go/v10"
 )
 
 // some snippet formatting regexps

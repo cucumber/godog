@@ -18,7 +18,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cucumber/messages-go/v9"
+	"github.com/cucumber/messages-go/v10"
 )
 
 func init() {

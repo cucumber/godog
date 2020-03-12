@@ -11,7 +11,7 @@ import (
 
 	txdb "github.com/DATA-DOG/go-txdb"
 	"github.com/cucumber/godog"
-	"github.com/cucumber/messages-go/v9"
+	"github.com/cucumber/messages-go/v10"
 )
 
 func init() {

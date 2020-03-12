@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cucumber/gherkin-go/v9"
-	"github.com/cucumber/messages-go/v9"
+	"github.com/cucumber/gherkin-go/v11"
+	"github.com/cucumber/messages-go/v10"
 
 	"github.com/cucumber/godog/colors"
 )

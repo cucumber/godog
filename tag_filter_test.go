@@ -3,7 +3,7 @@ package godog
 import (
 	"testing"
 
-	"github.com/cucumber/messages-go/v9"
+	"github.com/cucumber/messages-go/v10"
 )
 
 func assertNotMatchesTagFilter(tags []*messages.Pickle_PickleTag, filter string, t *testing.T) {
