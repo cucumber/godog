@@ -1,6 +1,6 @@
 module github.com/cucumber/godog
 
-go 1.14
+go 1.13
 
 require (
 	github.com/cucumber/gherkin-go/v11 v11.0.0
