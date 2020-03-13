@@ -130,6 +130,7 @@ func (s sortByName) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 type pickleResult struct {
 	Name        string
+	AstNodeIDs  []string
 	time        time.Time
 	stepResults []*stepResult
 }

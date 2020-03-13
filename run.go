@@ -167,10 +167,6 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 		}
 	}
 
-	if opt.Concurrency > 1 && !supportsConcurrency(opt.Format) {
-		fmt.Fprintln(os.Stderr, fmt.Errorf("format \"%s\" does not support concurrent execution", opt.Format))
-		return exitOptionError
-	}
 	formatter := FindFmt(opt.Format)
 	if nil == formatter {
 		var names []string
@@ -272,15 +268,4 @@ func Run(suite string, contextInitializer func(suite *Suite)) int {
 	opt.Paths = flagSet.Args()
 
 	return RunWithOptions(suite, contextInitializer, opt)
-}
-
-func supportsConcurrency(format string) bool {
-	switch format {
-	case "events", "progress", "junit", "pretty":
-		return true
-	case "cucumber":
-		return false
-	default:
-		return true // enables concurrent custom formatters to work
-	}
 }

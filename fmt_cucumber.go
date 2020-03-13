@@ -15,10 +15,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
-	"time"
-
-	"github.com/cucumber/messages-go/v9"
 )
 
 func init() {
@@ -29,12 +27,84 @@ func cucumberFunc(suite string, out io.Writer) Formatter {
 	return &cukefmt{basefmt: newBaseFmt(suite, out)}
 }
 
-// Replace spaces with - This function is used to create the "id" fields of the cucumber output.
-func makeID(name string) string {
-	return strings.Replace(strings.ToLower(name), " ", "-", -1)
+type cukefmt struct {
+	*basefmt
 }
 
-// The sequence of type structs are used to marshall the json object.
+func (f *cukefmt) Summary() {
+	res := f.buildCukeFeatures(f.features)
+
+	dat, err := json.MarshalIndent(res, "", "    ")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Fprintf(f.out, "%s\n", string(dat))
+}
+
+func (f *cukefmt) Sync(cf ConcurrentFormatter) {
+	if source, ok := cf.(*cukefmt); ok {
+		f.basefmt.Sync(source.basefmt)
+	}
+}
+
+func (f *cukefmt) Copy(cf ConcurrentFormatter) {
+	if source, ok := cf.(*cukefmt); ok {
+		f.basefmt.Copy(source.basefmt)
+	}
+}
+
+func (f *cukefmt) buildCukeFeatures(features []*feature) (res []cukeFeatureJSON) {
+	sort.Sort(sortByName(features))
+
+	res = make([]cukeFeatureJSON, len(features))
+
+	for idx, feat := range features {
+		cukeFeature := buildCukeFeature(feat)
+		cukeFeature.Elements = f.buildCukeElements(feat.pickleResults)
+
+		for jdx, elem := range cukeFeature.Elements {
+			elem.ID = cukeFeature.ID + ";" + makeCukeID(elem.Name) + elem.ID
+			elem.Tags = append(cukeFeature.Tags, elem.Tags...)
+			cukeFeature.Elements[jdx] = elem
+		}
+
+		res[idx] = cukeFeature
+	}
+
+	return res
+}
+
+func (f *cukefmt) buildCukeElements(pickleResults []*pickleResult) (res []cukeElement) {
+	res = make([]cukeElement, len(pickleResults))
+
+	for idx, pickleResult := range pickleResults {
+		cukeElement := f.buildCukeElement(pickleResult.Name, pickleResult.AstNodeIDs)
+
+		stepStartedAt := pickleResult.startedAt()
+
+		cukeElement.Steps = make([]cukeStep, len(pickleResult.stepResults))
+		for jdx, stepResult := range pickleResult.stepResults {
+			cukeStep := f.buildCukeStep(stepResult)
+
+			stepResultFinishedAt := stepResult.time
+			d := int(stepResultFinishedAt.Sub(stepStartedAt).Nanoseconds())
+			stepStartedAt = stepResultFinishedAt
+
+			cukeStep.Result.Duration = &d
+			if stepResult.status == undefined || stepResult.status == pending || stepResult.status == skipped {
+				cukeStep.Result.Duration = nil
+			}
+
+			cukeElement.Steps[jdx] = cukeStep
+		}
+
+		res[idx] = cukeElement
+	}
+
+	return res
+}
+
 type cukeComment struct {
 	Value string `json:"value"`
 	Line  int    `json:"line"`
@@ -98,213 +168,123 @@ type cukeFeatureJSON struct {
 	Elements    []cukeElement `json:"elements,omitempty"`
 }
 
-type cukefmt struct {
-	*basefmt
-
-	// currently running feature path, to be part of id.
-	// this is sadly not passed by gherkin nodes.
-	// it restricts this formatter to run only in synchronous single
-	// threaded execution. Unless running a copy of formatter for each feature
-	path       string
-	status     stepResultStatus  // last step status, before skipped
-	ID         string            // current test id.
-	results    []cukeFeatureJSON // structure that represent cuke results
-	curStep    *cukeStep         // track the current step
-	curElement *cukeElement      // track the current element
-	curFeature *cukeFeatureJSON  // track the current feature
-	curOutline cukeElement       // Each example show up as an outline element but the outline is parsed only once
-	// so I need to keep track of the current outline
-	curRow         int       // current row of the example table as it is being processed.
-	curExampleTags []cukeTag // temporary storage for tags associate with the current example table.
-	startTime      time.Time // used to time duration of the step execution
-	curExampleName string    // Due to the fact that examples are parsed once and then iterated over for each result then we need to keep track
-	// of the example name inorder to build id fields.
-}
-
-func (f *cukefmt) Pickle(pickle *messages.Pickle) {
-	f.basefmt.Pickle(pickle)
-
-	scenario := f.findScenario(pickle.AstNodeIds[0])
-
-	f.curFeature.Elements = append(f.curFeature.Elements, cukeElement{})
-	f.curElement = &f.curFeature.Elements[len(f.curFeature.Elements)-1]
-
-	f.curElement.Name = pickle.Name
-	f.curElement.Line = int(scenario.Location.Line)
-	f.curElement.Description = scenario.Description
-	f.curElement.Keyword = scenario.Keyword
-	f.curElement.ID = f.curFeature.ID + ";" + makeID(pickle.Name)
-	f.curElement.Type = "scenario"
-
-	f.curElement.Tags = make([]cukeTag, len(scenario.Tags)+len(f.curFeature.Tags))
-
-	if len(f.curElement.Tags) > 0 {
-		// apply feature level tags
-		copy(f.curElement.Tags, f.curFeature.Tags)
-
-		// apply scenario level tags.
-		for idx, element := range scenario.Tags {
-			f.curElement.Tags[idx+len(f.curFeature.Tags)].Line = int(element.Location.Line)
-			f.curElement.Tags[idx+len(f.curFeature.Tags)].Name = element.Name
-		}
+func buildCukeFeature(feat *feature) cukeFeatureJSON {
+	cukeFeature := cukeFeatureJSON{
+		URI:         feat.Path,
+		ID:          makeCukeID(feat.Feature.Name),
+		Keyword:     feat.Feature.Keyword,
+		Name:        feat.Feature.Name,
+		Description: feat.Feature.Description,
+		Line:        int(feat.Feature.Location.Line),
+		Comments:    make([]cukeComment, len(feat.Comments)),
+		Tags:        make([]cukeTag, len(feat.Feature.Tags)),
 	}
 
-	if len(pickle.AstNodeIds) == 1 {
+	for idx, element := range feat.Feature.Tags {
+		cukeFeature.Tags[idx].Line = int(element.Location.Line)
+		cukeFeature.Tags[idx].Name = element.Name
+	}
+
+	for idx, comment := range feat.Comments {
+		cukeFeature.Comments[idx].Value = strings.TrimSpace(comment.Text)
+		cukeFeature.Comments[idx].Line = int(comment.Location.Line)
+	}
+
+	return cukeFeature
+}
+
+func (f *cukefmt) buildCukeElement(pickleName string, pickleAstNodeIDs []string) (cukeElement cukeElement) {
+	scenario := f.findScenario(pickleAstNodeIDs[0])
+
+	cukeElement.Name = pickleName
+	cukeElement.Line = int(scenario.Location.Line)
+	cukeElement.Description = scenario.Description
+	cukeElement.Keyword = scenario.Keyword
+	cukeElement.Type = "scenario"
+
+	cukeElement.Tags = make([]cukeTag, len(scenario.Tags))
+	for idx, element := range scenario.Tags {
+		cukeElement.Tags[idx].Line = int(element.Location.Line)
+		cukeElement.Tags[idx].Name = element.Name
+	}
+
+	if len(pickleAstNodeIDs) == 1 {
 		return
 	}
 
-	example, _ := f.findExample(pickle.AstNodeIds[1])
-	// apply example level tags.
+	example, _ := f.findExample(pickleAstNodeIDs[1])
+
 	for _, tag := range example.Tags {
 		tag := cukeTag{Line: int(tag.Location.Line), Name: tag.Name}
-		f.curElement.Tags = append(f.curElement.Tags, tag)
+		cukeElement.Tags = append(cukeElement.Tags, tag)
 	}
 
 	examples := scenario.GetExamples()
 	if len(examples) > 0 {
-		rowID := pickle.AstNodeIds[1]
+		rowID := pickleAstNodeIDs[1]
 
 		for _, example := range examples {
 			for idx, row := range example.TableBody {
 				if rowID == row.Id {
-					f.curElement.ID += fmt.Sprintf(";%s;%d", makeID(example.Name), idx+2)
-					f.curElement.Line = int(row.Location.Line)
+					cukeElement.ID += fmt.Sprintf(";%s;%d", makeCukeID(example.Name), idx+2)
+					cukeElement.Line = int(row.Location.Line)
 				}
 			}
 		}
 	}
 
+	return cukeElement
 }
 
-func (f *cukefmt) Feature(gd *messages.GherkinDocument, p string, c []byte) {
-	f.basefmt.Feature(gd, p, c)
-
-	f.path = p
-	f.ID = makeID(gd.Feature.Name)
-	f.results = append(f.results, cukeFeatureJSON{})
-
-	f.curFeature = &f.results[len(f.results)-1]
-	f.curFeature.URI = p
-	f.curFeature.Name = gd.Feature.Name
-	f.curFeature.Keyword = gd.Feature.Keyword
-	f.curFeature.Line = int(gd.Feature.Location.Line)
-	f.curFeature.Description = gd.Feature.Description
-	f.curFeature.ID = f.ID
-	f.curFeature.Tags = make([]cukeTag, len(gd.Feature.Tags))
-
-	for idx, element := range gd.Feature.Tags {
-		f.curFeature.Tags[idx].Line = int(element.Location.Line)
-		f.curFeature.Tags[idx].Name = element.Name
-	}
-
-	f.curFeature.Comments = make([]cukeComment, len(gd.Comments))
-	for idx, comment := range gd.Comments {
-		f.curFeature.Comments[idx].Value = strings.TrimSpace(comment.Text)
-		f.curFeature.Comments[idx].Line = int(comment.Location.Line)
-	}
-
-}
-
-func (f *cukefmt) Summary() {
-	dat, err := json.MarshalIndent(f.results, "", "    ")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Fprintf(f.out, "%s\n", string(dat))
-}
-
-func (f *cukefmt) step(res *stepResult) {
-	d := int(timeNowFunc().Sub(f.startTime).Nanoseconds())
-	f.curStep.Result.Duration = &d
-	f.curStep.Result.Status = res.status.String()
-	if res.err != nil {
-		f.curStep.Result.Error = res.err.Error()
-	}
-}
-
-func (f *cukefmt) Defined(pickle *messages.Pickle, pickleStep *messages.Pickle_PickleStep, def *StepDefinition) {
-	f.startTime = timeNowFunc() // start timing the step
-	f.curElement.Steps = append(f.curElement.Steps, cukeStep{})
-	f.curStep = &f.curElement.Steps[len(f.curElement.Steps)-1]
-
-	step := f.findStep(pickleStep.AstNodeIds[0])
+func (f *cukefmt) buildCukeStep(stepResult *stepResult) (cukeStep cukeStep) {
+	step := f.findStep(stepResult.step.AstNodeIds[0])
 
 	line := step.Location.Line
-	if len(pickle.AstNodeIds) == 2 {
-		_, row := f.findExample(pickle.AstNodeIds[1])
+	if len(stepResult.owner.AstNodeIds) == 2 {
+		_, row := f.findExample(stepResult.owner.AstNodeIds[1])
 		line = row.Location.Line
 	}
 
-	f.curStep.Name = pickleStep.Text
-	f.curStep.Line = int(line)
-	f.curStep.Keyword = step.Keyword
+	cukeStep.Name = stepResult.step.Text
+	cukeStep.Line = int(line)
+	cukeStep.Keyword = step.Keyword
 
-	arg := pickleStep.Argument
+	arg := stepResult.step.Argument
 
 	if arg.GetDocString() != nil && step.GetDocString() != nil {
-		f.curStep.Docstring = &cukeDocstring{}
-		f.curStep.Docstring.ContentType = strings.TrimSpace(arg.GetDocString().MediaType)
-		f.curStep.Docstring.Line = int(step.GetDocString().Location.Line)
-		f.curStep.Docstring.Value = arg.GetDocString().Content
+		cukeStep.Docstring = &cukeDocstring{}
+		cukeStep.Docstring.ContentType = strings.TrimSpace(arg.GetDocString().MediaType)
+		cukeStep.Docstring.Line = int(step.GetDocString().Location.Line)
+		cukeStep.Docstring.Value = arg.GetDocString().Content
 	}
 
 	if arg.GetDataTable() != nil {
-		f.curStep.DataTable = make([]*cukeDataTableRow, len(arg.GetDataTable().Rows))
+		cukeStep.DataTable = make([]*cukeDataTableRow, len(arg.GetDataTable().Rows))
 		for i, row := range arg.GetDataTable().Rows {
 			cells := make([]string, len(row.Cells))
 			for j, cell := range row.Cells {
 				cells[j] = cell.Value
 			}
-			f.curStep.DataTable[i] = &cukeDataTableRow{Cells: cells}
+			cukeStep.DataTable[i] = &cukeDataTableRow{Cells: cells}
 		}
 	}
 
-	if def != nil {
-		f.curStep.Match.Location = strings.Split(def.definitionID(), " ")[0]
+	if stepResult.def != nil {
+		cukeStep.Match.Location = strings.Split(stepResult.def.definitionID(), " ")[0]
 	}
+
+	cukeStep.Result.Status = stepResult.status.String()
+	if stepResult.err != nil {
+		cukeStep.Result.Error = stepResult.err.Error()
+	}
+
+	if stepResult.status == undefined || stepResult.status == pending {
+		cukeStep.Match.Location = fmt.Sprintf("%s:%d", stepResult.owner.Uri, step.Location.Line)
+	}
+
+	return cukeStep
 }
 
-func (f *cukefmt) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
-	f.basefmt.Passed(pickle, step, match)
-
-	f.status = passed
-	f.step(f.lastStepResult())
-}
-
-func (f *cukefmt) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
-	f.basefmt.Skipped(pickle, step, match)
-
-	f.step(f.lastStepResult())
-
-	// no duration reported for skipped.
-	f.curStep.Result.Duration = nil
-}
-
-func (f *cukefmt) Undefined(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
-	f.basefmt.Undefined(pickle, step, match)
-
-	f.status = undefined
-	f.step(f.lastStepResult())
-
-	// the location for undefined is the feature file location not the step file.
-	f.curStep.Match.Location = fmt.Sprintf("%s:%d", f.path, f.findStep(step.AstNodeIds[0]).Location.Line)
-	f.curStep.Result.Duration = nil
-}
-
-func (f *cukefmt) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition, err error) {
-	f.basefmt.Failed(pickle, step, match, err)
-
-	f.status = failed
-	f.step(f.lastStepResult())
-}
-
-func (f *cukefmt) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
-	f.basefmt.Pending(pickle, step, match)
-
-	f.status = pending
-	f.step(f.lastStepResult())
-
-	// the location for pending is the feature file location not the step file.
-	f.curStep.Match.Location = fmt.Sprintf("%s:%d", f.path, f.findStep(step.AstNodeIds[0]).Location.Line)
-	f.curStep.Result.Duration = nil
+func makeCukeID(name string) string {
+	return strings.Replace(strings.ToLower(name), " ", "-", -1)
 }
