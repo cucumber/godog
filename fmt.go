@@ -5,47 +5,16 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"reflect"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync"
-	"text/template"
 	"time"
 	"unicode"
 
-	"github.com/cucumber/godog/colors"
-
 	"github.com/cucumber/messages-go/v10"
+
+	"github.com/cucumber/godog/colors"
 )
-
-// some snippet formatting regexps
-var snippetExprCleanup = regexp.MustCompile("([\\/\\[\\]\\(\\)\\\\^\\$\\.\\|\\?\\*\\+\\'])")
-var snippetExprQuoted = regexp.MustCompile("(\\W|^)\"(?:[^\"]*)\"(\\W|$)")
-var snippetMethodName = regexp.MustCompile("[^a-zA-Z\\_\\ ]")
-var snippetNumbers = regexp.MustCompile("(\\d+)")
-
-var snippetHelperFuncs = template.FuncMap{
-	"backticked": func(s string) string {
-		return "`" + s + "`"
-	},
-}
-
-var undefinedSnippetsTpl = template.Must(template.New("snippets").Funcs(snippetHelperFuncs).Parse(`
-{{ range . }}func {{ .Method }}({{ .Args }}) error {
-	return godog.ErrPending
-}
-
-{{end}}func FeatureContext(s *godog.Suite) { {{ range . }}
-	s.Step({{ backticked .Expr }}, {{ .Method }}){{end}}
-}
-`))
-
-type undefinedSnippet struct {
-	Method   string
-	Expr     string
-	argument *messages.PickleStepArgument
-}
 
 type registeredFormatter struct {
 	name        string
@@ -436,55 +405,6 @@ func (f *basefmt) Copy(cf ConcurrentFormatter) {
 			f.features = append(f.features, v)
 		}
 	}
-}
-
-func (s *undefinedSnippet) Args() (ret string) {
-	var (
-		args      []string
-		pos       int
-		breakLoop bool
-	)
-	for !breakLoop {
-		part := s.Expr[pos:]
-		ipos := strings.Index(part, "(\\d+)")
-		spos := strings.Index(part, "\"([^\"]*)\"")
-		switch {
-		case spos == -1 && ipos == -1:
-			breakLoop = true
-		case spos == -1:
-			pos += ipos + len("(\\d+)")
-			args = append(args, reflect.Int.String())
-		case ipos == -1:
-			pos += spos + len("\"([^\"]*)\"")
-			args = append(args, reflect.String.String())
-		case ipos < spos:
-			pos += ipos + len("(\\d+)")
-			args = append(args, reflect.Int.String())
-		case spos < ipos:
-			pos += spos + len("\"([^\"]*)\"")
-			args = append(args, reflect.String.String())
-		}
-	}
-
-	if s.argument != nil {
-		if s.argument.GetDocString() != nil {
-			args = append(args, "*messages.PickleStepArgument_PickleDocString")
-		}
-		if s.argument.GetDataTable() != nil {
-			args = append(args, "*messages.PickleStepArgument_PickleTable")
-		}
-	}
-
-	var last string
-	for i, arg := range args {
-		if last == "" || last == arg {
-			ret += fmt.Sprintf("arg%d, ", i+1)
-		} else {
-			ret = strings.TrimRight(ret, ", ") + fmt.Sprintf(" %s, arg%d, ", last, i+1)
-		}
-		last = arg
-	}
-	return strings.TrimSpace(strings.TrimRight(ret, ", ") + " " + last)
 }
 
 func (f *basefmt) findStepResults(status stepResultStatus) (res []*stepResult) {
