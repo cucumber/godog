@@ -9,7 +9,7 @@ import (
 
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
-	messages "github.com/cucumber/messages-go/v9"
+	messages "github.com/cucumber/messages-go/v10"
 )
 
 var opt = godog.Options{Output: colors.Colored(os.Stdout)}
