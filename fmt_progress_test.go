@@ -81,7 +81,8 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(` + "`^next undefined$`" + `, nextUndefined)
 }`
 
-	require.True(t, r.run())
+	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", w) })
+	require.True(t, failed)
 
 	expected = trimAllLines(expected)
 	actual := trimAllLines(buf.String())
@@ -108,10 +109,11 @@ func TestProgressFormatterWhenStepPanics(t *testing.T) {
 		},
 	}
 
-	require.True(t, r.run())
+	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", w) })
+	require.True(t, failed)
 
 	actual := buf.String()
-	assert.Contains(t, actual, "godog/fmt_progress_test.go:107")
+	assert.Contains(t, actual, "godog/fmt_progress_test.go:108")
 }
 
 func TestProgressFormatterWithPassingMultisteps(t *testing.T) {
@@ -136,7 +138,8 @@ func TestProgressFormatterWithPassingMultisteps(t *testing.T) {
 		},
 	}
 
-	assert.False(t, r.run())
+	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", w) })
+	assert.False(t, failed)
 }
 
 func TestProgressFormatterWithFailingMultisteps(t *testing.T) {
@@ -161,7 +164,8 @@ func TestProgressFormatterWithFailingMultisteps(t *testing.T) {
 		},
 	}
 
-	require.True(t, r.run())
+	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", w) })
+	require.True(t, failed)
 
 	expected := `
 .F 2
@@ -205,7 +209,8 @@ func TestProgressFormatterWithPanicInMultistep(t *testing.T) {
 		},
 	}
 
-	assert.True(t, r.run())
+	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", w) })
+	assert.True(t, failed)
 }
 
 func TestProgressFormatterMultistepTemplates(t *testing.T) {
@@ -229,7 +234,8 @@ func TestProgressFormatterMultistepTemplates(t *testing.T) {
 		},
 	}
 
-	require.False(t, r.run())
+	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", w) })
+	require.False(t, failed)
 
 	expected := `
 .U 2
@@ -296,7 +302,8 @@ Feature: basic
 		},
 	}
 
-	assert.False(t, r.run())
+	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", w) })
+	assert.False(t, failed)
 }
 
 func TestProgressFormatterWhenMultiStepHasStepWithArgument(t *testing.T) {
@@ -331,7 +338,8 @@ Feature: basic
 		},
 	}
 
-	require.True(t, r.run())
+	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", w) })
+	require.True(t, failed)
 
 	expected := `
 .F 2

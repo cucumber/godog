@@ -50,9 +50,11 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 			defer func() {
 				<-queue // free a space in queue
 			}()
+
 			if r.stopOnFailure && *fail {
 				return
 			}
+
 			suite := &Suite{
 				fmt:           r.fmt,
 				randomSeed:    r.randomSeed,
@@ -60,6 +62,7 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 				strict:        r.strict,
 				features:      []*feature{feat},
 			}
+
 			if useFmtCopy {
 				fmtCopy = formatterFn()
 				suite.fmt = fmtCopy
@@ -76,9 +79,11 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 
 			r.initializer(suite)
 			suite.run()
+
 			if suite.failed {
 				*fail = true
 			}
+
 			if useFmtCopy {
 				copyLock.Lock()
 
@@ -97,6 +102,7 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 			}
 		}(&failed, &ft)
 	}
+
 	// wait until last are processed
 	for i := 0; i < rate; i++ {
 		queue <- i
@@ -106,23 +112,6 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 	// print summary
 	r.fmt.Summary()
 	return
-}
-
-func (r *runner) run() bool {
-	suite := &Suite{
-		fmt:           r.fmt,
-		randomSeed:    r.randomSeed,
-		stopOnFailure: r.stopOnFailure,
-		strict:        r.strict,
-		features:      r.features,
-	}
-	r.initializer(suite)
-
-	r.fmt.TestRunStarted()
-	suite.run()
-	r.fmt.Summary()
-
-	return suite.failed
 }
 
 // RunWithOptions is same as Run function, except
@@ -208,12 +197,11 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 	_, filename, _, _ := runtime.Caller(1)
 	os.Setenv("GODOG_TESTED_PACKAGE", runsFromPackage(filename))
 
-	var failed bool
-	if opt.Concurrency > 1 {
-		failed = r.concurrent(opt.Concurrency, func() Formatter { return formatter(suite, output) })
-	} else {
-		failed = r.run()
+	if opt.Concurrency < 1 {
+		opt.Concurrency = 1
 	}
+
+	failed := r.concurrent(opt.Concurrency, func() Formatter { return formatter(suite, output) })
 
 	// @TODO: should prevent from having these
 	os.Setenv("GODOG_SEED", "")
