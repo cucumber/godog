@@ -16,33 +16,11 @@ func init() {
 }
 
 func eventsFunc(suite string, out io.Writer) Formatter {
-	formatter := &events{basefmt: newBaseFmt(suite, out)}
-
-	formatter.event(&struct {
-		Event     string `json:"event"`
-		Version   string `json:"version"`
-		Timestamp int64  `json:"timestamp"`
-		Suite     string `json:"suite"`
-	}{
-		"TestRunStarted",
-		spec,
-		timeNowFunc().UnixNano() / nanoSec,
-		suite,
-	})
-
-	return formatter
+	return &events{basefmt: newBaseFmt(suite, out)}
 }
 
 type events struct {
 	*basefmt
-
-	// currently running feature path, to be part of id.
-	// this is sadly not passed by gherkin nodes.
-	// it restricts this formatter to run only in synchronous single
-	// threaded execution. Unless running a copy of formatter for each feature
-	path         string
-	status       stepResultStatus // last step status, before skipped
-	outlineSteps int              // number of current outline scenario steps
 }
 
 func (f *events) event(ev interface{}) {
@@ -56,13 +34,16 @@ func (f *events) event(ev interface{}) {
 func (f *events) Pickle(pickle *messages.Pickle) {
 	f.basefmt.Pickle(pickle)
 
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	f.event(&struct {
 		Event     string `json:"event"`
 		Location  string `json:"location"`
 		Timestamp int64  `json:"timestamp"`
 	}{
 		"TestCaseStarted",
-		f.scenarioLocation(pickle.AstNodeIds),
+		f.scenarioLocation(pickle),
 		timeNowFunc().UnixNano() / nanoSec,
 	})
 
@@ -76,16 +57,38 @@ func (f *events) Pickle(pickle *messages.Pickle) {
 			Status    string `json:"status"`
 		}{
 			"TestCaseFinished",
-			f.scenarioLocation(pickle.AstNodeIds),
+			f.scenarioLocation(pickle),
 			timeNowFunc().UnixNano() / nanoSec,
 			"undefined",
 		})
 	}
 }
 
+func (f *events) TestRunStarted() {
+	f.basefmt.TestRunStarted()
+
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
+	f.event(&struct {
+		Event     string `json:"event"`
+		Version   string `json:"version"`
+		Timestamp int64  `json:"timestamp"`
+		Suite     string `json:"suite"`
+	}{
+		"TestRunStarted",
+		spec,
+		timeNowFunc().UnixNano() / nanoSec,
+		f.suiteName,
+	})
+}
+
 func (f *events) Feature(ft *messages.GherkinDocument, p string, c []byte) {
 	f.basefmt.Feature(ft, p, c)
-	f.path = p
+
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	f.event(&struct {
 		Event    string `json:"event"`
 		Location string `json:"location"`
@@ -130,6 +133,18 @@ func (f *events) Summary() {
 	})
 }
 
+func (f *events) Sync(cf ConcurrentFormatter) {
+	if source, ok := cf.(*events); ok {
+		f.basefmt.Sync(source.basefmt)
+	}
+}
+
+func (f *events) Copy(cf ConcurrentFormatter) {
+	if source, ok := cf.(*events); ok {
+		f.basefmt.Copy(source.basefmt)
+	}
+}
+
 func (f *events) step(res *stepResult) {
 	step := f.findStep(res.step.AstNodeIds[0])
 
@@ -145,13 +160,28 @@ func (f *events) step(res *stepResult) {
 		Summary   string `json:"summary,omitempty"`
 	}{
 		"TestStepFinished",
-		fmt.Sprintf("%s:%d", f.path, step.Location.Line),
+		fmt.Sprintf("%s:%d", res.owner.Uri, step.Location.Line),
 		timeNowFunc().UnixNano() / nanoSec,
 		res.status.String(),
 		errMsg,
 	})
 
 	if isLastStep(res.owner, res.step) {
+		var status string
+
+		for _, stepResult := range f.lastFeature().lastPickleResult().stepResults {
+			switch stepResult.status {
+			case passed:
+				status = passed.String()
+			case failed:
+				status = failed.String()
+			case undefined:
+				status = undefined.String()
+			case pending:
+				status = pending.String()
+			}
+		}
+
 		f.event(&struct {
 			Event     string `json:"event"`
 			Location  string `json:"location"`
@@ -159,14 +189,19 @@ func (f *events) step(res *stepResult) {
 			Status    string `json:"status"`
 		}{
 			"TestCaseFinished",
-			f.scenarioLocation(res.owner.AstNodeIds),
+			f.scenarioLocation(res.owner),
 			timeNowFunc().UnixNano() / nanoSec,
-			f.status.String(),
+			status,
 		})
 	}
 }
 
 func (f *events) Defined(pickle *messages.Pickle, pickleStep *messages.Pickle_PickleStep, def *StepDefinition) {
+	f.basefmt.Defined(pickle, pickleStep, def)
+
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	step := f.findStep(pickleStep.AstNodeIds[0])
 
 	if def != nil {
@@ -191,7 +226,7 @@ func (f *events) Defined(pickle *messages.Pickle, pickleStep *messages.Pickle_Pi
 			Args     [][2]int `json:"arguments"`
 		}{
 			"StepDefinitionFound",
-			fmt.Sprintf("%s:%d", f.path, step.Location.Line),
+			fmt.Sprintf("%s:%d", pickle.Uri, step.Location.Line),
 			def.definitionID(),
 			args,
 		})
@@ -203,7 +238,7 @@ func (f *events) Defined(pickle *messages.Pickle, pickleStep *messages.Pickle_Pi
 		Timestamp int64  `json:"timestamp"`
 	}{
 		"TestStepStarted",
-		fmt.Sprintf("%s:%d", f.path, step.Location.Line),
+		fmt.Sprintf("%s:%d", pickle.Uri, step.Location.Line),
 		timeNowFunc().UnixNano() / nanoSec,
 	})
 }
@@ -211,12 +246,17 @@ func (f *events) Defined(pickle *messages.Pickle, pickleStep *messages.Pickle_Pi
 func (f *events) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
 	f.basefmt.Passed(pickle, step, match)
 
-	f.status = passed
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	f.step(f.lastStepResult())
 }
 
 func (f *events) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
 	f.basefmt.Skipped(pickle, step, match)
+
+	f.lock.Lock()
+	defer f.lock.Unlock()
 
 	f.step(f.lastStepResult())
 }
@@ -224,31 +264,37 @@ func (f *events) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleSt
 func (f *events) Undefined(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
 	f.basefmt.Undefined(pickle, step, match)
 
-	f.status = undefined
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	f.step(f.lastStepResult())
 }
 
 func (f *events) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition, err error) {
 	f.basefmt.Failed(pickle, step, match, err)
 
-	f.status = failed
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	f.step(f.lastStepResult())
 }
 
 func (f *events) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
 	f.basefmt.Pending(pickle, step, match)
 
-	f.status = pending
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	f.step(f.lastStepResult())
 }
 
-func (f *events) scenarioLocation(astNodeIds []string) string {
-	scenario := f.findScenario(astNodeIds[0])
+func (f *events) scenarioLocation(pickle *messages.Pickle) string {
+	scenario := f.findScenario(pickle.AstNodeIds[0])
 	line := scenario.Location.Line
-	if len(astNodeIds) == 2 {
-		_, row := f.findExample(astNodeIds[1])
+	if len(pickle.AstNodeIds) == 2 {
+		_, row := f.findExample(pickle.AstNodeIds[1])
 		line = row.Location.Line
 	}
 
-	return fmt.Sprintf("%s:%d", f.path, line)
+	return fmt.Sprintf("%s:%d", pickle.Uri, line)
 }

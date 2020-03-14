@@ -38,6 +38,8 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 		useFmtCopy = true
 	}
 
+	r.fmt.TestRunStarted()
+
 	queue := make(chan int, rate)
 	for i, ft := range r.features {
 		queue <- i // reserve space in queue
@@ -115,9 +117,11 @@ func (r *runner) run() bool {
 		features:      r.features,
 	}
 	r.initializer(suite)
-	suite.run()
 
+	r.fmt.TestRunStarted()
+	suite.run()
 	r.fmt.Summary()
+
 	return suite.failed
 }
 
@@ -272,9 +276,9 @@ func Run(suite string, contextInitializer func(suite *Suite)) int {
 
 func supportsConcurrency(format string) bool {
 	switch format {
-	case "progress", "junit":
+	case "events", "progress", "junit", "pretty":
 		return true
-	case "events", "pretty", "cucumber":
+	case "cucumber":
 		return false
 	default:
 		return true // enables concurrent custom formatters to work
