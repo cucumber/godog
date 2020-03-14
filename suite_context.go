@@ -545,11 +545,13 @@ func (s *suiteContext) theRenderOutputWillBe(docstring *messages.PickleStepArgum
 	suiteCtxReg := regexp.MustCompile(`suite_context.go:\d+`)
 	suiteCtxFuncReg := regexp.MustCompile(`github.com/cucumber/godog.SuiteContext.func(\d+)`)
 
-	expected := trimAllLines(strings.TrimSpace(docstring.Content))
+	expected := docstring.Content
+	expected = trimAllLines(expected)
 	expected = suiteCtxReg.ReplaceAllString(expected, "suite_context.go:0")
 	expected = suiteCtxFuncReg.ReplaceAllString(expected, "SuiteContext.func$1")
 
-	actual := trimAllLines(strings.TrimSpace(s.out.String()))
+	actual := s.out.String()
+	actual = trimAllLines(actual)
 	actual = suiteCtxReg.ReplaceAllString(actual, "suite_context.go:0")
 	actual = suiteCtxFuncReg.ReplaceAllString(actual, "SuiteContext.func$1")
 
