@@ -56,7 +56,7 @@ need to store state within steps (a response), we should introduce a structure w
 package main
 
 import (
-	"github.com/cucumber/gherkin-go/v9"
+	"github.com/cucumber/gherkin-go/v11"
 	"github.com/cucumber/godog"
 )
 
@@ -98,7 +98,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/cucumber/gherkin-go/v9"
+	"github.com/cucumber/gherkin-go/v11"
 	"github.com/cucumber/godog"
 )
 

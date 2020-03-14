@@ -174,7 +174,7 @@ import (
 	"fmt"
 
 	"github.com/cucumber/godog"
-	messages "github.com/cucumber/messages-go/v9"
+	messages "github.com/cucumber/messages-go/v10"
 )
 
 func thereAreGodogs(available int) error {
