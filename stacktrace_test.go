@@ -3,17 +3,10 @@ package godog
 import (
 	"fmt"
 	"runtime"
-	"strings"
 	"testing"
-)
 
-func trimLineSpaces(s string) string {
-	var res []string
-	for _, ln := range strings.Split(s, "\n") {
-		res = append(res, strings.TrimSpace(ln))
-	}
-	return strings.Join(res, "\n")
-}
+	"github.com/stretchr/testify/assert"
+)
 
 func callstack1() *stack {
 	return callstack2()
@@ -37,14 +30,9 @@ func TestStacktrace(t *testing.T) {
 		stack: callstack1(),
 	}
 
-	expect := "err msg"
+	expected := "err msg"
 	actual := fmt.Sprintf("%s", err)
-	if expect != actual {
-		t.Fatalf("expected formatted trace error message to be: %s, but got %s", expect, actual)
-	}
 
-	actual = trimLineSpaces(fmt.Sprintf("%+v", err))
-	if strings.Index(actual, "stacktrace_test.go") == -1 {
-		t.Fatalf("does not have stacktrace in actual: %s", actual)
-	}
+	assert.Equal(t, expected, actual)
+	assert.NotContains(t, actual, "stacktrace_test.go")
 }

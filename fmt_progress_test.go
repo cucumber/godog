@@ -47,19 +47,18 @@ func TestProgressFormatterOutput(t *testing.T) {
 		},
 	}
 
-	expected := `
-...F-.P-.UU.....F..P..U 23
+	expected := `...F-.P-.UU.....F..P..U 23
 
 
 --- Failed steps:
 
   Scenario: failing scenario # any.feature:10
     When failing # any.feature:11
-	  Error: errored
+      Error: errored
 
   Scenario Outline: outline # any.feature:22
-	When failing # any.feature:24
-	  Error: errored
+    When failing # any.feature:24
+      Error: errored
 
 
 8 scenarios (2 passed, 2 failed, 2 pending, 2 undefined)
@@ -79,13 +78,13 @@ func nextUndefined() error {
 func FeatureContext(s *godog.Suite) {
 	s.Step(` + "`^undefined$`" + `, undefined)
 	s.Step(` + "`^next undefined$`" + `, nextUndefined)
-}`
+}
+
+`
 
 	require.True(t, r.run())
 
-	expected = trimAllLines(expected)
-	actual := trimAllLines(buf.String())
-
+	actual := buf.String()
 	assert.Equal(t, expected, actual)
 }
 
@@ -111,7 +110,7 @@ func TestProgressFormatterWhenStepPanics(t *testing.T) {
 	require.True(t, r.run())
 
 	actual := buf.String()
-	assert.Contains(t, actual, "godog/fmt_progress_test.go:107")
+	assert.Contains(t, actual, "godog/fmt_progress_test.go:106")
 }
 
 func TestProgressFormatterWithPassingMultisteps(t *testing.T) {
@@ -163,15 +162,14 @@ func TestProgressFormatterWithFailingMultisteps(t *testing.T) {
 
 	require.True(t, r.run())
 
-	expected := `
-.F 2
+	expected := `.F 2
 
 
 --- Failed steps:
 
-Scenario: passing scenario # some.feature:4
-Then two # some.feature:6
-Error: sub2: sub-sub: errored
+  Scenario: passing scenario # some.feature:4
+    Then two # some.feature:6
+      Error: sub2: sub-sub: errored
 
 
 1 scenarios (1 failed)
@@ -179,8 +177,7 @@ Error: sub2: sub-sub: errored
 0s
 `
 
-	expected = trimAllLines(expected)
-	actual := trimAllLines(buf.String())
+	actual := buf.String()
 	assert.Equal(t, expected, actual)
 }
 
@@ -231,8 +228,7 @@ func TestProgressFormatterMultistepTemplates(t *testing.T) {
 
 	require.False(t, r.run())
 
-	expected := `
-.U 2
+	expected := `.U 2
 
 
 1 scenarios (1 undefined)
@@ -258,11 +254,10 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(` + "`^unavailable \"([^\"]*)\" cost (\\d+)$`" + `, unavailableCost)
 	s.Step(` + "`^three$`" + `, three)
 }
+
 `
 
-	expected = trimAllLines(expected)
-	actual := trimAllLines(buf.String())
-
+	actual := buf.String()
 	assert.Equal(t, expected, actual)
 }
 
@@ -333,8 +328,7 @@ Feature: basic
 
 	require.True(t, r.run())
 
-	expected := `
-.F 2
+	expected := `.F 2
 
 
 --- Failed steps:
@@ -349,8 +343,6 @@ Feature: basic
 0s
 `
 
-	expected = trimAllLines(expected)
-	actual := trimAllLines(buf.String())
-
+	actual := buf.String()
 	assert.Equal(t, expected, actual)
 }
