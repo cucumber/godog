@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -428,7 +429,7 @@ func (f *basefmt) snippets() string {
 	}
 
 	var index int
-	var snips []*undefinedSnippet
+	var snips []undefinedSnippet
 	// build snippets
 	for _, u := range undefinedStepResults {
 		steps := []string{u.step.Text}
@@ -470,10 +471,12 @@ func (f *basefmt) snippets() string {
 				}
 			}
 			if !found {
-				snips = append(snips, &undefinedSnippet{Method: name, Expr: expr, argument: arg})
+				snips = append(snips, undefinedSnippet{Method: name, Expr: expr, argument: arg})
 			}
 		}
 	}
+
+	sort.Sort(snippetSortByMethod(snips))
 
 	var buf bytes.Buffer
 	if err := undefinedSnippetsTpl.Execute(&buf, snips); err != nil {

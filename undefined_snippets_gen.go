@@ -38,7 +38,7 @@ type undefinedSnippet struct {
 	argument *messages.PickleStepArgument
 }
 
-func (s *undefinedSnippet) Args() (ret string) {
+func (s undefinedSnippet) Args() (ret string) {
 	var (
 		args      []string
 		pos       int
@@ -91,4 +91,18 @@ func (s *undefinedSnippet) Args() (ret string) {
 	}
 
 	return strings.TrimSpace(strings.TrimRight(ret, ", ") + " " + last)
+}
+
+type snippetSortByMethod []undefinedSnippet
+
+func (s snippetSortByMethod) Len() int {
+	return len(s)
+}
+
+func (s snippetSortByMethod) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+func (s snippetSortByMethod) Less(i, j int) bool {
+	return s[i].Method < s[j].Method
 }
