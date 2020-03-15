@@ -28,6 +28,12 @@ type pretty struct {
 }
 
 func (f *pretty) Feature(gd *messages.GherkinDocument, p string, c []byte) {
+	f.lock.Lock()
+	if !*f.firstFeature {
+		fmt.Fprintln(f.out, "")
+	}
+	f.lock.Unlock()
+
 	f.basefmt.Feature(gd, p, c)
 
 	f.lock.Lock()
@@ -107,10 +113,6 @@ func (f *pretty) Copy(cf ConcurrentFormatter) {
 }
 
 func (f *pretty) printFeature(feature *messages.GherkinDocument_Feature) {
-	if len(f.features) > 1 {
-		fmt.Fprintln(f.out, "") // not a first feature, add a newline
-	}
-
 	fmt.Fprintln(f.out, keywordAndName(feature.Keyword, feature.Name))
 	if strings.TrimSpace(feature.Description) != "" {
 		for _, line := range strings.Split(feature.Description, "\n") {

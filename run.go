@@ -77,7 +77,9 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 			r.initializer(suite)
 			suite.run()
 			if suite.failed {
+				copyLock.Lock()
 				*fail = true
+				copyLock.Unlock()
 			}
 			if useFmtCopy {
 				copyLock.Lock()

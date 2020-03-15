@@ -190,16 +190,22 @@ type basefmt struct {
 	suiteName string
 
 	out    io.Writer
-	owner  interface{}
 	indent int
 
 	started  time.Time
 	features []*feature
 
-	lock *sync.Mutex
+	firstFeature *bool
+	lock         *sync.Mutex
 }
 
-func (f *basefmt) TestRunStarted() {}
+func (f *basefmt) TestRunStarted() {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
+	firstFeature := true
+	f.firstFeature = &firstFeature
+}
 
 func (f *basefmt) lastFeature() *feature {
 	return f.features[len(f.features)-1]
@@ -264,6 +270,8 @@ func (f *basefmt) Defined(*messages.Pickle, *messages.Pickle_PickleStep, *StepDe
 func (f *basefmt) Feature(ft *messages.GherkinDocument, p string, c []byte) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
+
+	*f.firstFeature = false
 
 	f.features = append(f.features, &feature{Path: p, GherkinDocument: ft, time: timeNowFunc()})
 }
@@ -422,6 +430,7 @@ func (f *basefmt) Summary() {
 func (f *basefmt) Sync(cf ConcurrentFormatter) {
 	if source, ok := cf.(*basefmt); ok {
 		f.lock = source.lock
+		f.firstFeature = source.firstFeature
 	}
 }
 
