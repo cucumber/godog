@@ -68,17 +68,17 @@ func TestProgressFormatterOutput(t *testing.T) {
 
 You can implement step definitions for undefined steps with these snippets:
 
-func undefined() error {
-	return godog.ErrPending
-}
-
 func nextUndefined() error {
 	return godog.ErrPending
 }
 
+func undefined() error {
+	return godog.ErrPending
+}
+
 func FeatureContext(s *godog.Suite) {
-	s.Step(` + "`^undefined$`" + `, undefined)
 	s.Step(` + "`^next undefined$`" + `, nextUndefined)
+	s.Step(` + "`^undefined$`" + `, undefined)
 }`
 
 	require.True(t, r.run())
@@ -241,7 +241,7 @@ func TestProgressFormatterMultistepTemplates(t *testing.T) {
 
 You can implement step definitions for undefined steps with these snippets:
 
-func undef() error {
+func three() error {
 	return godog.ErrPending
 }
 
@@ -249,14 +249,14 @@ func unavailableCost(arg1 string, arg2 int) error {
 	return godog.ErrPending
 }
 
-func three() error {
+func undef() error {
 	return godog.ErrPending
 }
 
 func FeatureContext(s *godog.Suite) {
-	s.Step(` + "`^undef$`" + `, undef)
-	s.Step(` + "`^unavailable \"([^\"]*)\" cost (\\d+)$`" + `, unavailableCost)
 	s.Step(` + "`^three$`" + `, three)
+	s.Step(` + "`^unavailable \"([^\"]*)\" cost (\\d+)$`" + `, unavailableCost)
+	s.Step(` + "`^undef$`" + `, undef)
 }
 `
 

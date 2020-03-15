@@ -105,17 +105,17 @@ Feature: undefined step snippets
     When I run feature suite
     And the undefined step snippets should be:
       """
-      func thereIsAWhichCosts(arg1 string, arg2 int) error {
-              return godog.ErrPending
-      }
-
       func iAddTheToTheBasket(arg1 string) error {
               return godog.ErrPending
       }
 
+      func thereIsAWhichCosts(arg1 string, arg2 int) error {
+              return godog.ErrPending
+      }
+
       func FeatureContext(s *godog.Suite) {
-              s.Step(`^there is a "([^"]*)", which costs £(\d+)$`, thereIsAWhichCosts)
               s.Step(`^I add the "([^"]*)" to the basket$`, iAddTheToTheBasket)
+              s.Step(`^there is a "([^"]*)", which costs £(\d+)$`, thereIsAWhichCosts)
       }
       """
 
@@ -131,16 +131,16 @@ Feature: undefined step snippets
     When I run feature suite
     And the undefined step snippets should be:
       """
-      func whichCosts(arg1 string, arg2 int) error {
-              return godog.ErrPending
-      }
-
       func godogs(arg1 int) error {
               return godog.ErrPending
       }
 
+      func whichCosts(arg1 string, arg2 int) error {
+              return godog.ErrPending
+      }
+
       func FeatureContext(s *godog.Suite) {
-              s.Step(`^"([^"]*)", which costs £(\d+)$`, whichCosts)
               s.Step(`^(\d+) godogs$`, godogs)
+              s.Step(`^"([^"]*)", which costs £(\d+)$`, whichCosts)
       }
       """
