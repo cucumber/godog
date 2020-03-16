@@ -5,47 +5,17 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"reflect"
-	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
-	"text/template"
 	"time"
 	"unicode"
 
+	"github.com/cucumber/messages-go/v10"
+
 	"github.com/cucumber/godog/colors"
-
-	"github.com/cucumber/messages-go/v9"
 )
-
-// some snippet formatting regexps
-var snippetExprCleanup = regexp.MustCompile("([\\/\\[\\]\\(\\)\\\\^\\$\\.\\|\\?\\*\\+\\'])")
-var snippetExprQuoted = regexp.MustCompile("(\\W|^)\"(?:[^\"]*)\"(\\W|$)")
-var snippetMethodName = regexp.MustCompile("[^a-zA-Z\\_\\ ]")
-var snippetNumbers = regexp.MustCompile("(\\d+)")
-
-var snippetHelperFuncs = template.FuncMap{
-	"backticked": func(s string) string {
-		return "`" + s + "`"
-	},
-}
-
-var undefinedSnippetsTpl = template.Must(template.New("snippets").Funcs(snippetHelperFuncs).Parse(`
-{{ range . }}func {{ .Method }}({{ .Args }}) error {
-	return godog.ErrPending
-}
-
-{{end}}func FeatureContext(s *godog.Suite) { {{ range . }}
-	s.Step({{ backticked .Expr }}, {{ .Method }}){{end}}
-}
-`))
-
-type undefinedSnippet struct {
-	Method   string
-	Expr     string
-	argument *messages.PickleStepArgument
-}
 
 type registeredFormatter struct {
 	name        string
@@ -213,6 +183,16 @@ func (f *basefmt) lastFeature() *feature {
 
 func (f *basefmt) lastStepResult() *stepResult {
 	return f.lastFeature().lastStepResult()
+}
+
+func (f *basefmt) findFeature(scenarioAstID string) *feature {
+	for _, ft := range f.features {
+		if sc := ft.findScenario(scenarioAstID); sc != nil {
+			return ft
+		}
+	}
+
+	panic("Couldn't find scenario for AST ID: " + scenarioAstID)
 }
 
 func (f *basefmt) findScenario(scenarioAstID string) *messages.GherkinDocument_Feature_Scenario {
@@ -442,55 +422,6 @@ func (f *basefmt) Copy(cf ConcurrentFormatter) {
 	}
 }
 
-func (s *undefinedSnippet) Args() (ret string) {
-	var (
-		args      []string
-		pos       int
-		breakLoop bool
-	)
-	for !breakLoop {
-		part := s.Expr[pos:]
-		ipos := strings.Index(part, "(\\d+)")
-		spos := strings.Index(part, "\"([^\"]*)\"")
-		switch {
-		case spos == -1 && ipos == -1:
-			breakLoop = true
-		case spos == -1:
-			pos += ipos + len("(\\d+)")
-			args = append(args, reflect.Int.String())
-		case ipos == -1:
-			pos += spos + len("\"([^\"]*)\"")
-			args = append(args, reflect.String.String())
-		case ipos < spos:
-			pos += ipos + len("(\\d+)")
-			args = append(args, reflect.Int.String())
-		case spos < ipos:
-			pos += spos + len("\"([^\"]*)\"")
-			args = append(args, reflect.String.String())
-		}
-	}
-
-	if s.argument != nil {
-		if s.argument.GetDocString() != nil {
-			args = append(args, "*messages.PickleStepArgument_PickleDocString")
-		}
-		if s.argument.GetDataTable() != nil {
-			args = append(args, "*messages.PickleStepArgument_PickleTable")
-		}
-	}
-
-	var last string
-	for i, arg := range args {
-		if last == "" || last == arg {
-			ret += fmt.Sprintf("arg%d, ", i+1)
-		} else {
-			ret = strings.TrimRight(ret, ", ") + fmt.Sprintf(" %s, arg%d, ", last, i+1)
-		}
-		last = arg
-	}
-	return strings.TrimSpace(strings.TrimRight(ret, ", ") + " " + last)
-}
-
 func (f *basefmt) findStepResults(status stepResultStatus) (res []*stepResult) {
 	for _, feat := range f.features {
 		for _, pr := range feat.pickleResults {
@@ -512,7 +443,7 @@ func (f *basefmt) snippets() string {
 	}
 
 	var index int
-	var snips []*undefinedSnippet
+	var snips []undefinedSnippet
 	// build snippets
 	for _, u := range undefinedStepResults {
 		steps := []string{u.step.Text}
@@ -554,10 +485,12 @@ func (f *basefmt) snippets() string {
 				}
 			}
 			if !found {
-				snips = append(snips, &undefinedSnippet{Method: name, Expr: expr, argument: arg})
+				snips = append(snips, undefinedSnippet{Method: name, Expr: expr, argument: arg})
 			}
 		}
 	}
+
+	sort.Sort(snippetSortByMethod(snips))
 
 	var buf bytes.Buffer
 	if err := undefinedSnippetsTpl.Execute(&buf, snips); err != nil {

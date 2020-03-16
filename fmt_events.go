@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/cucumber/messages-go/v9"
+	"github.com/cucumber/messages-go/v10"
 )
 
 const nanoSec = 1000000

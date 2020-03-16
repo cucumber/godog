@@ -14,8 +14,8 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/cucumber/gherkin-go/v9"
-	"github.com/cucumber/messages-go/v9"
+	"github.com/cucumber/gherkin-go/v11"
+	"github.com/cucumber/messages-go/v10"
 )
 
 var errorInterface = reflect.TypeOf((*error)(nil)).Elem()
