@@ -206,6 +206,16 @@ func (f *basefmt) lastStepResult() *stepResult {
 	return f.lastFeature().lastStepResult()
 }
 
+func (f *basefmt) findFeature(scenarioAstID string) *feature {
+	for _, ft := range f.features {
+		if sc := ft.findScenario(scenarioAstID); sc != nil {
+			return ft
+		}
+	}
+
+	panic("Couldn't find scenario for AST ID: " + scenarioAstID)
+}
+
 func (f *basefmt) findScenario(scenarioAstID string) *messages.GherkinDocument_Feature_Scenario {
 	for _, ft := range f.features {
 		if sc := ft.findScenario(scenarioAstID); sc != nil {
