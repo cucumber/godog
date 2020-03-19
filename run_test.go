@@ -278,6 +278,56 @@ func assertConcurrencyOutput(t *testing.T, formatter string, expected, actual []
 		actualRows := strings.Split(string(actual), "\n")
 		assert.ElementsMatch(t, expectedRows, actualRows)
 	case "progress":
-		// TODO
+		expectedOutput := parseProgressOutput(string(expected))
+		actualOutput := parseProgressOutput(string(actual))
+
+		assert.Equal(t, expectedOutput.passed, actualOutput.passed)
+		assert.Equal(t, expectedOutput.skipped, actualOutput.skipped)
+		assert.Equal(t, expectedOutput.failed, actualOutput.failed)
+		assert.Equal(t, expectedOutput.undefined, actualOutput.undefined)
+		assert.Equal(t, expectedOutput.pending, actualOutput.pending)
+		assert.Equal(t, expectedOutput.noOfStepsPerRow, actualOutput.noOfStepsPerRow)
+		assert.ElementsMatch(t, expectedOutput.bottomRows, actualOutput.bottomRows)
 	}
+}
+
+func parseProgressOutput(output string) (parsed progressOutput) {
+	mainParts := strings.Split(output, "\n\n\n")
+
+	topRows := strings.Split(mainParts[0], "\n")
+	parsed.bottomRows = strings.Split(mainParts[1], "\n")
+
+	parsed.noOfStepsPerRow = make([]string, len(topRows))
+	for idx, row := range topRows {
+		rowParts := strings.Split(row, " ")
+		stepResults := strings.Split(rowParts[0], "")
+		parsed.noOfStepsPerRow[idx] = rowParts[1]
+
+		for _, stepResult := range stepResults {
+			switch stepResult {
+			case ".":
+				parsed.passed++
+			case "-":
+				parsed.skipped++
+			case "F":
+				parsed.failed++
+			case "U":
+				parsed.undefined++
+			case "P":
+				parsed.pending++
+			}
+		}
+	}
+
+	return parsed
+}
+
+type progressOutput struct {
+	passed          int
+	skipped         int
+	failed          int
+	undefined       int
+	pending         int
+	noOfStepsPerRow []string
+	bottomRows      []string
 }
