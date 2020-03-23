@@ -44,7 +44,7 @@ Now we have described a success case and an error when the request method is not
 Run **godog version.feature**. You should see the following result, which says that all of our
 steps are yet undefined and provide us with the snippets to implement them.
 
-![Screenshot](https://raw.github.com/cucumber/godog/master/examples/api/screenshots/undefined.png)
+![Screenshot](https://raw.github.com/cucumber/godog/master/_examples/api/screenshots/undefined.png)
 
 ### Step 3
 
@@ -253,7 +253,7 @@ used to respond with the correct constant version number.
 
 Run our tests to see whether everything is happening as we have expected: `godog version.feature`
 
-![Screenshot](https://raw.github.com/cucumber/godog/master/examples/api/screenshots/passed.png)
+![Screenshot](https://raw.github.com/cucumber/godog/master/_examples/api/screenshots/passed.png)
 
 ### Conclusions
 
