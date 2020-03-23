@@ -5,13 +5,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cucumber/godog/gherkin"
+	"github.com/cucumber/messages-go/v10"
 )
 
 func TestShouldSupportIntTypes(t *testing.T) {
 	fn := func(a int64, b int32, c int16, d int8) error { return nil }
 
-	def := &StepDef{
+	def := &StepDefinition{
 		Handler: fn,
 		hv:      reflect.ValueOf(fn),
 	}
@@ -30,7 +30,7 @@ func TestShouldSupportIntTypes(t *testing.T) {
 func TestShouldSupportFloatTypes(t *testing.T) {
 	fn := func(a float64, b float32) error { return nil }
 
-	def := &StepDef{
+	def := &StepDefinition{
 		Handler: fn,
 		hv:      reflect.ValueOf(fn),
 	}
@@ -48,12 +48,12 @@ func TestShouldSupportFloatTypes(t *testing.T) {
 
 func TestShouldNotSupportOtherPointerTypesThanGherkin(t *testing.T) {
 	fn1 := func(a *int) error { return nil }
-	fn2 := func(a *gherkin.DocString) error { return nil }
-	fn3 := func(a *gherkin.DataTable) error { return nil }
+	fn2 := func(a *messages.PickleStepArgument_PickleDocString) error { return nil }
+	fn3 := func(a *messages.PickleStepArgument_PickleTable) error { return nil }
 
-	def1 := &StepDef{Handler: fn1, hv: reflect.ValueOf(fn1), args: []interface{}{(*int)(nil)}}
-	def2 := &StepDef{Handler: fn2, hv: reflect.ValueOf(fn2), args: []interface{}{(*gherkin.DocString)(nil)}}
-	def3 := &StepDef{Handler: fn3, hv: reflect.ValueOf(fn3), args: []interface{}{(*gherkin.DataTable)(nil)}}
+	def1 := &StepDefinition{Handler: fn1, hv: reflect.ValueOf(fn1), args: []interface{}{(*int)(nil)}}
+	def2 := &StepDefinition{Handler: fn2, hv: reflect.ValueOf(fn2), args: []interface{}{&messages.PickleStepArgument_PickleDocString{}}}
+	def3 := &StepDefinition{Handler: fn3, hv: reflect.ValueOf(fn3), args: []interface{}{(*messages.PickleStepArgument_PickleTable)(nil)}}
 
 	if err := def1.run(); err == nil {
 		t.Fatalf("expected conversion error, but got none")
@@ -70,8 +70,8 @@ func TestShouldSupportOnlyByteSlice(t *testing.T) {
 	fn1 := func(a []byte) error { return nil }
 	fn2 := func(a []string) error { return nil }
 
-	def1 := &StepDef{Handler: fn1, hv: reflect.ValueOf(fn1), args: []interface{}{"str"}}
-	def2 := &StepDef{Handler: fn2, hv: reflect.ValueOf(fn2), args: []interface{}{[]string{}}}
+	def1 := &StepDefinition{Handler: fn1, hv: reflect.ValueOf(fn1), args: []interface{}{"str"}}
+	def2 := &StepDefinition{Handler: fn2, hv: reflect.ValueOf(fn2), args: []interface{}{[]string{}}}
 
 	if err := def1.run(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -83,7 +83,7 @@ func TestShouldSupportOnlyByteSlice(t *testing.T) {
 
 func TestUnexpectedArguments(t *testing.T) {
 	fn := func(a, b int) error { return nil }
-	def := &StepDef{Handler: fn, hv: reflect.ValueOf(fn)}
+	def := &StepDefinition{Handler: fn, hv: reflect.ValueOf(fn)}
 
 	def.args = []interface{}{"1"}
 	if err := def.run(); err == nil {
@@ -97,7 +97,7 @@ func TestUnexpectedArguments(t *testing.T) {
 
 	// @TODO maybe we should support duration
 	// fn2 := func(err time.Duration) error { return nil }
-	// def = &StepDef{Handler: fn2, hv: reflect.ValueOf(fn2)}
+	// def = &StepDefinition{Handler: fn2, hv: reflect.ValueOf(fn2)}
 
 	// def.args = []interface{}{"1"}
 	// if err := def.run(); err == nil {

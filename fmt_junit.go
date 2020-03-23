@@ -64,45 +64,55 @@ func buildJUNITPackageSuite(suiteName string, startedAt time.Time, features []*f
 
 	for idx, feat := range features {
 		ts := junitTestSuite{
-			Name:      feat.Name,
+			Name:      feat.GherkinDocument.Feature.Name,
 			Time:      junitTimeDuration(feat.startedAt(), feat.finishedAt()),
-			TestCases: make([]*junitTestCase, len(feat.Scenarios)),
+			TestCases: make([]*junitTestCase, len(feat.pickleResults)),
 		}
 
-		for idx, scenario := range feat.Scenarios {
-			tc := junitTestCase{
-				Name: scenario.Name,
-				Time: junitTimeDuration(scenario.startedAt(), scenario.finishedAt()),
+		var testcaseNames = make(map[string]int)
+		for _, pickleResult := range feat.pickleResults {
+			testcaseNames[pickleResult.Name] = testcaseNames[pickleResult.Name] + 1
+		}
+
+		var outlineNo = make(map[string]int)
+		for idx, pickleResult := range feat.pickleResults {
+			tc := junitTestCase{}
+			tc.Time = junitTimeDuration(pickleResult.startedAt(), pickleResult.finishedAt())
+
+			tc.Name = pickleResult.Name
+			if testcaseNames[tc.Name] > 1 {
+				outlineNo[tc.Name] = outlineNo[tc.Name] + 1
+				tc.Name += fmt.Sprintf(" #%d", outlineNo[tc.Name])
 			}
 
 			ts.Tests++
 			suite.Tests++
 
-			for _, step := range scenario.Steps {
-				switch step.typ {
+			for _, stepResult := range pickleResult.stepResults {
+				switch stepResult.status {
 				case passed:
 					tc.Status = passed.String()
 				case failed:
 					tc.Status = failed.String()
 					tc.Failure = &junitFailure{
-						Message: fmt.Sprintf("%s %s: %s", step.step.Type, step.step.Text, step.err),
+						Message: fmt.Sprintf("Step %s: %s", stepResult.step.Text, stepResult.err),
 					}
 				case skipped:
 					tc.Error = append(tc.Error, &junitError{
 						Type:    "skipped",
-						Message: fmt.Sprintf("%s %s", step.step.Type, step.step.Text),
+						Message: fmt.Sprintf("Step %s", stepResult.step.Text),
 					})
 				case undefined:
 					tc.Status = undefined.String()
 					tc.Error = append(tc.Error, &junitError{
 						Type:    "undefined",
-						Message: fmt.Sprintf("%s %s", step.step.Type, step.step.Text),
+						Message: fmt.Sprintf("Step %s", stepResult.step.Text),
 					})
 				case pending:
 					tc.Status = pending.String()
 					tc.Error = append(tc.Error, &junitError{
 						Type:    "pending",
-						Message: fmt.Sprintf("%s %s: TODO: write pending definition", step.step.Type, step.step.Text),
+						Message: fmt.Sprintf("Step %s: TODO: write pending definition", stepResult.step.Text),
 					})
 				}
 			}

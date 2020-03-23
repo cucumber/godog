@@ -17,8 +17,8 @@
 
 --- <red>Failed steps:</red>
 
-  <red>Scenario: failing</red><bold-black> # formatter-tests/features/some_scenarions_including_failing.feature:3</bold-black>
-    <red>When failing step</red><bold-black> # formatter-tests/features/some_scenarions_including_failing.feature:5</bold-black>
+  <red>Scenario: failing</red> <bold-black># formatter-tests/features/some_scenarions_including_failing.feature:3</bold-black>
+    <red>When failing step</red> <bold-black># formatter-tests/features/some_scenarions_including_failing.feature:5</bold-black>
       <red>Error: </red><bold-red>step failed</bold-red>
 
 

@@ -9,6 +9,7 @@ import (
 
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
+	messages "github.com/cucumber/messages-go/v10"
 )
 
 var opt = godog.Options{Output: colors.Colored(os.Stdout)}
@@ -56,7 +57,7 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(`^I eat (\d+)$`, iEat)
 	s.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
 
-	s.BeforeScenario(func(interface{}) {
+	s.BeforeScenario(func(*messages.Pickle) {
 		Godogs = 0 // clean the state before every scenario
 	})
 }

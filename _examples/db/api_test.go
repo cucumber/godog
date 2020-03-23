@@ -11,7 +11,7 @@ import (
 
 	txdb "github.com/DATA-DOG/go-txdb"
 	"github.com/cucumber/godog"
-	"github.com/cucumber/godog/gherkin"
+	"github.com/cucumber/messages-go/v10"
 )
 
 func init() {
@@ -24,7 +24,7 @@ type apiFeature struct {
 	resp *httptest.ResponseRecorder
 }
 
-func (a *apiFeature) resetResponse(interface{}) {
+func (a *apiFeature) resetResponse(*messages.Pickle) {
 	a.resp = httptest.NewRecorder()
 	if a.db != nil {
 		a.db.Close()
@@ -71,7 +71,7 @@ func (a *apiFeature) theResponseCodeShouldBe(code int) error {
 	return nil
 }
 
-func (a *apiFeature) theResponseShouldMatchJSON(body *gherkin.DocString) (err error) {
+func (a *apiFeature) theResponseShouldMatchJSON(body *messages.PickleStepArgument_PickleDocString) (err error) {
 	var expected, actual interface{}
 
 	// re-encode expected response
@@ -91,7 +91,7 @@ func (a *apiFeature) theResponseShouldMatchJSON(body *gherkin.DocString) (err er
 	return nil
 }
 
-func (a *apiFeature) thereAreUsers(users *gherkin.DataTable) error {
+func (a *apiFeature) thereAreUsers(users *messages.PickleStepArgument_PickleTable) error {
 	var fields []string
 	var marks []string
 	head := users.Rows[0].Cells
