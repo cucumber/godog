@@ -20,6 +20,8 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Fixed
 
+- Fixed failing builder tests due to the v0.9.0 change ([lonnblad])
+
 ## [0.9.0]
 
 ### Added
