@@ -252,6 +252,7 @@ func TestFormatterConcurrencyRun(t *testing.T) {
 		"progress",
 		"junit",
 		"pretty",
+		"events",
 	}
 
 	featurePaths := []string{"formatter-tests/features"}
