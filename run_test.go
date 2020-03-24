@@ -124,30 +124,6 @@ func TestShouldFailOnError(t *testing.T) {
 	assert.True(t, r.run())
 }
 
-func TestFailsWithConcurrencyOptionError(t *testing.T) {
-	stderr, closer := bufErrorPipe(t)
-	defer closer()
-	defer stderr.Close()
-
-	opt := Options{
-		Format:      "pretty",
-		Paths:       []string{"features/load:6"},
-		Concurrency: 2,
-		Output:      ioutil.Discard,
-	}
-
-	status := RunWithOptions("fails", func(_ *Suite) {}, opt)
-	require.Equal(t, exitOptionError, status)
-
-	closer()
-
-	b, err := ioutil.ReadAll(stderr)
-	require.NoError(t, err)
-
-	out := strings.TrimSpace(string(b))
-	assert.Equal(t, `format "pretty" does not support concurrent execution`, out)
-}
-
 func TestFailsWithUnknownFormatterOptionError(t *testing.T) {
 	stderr, closer := bufErrorPipe(t)
 	defer closer()
@@ -275,6 +251,7 @@ func TestFormatterConcurrencyRun(t *testing.T) {
 	formatters := []string{
 		"progress",
 		"junit",
+		"pretty",
 	}
 
 	featurePaths := []string{"formatter-tests/features"}
