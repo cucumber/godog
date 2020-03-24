@@ -283,7 +283,7 @@ func supportsConcurrency(format string) bool {
 	case "events":
 		return true
 	case "cucumber":
-		return false
+		return true
 	case "pretty":
 		return true
 	default:

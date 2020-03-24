@@ -241,7 +241,9 @@ func (f *basefmt) Pickle(p *messages.Pickle) {
 	defer f.lock.Unlock()
 
 	feature := f.features[len(f.features)-1]
-	feature.pickleResults = append(feature.pickleResults, &pickleResult{Name: p.Name, time: timeNowFunc()})
+
+	pr := pickleResult{Name: p.Name, AstNodeIDs: p.AstNodeIds, time: timeNowFunc()}
+	feature.pickleResults = append(feature.pickleResults, &pr)
 }
 
 func (f *basefmt) Defined(*messages.Pickle, *messages.Pickle_PickleStep, *StepDefinition) {}
