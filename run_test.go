@@ -6,7 +6,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -250,56 +249,128 @@ func TestFeatureFilePathParser(t *testing.T) {
 	}
 }
 
-type succeedRunTestCase struct {
-	format      string // formatter to use
-	concurrency int    // concurrency option range to test
-	filename    string // expected output file
+func TestAllFeaturesRun(t *testing.T) {
+	const concurrency = 10
+	const format = "progress"
+
+	const expected = `...................................................................... 70
+...................................................................... 140
+...................................................................... 210
+...................................................................... 280
+..........................                                             306
+
+
+79 scenarios (79 passed)
+306 steps (306 passed)
+0s
+`
+
+	actualStatus, actualOutput := testRunWithOptions(t, format, concurrency, []string{"features"})
+
+	assert.Equal(t, exitSuccess, actualStatus)
+	assert.Equal(t, expected, actualOutput)
 }
 
-func TestConcurrencyRun(t *testing.T) {
-	testCases := []succeedRunTestCase{
-		{format: "progress", concurrency: 4, filename: "fixtures/progress_output.txt"},
-		{format: "junit", concurrency: 4, filename: "fixtures/junit_output.xml"},
+func TestFormatterConcurrencyRun(t *testing.T) {
+	formatters := []string{
+		"progress",
+		"junit",
 	}
 
-	for _, tc := range testCases {
-		expectedOutput, err := ioutil.ReadFile(tc.filename)
-		require.NoError(t, err)
+	featurePaths := []string{"formatter-tests/features"}
 
-		for concurrency := range make([]int, tc.concurrency) {
-			t.Run(
-				fmt.Sprintf("%s/concurrency/%d", tc.format, concurrency),
-				func(t *testing.T) {
-					testSucceedRun(t, tc.format, concurrency, string(expectedOutput))
-				},
-			)
-		}
+	const concurrency = 10
+
+	for _, formatter := range formatters {
+		t.Run(
+			fmt.Sprintf("%s/concurrency/%d", formatter, concurrency),
+			func(t *testing.T) {
+				singleThreadStatus, singleThreadOutput := testRunWithOptions(t, formatter, 1, featurePaths)
+				status, actual := testRunWithOptions(t, formatter, concurrency, featurePaths)
+
+				assert.Equal(t, singleThreadStatus, status)
+				assertConcurrencyOutput(t, formatter, singleThreadOutput, actual)
+			},
+		)
 	}
 }
 
-func testSucceedRun(t *testing.T, format string, concurrency int, expected string) {
+func testRunWithOptions(t *testing.T, format string, concurrency int, featurePaths []string) (int, string) {
 	output := new(bytes.Buffer)
 
 	opt := Options{
 		Format:      format,
 		NoColors:    true,
-		Paths:       []string{"features"},
+		Paths:       featurePaths,
 		Concurrency: concurrency,
 		Output:      output,
 	}
 
 	status := RunWithOptions("succeed", func(s *Suite) { SuiteContext(s) }, opt)
-	assert.Equal(t, exitSuccess, status)
 
-	b, err := ioutil.ReadAll(output)
+	actual, err := ioutil.ReadAll(output)
 	require.NoError(t, err)
 
-	suiteCtxReg := regexp.MustCompile(`suite_context.go:\d+`)
+	return status, string(actual)
+}
 
-	expected = suiteCtxReg.ReplaceAllString(expected, `suite_context.go:0`)
+func assertConcurrencyOutput(t *testing.T, formatter string, expected, actual string) {
+	switch formatter {
+	case "cucumber", "junit", "pretty", "events":
+		expectedRows := strings.Split(expected, "\n")
+		actualRows := strings.Split(actual, "\n")
+		assert.ElementsMatch(t, expectedRows, actualRows)
+	case "progress":
+		expectedOutput := parseProgressOutput(expected)
+		actualOutput := parseProgressOutput(actual)
 
-	actual := strings.TrimSpace(string(b))
-	actual = suiteCtxReg.ReplaceAllString(actual, `suite_context.go:0`)
+		assert.Equal(t, expectedOutput.passed, actualOutput.passed)
+		assert.Equal(t, expectedOutput.skipped, actualOutput.skipped)
+		assert.Equal(t, expectedOutput.failed, actualOutput.failed)
+		assert.Equal(t, expectedOutput.undefined, actualOutput.undefined)
+		assert.Equal(t, expectedOutput.pending, actualOutput.pending)
+		assert.Equal(t, expectedOutput.noOfStepsPerRow, actualOutput.noOfStepsPerRow)
+		assert.ElementsMatch(t, expectedOutput.bottomRows, actualOutput.bottomRows)
+	}
+}
 
-	assert.Equalf(t, expected, actual, "[%s]", actual)
+func parseProgressOutput(output string) (parsed progressOutput) {
+	mainParts := strings.Split(output, "\n\n\n")
+
+	topRows := strings.Split(mainParts[0], "\n")
+	parsed.bottomRows = strings.Split(mainParts[1], "\n")
+
+	parsed.noOfStepsPerRow = make([]string, len(topRows))
+	for idx, row := range topRows {
+		rowParts := strings.Split(row, " ")
+		stepResults := strings.Split(rowParts[0], "")
+		parsed.noOfStepsPerRow[idx] = rowParts[1]
+
+		for _, stepResult := range stepResults {
+			switch stepResult {
+			case ".":
+				parsed.passed++
+			case "-":
+				parsed.skipped++
+			case "F":
+				parsed.failed++
+			case "U":
+				parsed.undefined++
+			case "P":
+				parsed.pending++
+			}
+		}
+	}
+
+	return parsed
+}
+
+type progressOutput struct {
+	passed          int
+	skipped         int
+	failed          int
+	undefined       int
+	pending         int
+	noOfStepsPerRow []string
+	bottomRows      []string
 }
