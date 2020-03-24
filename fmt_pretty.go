@@ -104,7 +104,7 @@ func (f *pretty) scenarioLengths(scenarioAstID string) (scenarioHeaderLength int
 
 func (f *pretty) printScenarioHeader(astScenario *messages.GherkinDocument_Feature_Scenario, spaceFilling int) {
 	text := s(f.indent) + keywordAndName(astScenario.Keyword, astScenario.Name)
-	text += s(spaceFilling) + f.line(astScenario.Location)
+	text += s(spaceFilling) + f.line(f.lastFeature().Path, astScenario.Location)
 	fmt.Fprintln(f.out, "\n"+text)
 }
 
@@ -155,14 +155,16 @@ func (f *pretty) Summary() {
 	if len(failedStepResults) > 0 {
 		fmt.Fprintln(f.out, "\n--- "+red("Failed steps:")+"\n")
 		for _, fail := range failedStepResults {
+			feature := f.findFeature(fail.owner.AstNodeIds[0])
+
 			astScenario := f.findScenario(fail.owner.AstNodeIds[0])
 			scenarioDesc := fmt.Sprintf("%s: %s", astScenario.Keyword, fail.owner.Name)
 
 			astStep := f.findStep(fail.step.AstNodeIds[0])
 			stepDesc := strings.TrimSpace(astStep.Keyword) + " " + fail.step.Text
 
-			fmt.Fprintln(f.out, s(f.indent)+red(scenarioDesc)+f.line(astScenario.Location))
-			fmt.Fprintln(f.out, s(f.indent*2)+red(stepDesc)+f.line(astStep.Location))
+			fmt.Fprintln(f.out, s(f.indent)+red(scenarioDesc)+f.line(feature.Path, astScenario.Location))
+			fmt.Fprintln(f.out, s(f.indent*2)+red(stepDesc)+f.line(feature.Path, astStep.Location))
 			fmt.Fprintln(f.out, s(f.indent*3)+red("Error: ")+redb(fmt.Sprintf("%+v", fail.err))+"\n")
 		}
 	}
@@ -455,8 +457,8 @@ func (f *pretty) longestStep(steps []*messages.GherkinDocument_Feature_Step, pic
 }
 
 // a line number representation in feature file
-func (f *pretty) line(loc *messages.Location) string {
-	return " " + blackb(fmt.Sprintf("# %s:%d", f.lastFeature().Path, loc.Line))
+func (f *pretty) line(path string, loc *messages.Location) string {
+	return " " + blackb(fmt.Sprintf("# %s:%d", path, loc.Line))
 }
 
 func (f *pretty) lengthPickleStep(keyword, text string) int {

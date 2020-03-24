@@ -14,8 +14,23 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Changed
 
+### Deprecated
+
+### Removed
+
+### Fixed
+
+- Fixed failing builder tests due to the v0.9.0 change ([lonnblad])
+
+## [0.9.0]
+
+### Added
+
+### Changed
+
 - Run godog features in CircleCI in strict mode ([jaysonesmith])
 - Removed TestMain call in `suite_test.go` for CI. ([jaysonesmith])
+- Migrated to [gherkin-go - v11.0.0](https://github.com/cucumber/gherkin-go/releases/tag/v11.0.0). ([240](https://github.com/cucumber/godog/pull/240) - [lonnblad])
 
 ### Deprecated
 
@@ -27,7 +42,8 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 - Re enable custom formatters. ([238](https://github.com/cucumber/godog/pull/238) - [ericmcbride])
 - Added back suite_test.go ([jaysonesmith])
 - Normalise module paths for use on Windows ([242](https://github.com/cucumber/godog/pull/242) - [gjtaylor])
-- Fixed panic in indenting function `s`([247](https://github.com/cucumber/godog/pull/247) - [titouanfreville])
+- Fixed panic in indenting function `s` ([247](https://github.com/cucumber/godog/pull/247) - [titouanfreville])
+- Fixed wrong version in API example ([263](https://github.com/cucumber/godog/pull/263) - [denis-trofimov])
 
 ## [0.8.1]
 
@@ -79,3 +95,4 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 [ericmcbride]:      https://github.com/ericmcbride
 [gjtaylor]:         https://github.com/gjtaylor
 [titouanfreville]:  https://github.com/titouanfreville
+[denis-trofimov]:   https://github.com/denis-trofimov
