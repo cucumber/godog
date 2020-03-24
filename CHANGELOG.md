@@ -21,6 +21,8 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ### Fixed
 
 - Fixed failing builder tests due to the v0.9.0 change ([lonnblad])
+- Update paths to screenshots for examples ([270](https://github.com/cucumber/godog/pull/270) - [leviable])
+- Made progress formatter verification a bit more accurate ([lonnblad])
 
 ## [0.9.0]
 
@@ -96,3 +98,4 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 [gjtaylor]:         https://github.com/gjtaylor
 [titouanfreville]:  https://github.com/titouanfreville
 [denis-trofimov]:   https://github.com/denis-trofimov
+[leviable]:         https://github.com/leviable
