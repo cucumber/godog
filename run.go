@@ -75,7 +75,9 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 			r.initializer(suite)
 			suite.run()
 			if suite.failed {
+				copyLock.Lock()
 				*fail = true
+				copyLock.Unlock()
 			}
 			if useFmtCopy {
 				copyLock.Lock()
@@ -274,7 +276,11 @@ func supportsConcurrency(format string) bool {
 	switch format {
 	case "progress", "junit":
 		return true
-	case "events", "pretty", "cucumber":
+	case "events":
+		return false
+	case "cucumber":
+		return false
+	case "pretty":
 		return false
 	default:
 		return true // enables concurrent custom formatters to work
