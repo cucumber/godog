@@ -14,6 +14,12 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Changed
 
+- Broke out snippets gen and added sorting on method name ([271](https://github.com/cucumber/godog/pull/271) - [lonnblad])
+- Added concurrency support to the pretty formatter ([275](https://github.com/cucumber/godog/pull/275) - [lonnblad])
+- Added concurrency support to the events formatter ([274](https://github.com/cucumber/godog/pull/274) - [lonnblad])
+- Added concurrency support to the cucumber formatter ([273](https://github.com/cucumber/godog/pull/273) - [lonnblad])
+- Updated so that we run all tests concurrent now ([278](https://github.com/cucumber/godog/pull/278) - [lonnblad])
+
 ### Deprecated
 
 ### Removed
@@ -23,6 +29,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 - Fixed failing builder tests due to the v0.9.0 change ([lonnblad])
 - Update paths to screenshots for examples ([270](https://github.com/cucumber/godog/pull/270) - [leviable])
 - Made progress formatter verification a bit more accurate ([lonnblad])
+- Added comparison between single and multi threaded runs ([272](https://github.com/cucumber/godog/pull/272) - [lonnblad])
 
 ## [0.9.0]
 
