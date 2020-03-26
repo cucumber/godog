@@ -110,23 +110,6 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 	return
 }
 
-func (r *runner) run() bool {
-	suite := &Suite{
-		fmt:           r.fmt,
-		randomSeed:    r.randomSeed,
-		stopOnFailure: r.stopOnFailure,
-		strict:        r.strict,
-		features:      r.features,
-	}
-	r.initializer(suite)
-
-	r.fmt.TestRunStarted()
-	suite.run()
-	r.fmt.Summary()
-
-	return suite.failed
-}
-
 // RunWithOptions is same as Run function, except
 // it uses Options provided in order to run the
 // test suite without parsing flags
@@ -169,10 +152,10 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 		}
 	}
 
-	if opt.Concurrency > 1 && !supportsConcurrency(opt.Format) {
-		fmt.Fprintln(os.Stderr, fmt.Errorf("format \"%s\" does not support concurrent execution", opt.Format))
-		return exitOptionError
+	if opt.Concurrency < 1 {
+		opt.Concurrency = 1
 	}
+
 	formatter := FindFmt(opt.Format)
 	if nil == formatter {
 		var names []string
@@ -214,12 +197,7 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 	_, filename, _, _ := runtime.Caller(1)
 	os.Setenv("GODOG_TESTED_PACKAGE", runsFromPackage(filename))
 
-	var failed bool
-	if opt.Concurrency > 1 {
-		failed = r.concurrent(opt.Concurrency, func() Formatter { return formatter(suite, output) })
-	} else {
-		failed = r.run()
-	}
+	failed := r.concurrent(opt.Concurrency, func() Formatter { return formatter(suite, output) })
 
 	// @TODO: should prevent from having these
 	os.Setenv("GODOG_SEED", "")
@@ -274,19 +252,4 @@ func Run(suite string, contextInitializer func(suite *Suite)) int {
 	opt.Paths = flagSet.Args()
 
 	return RunWithOptions(suite, contextInitializer, opt)
-}
-
-func supportsConcurrency(format string) bool {
-	switch format {
-	case "progress", "junit":
-		return true
-	case "events":
-		return true
-	case "cucumber":
-		return true
-	case "pretty":
-		return true
-	default:
-		return true // enables concurrent custom formatters to work
-	}
 }
