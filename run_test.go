@@ -75,10 +75,12 @@ func TestFailsOrPassesBasedOnStrictModeWhenHasPendingSteps(t *testing.T) {
 		},
 	}
 
-	assert.False(t, r.run())
+	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", ioutil.Discard) })
+	require.False(t, failed)
 
 	r.strict = true
-	assert.True(t, r.run())
+	failed = r.concurrent(1, func() Formatter { return progressFunc("progress", ioutil.Discard) })
+	require.True(t, failed)
 }
 
 func TestFailsOrPassesBasedOnStrictModeWhenHasUndefinedSteps(t *testing.T) {
@@ -98,10 +100,12 @@ func TestFailsOrPassesBasedOnStrictModeWhenHasUndefinedSteps(t *testing.T) {
 		},
 	}
 
-	assert.False(t, r.run())
+	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", ioutil.Discard) })
+	require.False(t, failed)
 
 	r.strict = true
-	assert.True(t, r.run())
+	failed = r.concurrent(1, func() Formatter { return progressFunc("progress", ioutil.Discard) })
+	require.True(t, failed)
 }
 
 func TestShouldFailOnError(t *testing.T) {
@@ -121,7 +125,8 @@ func TestShouldFailOnError(t *testing.T) {
 		},
 	}
 
-	assert.True(t, r.run())
+	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", ioutil.Discard) })
+	require.True(t, failed)
 }
 
 func TestFailsWithUnknownFormatterOptionError(t *testing.T) {
