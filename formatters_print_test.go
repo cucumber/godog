@@ -47,12 +47,12 @@ func TestPrintingFormatters(t *testing.T) {
 			expectedOutput, err := ioutil.ReadFile(expectOutputPath)
 			require.NoError(t, err)
 
+			suite.fmt.TestRunStarted()
 			suite.run()
 			suite.fmt.Summary()
 
 			expected := string(expectedOutput)
 			actual := buf.String()
-
 			assert.Equalf(t, expected, actual, "path: %s", expectOutputPath)
 		}
 	}

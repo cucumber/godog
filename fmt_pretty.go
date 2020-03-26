@@ -28,13 +28,26 @@ type pretty struct {
 }
 
 func (f *pretty) Feature(gd *messages.GherkinDocument, p string, c []byte) {
+	f.lock.Lock()
+	if !*f.firstFeature {
+		fmt.Fprintln(f.out, "")
+	}
+	f.lock.Unlock()
+
 	f.basefmt.Feature(gd, p, c)
+
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	f.printFeature(gd.Feature)
 }
 
 // Pickle takes a gherkin node for formatting
 func (f *pretty) Pickle(pickle *messages.Pickle) {
 	f.basefmt.Pickle(pickle)
+
+	f.lock.Lock()
+	defer f.lock.Unlock()
 
 	if len(pickle.Steps) == 0 {
 		f.printUndefinedPickle(pickle)
@@ -44,34 +57,62 @@ func (f *pretty) Pickle(pickle *messages.Pickle) {
 
 func (f *pretty) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
 	f.basefmt.Passed(pickle, step, match)
+
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	f.printStep(f.lastStepResult())
 }
 
 func (f *pretty) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
 	f.basefmt.Skipped(pickle, step, match)
+
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	f.printStep(f.lastStepResult())
 }
 
 func (f *pretty) Undefined(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
 	f.basefmt.Undefined(pickle, step, match)
+
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	f.printStep(f.lastStepResult())
 }
 
 func (f *pretty) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition, err error) {
 	f.basefmt.Failed(pickle, step, match, err)
+
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	f.printStep(f.lastStepResult())
 }
 
 func (f *pretty) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
 	f.basefmt.Pending(pickle, step, match)
+
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	f.printStep(f.lastStepResult())
 }
 
-func (f *pretty) printFeature(feature *messages.GherkinDocument_Feature) {
-	if len(f.features) > 1 {
-		fmt.Fprintln(f.out, "") // not a first feature, add a newline
+func (f *pretty) Sync(cf ConcurrentFormatter) {
+	if source, ok := cf.(*pretty); ok {
+		f.basefmt.Sync(source.basefmt)
 	}
+}
 
+func (f *pretty) Copy(cf ConcurrentFormatter) {
+	if source, ok := cf.(*pretty); ok {
+		f.basefmt.Copy(source.basefmt)
+	}
+}
+
+func (f *pretty) printFeature(feature *messages.GherkinDocument_Feature) {
 	fmt.Fprintln(f.out, keywordAndName(feature.Keyword, feature.Name))
 	if strings.TrimSpace(feature.Description) != "" {
 		for _, line := range strings.Split(feature.Description, "\n") {

@@ -159,6 +159,7 @@ func TestJUnitFormatterOutput(t *testing.T) {
 		}},
 	}
 
+	s.fmt.TestRunStarted()
 	s.run()
 	s.fmt.Summary()
 

@@ -68,6 +68,7 @@ func AvailableFormatters() map[string]string {
 // formatters needs to be registered with a
 // godog.Format function call
 type Formatter interface {
+	TestRunStarted()
 	Feature(*messages.GherkinDocument, string, []byte)
 	Pickle(*messages.Pickle)
 	Defined(*messages.Pickle, *messages.Pickle_PickleStep, *StepDefinition)
@@ -165,7 +166,8 @@ type basefmt struct {
 	started  time.Time
 	features []*feature
 
-	lock *sync.Mutex
+	firstFeature *bool
+	lock         *sync.Mutex
 }
 
 func (f *basefmt) lastFeature() *feature {
@@ -226,6 +228,14 @@ func (f *basefmt) findStep(stepAstID string) *messages.GherkinDocument_Feature_S
 	panic("Couldn't find step for AST ID: " + stepAstID)
 }
 
+func (f *basefmt) TestRunStarted() {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
+	firstFeature := true
+	f.firstFeature = &firstFeature
+}
+
 func (f *basefmt) Pickle(p *messages.Pickle) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
@@ -239,6 +249,8 @@ func (f *basefmt) Defined(*messages.Pickle, *messages.Pickle_PickleStep, *StepDe
 func (f *basefmt) Feature(ft *messages.GherkinDocument, p string, c []byte) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
+
+	*f.firstFeature = false
 
 	f.features = append(f.features, &feature{Path: p, GherkinDocument: ft, time: timeNowFunc()})
 }
@@ -397,6 +409,7 @@ func (f *basefmt) Summary() {
 func (f *basefmt) Sync(cf ConcurrentFormatter) {
 	if source, ok := cf.(*basefmt); ok {
 		f.lock = source.lock
+		f.firstFeature = source.firstFeature
 	}
 }
 
