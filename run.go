@@ -281,7 +281,7 @@ func supportsConcurrency(format string) bool {
 	case "progress", "junit":
 		return true
 	case "events":
-		return false
+		return true
 	case "cucumber":
 		return false
 	case "pretty":
