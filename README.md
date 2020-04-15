@@ -42,15 +42,15 @@ The following about section was taken from
 
 Due to dependency changes in a coming merge to master, including breaking changes, you should update how you install or depend on godog so that you have a version specified.
 
-### Install
+## Install
 ```
-go get github.com/cucumber/godog/cmd/godog@v0.8.1
+go get github.com/cucumber/godog/cmd/godog@v0.9.0
 ```
-Adding `@v0.8.1` will install v0.8.1 specifically instead of master.
+Adding `@v0.9.0` will install v0.9.0 specifically instead of master.
 
 Running `within the $GOPATH`, you would also need to set `GO111MODULE=on`, like this:
 ```
-GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.8.1
+GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.9.0
 ```
 
 ## About
@@ -74,17 +74,6 @@ business goal in mind at all times.
 
 When automated testing is this much fun, teams can easily protect
 themselves from costly regressions.
-
-## Install
-```
-go get github.com/cucumber/godog/cmd/godog@v0.9.0
-```
-Adding `@v0.9.0` will install v0.9.0 specifically instead of master.
-
-Running `within the $GOPATH`, you would also need to set `GO111MODULE=on`, like this:
-```
-GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.9.0
-```
 
 ## Example
 
