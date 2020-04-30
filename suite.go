@@ -748,7 +748,10 @@ func (s sortByOrderGiven) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func filterFeatures(tags string, collected map[string]*feature) (features []*feature) {
 	for _, ft := range collected {
 		applyTagFilter(tags, ft)
-		features = append(features, ft)
+
+		if ft.Feature != nil {
+			features = append(features, ft)
+		}
 	}
 
 	sort.Sort(sortByOrderGiven(features))
