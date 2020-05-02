@@ -77,8 +77,7 @@ themselves from costly regressions.
 
 ## Example
 
-The following example can be [found
-here](/_examples/godogs).
+The following example can be [found here](/_examples/godogs).
 
 ### Step 1
 
@@ -344,6 +343,40 @@ is one of the following:
 - `~@wip` - exclude all scenarios with wip tag
 - `@wip && ~@new` - run wip scenarios, but exclude new
 - `@wip,@undone` - run wip or undone scenarios
+
+### Using assertion packages like testify with Godog
+A more extensive example can be [found here](/_examples/assert-godogs).
+
+``` go
+/* file: $GOPATH/src/assert-godogs/godogs_test.go */
+
+func thereShouldBeRemaining(remaining int) error {
+	return assertExpectedAndActual(
+		assert.Equal, Godogs, remaining,
+		"Expected %d godogs to be remaining, but there is %d", remaining, Godogs,
+	)
+}
+
+// assertExpectedAndActual is a helper function to allow the step function to call
+// assertion functions where you want to compare an expected and an actual value.
+func assertExpectedAndActual(a expectedAndActualAssertion, expected, actual interface{}, msgAndArgs ...interface{}) error {
+	var t asserter
+	a(&t, expected, actual, msgAndArgs...)
+	return t.err
+}
+
+type expectedAndActualAssertion func(t assert.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool
+
+// asserter is used to be able to retrieve the error reported by the called assertion
+type asserter struct {
+	err error
+}
+
+// Errorf is used by the called assertion to report an error
+func (a *asserter) Errorf(format string, args ...interface{}) {
+	a.err = fmt.Errorf(format, args...)
+}
+```
 
 ### Configure common options for godog CLI
 
