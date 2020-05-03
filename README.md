@@ -140,7 +140,6 @@ Since we need a working implementation, we may start by implementing only what i
 We only need a number of **godogs** for now. Lets keep it simple.
 
 ``` go
-/* file: $GOPATH/src/godogs/godogs.go */
 package main
 
 // Godogs available to eat
@@ -155,7 +154,6 @@ Now lets implement our step definitions, which we can copy from generated
 console output snippets in order to test our feature requirements:
 
 ``` go
-/* file: $GOPATH/src/godogs/godogs_test.go */
 package main
 
 import (
@@ -348,8 +346,6 @@ is one of the following:
 A more extensive example can be [found here](/_examples/assert-godogs).
 
 ``` go
-/* file: $GOPATH/src/assert-godogs/godogs_test.go */
-
 func thereShouldBeRemaining(remaining int) error {
 	return assertExpectedAndActual(
 		assert.Equal, Godogs, remaining,

@@ -15,57 +15,67 @@ executors:
       - image: circleci/golang:1.14.0
 
 commands:
-  install:
-    description: "Install dependencies"
+  fmt:
+    description: "Run gofmt"
     steps:
-      - run: GO111MODULE=on go mod vendor -v
+      - run: gofmt -d -e . 2>&1 | tee outfile && test -z "$(cat outfile)" && rm outfile
+  lint:
+    description: "Run golint"
+    steps:
+      - run: go get -u golang.org/x/lint/golint
+      - run: golint -set_exit_status ./...
+      - run: cd _examples && golint -set_exit_status ./... && cd ..
+  install:
+    description: "Install dependencies for go1.12"
+    steps:
+      - run: GO111MODULE=on go mod vendor
   vet:
     description: "Run go vet"
     steps:
       - run: go vet github.com/cucumber/godog
       - run: go vet github.com/cucumber/godog/colors
-  fmt:
-    description: "Run go fmt"
+  go_test:
+    description: "Run go test"
     steps:
-      - run: test -z "$(go fmt ./...)"
-  lint:
-    description: "Run golint"
-    steps:
-      - run: go get -u golang.org/x/lint/golint
-      - run: golint ./godog
-      - run: golint ./cmd/godog/main.go
+      - run: go test -v -race -coverprofile=coverage.txt -covermode=atomic
   godog:
     description: "Run godog"
     steps:
       - run: go install ./cmd/godog
       - run: godog -f progress --strict
-  go_test:
-    description: "Run go test"
-    steps:
-      - run: go test -v -race -coverprofile=coverage.txt -covermode=atomic
   coverage:
     description: "Report on code coverage"
     steps:
       - codecov/upload:
           file: "coverage.txt"
+  part1:
+    description: "Part1 include all commands that doesn't need dependencies installed"
+    steps:
+      - checkout
+      - fmt
+      - lint
+  part2:
+    description: "Part2 is the all other commands"
+    steps:
+      - vet
+      - go_test
+      - godog
+      - coverage
   all:
     description: "Run all commands against godog code"
     steps:
-      - checkout
-      - install
-      - vet
-      - fmt
-      - lint
-      - godog
-      - go_test
-      - coverage
+      - part1
+      - part2
+
 
 jobs:
   go1_12:
     working_directory: /go/src/github.com/cucumber/godog
     executor: exec_go_1_12
     steps:
-      - all
+      - part1
+      - install
+      - part2
   go1_13:
     working_directory: /go/src/github.com/cucumber/godog
     executor: exec_go_1_13
