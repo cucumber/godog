@@ -33,6 +33,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 - Made progress formatter verification a bit more accurate ([lonnblad])
 - Added comparison between single and multi threaded runs ([272](https://github.com/cucumber/godog/pull/272) - [lonnblad])
 - Fixed issue with empty feature file causing nil pointer deref ([288](https://github.com/cucumber/godog/pull/288) - [lonnblad])
+- Updated linting checks in circleci config and fixed linting issues ([290](https://github.com/cucumber/godog/pull/290) - [lonnblad])
 
 ## [0.9.0]
 
