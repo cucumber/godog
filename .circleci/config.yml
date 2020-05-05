@@ -6,13 +6,13 @@ orbs:
 executors:
   exec_go_1_12:
     docker:
-      - image: circleci/golang:1.12.16
+      - image: circleci/golang:1.12.17
   exec_go_1_13:
     docker:
-      - image: circleci/golang:1.13.8
+      - image: circleci/golang:1.13.9
   exec_go_1_14:
     docker:
-      - image: circleci/golang:1.14.0
+      - image: circleci/golang:1.14.2
 
 commands:
   fmt:
