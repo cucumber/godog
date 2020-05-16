@@ -6,10 +6,10 @@ Feature: eat godogs
 
   Scenario: Eat 5 out of 12
     Given there are 12 godogs
-    When I eat 4
+    When I eat 5
     Then there should be 7 remaining
 
   Scenario: Eat 12 out of 12
     Given there are 12 godogs
-    When I eat 11
+    When I eat 12
     Then there should be none remaining

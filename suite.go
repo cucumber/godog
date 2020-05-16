@@ -165,6 +165,10 @@ var ErrPending = fmt.Errorf("step implementation is pending")
 // in order to have a trace information. Only step
 // executions are catching panic error since it may
 // be a context specific error.
+//
+// Deprecated: The current Suite initializer will be removed and replaced by
+// two initializers, one for the Test Suite and one for the Scenarios.
+// This struct will therefore not be exported in the future.
 type Suite struct {
 	steps    []*StepDefinition
 	features []*feature
@@ -174,6 +178,8 @@ type Suite struct {
 	randomSeed    int64
 	stopOnFailure bool
 	strict        bool
+
+	scenarioInitializer scenarioInitializer
 
 	// suite event handlers
 	beforeSuiteHandlers    []func()
@@ -201,6 +207,10 @@ type Suite struct {
 // If none of the *StepDefinition is matched, then
 // ErrUndefined error will be returned when
 // running steps.
+//
+// Deprecated: The current Suite initializer will be removed and replaced by
+// two initializers, one for the Test Suite and one for the Scenarios. Use
+// func (ctx *ScenarioContext) Step instead.
 func (s *Suite) Step(expr interface{}, stepFunc interface{}) {
 	var regex *regexp.Regexp
 
@@ -254,6 +264,10 @@ func (s *Suite) Step(expr interface{}, stepFunc interface{}) {
 //
 // Use it to prepare the test suite for a spin.
 // Connect and prepare database for instance...
+//
+// Deprecated: The current Suite initializer will be removed and replaced by
+// two initializers, one for the Test Suite and one for the Scenarios. Use
+// func (ctx *TestSuiteContext) BeforeSuite instead.
 func (s *Suite) BeforeSuite(fn func()) {
 	s.beforeSuiteHandlers = append(s.beforeSuiteHandlers, fn)
 }
@@ -285,12 +299,20 @@ func (s *Suite) BeforeFeature(fn func(*messages.GherkinDocument)) {
 // It is a good practice to restore the default state
 // before every scenario so it would be isolated from
 // any kind of state.
+//
+// Deprecated: The current Suite initializer will be removed and replaced by
+// two initializers, one for the Test Suite and one for the Scenarios. Use
+// func (ctx *ScenarioContext) BeforeScenario instead.
 func (s *Suite) BeforeScenario(fn func(*messages.Pickle)) {
 	s.beforeScenarioHandlers = append(s.beforeScenarioHandlers, fn)
 }
 
 // BeforeStep registers a function or method
 // to be run before every step.
+//
+// Deprecated: The current Suite initializer will be removed and replaced by
+// two initializers, one for the Test Suite and one for the Scenarios. Use
+// func (ctx *ScenarioContext) BeforeStep instead.
 func (s *Suite) BeforeStep(fn func(*messages.Pickle_PickleStep)) {
 	s.beforeStepHandlers = append(s.beforeStepHandlers, fn)
 }
@@ -304,12 +326,20 @@ func (s *Suite) BeforeStep(fn func(*messages.Pickle_PickleStep)) {
 //
 // In some cases, for example when running a headless
 // browser, to take a screenshot after failure.
+//
+// Deprecated: The current Suite initializer will be removed and replaced by
+// two initializers, one for the Test Suite and one for the Scenarios. Use
+// func (ctx *ScenarioContext) AfterStep instead.
 func (s *Suite) AfterStep(fn func(*messages.Pickle_PickleStep, error)) {
 	s.afterStepHandlers = append(s.afterStepHandlers, fn)
 }
 
 // AfterScenario registers an function or method
 // to be run after every pickle.
+//
+// Deprecated: The current Suite initializer will be removed and replaced by
+// two initializers, one for the Test Suite and one for the Scenarios. Use
+// func (ctx *ScenarioContext) AfterScenario instead.
 func (s *Suite) AfterScenario(fn func(*messages.Pickle, error)) {
 	s.afterScenarioHandlers = append(s.afterScenarioHandlers, fn)
 }
@@ -326,6 +356,10 @@ func (s *Suite) AfterFeature(fn func(*messages.GherkinDocument)) {
 
 // AfterSuite registers a function or method
 // to be run once after suite runner
+//
+// Deprecated: The current Suite initializer will be removed and replaced by
+// two initializers, one for the Test Suite and one for the Scenarios. Use
+// func (ctx *TestSuiteContext) AfterSuite instead.
 func (s *Suite) AfterSuite(fn func()) {
 	s.afterSuiteHandlers = append(s.afterSuiteHandlers, fn)
 }
@@ -552,6 +586,11 @@ func (s *Suite) runFeature(f *feature) {
 	}()
 
 	for _, pickle := range f.pickles {
+		if s.scenarioInitializer != nil {
+			sc := ScenarioContext{suite: s}
+			s.scenarioInitializer(&sc)
+		}
+
 		err := s.runPickle(pickle)
 		if s.shouldFail(err) {
 			s.failed = true
