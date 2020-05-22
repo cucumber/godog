@@ -1,4 +1,4 @@
-package godog
+package godog_test
 
 import (
 	"bytes"
@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/cucumber/godog"
 )
 
 var builderFeatureFile = `Feature: eat godogs
@@ -137,7 +139,7 @@ func buildTestCommand(t *testing.T, args ...string) *exec.Cmd {
 	if build.Default.GOOS == "windows" {
 		bin += ".exe"
 	}
-	if err = Build(bin); err != nil {
+	if err = godog.Build(bin); err != nil {
 		t.Fatal(err)
 	}
 

@@ -1,6 +1,6 @@
 // +build go1.13
 
-package godog
+package godog_test
 
 import (
 	"bytes"
