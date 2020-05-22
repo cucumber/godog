@@ -1,4 +1,4 @@
-package godog
+package godog_test
 
 import (
 	"bytes"

@@ -2,7 +2,6 @@ package godog
 
 import (
 	"bytes"
-	"fmt"
 	"strings"
 	"testing"
 
@@ -21,73 +20,6 @@ Feature: basic
 	When one
 	Then two
 `
-
-func TestProgressFormatterOutput(t *testing.T) {
-	const path = "any.feature"
-
-	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(sampleGherkinFeature), (&messages.Incrementing{}).NewId)
-	require.NoError(t, err)
-
-	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
-
-	var buf bytes.Buffer
-	w := colors.Uncolored(&buf)
-	r := runner{
-		fmt: progressFunc("progress", w),
-		features: []*feature{{
-			GherkinDocument: gd,
-			pickles:         pickles,
-			Path:            path,
-			Content:         []byte(sampleGherkinFeature),
-		}},
-		initializer: func(s *Suite) {
-			s.Step(`^passing$`, func() error { return nil })
-			s.Step(`^failing$`, func() error { return fmt.Errorf("errored") })
-			s.Step(`^pending$`, func() error { return ErrPending })
-		},
-	}
-
-	expected := `...F-.P-.UU.....F..P..U 23
-
-
---- Failed steps:
-
-  Scenario: failing scenario # any.feature:10
-    When failing # any.feature:11
-      Error: errored
-
-  Scenario Outline: outline # any.feature:22
-    When failing # any.feature:24
-      Error: errored
-
-
-8 scenarios (2 passed, 2 failed, 2 pending, 2 undefined)
-23 steps (14 passed, 2 failed, 2 pending, 3 undefined, 2 skipped)
-0s
-
-You can implement step definitions for undefined steps with these snippets:
-
-func nextUndefined() error {
-	return godog.ErrPending
-}
-
-func undefined() error {
-	return godog.ErrPending
-}
-
-func FeatureContext(s *godog.Suite) {
-	s.Step(` + "`^next undefined$`" + `, nextUndefined)
-	s.Step(` + "`^undefined$`" + `, undefined)
-}
-
-`
-
-	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", w) })
-	require.True(t, failed)
-
-	actual := buf.String()
-	assert.Equal(t, expected, actual)
-}
 
 func TestProgressFormatterWhenStepPanics(t *testing.T) {
 	const path = "any.feature"
@@ -112,77 +44,7 @@ func TestProgressFormatterWhenStepPanics(t *testing.T) {
 	require.True(t, failed)
 
 	actual := buf.String()
-	assert.Contains(t, actual, "godog/fmt_progress_test.go:107")
-}
-
-func TestProgressFormatterWithPassingMultisteps(t *testing.T) {
-	const path = "any.feature"
-
-	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(basicGherkinFeature), (&messages.Incrementing{}).NewId)
-	require.NoError(t, err)
-
-	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
-
-	var buf bytes.Buffer
-	w := colors.Uncolored(&buf)
-	r := runner{
-		fmt:      progressFunc("progress", w),
-		features: []*feature{{GherkinDocument: gd, pickles: pickles}},
-		initializer: func(s *Suite) {
-			s.Step(`^sub1$`, func() error { return nil })
-			s.Step(`^sub-sub$`, func() error { return nil })
-			s.Step(`^sub2$`, func() Steps { return Steps{"sub-sub", "sub1", "one"} })
-			s.Step(`^one$`, func() error { return nil })
-			s.Step(`^two$`, func() Steps { return Steps{"sub1", "sub2"} })
-		},
-	}
-
-	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", w) })
-	require.False(t, failed)
-}
-
-func TestProgressFormatterWithFailingMultisteps(t *testing.T) {
-	const path = "some.feature"
-
-	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(basicGherkinFeature), (&messages.Incrementing{}).NewId)
-	require.NoError(t, err)
-
-	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
-
-	var buf bytes.Buffer
-	w := colors.Uncolored(&buf)
-	r := runner{
-		fmt:      progressFunc("progress", w),
-		features: []*feature{{GherkinDocument: gd, pickles: pickles, Path: path}},
-		initializer: func(s *Suite) {
-			s.Step(`^sub1$`, func() error { return nil })
-			s.Step(`^sub-sub$`, func() error { return fmt.Errorf("errored") })
-			s.Step(`^sub2$`, func() Steps { return Steps{"sub-sub", "sub1", "one"} })
-			s.Step(`^one$`, func() error { return nil })
-			s.Step(`^two$`, func() Steps { return Steps{"sub1", "sub2"} })
-		},
-	}
-
-	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", w) })
-	require.True(t, failed)
-
-	expected := `.F 2
-
-
---- Failed steps:
-
-  Scenario: passing scenario # some.feature:4
-    Then two # some.feature:6
-      Error: sub2: sub-sub: errored
-
-
-1 scenarios (1 failed)
-2 steps (1 passed, 1 failed)
-0s
-`
-
-	actual := buf.String()
-	assert.Equal(t, expected, actual)
+	assert.Contains(t, actual, "godog/fmt_progress_test.go:39")
 }
 
 func TestProgressFormatterWithPanicInMultistep(t *testing.T) {

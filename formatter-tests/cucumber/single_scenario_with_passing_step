@@ -20,7 +20,7 @@
                         "name": "a passing step",
                         "line": 7,
                         "match": {
-                            "location": "formatters_print_test.go:63"
+                            "location": "fmt_output_test.go:97"
                         },
                         "result": {
                             "status": "passed",
