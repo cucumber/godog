@@ -1,4 +1,3 @@
-/* file: $GOPATH/src/assert-godogs/godogs_test.go */
 package main
 
 import (
@@ -9,23 +8,24 @@ import (
 
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
-	messages "github.com/cucumber/messages-go/v10"
 	"github.com/stretchr/testify/assert"
 )
 
-var opt = godog.Options{Output: colors.Colored(os.Stdout)}
+var opts = godog.Options{Output: colors.Colored(os.Stdout)}
 
 func init() {
-	godog.BindFlags("godog.", flag.CommandLine, &opt)
+	godog.BindFlags("godog.", flag.CommandLine, &opts)
 }
 
 func TestMain(m *testing.M) {
 	flag.Parse()
-	opt.Paths = flag.Args()
+	opts.Paths = flag.Args()
 
-	status := godog.RunWithOptions("godogs", func(s *godog.Suite) {
-		FeatureContext(s)
-	}, opt)
+	status := godog.TestSuite{
+		Name:                "godogs",
+		ScenarioInitializer: ScenarioContext,
+		Options:             &opts,
+	}.Run()
 
 	if st := m.Run(); st > status {
 		status = st
@@ -65,13 +65,13 @@ func thereShouldBeNoneRemaining() error {
 	)
 }
 
-func FeatureContext(s *godog.Suite) {
+func ScenarioContext(s *godog.ScenarioContext) {
 	s.Step(`^there are (\d+) godogs$`, thereAreGodogs)
 	s.Step(`^I eat (\d+)$`, iEat)
 	s.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
 	s.Step(`^there should be none remaining$`, thereShouldBeNoneRemaining)
 
-	s.BeforeScenario(func(*messages.Pickle) {
+	s.BeforeScenario(func(*godog.Scenario) {
 		Godogs = 0 // clean the state before every scenario
 	})
 }

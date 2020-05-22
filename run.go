@@ -20,6 +20,8 @@ const (
 )
 
 type initializer func(*Suite)
+type testSuiteInitializer func(*TestSuiteContext)
+type scenarioInitializer func(*ScenarioContext)
 
 type runner struct {
 	randomSeed            int64
@@ -27,6 +29,8 @@ type runner struct {
 	features              []*feature
 	fmt                   Formatter
 	initializer           initializer
+	testSuiteInitializer  testSuiteInitializer
+	scenarioInitializer   scenarioInitializer
 }
 
 func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool) {
@@ -38,7 +42,16 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 		useFmtCopy = true
 	}
 
+	testSuiteContext := TestSuiteContext{}
+	if r.testSuiteInitializer != nil {
+		r.testSuiteInitializer(&testSuiteContext)
+	}
 	r.fmt.TestRunStarted()
+
+	// run before suite handlers
+	for _, f := range testSuiteContext.beforeSuiteHandlers {
+		f()
+	}
 
 	queue := make(chan int, rate)
 	for i, ft := range r.features {
@@ -74,7 +87,14 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 				suite.fmt = r.fmt
 			}
 
-			r.initializer(suite)
+			if r.initializer != nil {
+				r.initializer(suite)
+			}
+
+			if r.scenarioInitializer != nil {
+				suite.scenarioInitializer = r.scenarioInitializer
+			}
+
 			suite.run()
 			if suite.failed {
 				copyLock.Lock()
@@ -105,6 +125,11 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 	}
 	close(queue)
 
+	// run after suite handlers
+	for _, f := range testSuiteContext.afterSuiteHandlers {
+		f()
+	}
+
 	// print summary
 	r.fmt.Summary()
 	return
@@ -126,7 +151,22 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 //
 // If there are flag related errors they will
 // be directed to os.Stderr
-func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Options) int {
+//
+// Deprecated: The current Suite initializer will be removed and replaced by
+// two initializers, one for the Test Suite and one for the Scenarios.
+// Use:
+//   godog.TestSuite{
+//     Name: name,
+//     TestSuiteInitializer: testSuiteInitializer,
+//     ScenarioInitializer: scenarioInitializer,
+//     Options: &opts,
+//   }.Run()
+// instead.
+func RunWithOptions(suite string, initializer func(*Suite), opt Options) int {
+	return runWithOptions(suite, runner{initializer: initializer}, opt)
+}
+
+func runWithOptions(suite string, runner runner, opt Options) int {
 	var output io.Writer = os.Stdout
 	if nil != opt.Output {
 		output = opt.Output
@@ -140,7 +180,7 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 
 	if opt.ShowStepDefinitions {
 		s := &Suite{}
-		contextInitializer(s)
+		runner.initializer(s)
 		s.printStepDefinitions(output)
 		return exitOptionError
 	}
@@ -169,35 +209,30 @@ func RunWithOptions(suite string, contextInitializer func(suite *Suite), opt Opt
 		))
 		return exitOptionError
 	}
+	runner.fmt = formatter(suite, output)
 
-	features, err := parseFeatures(opt.Tags, opt.Paths)
-	if err != nil {
+	var err error
+	if runner.features, err = parseFeatures(opt.Tags, opt.Paths); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return exitOptionError
 	}
 
 	// user may have specified -1 option to create random seed
-	randomize := opt.Randomize
-	if randomize == -1 {
-		randomize = makeRandomSeed()
+	runner.randomSeed = opt.Randomize
+	if runner.randomSeed == -1 {
+		runner.randomSeed = makeRandomSeed()
 	}
 
-	r := runner{
-		fmt:           formatter(suite, output),
-		initializer:   contextInitializer,
-		features:      features,
-		randomSeed:    randomize,
-		stopOnFailure: opt.StopOnFailure,
-		strict:        opt.Strict,
-	}
+	runner.stopOnFailure = opt.StopOnFailure
+	runner.strict = opt.Strict
 
 	// store chosen seed in environment, so it could be seen in formatter summary report
-	os.Setenv("GODOG_SEED", strconv.FormatInt(r.randomSeed, 10))
+	os.Setenv("GODOG_SEED", strconv.FormatInt(runner.randomSeed, 10))
 	// determine tested package
 	_, filename, _, _ := runtime.Caller(1)
 	os.Setenv("GODOG_TESTED_PACKAGE", runsFromPackage(filename))
 
-	failed := r.concurrent(opt.Concurrency, func() Formatter { return formatter(suite, output) })
+	failed := runner.concurrent(opt.Concurrency, func() Formatter { return formatter(suite, output) })
 
 	// @TODO: should prevent from having these
 	os.Setenv("GODOG_SEED", "")
@@ -240,9 +275,20 @@ func runsFromPackage(fp string) string {
 //
 // If there are flag related errors they will
 // be directed to os.Stderr
-func Run(suite string, contextInitializer func(suite *Suite)) int {
+//
+// Deprecated: The current Suite initializer will be removed and replaced by
+// two initializers, one for the Test Suite and one for the Scenarios.
+// Use:
+//   godog.TestSuite{
+//     Name: name,
+//     TestSuiteInitializer: testSuiteInitializer,
+//     ScenarioInitializer: scenarioInitializer,
+//   }.Run()
+// instead.
+func Run(suite string, initializer func(*Suite)) int {
 	var opt Options
 	opt.Output = colors.Colored(os.Stdout)
+
 	flagSet := FlagSet(&opt)
 	if err := flagSet.Parse(os.Args[1:]); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -251,5 +297,44 @@ func Run(suite string, contextInitializer func(suite *Suite)) int {
 
 	opt.Paths = flagSet.Args()
 
-	return RunWithOptions(suite, contextInitializer, opt)
+	return RunWithOptions(suite, initializer, opt)
+}
+
+// TestSuite allows for configuration
+// of the Test Suite Execution
+type TestSuite struct {
+	Name                 string
+	TestSuiteInitializer func(*TestSuiteContext)
+	ScenarioInitializer  func(*ScenarioContext)
+	Options              *Options
+}
+
+// Run will execute the test suite.
+//
+// If options are not set, it will reads
+// all configuration options from flags.
+//
+// The exit codes may vary from:
+//  0 - success
+//  1 - failed
+//  2 - command line usage error
+//  128 - or higher, os signal related error exit codes
+//
+// If there are flag related errors they will be directed to os.Stderr
+func (ts TestSuite) Run() int {
+	if ts.Options == nil {
+		ts.Options = &Options{}
+		ts.Options.Output = colors.Colored(os.Stdout)
+
+		flagSet := FlagSet(ts.Options)
+		if err := flagSet.Parse(os.Args[1:]); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return exitOptionError
+		}
+
+		ts.Options.Paths = flagSet.Args()
+	}
+
+	r := runner{testSuiteInitializer: ts.TestSuiteInitializer, scenarioInitializer: ts.ScenarioInitializer}
+	return runWithOptions(ts.Name, r, *ts.Options)
 }

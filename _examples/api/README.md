@@ -56,7 +56,6 @@ need to store state within steps (a response), we should introduce a structure w
 package main
 
 import (
-	"github.com/cucumber/gherkin-go/v11"
 	"github.com/cucumber/godog"
 )
 
@@ -71,11 +70,11 @@ func (a *apiFeature) theResponseCodeShouldBe(code int) error {
 	return godog.ErrPending
 }
 
-func (a *apiFeature) theResponseShouldMatchJSON(body *messages.PickleStepArgument_PickleDocString) error {
+func (a *apiFeature) theResponseShouldMatchJSON(body *godog.DocString) error {
 	return godog.ErrPending
 }
 
-func FeatureContext(s *godog.Suite) {
+func ScenarioContext(s *godog.ScenarioContext) {
 	api := &apiFeature{}
 	s.Step(`^I send "([^"]*)" request to "([^"]*)"$`, api.iSendrequestTo)
 	s.Step(`^the response code should be (\d+)$`, api.theResponseCodeShouldBe)
@@ -98,7 +97,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/cucumber/gherkin-go/v11"
 	"github.com/cucumber/godog"
 )
 
@@ -142,7 +140,7 @@ func (a *apiFeature) theResponseCodeShouldBe(code int) error {
 	return nil
 }
 
-func (a *apiFeature) theResponseShouldMatchJSON(body *messages.PickleStepArgument_PickleDocString) error {
+func (a *apiFeature) theResponseShouldMatchJSON(body *godog.DocString) error {
 	var expected, actual []byte
 	var data interface{}
 	if err = json.Unmarshal([]byte(body.Content), &data); err != nil {
@@ -158,7 +156,7 @@ func (a *apiFeature) theResponseShouldMatchJSON(body *messages.PickleStepArgumen
 	return
 }
 
-func FeatureContext(s *godog.Suite) {
+func ScenarioContext(s *godog.ScenarioContext) {
 	api := &apiFeature{}
 
 	s.BeforeScenario(api.resetResponse)

@@ -160,7 +160,6 @@ import (
 	"fmt"
 
 	"github.com/cucumber/godog"
-	messages "github.com/cucumber/messages-go/v10"
 )
 
 func thereAreGodogs(available int) error {
@@ -183,12 +182,12 @@ func thereShouldBeRemaining(remaining int) error {
 	return nil
 }
 
-func FeatureContext(s *godog.Suite) {
+func ScenarioContext(s *godog.ScenarioContext) {
 	s.Step(`^there are (\d+) godogs$`, thereAreGodogs)
 	s.Step(`^I eat (\d+)$`, iEat)
 	s.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
 
-	s.BeforeScenario(func(*messages.Pickle) {
+	s.BeforeScenario(func(*godog.Scenario) {
 		Godogs = 0 // clean the state before every scenario
 	})
 }
@@ -250,22 +249,24 @@ The following example binds **godog** flags with specified prefix `godog`
 in order to prevent flag collisions.
 
 ``` go
-var opt = godog.Options{
+var opts = godog.Options{
 	Output: colors.Colored(os.Stdout),
 	Format: "progress", // can define default values
 }
 
 func init() {
-	godog.BindFlags("godog.", flag.CommandLine, &opt)
+	godog.BindFlags("godog.", flag.CommandLine, &opts)
 }
 
 func TestMain(m *testing.M) {
 	flag.Parse()
-	opt.Paths = flag.Args()
+	opts.Paths = flag.Args()
 
-	status := godog.RunWithOptions("godogs", func(s *godog.Suite) {
-		FeatureContext(s)
-	}, opt)
+	status := godog.TestSuite{
+		Name: "godogs",
+		ScenarioInitializer: ScenarioContext,
+		Options: &opts,
+	}.Run()
 
 	if st := m.Run(); st > status {
 		status = st
@@ -287,13 +288,17 @@ configuring needed options.
 
 ``` go
 func TestMain(m *testing.M) {
-	status := godog.RunWithOptions("godog", func(s *godog.Suite) {
-		FeatureContext(s)
-	}, godog.Options{
+	opts := godog.Options{
 		Format:    "progress",
 		Paths:     []string{"features"},
 		Randomize: time.Now().UTC().UnixNano(), // randomize scenario execution order
-	})
+	}
+
+	status := godog.TestSuite{
+		Name: "godogs",
+		ScenarioInitializer: ScenarioContext,
+		Options: opts,
+	}.Run()
 
 	if st := m.Run(); st > status {
 		status = st
@@ -315,12 +320,17 @@ func TestMain(m *testing.M) {
 			break
 		}
 	}
-	status := godog.RunWithOptions("godog", func(s *godog.Suite) {
-		godog.SuiteContext(s)
-	}, godog.Options{
+
+	opts := godog.Options{
 		Format: format,
 		Paths:     []string{"features"},
-	})
+	}
+
+	status := godog.TestSuite{
+		Name: "godogs",
+		ScenarioInitializer: ScenarioContext,
+		Options: opts,
+	}.Run()
 
 	if st := m.Run(); st > status {
 		status = st

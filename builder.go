@@ -30,28 +30,51 @@ var (
 
 import (
 	"github.com/cucumber/godog"
-	{{if .Contexts}}_test "{{.ImportPath}}"{{end}}
-	{{if .XContexts}}_xtest "{{.ImportPath}}_test"{{end}}
-	{{if .XContexts}}"testing/internal/testdeps"{{end}}
+	{{if or .DeprecatedFeatureContexts .TestSuiteContexts .ScenarioContexts}}_test "{{.ImportPath}}"{{end}}
+	{{if or .XDeprecatedFeatureContexts .XTestSuiteContexts .XScenarioContexts}}_xtest "{{.ImportPath}}_test"{{end}}
+	{{if or .XDeprecatedFeatureContexts .XTestSuiteContexts .XScenarioContexts}}"testing/internal/testdeps"{{end}}
 	"os"
 )
 
-{{if .XContexts}}
+{{if or .XDeprecatedFeatureContexts .XTestSuiteContexts .XScenarioContexts}}
 func init() {
 	testdeps.ImportPath = "{{.ImportPath}}"
 }
 {{end}}
 
 func main() {
+	{{if or .TestSuiteContexts .ScenarioContexts .XTestSuiteContexts .XScenarioContexts}}
+	status := godog.TestSuite{
+		Name: "{{ .Name }}",
+		TestSuiteInitializer: func (ctx *godog.TestSuiteContext) {
+			os.Setenv("GODOG_TESTED_PACKAGE", "{{.ImportPath}}")
+			{{range .TestSuiteContexts}}
+			_test.{{ . }}(ctx)
+			{{end}}
+			{{range .XTestSuiteContexts}}
+			_xtest.{{ . }}(ctx)
+			{{end}}
+		},
+		ScenarioInitializer: func (ctx *godog.ScenarioContext) {
+			{{range .ScenarioContexts}}
+			_test.{{ . }}(ctx)
+			{{end}}
+			{{range .XScenarioContexts}}
+			_xtest.{{ . }}(ctx)
+			{{end}}
+		},
+	}.Run()
+	{{else}}
 	status := godog.Run("{{ .Name }}", func (suite *godog.Suite) {
 		os.Setenv("GODOG_TESTED_PACKAGE", "{{.ImportPath}}")
-		{{range .Contexts}}
+		{{range .DeprecatedFeatureContexts}}
 			_test.{{ . }}(suite)
 		{{end}}
-		{{range .XContexts}}
+		{{range .XDeprecatedFeatureContexts}}
 			_xtest.{{ . }}(suite)
 		{{end}}
 	})
+	{{end}}
 	os.Exit(status)
 }`))
 
@@ -308,35 +331,44 @@ func buildTempFile(pkg *build.Package) ([]byte, error) {
 // and produces a testmain source code.
 func buildTestMain(pkg *build.Package) ([]byte, error) {
 	var (
-		contexts         []string
-		xcontexts        []string
-		err              error
-		name, importPath string
+		ctxs, xctxs contexts
+		err         error
+		name        = "main"
+		importPath  string
 	)
+
 	if nil != pkg {
-		contexts, err = processPackageTestFiles(pkg.TestGoFiles)
-		if err != nil {
+		if ctxs, err = processPackageTestFiles(pkg.TestGoFiles); err != nil {
 			return nil, err
 		}
-		xcontexts, err = processPackageTestFiles(pkg.XTestGoFiles)
-		if err != nil {
+
+		if xctxs, err = processPackageTestFiles(pkg.XTestGoFiles); err != nil {
 			return nil, err
 		}
+
 		importPath = parseImport(pkg.ImportPath, pkg.Root)
 		name = pkg.Name
 	} else {
 		name = "main"
 	}
 	data := struct {
-		Name       string
-		Contexts   []string
-		XContexts  []string
-		ImportPath string
+		Name                       string
+		ImportPath                 string
+		DeprecatedFeatureContexts  []string
+		TestSuiteContexts          []string
+		ScenarioContexts           []string
+		XDeprecatedFeatureContexts []string
+		XTestSuiteContexts         []string
+		XScenarioContexts          []string
 	}{
-		Name:       name,
-		Contexts:   contexts,
-		XContexts:  xcontexts,
-		ImportPath: importPath,
+		Name:                       name,
+		ImportPath:                 importPath,
+		DeprecatedFeatureContexts:  ctxs.deprecatedFeatureCtxs,
+		TestSuiteContexts:          ctxs.testSuiteCtxs,
+		ScenarioContexts:           ctxs.scenarioCtxs,
+		XDeprecatedFeatureContexts: xctxs.deprecatedFeatureCtxs,
+		XTestSuiteContexts:         xctxs.testSuiteCtxs,
+		XScenarioContexts:          xctxs.scenarioCtxs,
 	}
 
 	var buf bytes.Buffer
@@ -380,11 +412,38 @@ func parseImport(rawPath, rootPath string) string {
 	return mod.Path + filepath.ToSlash(strings.TrimPrefix(rawPath, normaliseLocalImportPath(mod.Dir)))
 }
 
+type contexts struct {
+	deprecatedFeatureCtxs []string
+	testSuiteCtxs         []string
+	scenarioCtxs          []string
+}
+
+func (ctxs contexts) validate() error {
+	var allCtxs []string
+	allCtxs = append(allCtxs, ctxs.deprecatedFeatureCtxs...)
+	allCtxs = append(allCtxs, ctxs.testSuiteCtxs...)
+	allCtxs = append(allCtxs, ctxs.scenarioCtxs...)
+
+	var failed []string
+	for _, ctx := range allCtxs {
+		runes := []rune(ctx)
+		if unicode.IsLower(runes[0]) {
+			expected := append([]rune{unicode.ToUpper(runes[0])}, runes[1:]...)
+			failed = append(failed, fmt.Sprintf("%s - should be: %s", ctx, string(expected)))
+		}
+	}
+
+	if len(failed) > 0 {
+		return fmt.Errorf("godog contexts must be exported:\n\t%s", strings.Join(failed, "\n\t"))
+	}
+
+	return nil
+}
+
 // processPackageTestFiles runs through ast of each test
 // file pack and looks for godog suite contexts to register
 // on run
-func processPackageTestFiles(packs ...[]string) ([]string, error) {
-	var ctxs []string
+func processPackageTestFiles(packs ...[]string) (ctxs contexts, _ error) {
 	fset := token.NewFileSet()
 	for _, pack := range packs {
 		for _, testFile := range pack {
@@ -393,21 +452,13 @@ func processPackageTestFiles(packs ...[]string) ([]string, error) {
 				return ctxs, err
 			}
 
-			ctxs = append(ctxs, astContexts(node)...)
+			ctxs.deprecatedFeatureCtxs = append(ctxs.deprecatedFeatureCtxs, astContexts(node, "Suite")...)
+			ctxs.testSuiteCtxs = append(ctxs.testSuiteCtxs, astContexts(node, "TestSuiteContext")...)
+			ctxs.scenarioCtxs = append(ctxs.scenarioCtxs, astContexts(node, "ScenarioContext")...)
 		}
 	}
-	var failed []string
-	for _, ctx := range ctxs {
-		runes := []rune(ctx)
-		if unicode.IsLower(runes[0]) {
-			expected := append([]rune{unicode.ToUpper(runes[0])}, runes[1:]...)
-			failed = append(failed, fmt.Sprintf("%s - should be: %s", ctx, string(expected)))
-		}
-	}
-	if len(failed) > 0 {
-		return ctxs, fmt.Errorf("godog contexts must be exported:\n\t%s", strings.Join(failed, "\n\t"))
-	}
-	return ctxs, nil
+
+	return ctxs, ctxs.validate()
 }
 
 func findToolDir() string {

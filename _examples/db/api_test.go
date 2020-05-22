@@ -11,7 +11,6 @@ import (
 
 	txdb "github.com/DATA-DOG/go-txdb"
 	"github.com/cucumber/godog"
-	"github.com/cucumber/messages-go/v10"
 )
 
 func init() {
@@ -24,7 +23,7 @@ type apiFeature struct {
 	resp *httptest.ResponseRecorder
 }
 
-func (a *apiFeature) resetResponse(*messages.Pickle) {
+func (a *apiFeature) resetResponse(*godog.Scenario) {
 	a.resp = httptest.NewRecorder()
 	if a.db != nil {
 		a.db.Close()
@@ -71,7 +70,7 @@ func (a *apiFeature) theResponseCodeShouldBe(code int) error {
 	return nil
 }
 
-func (a *apiFeature) theResponseShouldMatchJSON(body *messages.PickleStepArgument_PickleDocString) (err error) {
+func (a *apiFeature) theResponseShouldMatchJSON(body *godog.DocString) (err error) {
 	var expected, actual interface{}
 
 	// re-encode expected response
@@ -91,7 +90,7 @@ func (a *apiFeature) theResponseShouldMatchJSON(body *messages.PickleStepArgumen
 	return nil
 }
 
-func (a *apiFeature) thereAreUsers(users *messages.PickleStepArgument_PickleTable) error {
+func (a *apiFeature) thereAreUsers(users *godog.Table) error {
 	var fields []string
 	var marks []string
 	head := users.Rows[0].Cells
@@ -123,7 +122,7 @@ func (a *apiFeature) thereAreUsers(users *messages.PickleStepArgument_PickleTabl
 	return nil
 }
 
-func FeatureContext(s *godog.Suite) {
+func ScenarioContext(s *godog.ScenarioContext) {
 	api := &apiFeature{}
 
 	s.BeforeScenario(api.resetResponse)

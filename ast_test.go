@@ -34,7 +34,7 @@ func astContextParse(src string, t *testing.T) []string {
 		t.Fatalf("unexpected error while parsing ast: %v", err)
 	}
 
-	return astContexts(f)
+	return astContexts(f, "Suite")
 }
 
 func TestShouldGetSingleContextFromSource(t *testing.T) {

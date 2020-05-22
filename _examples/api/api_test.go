@@ -8,14 +8,13 @@ import (
 	"reflect"
 
 	"github.com/cucumber/godog"
-	"github.com/cucumber/messages-go/v10"
 )
 
 type apiFeature struct {
 	resp *httptest.ResponseRecorder
 }
 
-func (a *apiFeature) resetResponse(*messages.Pickle) {
+func (a *apiFeature) resetResponse(*godog.Scenario) {
 	a.resp = httptest.NewRecorder()
 }
 
@@ -51,7 +50,7 @@ func (a *apiFeature) theResponseCodeShouldBe(code int) error {
 	return nil
 }
 
-func (a *apiFeature) theResponseShouldMatchJSON(body *messages.PickleStepArgument_PickleDocString) (err error) {
+func (a *apiFeature) theResponseShouldMatchJSON(body *godog.DocString) (err error) {
 	var expected, actual interface{}
 
 	// re-encode expected response
@@ -71,7 +70,7 @@ func (a *apiFeature) theResponseShouldMatchJSON(body *messages.PickleStepArgumen
 	return nil
 }
 
-func FeatureContext(s *godog.Suite) {
+func ScenarioContext(s *godog.ScenarioContext) {
 	api := &apiFeature{}
 
 	s.BeforeScenario(api.resetResponse)
