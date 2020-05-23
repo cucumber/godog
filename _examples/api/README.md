@@ -74,7 +74,7 @@ func (a *apiFeature) theResponseShouldMatchJSON(body *godog.DocString) error {
 	return godog.ErrPending
 }
 
-func ScenarioContext(s *godog.ScenarioContext) {
+func InitializeScenario(s *godog.ScenarioContext) {
 	api := &apiFeature{}
 	s.Step(`^I send "([^"]*)" request to "([^"]*)"$`, api.iSendrequestTo)
 	s.Step(`^the response code should be (\d+)$`, api.theResponseCodeShouldBe)
@@ -156,7 +156,7 @@ func (a *apiFeature) theResponseShouldMatchJSON(body *godog.DocString) error {
 	return
 }
 
-func ScenarioContext(s *godog.ScenarioContext) {
+func InitializeScenario(s *godog.ScenarioContext) {
 	api := &apiFeature{}
 
 	s.BeforeScenario(api.resetResponse)
