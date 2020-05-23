@@ -21,9 +21,10 @@ func TestMain(m *testing.M) {
 	opts.Paths = flag.Args()
 
 	status := godog.TestSuite{
-		Name:                "godogs",
-		ScenarioInitializer: ScenarioContext,
-		Options:             &opts,
+		Name:                 "godogs",
+		TestSuiteInitializer: InitializeTestSuite,
+		ScenarioInitializer:  InitializeScenario,
+		Options:              &opts,
 	}.Run()
 
 	if st := m.Run(); st > status {
@@ -52,12 +53,16 @@ func thereShouldBeRemaining(remaining int) error {
 	return nil
 }
 
-func ScenarioContext(s *godog.ScenarioContext) {
-	s.Step(`^there are (\d+) godogs$`, thereAreGodogs)
-	s.Step(`^I eat (\d+)$`, iEat)
-	s.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
+func InitializeTestSuite(ctx *godog.TestSuiteContext) {
+	ctx.BeforeSuite(func() { Godogs = 0 })
+}
 
-	s.BeforeScenario(func(*godog.Scenario) {
+func InitializeScenario(ctx *godog.ScenarioContext) {
+	ctx.BeforeScenario(func(*godog.Scenario) {
 		Godogs = 0 // clean the state before every scenario
 	})
+
+	ctx.Step(`^there are (\d+) godogs$`, thereAreGodogs)
+	ctx.Step(`^I eat (\d+)$`, iEat)
+	ctx.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
 }

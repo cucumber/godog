@@ -122,13 +122,13 @@ func (a *apiFeature) thereAreUsers(users *godog.Table) error {
 	return nil
 }
 
-func ScenarioContext(s *godog.ScenarioContext) {
+func InitializeScenario(ctx *godog.ScenarioContext) {
 	api := &apiFeature{}
 
-	s.BeforeScenario(api.resetResponse)
+	ctx.BeforeScenario(api.resetResponse)
 
-	s.Step(`^I send "(GET|POST|PUT|DELETE)" request to "([^"]*)"$`, api.iSendrequestTo)
-	s.Step(`^the response code should be (\d+)$`, api.theResponseCodeShouldBe)
-	s.Step(`^the response should match json:$`, api.theResponseShouldMatchJSON)
-	s.Step(`^there are users:$`, api.thereAreUsers)
+	ctx.Step(`^I send "(GET|POST|PUT|DELETE)" request to "([^"]*)"$`, api.iSendrequestTo)
+	ctx.Step(`^the response code should be (\d+)$`, api.theResponseCodeShouldBe)
+	ctx.Step(`^the response should match json:$`, api.theResponseShouldMatchJSON)
+	ctx.Step(`^there are users:$`, api.thereAreUsers)
 }

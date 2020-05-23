@@ -182,14 +182,32 @@ func thereShouldBeRemaining(remaining int) error {
 	return nil
 }
 
-func ScenarioContext(s *godog.ScenarioContext) {
-	s.Step(`^there are (\d+) godogs$`, thereAreGodogs)
-	s.Step(`^I eat (\d+)$`, iEat)
-	s.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
+// godog v0.9.0 (latest) and earlier
+func FeatureContext(s *godog.Suite) {
+	s.BeforeSuite(func() { Godogs = 0 })
 
 	s.BeforeScenario(func(*godog.Scenario) {
 		Godogs = 0 // clean the state before every scenario
 	})
+
+	s.Step(`^there are (\d+) godogs$`, thereAreGodogs)
+	s.Step(`^I eat (\d+)$`, iEat)
+	s.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
+}
+
+// godog v0.10.0 (coming release)
+func InitializeTestSuite(ctx *godog.TestSuiteContext) {
+	ctx.BeforeSuite(func() { Godogs = 0 })
+}
+
+func InitializeScenario(ctx *godog.ScenarioContext) {
+	ctx.BeforeScenario(func(*godog.Scenario) {
+		Godogs = 0 // clean the state before every scenario
+	})
+
+	ctx.Step(`^there are (\d+) godogs$`, thereAreGodogs)
+	ctx.Step(`^I eat (\d+)$`, iEat)
+	ctx.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
 }
 ```
 
@@ -262,9 +280,16 @@ func TestMain(m *testing.M) {
 	flag.Parse()
 	opts.Paths = flag.Args()
 
+	// godog v0.9.0 (latest) and earlier
+	status := godog.RunWithOptions("godogs", func(s *godog.Suite) {
+		FeatureContext(s)
+	}, opts)
+
+	// godog v0.10.0 (coming release)
 	status := godog.TestSuite{
 		Name: "godogs",
-		ScenarioInitializer: ScenarioContext,
+		TestSuiteInitializer: InitializeTestSuite,
+		ScenarioInitializer:  InitializeScenario,
 		Options: &opts,
 	}.Run()
 
@@ -294,10 +319,17 @@ func TestMain(m *testing.M) {
 		Randomize: time.Now().UTC().UnixNano(), // randomize scenario execution order
 	}
 
+	// godog v0.9.0 (latest) and earlier
+	status := godog.RunWithOptions("godogs", func(s *godog.Suite) {
+		FeatureContext(s)
+	}, opts)
+
+	// godog v0.10.0 (coming release)
 	status := godog.TestSuite{
 		Name: "godogs",
-		ScenarioInitializer: ScenarioContext,
-		Options: opts,
+		TestSuiteInitializer: InitializeTestSuite,
+		ScenarioInitializer:  InitializeScenario,
+		Options: &opts,
 	}.Run()
 
 	if st := m.Run(); st > status {
@@ -326,10 +358,17 @@ func TestMain(m *testing.M) {
 		Paths:     []string{"features"},
 	}
 
+	// godog v0.9.0 (latest) and earlier
+	status := godog.RunWithOptions("godogs", func(s *godog.Suite) {
+		FeatureContext(s)
+	}, opts)
+
+	// godog v0.10.0 (coming release)
 	status := godog.TestSuite{
 		Name: "godogs",
-		ScenarioInitializer: ScenarioContext,
-		Options: opts,
+		TestSuiteInitializer: InitializeTestSuite,
+		ScenarioInitializer:  InitializeScenario,
+		Options: &opts,
 	}.Run()
 
 	if st := m.Run(); st > status {
