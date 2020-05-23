@@ -20,7 +20,7 @@
                         "name": "passing step",
                         "line": 4,
                         "match": {
-                            "location": "formatters_print_test.go:63"
+                            "location": "fmt_output_test.go:97"
                         },
                         "result": {
                             "status": "passed",
@@ -32,7 +32,7 @@
                         "name": "failing step",
                         "line": 5,
                         "match": {
-                            "location": "formatters_print_test.go:79"
+                            "location": "fmt_output_test.go:113"
                         },
                         "result": {
                             "status": "failed",
@@ -45,7 +45,7 @@
                         "name": "passing step",
                         "line": 8,
                         "match": {
-                            "location": "formatters_print_test.go:63"
+                            "location": "fmt_output_test.go:97"
                         },
                         "result": {
                             "status": "skipped"
@@ -56,7 +56,7 @@
                         "name": "passing step",
                         "line": 9,
                         "match": {
-                            "location": "formatters_print_test.go:63"
+                            "location": "fmt_output_test.go:97"
                         },
                         "result": {
                             "status": "skipped"
@@ -77,7 +77,7 @@
                         "name": "passing step",
                         "line": 4,
                         "match": {
-                            "location": "formatters_print_test.go:63"
+                            "location": "fmt_output_test.go:97"
                         },
                         "result": {
                             "status": "passed",
@@ -89,7 +89,7 @@
                         "name": "failing step",
                         "line": 5,
                         "match": {
-                            "location": "formatters_print_test.go:79"
+                            "location": "fmt_output_test.go:113"
                         },
                         "result": {
                             "status": "failed",
@@ -102,7 +102,7 @@
                         "name": "passing step",
                         "line": 12,
                         "match": {
-                            "location": "formatters_print_test.go:63"
+                            "location": "fmt_output_test.go:97"
                         },
                         "result": {
                             "status": "skipped"

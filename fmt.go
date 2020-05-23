@@ -19,8 +19,8 @@ import (
 
 type registeredFormatter struct {
 	name        string
-	fmt         FormatterFunc
 	description string
+	fmt         FormatterFunc
 }
 
 var formatters []*registeredFormatter
@@ -34,6 +34,7 @@ func FindFmt(name string) FormatterFunc {
 			return el.fmt
 		}
 	}
+
 	return nil
 }
 
@@ -54,9 +55,11 @@ func Format(name, description string, f FormatterFunc) {
 // and description as value
 func AvailableFormatters() map[string]string {
 	fmts := make(map[string]string, len(formatters))
+
 	for _, f := range formatters {
 		fmts[f.name] = f.description
 	}
+
 	return fmts
 }
 
