@@ -11,29 +11,31 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ## [Unreleased]
 
 ### Added
-
 - Added concurrency support to the pretty formatter ([275](https://github.com/cucumber/godog/pull/275) - [lonnblad])
 - Added concurrency support to the events formatter ([274](https://github.com/cucumber/godog/pull/274) - [lonnblad])
 - Added concurrency support to the cucumber formatter ([273](https://github.com/cucumber/godog/pull/273) - [lonnblad])
 - Added an example for how to use assertion pkgs like testify with godog ([289](https://github.com/cucumber/godog/pull/289) - [lonnblad])
+- Added the new TestSuiteInitializer and ScenarioInitializer ([294](https://github.com/cucumber/godog/pull/294) - [lonnblad])
 
 ### Changed
-
 - Broke out snippets gen and added sorting on method name ([271](https://github.com/cucumber/godog/pull/271) - [lonnblad])
 - Updated so that we run all tests concurrent now ([278](https://github.com/cucumber/godog/pull/278) - [lonnblad])
+- Moved fmt tests to a godog_test pkg and restructured the fmt output tests ([295](https://github.com/cucumber/godog/pull/295) - [lonnblad])
+- Moved builder tests to a godog_test pkg ([296](https://github.com/cucumber/godog/pull/296) - [lonnblad])
 
 ### Deprecated
 
 ### Removed
+- Removed pre go112 build code ([293](https://github.com/cucumber/godog/pull/293) - [lonnblad])
 
 ### Fixed
-
 - Fixed failing builder tests due to the v0.9.0 change ([lonnblad])
 - Update paths to screenshots for examples ([270](https://github.com/cucumber/godog/pull/270) - [leviable])
 - Made progress formatter verification a bit more accurate ([lonnblad])
 - Added comparison between single and multi threaded runs ([272](https://github.com/cucumber/godog/pull/272) - [lonnblad])
 - Fixed issue with empty feature file causing nil pointer deref ([288](https://github.com/cucumber/godog/pull/288) - [lonnblad])
 - Updated linting checks in circleci config and fixed linting issues ([290](https://github.com/cucumber/godog/pull/290) - [lonnblad])
+- Readded some legacy doc for FeatureContext ([297](https://github.com/cucumber/godog/pull/297) - [lonnblad])
 
 ## [0.9.0]
 
