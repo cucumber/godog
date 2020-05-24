@@ -269,6 +269,8 @@ func TestFormatterConcurrencyRun(t *testing.T) {
 		t.Run(
 			fmt.Sprintf("%s/concurrency/%d", formatter, concurrency),
 			func(t *testing.T) {
+				t.Parallel()
+
 				singleThreadStatus, singleThreadOutput := testRunWithOptions(t, formatter, 1, featurePaths)
 				status, actual := testRunWithOptions(t, formatter, concurrency, featurePaths)
 

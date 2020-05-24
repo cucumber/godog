@@ -20,7 +20,7 @@
                         "name": "passing step",
                         "line": 4,
                         "match": {
-                            "location": "fmt_output_test.go:97"
+                            "location": "fmt_output_test.go:99"
                         },
                         "result": {
                             "status": "passed",
@@ -32,7 +32,7 @@
                         "name": "failing step",
                         "line": 5,
                         "match": {
-                            "location": "fmt_output_test.go:113"
+                            "location": "fmt_output_test.go:115"
                         },
                         "result": {
                             "status": "failed",
@@ -45,7 +45,7 @@
                         "name": "passing step",
                         "line": 6,
                         "match": {
-                            "location": "fmt_output_test.go:97"
+                            "location": "fmt_output_test.go:99"
                         },
                         "result": {
                             "status": "skipped"
@@ -77,7 +77,7 @@
                         "name": "passing step",
                         "line": 10,
                         "match": {
-                            "location": "fmt_output_test.go:97"
+                            "location": "fmt_output_test.go:99"
                         },
                         "result": {
                             "status": "skipped"
@@ -109,7 +109,7 @@
                         "name": "passing step",
                         "line": 14,
                         "match": {
-                            "location": "fmt_output_test.go:97"
+                            "location": "fmt_output_test.go:99"
                         },
                         "result": {
                             "status": "skipped"

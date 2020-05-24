@@ -1,9 +1,9 @@
 <bold-white>Feature:</bold-white> outline
 
   <bold-white>Scenario Outline:</bold-white> outline               <bold-black># formatter-tests/features/scenario_outline.feature:5</bold-black>
-    <cyan>Given</cyan> <cyan>passing step</cyan>                    <bold-black># fmt_output_test.go:97 -> github.com/cucumber/godog_test.passingStepDef</bold-black>
-    <cyan>When</cyan> <cyan>passing step</cyan>                     <bold-black># fmt_output_test.go:97 -> github.com/cucumber/godog_test.passingStepDef</bold-black>
-    <cyan>Then</cyan> <cyan>odd </cyan><bold-cyan><odd></bold-cyan><cyan> and even </cyan><bold-cyan><even></bold-cyan><cyan> number</cyan> <bold-black># fmt_output_test.go:99 -> github.com/cucumber/godog_test.oddEvenStepDef</bold-black>
+    <cyan>Given</cyan> <cyan>passing step</cyan>                    <bold-black># fmt_output_test.go:99 -> github.com/cucumber/godog_test.passingStepDef</bold-black>
+    <cyan>When</cyan> <cyan>passing step</cyan>                     <bold-black># fmt_output_test.go:99 -> github.com/cucumber/godog_test.passingStepDef</bold-black>
+    <cyan>Then</cyan> <cyan>odd </cyan><bold-cyan><odd></bold-cyan><cyan> and even </cyan><bold-cyan><even></bold-cyan><cyan> number</cyan> <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog_test.oddEvenStepDef</bold-black>
 
     <bold-white>Examples:</bold-white> tagged
       | <cyan>odd</cyan> | <cyan>even</cyan> |

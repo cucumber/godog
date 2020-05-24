@@ -68,6 +68,8 @@ func fmtOutputTest(fmtName, testName, featureFilePath string) func(*testing.T) {
 	}
 
 	return func(t *testing.T) {
+		// t.Parallel()
+
 		expectOutputPath := strings.Replace(featureFilePath, "features", fmtName, 1)
 		expectOutputPath = strings.TrimSuffix(expectOutputPath, path.Ext(expectOutputPath))
 		if _, err := os.Stat(expectOutputPath); err != nil {
