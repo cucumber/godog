@@ -1,7 +1,6 @@
 package godog_test
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -11,176 +10,73 @@ import (
 	"github.com/cucumber/godog"
 )
 
-func TestGodogBuildWithModuleOutsideGopathAndHavingOnlyFeature(t *testing.T) {
-	dir := filepath.Join(os.TempDir(), "godogs")
-	err := buildTestPackage(dir, map[string]string{
+func testOutsideGopathAndHavingOnlyFeature(t *testing.T) {
+	builderTC := builderTestCase{}
+
+	builderTC.dir = filepath.Join(os.TempDir(), t.Name(), "godogs")
+	builderTC.files = map[string]string{
 		"godogs.feature": builderFeatureFile,
-	})
-	if err != nil {
-		os.RemoveAll(dir)
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(dir)
-
-	prevDir, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
 	}
 
-	if err := os.Chdir(dir); err != nil {
-		t.Fatal(err)
-	}
-	defer os.Chdir(prevDir)
+	builderTC.goModCmds = make([]*exec.Cmd, 2)
+	builderTC.goModCmds[0] = exec.Command("go", "mod", "init", "godogs")
 
-	if out, err := exec.Command("go", "mod", "init", "godogs").CombinedOutput(); err != nil {
-		t.Log(string(out))
-		t.Fatal(err)
-	}
+	godogDependency := fmt.Sprintf("github.com/cucumber/godog@%s", godog.Version)
+	builderTC.goModCmds[1] = exec.Command("go", "mod", "edit", "-require", godogDependency)
 
-	if out, err := exec.Command("go", "mod", "edit", "-require", fmt.Sprintf("github.com/cucumber/godog@%s", godog.Version)).CombinedOutput(); err != nil {
-		t.Log(string(out))
-		t.Fatal(err)
-	}
-
-	var stdout, stderr bytes.Buffer
-	cmd := buildTestCommand(t, "godogs.feature")
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	cmd.Env = os.Environ()
-
-	if err := cmd.Run(); err != nil {
-		t.Log(stdout.String())
-		t.Log(stderr.String())
-		t.Fatal(err)
-	}
+	builderTC.run(t)
 }
 
-func TestGodogBuildWithModuleOutsideGopath(t *testing.T) {
-	dir := filepath.Join(os.TempDir(), "godogs")
-	err := buildTestPackage(dir, map[string]string{
+func testOutsideGopath(t *testing.T) {
+	builderTC := builderTestCase{}
+
+	builderTC.dir = filepath.Join(os.TempDir(), t.Name(), "godogs")
+	builderTC.files = map[string]string{
 		"godogs.feature": builderFeatureFile,
 		"godogs.go":      builderMainCodeFile,
 		"godogs_test.go": builderTestFile,
-	})
-	if err != nil {
-		os.RemoveAll(dir)
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(dir)
-
-	prevDir, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
 	}
 
-	if err := os.Chdir(dir); err != nil {
-		t.Fatal(err)
-	}
-	defer os.Chdir(prevDir)
+	builderTC.goModCmds = make([]*exec.Cmd, 1)
+	builderTC.goModCmds[0] = exec.Command("go", "mod", "init", "godogs")
 
-	if out, err := exec.Command("go", "mod", "init", "godogs").CombinedOutput(); err != nil {
-		t.Log(string(out))
-		t.Fatal(err)
-	}
-
-	var stdout, stderr bytes.Buffer
-	cmd := buildTestCommand(t, "godogs.feature")
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	cmd.Env = os.Environ()
-
-	if err := cmd.Run(); err != nil {
-		t.Log(stdout.String())
-		t.Log(stderr.String())
-		t.Fatal(err)
-	}
+	builderTC.run(t)
 }
 
-func TestGodogBuildWithModuleWithXTestOutsideGopath(t *testing.T) {
-	dir := filepath.Join(os.TempDir(), "godogs")
-	err := buildTestPackage(dir, map[string]string{
+func testOutsideGopathWithXTest(t *testing.T) {
+	builderTC := builderTestCase{}
+
+	builderTC.dir = filepath.Join(os.TempDir(), t.Name(), "godogs")
+	builderTC.files = map[string]string{
 		"godogs.feature": builderFeatureFile,
 		"godogs.go":      builderMainCodeFile,
 		"godogs_test.go": builderXTestFile,
-	})
-	if err != nil {
-		os.RemoveAll(dir)
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(dir)
-
-	prevDir, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
 	}
 
-	if err := os.Chdir(dir); err != nil {
-		t.Fatal(err)
-	}
-	defer os.Chdir(prevDir)
+	builderTC.goModCmds = make([]*exec.Cmd, 1)
+	builderTC.goModCmds[0] = exec.Command("go", "mod", "init", "godogs")
 
-	if out, err := exec.Command("go", "mod", "init", "godogs").CombinedOutput(); err != nil {
-		t.Log(string(out))
-		t.Fatal(err)
-	}
-
-	var stdout, stderr bytes.Buffer
-	cmd := buildTestCommand(t, "godogs.feature")
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	cmd.Env = os.Environ()
-
-	if err := cmd.Run(); err != nil {
-		t.Log(stdout.String())
-		t.Log(stderr.String())
-		t.Fatal(err)
-	}
+	builderTC.run(t)
 }
 
-func TestGodogBuildWithModuleInsideGopath(t *testing.T) {
-	gopath := filepath.Join(os.TempDir(), "_gp")
-	dir := filepath.Join(gopath, "src", "godogs")
-	err := buildTestPackage(dir, map[string]string{
+func testInsideGopath(t *testing.T) {
+	builderTC := builderTestCase{}
+
+	gopath := filepath.Join(os.TempDir(), t.Name(), "_gp")
+	defer os.RemoveAll(gopath)
+
+	builderTC.dir = filepath.Join(gopath, "src", "godogs")
+	builderTC.files = map[string]string{
 		"godogs.feature": builderFeatureFile,
 		"godogs.go":      builderMainCodeFile,
 		"godogs_test.go": builderTestFile,
-	})
-	if err != nil {
-		os.RemoveAll(gopath)
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(gopath)
-
-	prevDir, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
 	}
 
-	if err := os.Chdir(dir); err != nil {
-		t.Fatal(err)
-	}
-	defer os.Chdir(prevDir)
+	builderTC.goModCmds = make([]*exec.Cmd, 1)
+	builderTC.goModCmds[0] = exec.Command("go", "mod", "init", "godogs")
+	builderTC.goModCmds[0].Env = os.Environ()
+	builderTC.goModCmds[0].Env = append(builderTC.goModCmds[0].Env, "GOPATH="+gopath)
+	builderTC.goModCmds[0].Env = append(builderTC.goModCmds[0].Env, "GO111MODULE=on")
 
-	c := exec.Command("go", "mod", "init", "godogs")
-	c.Env = os.Environ()
-	c.Env = append(c.Env, "GOPATH="+gopath)
-	c.Env = append(c.Env, "GO111MODULE=on")
-	if out, err := c.CombinedOutput(); err != nil {
-		t.Log(string(out))
-		t.Fatal(err)
-	}
-
-	var stdout, stderr bytes.Buffer
-	cmd := buildTestCommand(t, "godogs.feature")
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, "GOPATH="+gopath)
-	cmd.Env = append(cmd.Env, "GO111MODULE=on")
-
-	if err := cmd.Run(); err != nil {
-		t.Log(stdout.String())
-		t.Log(stderr.String())
-		t.Fatal(err)
-	}
+	builderTC.run(t)
 }
