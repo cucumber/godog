@@ -158,6 +158,8 @@ package main
 
 import (
 	"fmt"
+	
+	messages "github.com/cucumber/messages-go/v10" // needed for godog v0.9.0 (latest) and earlier
 
 	"github.com/cucumber/godog"
 )
@@ -186,7 +188,7 @@ func thereShouldBeRemaining(remaining int) error {
 func FeatureContext(s *godog.Suite) {
 	s.BeforeSuite(func() { Godogs = 0 })
 
-	s.BeforeScenario(func(*godog.Scenario) {
+	s.BeforeScenario(func(*messages.Pickle) {
 		Godogs = 0 // clean the state before every scenario
 	})
 
