@@ -1,16 +1,16 @@
 <bold-white>Feature:</bold-white> two scenarios with background fail
 
   <bold-white>Background:</bold-white>
-    <green>Given</green> <green>passing step</green> <bold-black># fmt_output_test.go:97 -> github.com/cucumber/godog_test.passingStepDef</bold-black>
-    <red>And</red> <red>failing step</red>   <bold-black># fmt_output_test.go:113 -> github.com/cucumber/godog_test.failingStepDef</bold-black>
+    <green>Given</green> <green>passing step</green> <bold-black># fmt_output_test.go:116 -> github.com/cucumber/godog_test.passingStepDef</bold-black>
+    <red>And</red> <red>failing step</red>   <bold-black># fmt_output_test.go:132 -> github.com/cucumber/godog_test.failingStepDef</bold-black>
     <bold-red>step failed</bold-red>
 
   <bold-white>Scenario:</bold-white> one        <bold-black># formatter-tests/features/two_scenarios_with_background_fail.feature:7</bold-black>
-    <cyan>When</cyan> <cyan>passing step</cyan>  <bold-black># fmt_output_test.go:97 -> github.com/cucumber/godog_test.passingStepDef</bold-black>
-    <cyan>Then</cyan> <cyan>passing step</cyan>  <bold-black># fmt_output_test.go:97 -> github.com/cucumber/godog_test.passingStepDef</bold-black>
+    <cyan>When</cyan> <cyan>passing step</cyan>  <bold-black># fmt_output_test.go:116 -> github.com/cucumber/godog_test.passingStepDef</bold-black>
+    <cyan>Then</cyan> <cyan>passing step</cyan>  <bold-black># fmt_output_test.go:116 -> github.com/cucumber/godog_test.passingStepDef</bold-black>
 
   <bold-white>Scenario:</bold-white> two        <bold-black># formatter-tests/features/two_scenarios_with_background_fail.feature:11</bold-black>
-    <cyan>Then</cyan> <cyan>passing step</cyan>  <bold-black># fmt_output_test.go:97 -> github.com/cucumber/godog_test.passingStepDef</bold-black>
+    <cyan>Then</cyan> <cyan>passing step</cyan>  <bold-black># fmt_output_test.go:116 -> github.com/cucumber/godog_test.passingStepDef</bold-black>
 
 --- <red>Failed steps:</red>
 
