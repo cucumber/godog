@@ -230,7 +230,7 @@ func TestFeatureFilePathParser(t *testing.T) {
 	}
 }
 
-func TestAllFeaturesRun(t *testing.T) {
+func Test_AllFeaturesRun(t *testing.T) {
 	const concurrency = 10
 	const format = "progress"
 
@@ -247,6 +247,11 @@ func TestAllFeaturesRun(t *testing.T) {
 `
 
 	actualStatus, actualOutput := testRunWithOptions(t, format, concurrency, []string{"features"})
+
+	assert.Equal(t, exitSuccess, actualStatus)
+	assert.Equal(t, expected, actualOutput)
+
+	actualStatus, actualOutput = testRun(t, format, concurrency, []string{"features"})
 
 	assert.Equal(t, exitSuccess, actualStatus)
 	assert.Equal(t, expected, actualOutput)
@@ -269,11 +274,17 @@ func TestFormatterConcurrencyRun(t *testing.T) {
 		t.Run(
 			fmt.Sprintf("%s/concurrency/%d", formatter, concurrency),
 			func(t *testing.T) {
-				singleThreadStatus, singleThreadOutput := testRunWithOptions(t, formatter, 1, featurePaths)
-				status, actual := testRunWithOptions(t, formatter, concurrency, featurePaths)
+				expectedStatus, expectedOutput := testRunWithOptions(t, formatter, 1, featurePaths)
+				actualStatus, actualOutput := testRunWithOptions(t, formatter, concurrency, featurePaths)
 
-				assert.Equal(t, singleThreadStatus, status)
-				assertConcurrencyOutput(t, formatter, singleThreadOutput, actual)
+				assert.Equal(t, expectedStatus, actualStatus)
+				assertOutput(t, formatter, expectedOutput, actualOutput)
+
+				expectedStatus, expectedOutput = testRun(t, formatter, 1, featurePaths)
+				actualStatus, actualOutput = testRun(t, formatter, concurrency, featurePaths)
+
+				assert.Equal(t, expectedStatus, actualStatus)
+				assertOutput(t, formatter, expectedOutput, actualOutput)
 			},
 		)
 	}
@@ -282,7 +293,7 @@ func TestFormatterConcurrencyRun(t *testing.T) {
 func testRunWithOptions(t *testing.T, format string, concurrency int, featurePaths []string) (int, string) {
 	output := new(bytes.Buffer)
 
-	opt := Options{
+	opts := Options{
 		Format:      format,
 		NoColors:    true,
 		Paths:       featurePaths,
@@ -290,7 +301,7 @@ func testRunWithOptions(t *testing.T, format string, concurrency int, featurePat
 		Output:      output,
 	}
 
-	status := RunWithOptions("succeed", func(s *Suite) { SuiteContext(s) }, opt)
+	status := RunWithOptions("succeed", func(s *Suite) { SuiteContext(s) }, opts)
 
 	actual, err := ioutil.ReadAll(output)
 	require.NoError(t, err)
@@ -298,7 +309,30 @@ func testRunWithOptions(t *testing.T, format string, concurrency int, featurePat
 	return status, string(actual)
 }
 
-func assertConcurrencyOutput(t *testing.T, formatter string, expected, actual string) {
+func testRun(t *testing.T, format string, concurrency int, featurePaths []string) (int, string) {
+	output := new(bytes.Buffer)
+
+	opts := Options{
+		Format:      format,
+		NoColors:    true,
+		Paths:       featurePaths,
+		Concurrency: concurrency,
+		Output:      output,
+	}
+
+	status := TestSuite{
+		Name:                "succeed",
+		ScenarioInitializer: InitializeScenario,
+		Options:             &opts,
+	}.Run()
+
+	actual, err := ioutil.ReadAll(output)
+	require.NoError(t, err)
+
+	return status, string(actual)
+}
+
+func assertOutput(t *testing.T, formatter string, expected, actual string) {
 	switch formatter {
 	case "cucumber", "junit", "pretty", "events":
 		expectedRows := strings.Split(expected, "\n")
@@ -357,4 +391,43 @@ type progressOutput struct {
 	pending         int
 	noOfStepsPerRow []string
 	bottomRows      []string
+}
+
+func Test_AllFeaturesRun_v010(t *testing.T) {
+	const concurrency = 10
+	const format = "progress"
+
+	const expected = `...................................................................... 70
+...................................................................... 140
+...................................................................... 210
+...................................................................... 280
+..........................                                             306
+
+
+79 scenarios (79 passed)
+306 steps (306 passed)
+0s
+`
+
+	output := new(bytes.Buffer)
+
+	opts := Options{
+		Format:      format,
+		NoColors:    true,
+		Paths:       []string{"features"},
+		Concurrency: concurrency,
+		Output:      output,
+	}
+
+	actualStatus := TestSuite{
+		Name:                "godogs",
+		ScenarioInitializer: InitializeScenario,
+		Options:             &opts,
+	}.Run()
+
+	actualOutput, err := ioutil.ReadAll(output)
+	require.NoError(t, err)
+
+	assert.Equal(t, exitSuccess, actualStatus)
+	assert.Equal(t, expected, string(actualOutput))
 }

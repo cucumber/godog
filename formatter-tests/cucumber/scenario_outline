@@ -48,7 +48,7 @@
                         "name": "passing step",
                         "line": 13,
                         "match": {
-                            "location": "fmt_output_test.go:97"
+                            "location": "fmt_output_test.go:116"
                         },
                         "result": {
                             "status": "passed",
@@ -60,7 +60,7 @@
                         "name": "passing step",
                         "line": 13,
                         "match": {
-                            "location": "fmt_output_test.go:97"
+                            "location": "fmt_output_test.go:116"
                         },
                         "result": {
                             "status": "passed",
@@ -72,7 +72,7 @@
                         "name": "odd 1 and even 2 number",
                         "line": 13,
                         "match": {
-                            "location": "fmt_output_test.go:99"
+                            "location": "fmt_output_test.go:118"
                         },
                         "result": {
                             "status": "passed",
@@ -112,7 +112,7 @@
                         "name": "passing step",
                         "line": 14,
                         "match": {
-                            "location": "fmt_output_test.go:97"
+                            "location": "fmt_output_test.go:116"
                         },
                         "result": {
                             "status": "passed",
@@ -124,7 +124,7 @@
                         "name": "passing step",
                         "line": 14,
                         "match": {
-                            "location": "fmt_output_test.go:97"
+                            "location": "fmt_output_test.go:116"
                         },
                         "result": {
                             "status": "passed",
@@ -136,7 +136,7 @@
                         "name": "odd 2 and even 0 number",
                         "line": 14,
                         "match": {
-                            "location": "fmt_output_test.go:99"
+                            "location": "fmt_output_test.go:118"
                         },
                         "result": {
                             "status": "failed",
@@ -177,7 +177,7 @@
                         "name": "passing step",
                         "line": 15,
                         "match": {
-                            "location": "fmt_output_test.go:97"
+                            "location": "fmt_output_test.go:116"
                         },
                         "result": {
                             "status": "passed",
@@ -189,7 +189,7 @@
                         "name": "passing step",
                         "line": 15,
                         "match": {
-                            "location": "fmt_output_test.go:97"
+                            "location": "fmt_output_test.go:116"
                         },
                         "result": {
                             "status": "passed",
@@ -201,7 +201,7 @@
                         "name": "odd 3 and even 11 number",
                         "line": 15,
                         "match": {
-                            "location": "fmt_output_test.go:99"
+                            "location": "fmt_output_test.go:118"
                         },
                         "result": {
                             "status": "failed",
@@ -242,7 +242,7 @@
                         "name": "passing step",
                         "line": 20,
                         "match": {
-                            "location": "fmt_output_test.go:97"
+                            "location": "fmt_output_test.go:116"
                         },
                         "result": {
                             "status": "passed",
@@ -254,7 +254,7 @@
                         "name": "passing step",
                         "line": 20,
                         "match": {
-                            "location": "fmt_output_test.go:97"
+                            "location": "fmt_output_test.go:116"
                         },
                         "result": {
                             "status": "passed",
@@ -266,7 +266,7 @@
                         "name": "odd 1 and even 14 number",
                         "line": 20,
                         "match": {
-                            "location": "fmt_output_test.go:99"
+                            "location": "fmt_output_test.go:118"
                         },
                         "result": {
                             "status": "passed",
@@ -306,7 +306,7 @@
                         "name": "passing step",
                         "line": 21,
                         "match": {
-                            "location": "fmt_output_test.go:97"
+                            "location": "fmt_output_test.go:116"
                         },
                         "result": {
                             "status": "passed",
@@ -318,7 +318,7 @@
                         "name": "passing step",
                         "line": 21,
                         "match": {
-                            "location": "fmt_output_test.go:97"
+                            "location": "fmt_output_test.go:116"
                         },
                         "result": {
                             "status": "passed",
@@ -330,7 +330,7 @@
                         "name": "odd 3 and even 9 number",
                         "line": 21,
                         "match": {
-                            "location": "fmt_output_test.go:99"
+                            "location": "fmt_output_test.go:118"
                         },
                         "result": {
                             "status": "failed",

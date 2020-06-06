@@ -67,6 +67,13 @@ func fmtOutputTest(fmtName, testName, featureFilePath string) func(*testing.T) {
 		s.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)
 	}
 
+	fmtOutputScenarioInitializer := func(ctx *godog.ScenarioContext) {
+		ctx.Step(`^(?:a )?failing step`, failingStepDef)
+		ctx.Step(`^(?:a )?pending step$`, pendingStepDef)
+		ctx.Step(`^(?:a )?passing step$`, passingStepDef)
+		ctx.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)
+	}
+
 	return func(t *testing.T) {
 		expectOutputPath := strings.Replace(featureFilePath, "features", fmtName, 1)
 		expectOutputPath = strings.TrimSuffix(expectOutputPath, path.Ext(expectOutputPath))
@@ -90,6 +97,18 @@ func fmtOutputTest(fmtName, testName, featureFilePath string) func(*testing.T) {
 
 		expected := string(expectedOutput)
 		actual := buf.String()
+		assert.Equalf(t, expected, actual, "path: %s", expectOutputPath)
+
+		buf.Reset()
+
+		godog.TestSuite{
+			Name:                fmtName,
+			ScenarioInitializer: fmtOutputScenarioInitializer,
+			Options:             &opts,
+		}.Run()
+
+		expected = string(expectedOutput)
+		actual = buf.String()
 		assert.Equalf(t, expected, actual, "path: %s", expectOutputPath)
 	}
 }
