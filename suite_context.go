@@ -5,15 +5,14 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"io"
 	"path/filepath"
-	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/cucumber/gherkin-go/v11"
 	"github.com/cucumber/messages-go/v10"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/cucumber/godog/colors"
 )
@@ -108,7 +107,7 @@ func SuiteContext(s *Suite, additionalContextInitializers ...func(suite *Suite))
 	s.BeforeStep(c.inject)
 }
 
-func (s *suiteContext) inject(step *messages.Pickle_PickleStep) {
+func (s *suiteContext) inject(step *Step) {
 	if !s.allowInjection {
 		return
 	}
@@ -134,9 +133,11 @@ func injectAll(src string) string {
 		src,
 		func(key string) string {
 			injectRegex := regexp.MustCompile(`^{{.+}}$`)
+
 			if injectRegex.MatchString(key) {
 				return "someverylonginjectionsoweacanbesureitsurpasstheinitiallongeststeplenghtanditwillhelptestsmethodsafety"
 			}
+
 			return key
 		},
 	)
@@ -156,7 +157,7 @@ type suiteContext struct {
 	allowInjection bool
 }
 
-func (s *suiteContext) ResetBeforeEachScenario(*messages.Pickle) {
+func (s *suiteContext) ResetBeforeEachScenario(*Scenario) {
 	// reset whole suite with the state
 	s.out.Reset()
 	s.paths = []string{}
@@ -177,10 +178,12 @@ func (s *suiteContext) iRunFeatureSuiteWithTags(tags string) error {
 	if err := s.parseFeatures(); err != nil {
 		return err
 	}
+
 	for _, feat := range s.testedSuite.features {
 		applyTagFilter(tags, feat)
 	}
-	s.testedSuite.fmt = testFormatterFunc("godog", &s.out)
+
+	s.testedSuite.fmt = newBaseFmt("godog", &s.out)
 
 	s.testedSuite.fmt.TestRunStarted()
 	s.testedSuite.run()
@@ -194,7 +197,9 @@ func (s *suiteContext) iRunFeatureSuiteWithFormatter(name string) error {
 	if f == nil {
 		return fmt.Errorf(`formatter "%s" is not available`, name)
 	}
+
 	s.testedSuite.fmt = f("godog", colors.Uncolored(&s.out))
+
 	if err := s.parseFeatures(); err != nil {
 		return err
 	}
@@ -206,9 +211,10 @@ func (s *suiteContext) iRunFeatureSuiteWithFormatter(name string) error {
 	return nil
 }
 
-func (s *suiteContext) thereShouldBeEventsFired(doc *messages.PickleStepArgument_PickleDocString) error {
+func (s *suiteContext) thereShouldBeEventsFired(doc *DocString) error {
 	actual := strings.Split(strings.TrimSpace(s.out.String()), "\n")
 	expect := strings.Split(strings.TrimSpace(doc.Content), "\n")
+
 	if len(expect) != len(actual) {
 		return fmt.Errorf("expected %d events, but got %d", len(expect), len(actual))
 	}
@@ -220,6 +226,7 @@ func (s *suiteContext) thereShouldBeEventsFired(doc *messages.PickleStepArgument
 	for i, event := range actual {
 		exp := strings.TrimSpace(expect[i])
 		var act ev
+
 		if err := json.Unmarshal([]byte(event), &act); err != nil {
 			return fmt.Errorf("failed to read event data: %v", err)
 		}
@@ -228,6 +235,7 @@ func (s *suiteContext) thereShouldBeEventsFired(doc *messages.PickleStepArgument
 			return fmt.Errorf(`expected event: "%s" at position: %d, but actual was "%s"`, exp, i, act.Event)
 		}
 	}
+
 	return nil
 }
 
@@ -236,30 +244,35 @@ func (s *suiteContext) cleanupSnippet(snip string) string {
 	for i := 0; i < len(lines); i++ {
 		lines[i] = strings.TrimSpace(lines[i])
 	}
+
 	return strings.Join(lines, "\n")
 }
 
-func (s *suiteContext) theUndefinedStepSnippetsShouldBe(body *messages.PickleStepArgument_PickleDocString) error {
-	f, ok := s.testedSuite.fmt.(*testFormatter)
+func (s *suiteContext) theUndefinedStepSnippetsShouldBe(body *DocString) error {
+	f, ok := s.testedSuite.fmt.(*basefmt)
 	if !ok {
-		return fmt.Errorf("this step requires testFormatter, but there is: %T", s.testedSuite.fmt)
+		return fmt.Errorf("this step requires *basefmt, but there is: %T", s.testedSuite.fmt)
 	}
+
 	actual := s.cleanupSnippet(f.snippets())
 	expected := s.cleanupSnippet(body.Content)
+
 	if actual != expected {
 		return fmt.Errorf("snippets do not match actual: %s", f.snippets())
 	}
+
 	return nil
 }
 
-func (s *suiteContext) followingStepsShouldHave(status string, steps *messages.PickleStepArgument_PickleDocString) error {
+func (s *suiteContext) followingStepsShouldHave(status string, steps *DocString) error {
 	var expected = strings.Split(steps.Content, "\n")
 	var actual, unmatched, matched []string
 
-	f, ok := s.testedSuite.fmt.(*testFormatter)
+	f, ok := s.testedSuite.fmt.(*basefmt)
 	if !ok {
-		return fmt.Errorf("this step requires testFormatter, but there is: %T", s.testedSuite.fmt)
+		return fmt.Errorf("this step requires *basefmt, but there is: %T", s.testedSuite.fmt)
 	}
+
 	switch status {
 	case "passed":
 		for _, st := range f.findStepResults(passed) {
@@ -301,6 +314,7 @@ func (s *suiteContext) followingStepsShouldHave(status string, steps *messages.P
 	if len(matched) >= len(expected) {
 		return nil
 	}
+
 	for _, s := range expected {
 		var found bool
 		for _, m := range matched {
@@ -309,6 +323,7 @@ func (s *suiteContext) followingStepsShouldHave(status string, steps *messages.P
 				break
 			}
 		}
+
 		if !found {
 			unmatched = append(unmatched, s)
 		}
@@ -318,9 +333,9 @@ func (s *suiteContext) followingStepsShouldHave(status string, steps *messages.P
 }
 
 func (s *suiteContext) allStepsShouldHave(status string) error {
-	f, ok := s.testedSuite.fmt.(*testFormatter)
+	f, ok := s.testedSuite.fmt.(*basefmt)
 	if !ok {
-		return fmt.Errorf("this step requires testFormatter, but there is: %T", s.testedSuite.fmt)
+		return fmt.Errorf("this step requires *basefmt, but there is: %T", s.testedSuite.fmt)
 	}
 
 	total := len(f.findStepResults(passed)) +
@@ -328,7 +343,9 @@ func (s *suiteContext) allStepsShouldHave(status string) error {
 		len(f.findStepResults(skipped)) +
 		len(f.findStepResults(undefined)) +
 		len(f.findStepResults(pending))
+
 	var actual int
+
 	switch status {
 	case "passed":
 		actual = len(f.findStepResults(passed))
@@ -347,6 +364,7 @@ func (s *suiteContext) allStepsShouldHave(status string) error {
 	if total > actual {
 		return fmt.Errorf("number of expected %s steps: %d is less than actual %s steps: %d", status, total, status, actual)
 	}
+
 	return nil
 }
 
@@ -354,27 +372,35 @@ func (s *suiteContext) iAmListeningToSuiteEvents() error {
 	s.testedSuite.BeforeSuite(func() {
 		s.events = append(s.events, &firedEvent{"BeforeSuite", []interface{}{}})
 	})
+
 	s.testedSuite.AfterSuite(func() {
 		s.events = append(s.events, &firedEvent{"AfterSuite", []interface{}{}})
 	})
+
 	s.testedSuite.BeforeFeature(func(ft *messages.GherkinDocument) {
 		s.events = append(s.events, &firedEvent{"BeforeFeature", []interface{}{ft}})
 	})
+
 	s.testedSuite.AfterFeature(func(ft *messages.GherkinDocument) {
 		s.events = append(s.events, &firedEvent{"AfterFeature", []interface{}{ft}})
 	})
-	s.testedSuite.BeforeScenario(func(pickle *messages.Pickle) {
+
+	s.testedSuite.BeforeScenario(func(pickle *Scenario) {
 		s.events = append(s.events, &firedEvent{"BeforeScenario", []interface{}{pickle}})
 	})
-	s.testedSuite.AfterScenario(func(pickle *messages.Pickle, err error) {
+
+	s.testedSuite.AfterScenario(func(pickle *Scenario, err error) {
 		s.events = append(s.events, &firedEvent{"AfterScenario", []interface{}{pickle, err}})
 	})
-	s.testedSuite.BeforeStep(func(step *messages.Pickle_PickleStep) {
+
+	s.testedSuite.BeforeStep(func(step *Step) {
 		s.events = append(s.events, &firedEvent{"BeforeStep", []interface{}{step}})
 	})
-	s.testedSuite.AfterStep(func(step *messages.Pickle_PickleStep, err error) {
+
+	s.testedSuite.AfterStep(func(step *Step, err error) {
 		s.events = append(s.events, &firedEvent{"AfterStep", []interface{}{step, err}})
 	})
+
 	return nil
 }
 
@@ -383,10 +409,11 @@ func (s *suiteContext) aFailingStep() error {
 }
 
 // parse a given feature file body as a feature
-func (s *suiteContext) aFeatureFile(path string, body *messages.PickleStepArgument_PickleDocString) error {
+func (s *suiteContext) aFeatureFile(path string, body *DocString) error {
 	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(body.Content), (&messages.Incrementing{}).NewId)
 	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
 	s.testedSuite.features = append(s.testedSuite.features, &feature{GherkinDocument: gd, pickles: pickles, Path: path})
+
 	return err
 }
 
@@ -400,7 +427,9 @@ func (s *suiteContext) parseFeatures() error {
 	if err != nil {
 		return err
 	}
+
 	s.testedSuite.features = append(s.testedSuite.features, fts...)
+
 	return nil
 }
 
@@ -408,54 +437,56 @@ func (s *suiteContext) theSuiteShouldHave(state string) error {
 	if s.testedSuite.failed && state == "passed" {
 		return fmt.Errorf("the feature suite has failed")
 	}
+
 	if !s.testedSuite.failed && state == "failed" {
 		return fmt.Errorf("the feature suite has passed")
 	}
+
 	return nil
 }
 
-func (s *suiteContext) iShouldHaveNumFeatureFiles(num int, files *messages.PickleStepArgument_PickleDocString) error {
+func (s *suiteContext) iShouldHaveNumFeatureFiles(num int, files *DocString) error {
 	if len(s.testedSuite.features) != num {
 		return fmt.Errorf("expected %d features to be parsed, but have %d", num, len(s.testedSuite.features))
 	}
+
 	expected := strings.Split(files.Content, "\n")
+
 	var actual []string
+
 	for _, ft := range s.testedSuite.features {
 		actual = append(actual, ft.Path)
 	}
+
 	if len(expected) != len(actual) {
 		return fmt.Errorf("expected %d feature paths to be parsed, but have %d", len(expected), len(actual))
 	}
+
 	for i := 0; i < len(expected); i++ {
 		var matched bool
 		split := strings.Split(expected[i], "/")
 		exp := filepath.Join(split...)
+
 		for j := 0; j < len(actual); j++ {
 			split = strings.Split(actual[j], "/")
 			act := filepath.Join(split...)
+
 			if exp == act {
 				matched = true
 				break
 			}
 		}
+
 		if !matched {
 			return fmt.Errorf(`expected feature path "%s" at position: %d, was not parsed, actual are %+v`, exp, i, actual)
 		}
 	}
+
 	return nil
 }
 
 func (s *suiteContext) iRunFeatureSuite() error {
-	if err := s.parseFeatures(); err != nil {
-		return err
-	}
-	s.testedSuite.fmt = testFormatterFunc("godog", &s.out)
-
-	s.testedSuite.fmt.TestRunStarted()
-	s.testedSuite.run()
-	s.testedSuite.fmt.Summary()
-
-	return nil
+	return s.iRunFeatureSuiteWithTags("")
 }
 
 func (s *suiteContext) numScenariosRegistered(expected int) (err error) {
@@ -463,9 +494,11 @@ func (s *suiteContext) numScenariosRegistered(expected int) (err error) {
 	for _, ft := range s.testedSuite.features {
 		num += len(ft.pickles)
 	}
+
 	if num != expected {
 		err = fmt.Errorf("expected %d scenarios to be registered, but got %d", expected, num)
 	}
+
 	return
 }
 
@@ -476,9 +509,11 @@ func (s *suiteContext) thereWereNumEventsFired(_ string, expected int, typ strin
 			num++
 		}
 	}
+
 	if num != expected {
 		return fmt.Errorf("expected %d %s events to be fired, but got %d", expected, typ, num)
 	}
+
 	return nil
 }
 
@@ -491,9 +526,10 @@ func (s *suiteContext) thereWasEventTriggeredBeforeScenario(expected string) err
 
 		var name string
 		switch t := event.args[0].(type) {
-		case *messages.Pickle:
+		case *Scenario:
 			name = t.Name
 		}
+
 		if name == expected {
 			return nil
 		}
@@ -508,7 +544,7 @@ func (s *suiteContext) thereWasEventTriggeredBeforeScenario(expected string) err
 	return fmt.Errorf(`expected "%s" scenario, but got these fired %s`, expected, `"`+strings.Join(found, `", "`)+`"`)
 }
 
-func (s *suiteContext) theseEventsHadToBeFiredForNumberOfTimes(tbl *messages.PickleStepArgument_PickleTable) error {
+func (s *suiteContext) theseEventsHadToBeFiredForNumberOfTimes(tbl *Table) error {
 	if len(tbl.Rows[0].Cells) != 2 {
 		return fmt.Errorf("expected two columns for event table row, got: %d", len(tbl.Rows[0].Cells))
 	}
@@ -518,18 +554,21 @@ func (s *suiteContext) theseEventsHadToBeFiredForNumberOfTimes(tbl *messages.Pic
 		if err != nil {
 			return err
 		}
+
 		if err := s.thereWereNumEventsFired("", int(num), row.Cells[0].Value); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
-func (s *suiteContext) theRenderJSONWillBe(docstring *messages.PickleStepArgument_PickleDocString) error {
+func (s *suiteContext) theRenderJSONWillBe(docstring *DocString) error {
 	suiteCtxReg := regexp.MustCompile(`suite_context.go:\d+`)
 
 	expectedString := docstring.Content
 	expectedString = suiteCtxReg.ReplaceAllString(expectedString, `suite_context.go:0`)
+
 	actualString := s.out.String()
 	actualString = suiteCtxReg.ReplaceAllString(actualString, `suite_context.go:0`)
 
@@ -543,13 +582,10 @@ func (s *suiteContext) theRenderJSONWillBe(docstring *messages.PickleStepArgumen
 		return err
 	}
 
-	if !reflect.DeepEqual(expected, actual) {
-		return fmt.Errorf("expected json does not match actual: %s", actualString)
-	}
-	return nil
+	return assertExpectedAndActual(assert.Equal, expected, actual)
 }
 
-func (s *suiteContext) theRenderOutputWillBe(docstring *messages.PickleStepArgument_PickleDocString) error {
+func (s *suiteContext) theRenderOutputWillBe(docstring *DocString) error {
 	suiteCtxReg := regexp.MustCompile(`suite_context.go:\d+`)
 	suiteCtxFuncReg := regexp.MustCompile(`github.com/cucumber/godog.SuiteContext.func(\d+)`)
 
@@ -563,14 +599,13 @@ func (s *suiteContext) theRenderOutputWillBe(docstring *messages.PickleStepArgum
 	actual = suiteCtxReg.ReplaceAllString(actual, "suite_context.go:0")
 	actual = suiteCtxFuncReg.ReplaceAllString(actual, "SuiteContext.func$1")
 
-	if err := match(expected, actual); err != nil {
-		return err
-	}
+	expectedRows := strings.Split(expected, "\n")
+	actualRows := strings.Split(actual, "\n")
 
-	return nil
+	return assertExpectedAndActual(assert.ElementsMatch, expectedRows, actualRows)
 }
 
-func (s *suiteContext) theRenderXMLWillBe(docstring *messages.PickleStepArgument_PickleDocString) error {
+func (s *suiteContext) theRenderXMLWillBe(docstring *DocString) error {
 	expectedString := docstring.Content
 	actualString := s.out.String()
 
@@ -584,53 +619,21 @@ func (s *suiteContext) theRenderXMLWillBe(docstring *messages.PickleStepArgument
 		return err
 	}
 
-	if !reflect.DeepEqual(expected, actual) {
-		return fmt.Errorf("expected json does not match actual: %s", actualString)
-	}
-	return nil
+	return assertExpectedAndActual(assert.Equal, expected, actual)
 }
 
-type testFormatter struct {
-	*basefmt
-	pickles []*messages.Pickle
+func assertExpectedAndActual(a expectedAndActualAssertion, expected, actual interface{}, msgAndArgs ...interface{}) error {
+	var t asserter
+	a(&t, expected, actual, msgAndArgs...)
+	return t.err
 }
 
-func testFormatterFunc(suite string, out io.Writer) Formatter {
-	return &testFormatter{basefmt: newBaseFmt(suite, out)}
+type expectedAndActualAssertion func(t assert.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool
+
+type asserter struct {
+	err error
 }
 
-func (f *testFormatter) Pickle(p *messages.Pickle) {
-	f.basefmt.Pickle(p)
-	f.pickles = append(f.pickles, p)
-}
-
-func (f *testFormatter) Summary() {}
-
-func match(expected, actual string) error {
-	act := []byte(actual)
-	exp := []byte(expected)
-
-	if len(act) != len(exp) {
-		return fmt.Errorf("content lengths do not match, expected: %d, actual %d, expected output:\n%s, actual output:\n%s", len(exp), len(act), expected, actual)
-	}
-
-	for i := 0; i < len(exp); i++ {
-		if act[i] == exp[i] {
-			continue
-		}
-
-		cpe := make([]byte, len(exp))
-		copy(cpe, exp)
-		e := append(exp[:i], '^')
-		e = append(e, cpe[i:]...)
-
-		cpa := make([]byte, len(act))
-		copy(cpa, act)
-		a := append(act[:i], '^')
-		a = append(a, cpa[i:]...)
-
-		return fmt.Errorf("expected output does not match:\n%s\n\n%s", string(a), string(e))
-	}
-
-	return nil
+func (a *asserter) Errorf(format string, args ...interface{}) {
+	a.err = fmt.Errorf(format, args...)
 }
