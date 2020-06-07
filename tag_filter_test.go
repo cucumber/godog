@@ -6,13 +6,13 @@ import (
 	"github.com/cucumber/messages-go/v10"
 )
 
-func assertNotMatchesTagFilter(tags []*messages.Pickle_PickleTag, filter string, t *testing.T) {
+func assertNotMatchesTagFilter(tags []*tag, filter string, t *testing.T) {
 	if matchesTags(filter, tags) {
 		t.Errorf(`expected tags: %v not to match tag filter "%s", but it did`, tags, filter)
 	}
 }
 
-func assertMatchesTagFilter(tags []*messages.Pickle_PickleTag, filter string, t *testing.T) {
+func assertMatchesTagFilter(tags []*tag, filter string, t *testing.T) {
 	if !matchesTags(filter, tags) {
 		t.Errorf(`expected tags: %v to match tag filter "%s", but it did not`, tags, filter)
 	}
