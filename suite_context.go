@@ -412,7 +412,7 @@ func (s *suiteContext) aFailingStep() error {
 func (s *suiteContext) aFeatureFile(path string, body *DocString) error {
 	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(body.Content), (&messages.Incrementing{}).NewId)
 	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
-	s.testedSuite.features = append(s.testedSuite.features, &feature{GherkinDocument: gd, pickles: pickles, Path: path})
+	s.testedSuite.features = append(s.testedSuite.features, &feature{GherkinDocument: gd, pickles: pickles, path: path})
 
 	return err
 }
@@ -455,7 +455,7 @@ func (s *suiteContext) iShouldHaveNumFeatureFiles(num int, files *DocString) err
 	var actual []string
 
 	for _, ft := range s.testedSuite.features {
-		actual = append(actual, ft.Path)
+		actual = append(actual, ft.path)
 	}
 
 	if len(expected) != len(actual) {

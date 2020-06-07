@@ -71,7 +71,7 @@ func buildJUNITPackageSuite(suiteName string, startedAt time.Time, features []*f
 
 		var testcaseNames = make(map[string]int)
 		for _, pickleResult := range feat.pickleResults {
-			testcaseNames[pickleResult.Name] = testcaseNames[pickleResult.Name] + 1
+			testcaseNames[pickleResult.name] = testcaseNames[pickleResult.name] + 1
 		}
 
 		var outlineNo = make(map[string]int)
@@ -79,7 +79,7 @@ func buildJUNITPackageSuite(suiteName string, startedAt time.Time, features []*f
 			tc := junitTestCase{}
 			tc.Time = junitTimeDuration(pickleResult.startedAt(), pickleResult.finishedAt())
 
-			tc.Name = pickleResult.Name
+			tc.Name = pickleResult.name
 			if testcaseNames[tc.Name] > 1 {
 				outlineNo[tc.Name] = outlineNo[tc.Name] + 1
 				tc.Name += fmt.Sprintf(" #%d", outlineNo[tc.Name])

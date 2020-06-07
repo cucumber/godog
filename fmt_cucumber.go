@@ -79,7 +79,7 @@ func (f *cukefmt) buildCukeElements(pickleResults []*pickleResult) (res []cukeEl
 	res = make([]cukeElement, len(pickleResults))
 
 	for idx, pickleResult := range pickleResults {
-		cukeElement := f.buildCukeElement(pickleResult.Name, pickleResult.AstNodeIDs)
+		cukeElement := f.buildCukeElement(pickleResult.name, pickleResult.astNodeIDs)
 
 		stepStartedAt := pickleResult.startedAt()
 
@@ -170,7 +170,7 @@ type cukeFeatureJSON struct {
 
 func buildCukeFeature(feat *feature) cukeFeatureJSON {
 	cukeFeature := cukeFeatureJSON{
-		URI:         feat.Path,
+		URI:         feat.path,
 		ID:          makeCukeID(feat.Feature.Name),
 		Keyword:     feat.Feature.Keyword,
 		Name:        feat.Feature.Name,

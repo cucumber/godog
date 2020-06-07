@@ -145,7 +145,7 @@ func (f *pretty) scenarioLengths(scenarioAstID string) (scenarioHeaderLength int
 
 func (f *pretty) printScenarioHeader(astScenario *messages.GherkinDocument_Feature_Scenario, spaceFilling int) {
 	text := s(f.indent) + keywordAndName(astScenario.Keyword, astScenario.Name)
-	text += s(spaceFilling) + f.line(f.lastFeature().Path, astScenario.Location)
+	text += s(spaceFilling) + f.line(f.lastFeature().path, astScenario.Location)
 	fmt.Fprintln(f.out, "\n"+text)
 }
 
@@ -204,8 +204,8 @@ func (f *pretty) Summary() {
 			astStep := f.findStep(fail.step.AstNodeIds[0])
 			stepDesc := strings.TrimSpace(astStep.Keyword) + " " + fail.step.Text
 
-			fmt.Fprintln(f.out, s(f.indent)+red(scenarioDesc)+f.line(feature.Path, astScenario.Location))
-			fmt.Fprintln(f.out, s(f.indent*2)+red(stepDesc)+f.line(feature.Path, astStep.Location))
+			fmt.Fprintln(f.out, s(f.indent)+red(scenarioDesc)+f.line(feature.path, astScenario.Location))
+			fmt.Fprintln(f.out, s(f.indent*2)+red(stepDesc)+f.line(feature.path, astStep.Location))
 			fmt.Fprintln(f.out, s(f.indent*3)+red("Error: ")+redb(fmt.Sprintf("%+v", fail.err))+"\n")
 		}
 	}
