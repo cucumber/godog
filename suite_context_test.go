@@ -374,7 +374,7 @@ func (tc *godogFeaturesScenario) aFailingStep() error {
 func (tc *godogFeaturesScenario) aFeatureFile(path string, body *DocString) error {
 	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(body.Content), (&messages.Incrementing{}).NewId)
 	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
-	tc.testedSuite.features = append(tc.testedSuite.features, &feature{GherkinDocument: gd, pickles: pickles, Path: path})
+	tc.testedSuite.features = append(tc.testedSuite.features, &feature{GherkinDocument: gd, pickles: pickles, path: path})
 
 	return err
 }
@@ -417,7 +417,7 @@ func (tc *godogFeaturesScenario) iShouldHaveNumFeatureFiles(num int, files *DocS
 	var actual []string
 
 	for _, ft := range tc.testedSuite.features {
-		actual = append(actual, ft.Path)
+		actual = append(actual, ft.path)
 	}
 
 	if len(expected) != len(actual) {

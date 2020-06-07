@@ -245,7 +245,7 @@ func (f *basefmt) Pickle(p *messages.Pickle) {
 
 	feature := f.features[len(f.features)-1]
 
-	pr := pickleResult{Name: p.Name, AstNodeIDs: p.AstNodeIds, time: timeNowFunc()}
+	pr := pickleResult{name: p.Name, astNodeIDs: p.AstNodeIds, time: timeNowFunc()}
 	feature.pickleResults = append(feature.pickleResults, &pr)
 }
 
@@ -257,7 +257,7 @@ func (f *basefmt) Feature(ft *messages.GherkinDocument, p string, c []byte) {
 
 	*f.firstFeature = false
 
-	f.features = append(f.features, &feature{Path: p, GherkinDocument: ft, time: timeNowFunc()})
+	f.features = append(f.features, &feature{path: p, GherkinDocument: ft, time: timeNowFunc()})
 }
 
 func (f *basefmt) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {

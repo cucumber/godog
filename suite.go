@@ -27,8 +27,8 @@ type feature struct {
 	pickleResults []*pickleResult
 
 	time    time.Time
-	Content []byte `json:"-"`
-	Path    string `json:"path"`
+	content []byte
+	path    string
 	order   int
 }
 
@@ -129,8 +129,8 @@ func (s sortByName) Less(i, j int) bool { return s[i].Feature.Name < s[j].Featur
 func (s sortByName) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 type pickleResult struct {
-	Name        string
-	AstNodeIDs  []string
+	name        string
+	astNodeIDs  []string
 	time        time.Time
 	stepResults []*stepResult
 }
@@ -575,7 +575,7 @@ func (s *Suite) runFeature(f *feature) {
 		}
 	}
 
-	s.fmt.Feature(f.GherkinDocument, f.Path, f.Content)
+	s.fmt.Feature(f.GherkinDocument, f.path, f.content)
 
 	defer func() {
 		if !isEmptyFeature(f.pickles) {
@@ -686,8 +686,8 @@ func parseFeatureFile(path string, newIDFunc func() string) (*feature, error) {
 	return &feature{
 		GherkinDocument: gherkinDocument,
 		pickles:         pickles,
-		Content:         buf.Bytes(),
-		Path:            path,
+		content:         buf.Bytes(),
+		path:            path,
 	}, nil
 }
 
@@ -765,13 +765,13 @@ func parseFeatures(filter string, paths []string) ([]*feature, error) {
 		}
 
 		for _, ft := range feats {
-			if _, duplicate := byPath[ft.Path]; duplicate {
+			if _, duplicate := byPath[ft.path]; duplicate {
 				continue
 			}
 
 			ft.order = order
 			order++
-			byPath[ft.Path] = ft
+			byPath[ft.path] = ft
 		}
 	}
 
