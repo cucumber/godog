@@ -26,13 +26,15 @@ type scenarioInitializer func(*ScenarioContext)
 type runner struct {
 	randomSeed            int64
 	stopOnFailure, strict bool
-	features              []*feature
-	fmt                   Formatter
-	initializer           initializer
-	testSuiteInitializer  testSuiteInitializer
-	scenarioInitializer   scenarioInitializer
+
+	features []*feature
+
+	initializer          initializer
+	testSuiteInitializer testSuiteInitializer
+	scenarioInitializer  scenarioInitializer
 
 	storage *storage
+	fmt     Formatter
 }
 
 func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool) {
@@ -67,21 +69,24 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 
 		go func(fail *bool, feat *feature) {
 			var fmtCopy Formatter
+
 			defer func() {
 				<-queue // free a space in queue
 			}()
+
 			if r.stopOnFailure && *fail {
 				return
 			}
+
 			suite := &Suite{
 				fmt:           r.fmt,
 				randomSeed:    r.randomSeed,
 				stopOnFailure: r.stopOnFailure,
 				strict:        r.strict,
 				features:      []*feature{feat},
+				storage:       r.storage,
 			}
 
-			suite.fmt = r.fmt
 			if useFmtCopy {
 				fmtCopy = formatterFn()
 				suite.fmt = fmtCopy
@@ -107,11 +112,13 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 			}
 
 			suite.run()
+
 			if suite.failed {
 				copyLock.Lock()
 				*fail = true
 				copyLock.Unlock()
 			}
+
 			if useFmtCopy {
 				copyLock.Lock()
 

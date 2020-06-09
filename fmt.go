@@ -139,25 +139,25 @@ func (st stepResultStatus) String() string {
 	}
 }
 
-type stepResult struct {
-	status stepResultStatus
-	time   time.Time
-	err    error
+type pickleStepResult struct {
+	Status     stepResultStatus
+	finishedAt time.Time
+	err        error
 
-	pickleID     string
-	pickleStepID string
+	PickleID     string
+	PickleStepID string
 
 	def *StepDefinition
 }
 
-func newStepResult(pickleID, pickleStepID string, match *StepDefinition) *stepResult {
-	return &stepResult{time: timeNowFunc(), pickleID: pickleID, pickleStepID: pickleStepID, def: match}
+func newStepResult(pickleID, pickleStepID string, match *StepDefinition) pickleStepResult {
+	return pickleStepResult{finishedAt: timeNowFunc(), PickleID: pickleID, PickleStepID: pickleStepID, def: match}
 }
 
 func newBaseFmt(suite string, out io.Writer) *basefmt {
 	return &basefmt{
 		suiteName: suite,
-		started:   timeNowFunc(),
+		startedAt: timeNowFunc(),
 		indent:    2,
 		out:       out,
 		lock:      new(sync.Mutex),
@@ -173,8 +173,8 @@ type basefmt struct {
 
 	storage *storage
 
-	started  time.Time
-	features []*feature
+	startedAt time.Time
+	features  []*feature
 
 	firstFeature *bool
 	lock         *sync.Mutex
@@ -186,10 +186,6 @@ func (f *basefmt) setStorage(st *storage) {
 
 func (f *basefmt) lastFeature() *feature {
 	return f.features[len(f.features)-1]
-}
-
-func (f *basefmt) lastStepResult() *stepResult {
-	return f.lastFeature().lastStepResult()
 }
 
 func (f *basefmt) findFeature(scenarioAstID string) *feature {
@@ -250,15 +246,7 @@ func (f *basefmt) TestRunStarted() {
 	f.firstFeature = &firstFeature
 }
 
-func (f *basefmt) Pickle(p *messages.Pickle) {
-	f.lock.Lock()
-	defer f.lock.Unlock()
-
-	feature := f.features[len(f.features)-1]
-
-	pr := pickleResult{pickleID: p.Id, time: timeNowFunc()}
-	feature.pickleResults = append(feature.pickleResults, &pr)
-}
+func (f *basefmt) Pickle(p *messages.Pickle) {}
 
 func (f *basefmt) Defined(*messages.Pickle, *messages.Pickle_PickleStep, *StepDefinition) {}
 
@@ -268,94 +256,60 @@ func (f *basefmt) Feature(ft *messages.GherkinDocument, p string, c []byte) {
 
 	*f.firstFeature = false
 
-	f.features = append(f.features, &feature{path: p, GherkinDocument: ft, time: timeNowFunc()})
+	f.features = append(f.features, &feature{GherkinDocument: ft, time: timeNowFunc()})
 }
 
 func (f *basefmt) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
-	f.lock.Lock()
-	defer f.lock.Unlock()
-
-	s := newStepResult(pickle.Id, step.Id, match)
-	s.status = passed
-	f.lastFeature().appendStepResult(s)
 }
-
 func (f *basefmt) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
-	f.lock.Lock()
-	defer f.lock.Unlock()
-
-	s := newStepResult(pickle.Id, step.Id, match)
-	s.status = skipped
-	f.lastFeature().appendStepResult(s)
 }
-
 func (f *basefmt) Undefined(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
-	f.lock.Lock()
-	defer f.lock.Unlock()
-
-	s := newStepResult(pickle.Id, step.Id, match)
-	s.status = undefined
-	f.lastFeature().appendStepResult(s)
 }
-
 func (f *basefmt) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition, err error) {
-	f.lock.Lock()
-	defer f.lock.Unlock()
-
-	s := newStepResult(pickle.Id, step.Id, match)
-	s.status = failed
-	s.err = err
-	f.lastFeature().appendStepResult(s)
 }
-
 func (f *basefmt) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
-	f.lock.Lock()
-	defer f.lock.Unlock()
-
-	s := newStepResult(pickle.Id, step.Id, match)
-	s.status = pending
-	f.lastFeature().appendStepResult(s)
 }
 
 func (f *basefmt) Summary() {
 	var totalSc, passedSc, undefinedSc int
 	var totalSt, passedSt, failedSt, skippedSt, pendingSt, undefinedSt int
 
-	for _, feat := range f.features {
-		for _, pr := range feat.pickleResults {
-			var prStatus stepResultStatus
-			totalSc++
+	pickleResults := f.storage.mustGetPickleResults()
+	for _, pr := range pickleResults {
+		var prStatus stepResultStatus
+		totalSc++
 
-			if len(pr.stepResults) == 0 {
+		pickleStepResults := f.storage.mustGetPickleStepResultsByPickleID(pr.PickleID)
+
+		if len(pickleStepResults) == 0 {
+			prStatus = undefined
+		}
+
+		for _, sr := range pickleStepResults {
+			totalSt++
+
+			switch sr.Status {
+			case passed:
+				prStatus = passed
+				passedSt++
+			case failed:
+				prStatus = failed
+				failedSt++
+			case skipped:
+				skippedSt++
+			case undefined:
 				prStatus = undefined
+				undefinedSt++
+			case pending:
+				prStatus = pending
+				pendingSt++
 			}
+		}
 
-			for _, sr := range pr.stepResults {
-				totalSt++
-
-				switch sr.status {
-				case passed:
-					prStatus = passed
-					passedSt++
-				case failed:
-					prStatus = failed
-					failedSt++
-				case skipped:
-					skippedSt++
-				case undefined:
-					prStatus = undefined
-					undefinedSt++
-				case pending:
-					prStatus = pending
-					pendingSt++
-				}
-			}
-
-			if prStatus == passed {
-				passedSc++
-			} else if prStatus == undefined {
-				undefinedSc++
-			}
+		if prStatus == passed {
+			passedSc++
+		} else if prStatus == undefined {
+			undefinedSc++
 		}
 	}
 
@@ -385,7 +339,7 @@ func (f *basefmt) Summary() {
 		scenarios = append(scenarios, green(fmt.Sprintf("%d passed", passedSc)))
 	}
 	scenarios = append(scenarios, parts...)
-	elapsed := timeNowFunc().Sub(f.started)
+	elapsed := timeNowFunc().Sub(f.startedAt)
 
 	fmt.Fprintln(f.out, "")
 
@@ -437,22 +391,8 @@ func (f *basefmt) Copy(cf ConcurrentFormatter) {
 	}
 }
 
-func (f *basefmt) findStepResults(status stepResultStatus) (res []*stepResult) {
-	for _, feat := range f.features {
-		for _, pr := range feat.pickleResults {
-			for _, sr := range pr.stepResults {
-				if sr.status == status {
-					res = append(res, sr)
-				}
-			}
-		}
-	}
-
-	return
-}
-
 func (f *basefmt) snippets() string {
-	undefinedStepResults := f.findStepResults(undefined)
+	undefinedStepResults := f.storage.mustGetPickleStepResultsByStatus(undefined)
 	if len(undefinedStepResults) == 0 {
 		return ""
 	}
@@ -461,7 +401,7 @@ func (f *basefmt) snippets() string {
 	var snips []undefinedSnippet
 	// build snippets
 	for _, u := range undefinedStepResults {
-		pickleStep := f.storage.mustGetPickleStep(u.pickleStepID)
+		pickleStep := f.storage.mustGetPickleStep(u.PickleStepID)
 
 		steps := []string{pickleStep.Text}
 		arg := pickleStep.Argument
