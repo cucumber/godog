@@ -40,6 +40,11 @@ func TestProgressFormatterWhenStepPanics(t *testing.T) {
 		},
 	}
 
+	r.storage = newStorage()
+	for _, pickle := range pickles {
+		r.storage.mustInsertPickle(pickle)
+	}
+
 	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", w) })
 	require.True(t, failed)
 
@@ -54,6 +59,7 @@ func TestProgressFormatterWithPanicInMultistep(t *testing.T) {
 	require.NoError(t, err)
 
 	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
+
 	var buf bytes.Buffer
 	w := colors.Uncolored(&buf)
 	r := runner{
@@ -66,6 +72,11 @@ func TestProgressFormatterWithPanicInMultistep(t *testing.T) {
 			s.Step(`^one$`, func() error { return nil })
 			s.Step(`^two$`, func() []string { return []string{"sub1", "sub2"} })
 		},
+	}
+
+	r.storage = newStorage()
+	for _, pickle := range pickles {
+		r.storage.mustInsertPickle(pickle)
 	}
 
 	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", w) })
@@ -91,6 +102,11 @@ func TestProgressFormatterMultistepTemplates(t *testing.T) {
 			s.Step(`^one$`, func() error { return nil })
 			s.Step(`^(t)wo$`, func(s string) Steps { return Steps{"undef", "substep"} })
 		},
+	}
+
+	r.storage = newStorage()
+	for _, pickle := range pickles {
+		r.storage.mustInsertPickle(pickle)
 	}
 
 	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", w) })
@@ -159,6 +175,11 @@ Feature: basic
 		},
 	}
 
+	r.storage = newStorage()
+	for _, pickle := range pickles {
+		r.storage.mustInsertPickle(pickle)
+	}
+
 	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", w) })
 	require.False(t, failed)
 }
@@ -193,6 +214,11 @@ Feature: basic
 			s.Step(`^two$`, func() Steps { return Steps{subStep} })
 			s.Step(`^three:$`, func(doc *messages.PickleStepArgument_PickleDocString) error { return nil })
 		},
+	}
+
+	r.storage = newStorage()
+	for _, pickle := range pickles {
+		r.storage.mustInsertPickle(pickle)
 	}
 
 	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", w) })

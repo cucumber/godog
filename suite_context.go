@@ -183,7 +183,16 @@ func (s *suiteContext) iRunFeatureSuiteWithTags(tags string) error {
 		applyTagFilter(tags, feat)
 	}
 
-	s.testedSuite.fmt = newBaseFmt("godog", &s.out)
+	st := newStorage()
+	for _, feat := range s.testedSuite.features {
+		for _, pickle := range feat.pickles {
+			st.mustInsertPickle(pickle)
+		}
+	}
+
+	fmt := newBaseFmt("godog", &s.out)
+	fmt.setStorage(st)
+	s.testedSuite.fmt = fmt
 
 	s.testedSuite.fmt.TestRunStarted()
 	s.testedSuite.run()
@@ -193,15 +202,25 @@ func (s *suiteContext) iRunFeatureSuiteWithTags(tags string) error {
 }
 
 func (s *suiteContext) iRunFeatureSuiteWithFormatter(name string) error {
+	if err := s.parseFeatures(); err != nil {
+		return err
+	}
+
 	f := FindFmt(name)
 	if f == nil {
 		return fmt.Errorf(`formatter "%s" is not available`, name)
 	}
 
-	s.testedSuite.fmt = f("godog", colors.Uncolored(&s.out))
+	st := newStorage()
+	for _, feat := range s.testedSuite.features {
+		for _, pickle := range feat.pickles {
+			st.mustInsertPickle(pickle)
+		}
+	}
 
-	if err := s.parseFeatures(); err != nil {
-		return err
+	s.testedSuite.fmt = f("godog", colors.Uncolored(&s.out))
+	if fmt, ok := s.testedSuite.fmt.(storageFormatter); ok {
+		fmt.setStorage(st)
 	}
 
 	s.testedSuite.fmt.TestRunStarted()
@@ -276,23 +295,28 @@ func (s *suiteContext) followingStepsShouldHave(status string, steps *DocString)
 	switch status {
 	case "passed":
 		for _, st := range f.findStepResults(passed) {
-			actual = append(actual, st.step.Text)
+			pickleStep := f.storage.mustGetPickleStep(st.pickleStepID)
+			actual = append(actual, pickleStep.Text)
 		}
 	case "failed":
 		for _, st := range f.findStepResults(failed) {
-			actual = append(actual, st.step.Text)
+			pickleStep := f.storage.mustGetPickleStep(st.pickleStepID)
+			actual = append(actual, pickleStep.Text)
 		}
 	case "skipped":
 		for _, st := range f.findStepResults(skipped) {
-			actual = append(actual, st.step.Text)
+			pickleStep := f.storage.mustGetPickleStep(st.pickleStepID)
+			actual = append(actual, pickleStep.Text)
 		}
 	case "undefined":
 		for _, st := range f.findStepResults(undefined) {
-			actual = append(actual, st.step.Text)
+			pickleStep := f.storage.mustGetPickleStep(st.pickleStepID)
+			actual = append(actual, pickleStep.Text)
 		}
 	case "pending":
 		for _, st := range f.findStepResults(pending) {
-			actual = append(actual, st.step.Text)
+			pickleStep := f.storage.mustGetPickleStep(st.pickleStepID)
+			actual = append(actual, pickleStep.Text)
 		}
 	default:
 		return fmt.Errorf("unexpected step status wanted: %s", status)

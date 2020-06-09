@@ -75,6 +75,11 @@ func TestFailsOrPassesBasedOnStrictModeWhenHasPendingSteps(t *testing.T) {
 		},
 	}
 
+	r.storage = newStorage()
+	for _, pickle := range pickles {
+		r.storage.mustInsertPickle(pickle)
+	}
+
 	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", ioutil.Discard) })
 	require.False(t, failed)
 
@@ -100,6 +105,11 @@ func TestFailsOrPassesBasedOnStrictModeWhenHasUndefinedSteps(t *testing.T) {
 		},
 	}
 
+	r.storage = newStorage()
+	for _, pickle := range pickles {
+		r.storage.mustInsertPickle(pickle)
+	}
+
 	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", ioutil.Discard) })
 	require.False(t, failed)
 
@@ -123,6 +133,11 @@ func TestShouldFailOnError(t *testing.T) {
 			s.Step(`^one$`, func() error { return nil })
 			s.Step(`^two$`, func() error { return fmt.Errorf("error") })
 		},
+	}
+
+	r.storage = newStorage()
+	for _, pickle := range pickles {
+		r.storage.mustInsertPickle(pickle)
 	}
 
 	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", ioutil.Discard) })

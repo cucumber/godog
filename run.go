@@ -31,6 +31,8 @@ type runner struct {
 	initializer           initializer
 	testSuiteInitializer  testSuiteInitializer
 	scenarioInitializer   scenarioInitializer
+
+	storage *storage
 }
 
 func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool) {
@@ -42,10 +44,15 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 		useFmtCopy = true
 	}
 
+	if fmt, ok := r.fmt.(storageFormatter); ok {
+		fmt.setStorage(r.storage)
+	}
+
 	testSuiteContext := TestSuiteContext{}
 	if r.testSuiteInitializer != nil {
 		r.testSuiteInitializer(&testSuiteContext)
 	}
+
 	r.fmt.TestRunStarted()
 
 	// run before suite handlers
@@ -73,6 +80,8 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 				strict:        r.strict,
 				features:      []*feature{feat},
 			}
+
+			suite.fmt = r.fmt
 			if useFmtCopy {
 				fmtCopy = formatterFn()
 				suite.fmt = fmtCopy
@@ -83,8 +92,10 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 				if dOk && sOk {
 					concurrentDestFmt.Sync(concurrentSourceFmt)
 				}
-			} else {
-				suite.fmt = r.fmt
+			}
+
+			if fmt, ok := suite.fmt.(storageFormatter); ok {
+				fmt.setStorage(r.storage)
 			}
 
 			if r.initializer != nil {
@@ -215,6 +226,13 @@ func runWithOptions(suite string, runner runner, opt Options) int {
 	if runner.features, err = parseFeatures(opt.Tags, opt.Paths); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return exitOptionError
+	}
+
+	runner.storage = newStorage()
+	for _, feat := range runner.features {
+		for _, pickle := range feat.pickles {
+			runner.storage.mustInsertPickle(pickle)
+		}
 	}
 
 	// user may have specified -1 option to create random seed

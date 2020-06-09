@@ -129,8 +129,8 @@ func (s sortByName) Less(i, j int) bool { return s[i].Feature.Name < s[j].Featur
 func (s sortByName) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 type pickleResult struct {
-	name        string
-	astNodeIDs  []string
+	pickleID string
+
 	time        time.Time
 	stepResults []*stepResult
 }
