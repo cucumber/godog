@@ -41,13 +41,16 @@ func (f *progress) Summary() {
 	var failedStepsOutput []string
 	for _, sr := range f.findStepResults(failed) {
 		if sr.status == failed {
-			sc := f.findScenario(sr.owner.AstNodeIds[0])
-			scenarioDesc := fmt.Sprintf("%s: %s", sc.Keyword, sr.owner.Name)
-			scenarioLine := fmt.Sprintf("%s:%d", sr.owner.Uri, sc.Location.Line)
+			pickle := f.storage.mustGetPickle(sr.pickleID)
+			pickleStep := f.storage.mustGetPickleStep(sr.pickleStepID)
 
-			step := f.findStep(sr.step.AstNodeIds[0])
-			stepDesc := strings.TrimSpace(step.Keyword) + " " + sr.step.Text
-			stepLine := fmt.Sprintf("%s:%d", sr.owner.Uri, step.Location.Line)
+			sc := f.findScenario(pickle.AstNodeIds[0])
+			scenarioDesc := fmt.Sprintf("%s: %s", sc.Keyword, pickle.Name)
+			scenarioLine := fmt.Sprintf("%s:%d", pickle.Uri, sc.Location.Line)
+
+			step := f.findStep(pickleStep.AstNodeIds[0])
+			stepDesc := strings.TrimSpace(step.Keyword) + " " + pickleStep.Text
+			stepLine := fmt.Sprintf("%s:%d", pickle.Uri, step.Location.Line)
 
 			failedStepsOutput = append(
 				failedStepsOutput,

@@ -91,6 +91,10 @@ type ConcurrentFormatter interface {
 	Sync(ConcurrentFormatter)
 }
 
+type storageFormatter interface {
+	setStorage(*storage)
+}
+
 // FormatterFunc builds a formatter with given
 // suite name and io.Writer to record output
 type FormatterFunc func(string, io.Writer) Formatter
@@ -140,13 +144,14 @@ type stepResult struct {
 	time   time.Time
 	err    error
 
-	owner *messages.Pickle
-	step  *messages.Pickle_PickleStep
-	def   *StepDefinition
+	pickleID     string
+	pickleStepID string
+
+	def *StepDefinition
 }
 
-func newStepResult(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) *stepResult {
-	return &stepResult{time: timeNowFunc(), owner: pickle, step: step, def: match}
+func newStepResult(pickleID, pickleStepID string, match *StepDefinition) *stepResult {
+	return &stepResult{time: timeNowFunc(), pickleID: pickleID, pickleStepID: pickleStepID, def: match}
 }
 
 func newBaseFmt(suite string, out io.Writer) *basefmt {
@@ -166,11 +171,17 @@ type basefmt struct {
 	owner  interface{}
 	indent int
 
+	storage *storage
+
 	started  time.Time
 	features []*feature
 
 	firstFeature *bool
 	lock         *sync.Mutex
+}
+
+func (f *basefmt) setStorage(st *storage) {
+	f.storage = st
 }
 
 func (f *basefmt) lastFeature() *feature {
@@ -245,7 +256,7 @@ func (f *basefmt) Pickle(p *messages.Pickle) {
 
 	feature := f.features[len(f.features)-1]
 
-	pr := pickleResult{name: p.Name, astNodeIDs: p.AstNodeIds, time: timeNowFunc()}
+	pr := pickleResult{pickleID: p.Id, time: timeNowFunc()}
 	feature.pickleResults = append(feature.pickleResults, &pr)
 }
 
@@ -264,7 +275,7 @@ func (f *basefmt) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleSt
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
-	s := newStepResult(pickle, step, match)
+	s := newStepResult(pickle.Id, step.Id, match)
 	s.status = passed
 	f.lastFeature().appendStepResult(s)
 }
@@ -273,7 +284,7 @@ func (f *basefmt) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleS
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
-	s := newStepResult(pickle, step, match)
+	s := newStepResult(pickle.Id, step.Id, match)
 	s.status = skipped
 	f.lastFeature().appendStepResult(s)
 }
@@ -282,7 +293,7 @@ func (f *basefmt) Undefined(pickle *messages.Pickle, step *messages.Pickle_Pickl
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
-	s := newStepResult(pickle, step, match)
+	s := newStepResult(pickle.Id, step.Id, match)
 	s.status = undefined
 	f.lastFeature().appendStepResult(s)
 }
@@ -291,7 +302,7 @@ func (f *basefmt) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleSt
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
-	s := newStepResult(pickle, step, match)
+	s := newStepResult(pickle.Id, step.Id, match)
 	s.status = failed
 	s.err = err
 	f.lastFeature().appendStepResult(s)
@@ -301,7 +312,7 @@ func (f *basefmt) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleS
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
-	s := newStepResult(pickle, step, match)
+	s := newStepResult(pickle.Id, step.Id, match)
 	s.status = pending
 	f.lastFeature().appendStepResult(s)
 }
@@ -450,8 +461,10 @@ func (f *basefmt) snippets() string {
 	var snips []undefinedSnippet
 	// build snippets
 	for _, u := range undefinedStepResults {
-		steps := []string{u.step.Text}
-		arg := u.step.Argument
+		pickleStep := f.storage.mustGetPickleStep(u.pickleStepID)
+
+		steps := []string{pickleStep.Text}
+		arg := pickleStep.Argument
 		if u.def != nil {
 			steps = u.def.undefined
 			arg = nil

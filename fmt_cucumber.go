@@ -79,7 +79,9 @@ func (f *cukefmt) buildCukeElements(pickleResults []*pickleResult) (res []cukeEl
 	res = make([]cukeElement, len(pickleResults))
 
 	for idx, pickleResult := range pickleResults {
-		cukeElement := f.buildCukeElement(pickleResult.name, pickleResult.astNodeIDs)
+		pickle := f.storage.mustGetPickle(pickleResult.pickleID)
+
+		cukeElement := f.buildCukeElement(pickle.Name, pickle.AstNodeIds)
 
 		stepStartedAt := pickleResult.startedAt()
 
@@ -237,19 +239,21 @@ func (f *cukefmt) buildCukeElement(pickleName string, pickleAstNodeIDs []string)
 }
 
 func (f *cukefmt) buildCukeStep(stepResult *stepResult) (cukeStep cukeStep) {
-	step := f.findStep(stepResult.step.AstNodeIds[0])
+	pickle := f.storage.mustGetPickle(stepResult.pickleID)
+	pickleStep := f.storage.mustGetPickleStep(stepResult.pickleStepID)
+	step := f.findStep(pickleStep.AstNodeIds[0])
 
 	line := step.Location.Line
-	if len(stepResult.owner.AstNodeIds) == 2 {
-		_, row := f.findExample(stepResult.owner.AstNodeIds[1])
+	if len(pickle.AstNodeIds) == 2 {
+		_, row := f.findExample(pickle.AstNodeIds[1])
 		line = row.Location.Line
 	}
 
-	cukeStep.Name = stepResult.step.Text
+	cukeStep.Name = pickleStep.Text
 	cukeStep.Line = int(line)
 	cukeStep.Keyword = step.Keyword
 
-	arg := stepResult.step.Argument
+	arg := pickleStep.Argument
 
 	if arg.GetDocString() != nil && step.GetDocString() != nil {
 		cukeStep.Docstring = &cukeDocstring{}
@@ -279,7 +283,7 @@ func (f *cukefmt) buildCukeStep(stepResult *stepResult) (cukeStep cukeStep) {
 	}
 
 	if stepResult.status == undefined || stepResult.status == pending {
-		cukeStep.Match.Location = fmt.Sprintf("%s:%d", stepResult.owner.Uri, step.Location.Line)
+		cukeStep.Match.Location = fmt.Sprintf("%s:%d", pickle.Uri, step.Location.Line)
 	}
 
 	return cukeStep
