@@ -8,39 +8,38 @@
 
 **The API is likely to change a few times before we reach 1.0.0**
 
-Please read all the README, you may find it very useful. And do not forget
-to peek into the
-[CHANGELOG](https://github.com/cucumber/godog/blob/master/CHANGELOG.md)
-from time to time.
+Please read all the README, you may find it very useful. And do not forget to peek into the [CHANGELOG](https://github.com/cucumber/godog/blob/master/CHANGELOG.md) from time to time.
 
-Package godog is the official Cucumber BDD framework for Golang, it merges
-specification and test documentation into one cohesive whole. The author
-is a member of [cucumber team](https://github.com/cucumber).
+Package godog is the official Cucumber BDD framework for Golang, it merges specification and test documentation into one cohesive whole, using Gherkin formatted scenarios in the format of Given, When, Then.
 
-The project is inspired by [behat][behat] and [cucumber][cucumber] and is
-based on cucumber [gherkin3 parser][gherkin].
+**Godog** does not intervene with the standard **go test** command behavior. You can leverage both frameworks to functionally test your application while maintaining all test related source code in **_test.go** files.
 
-**Godog** does not intervene with the standard **go test** command
-behavior. You can leverage both frameworks to functionally test your
-application while maintaining all test related source code in **_test.go**
-files.
+**Godog** acts similar compared to **go test** command, by using go compiler and linker tool in order to produce test executable. Godog contexts need to be exported the same way as **Test** functions for go tests. Note, that if you use **godog** command tool, it will use `go` executable to determine compiler and linker.
 
-**Godog** acts similar compared to **go test** command, by using go
-compiler and linker tool in order to produce test executable. Godog
-contexts need to be exported the same way as **Test** functions for go
-tests. Note, that if you use **godog** command tool, it will use `go`
-executable to determine compiler and linker.
+The project was inspired by [behat][behat] and [cucumber][cucumber].
 
-**Godog** depends on [gherkin-go](https://github.com/cucumber/gherkin-go) and [messages-go](https://github.com/cucumber/messages-go).
+## Why Godog/Cucumber
 
-The following about section was taken from
-[cucumber](https://cucumber.io/) homepage.
+### A single source of truth
 
-## Notice:
+Godog merges specification and test documentation into one cohesive whole.
 
-**If your project depend on the master version of godog instead of a specific release, please read this.**
+### Living documentation
 
-Due to dependency changes in a coming merge to master, including breaking changes, you should update how you install or depend on godog so that you have a version specified.
+Because they're automatically tested by Godog, your specifications are
+always bang up-to-date.
+
+### Focus on the customer
+
+Business and IT don't always understand each other. Godog's executable specifications encourage closer collaboration, helping teams keep the business goal in mind at all times.
+
+### Less rework
+
+When automated testing is this much fun, teams can easily protect themselves from costly regressions.
+
+### Read more
+- [Behaviour-Driven Development](https://cucumber.io/docs/bdd/)
+- [Gherkin Reference](https://cucumber.io/docs/gherkin/reference/)
 
 ## Install
 ```
@@ -53,27 +52,21 @@ Running `within the $GOPATH`, you would also need to set `GO111MODULE=on`, like 
 GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.9.0
 ```
 
-## About
+## Contributions
 
-#### A single source of truth
+Godog is a community driven Open Source Project within the Cucumber organization, it is maintained by a handfull of developers, but we appreciate contributions from everyone.
 
-Cucumber merges specification and test documentation into one cohesive whole.
+If you are interested in developing Godog, we suggest you to visit one of our slack channels.
 
-#### Living documentation
+Feel free to open a pull request. Note, if you wish to contribute larger changes or an extension to the exported methods or types, please open an issue before and visit us in slack to discuss the changes.
 
-Because they're automatically tested by Cucumber, your specifications are
-always bang up-to-date.
+Reach out to the community on our [Cucumber Slack Community](https://cucumberbdd.slack.com/).
+Join [here](https://cucumberbdd-slack-invite.herokuapp.com/).
 
-#### Focus on the customer
-
-Business and IT don't always understand each other. Cucumber's executable
-specifications encourage closer collaboration, helping teams keep the
-business goal in mind at all times.
-
-#### Less rework
-
-When automated testing is this much fun, teams can easily protect
-themselves from costly regressions.
+### Popular Cucumber Slack channels for Godog:
+- [#help-godog](https://cucumberbdd.slack.com/archives/CTNL1JCVA) - General Godog Adoption Help
+- [#committers-go](https://cucumberbdd.slack.com/archives/CA5NJPDJ4) - Golang focused Cucumber Contributors
+- [#committers](https://cucumberbdd.slack.com/archives/C62D0FK0E) - General Cucumber Contributors
 
 ## Example
 
@@ -81,12 +74,9 @@ The following example can be [found here](/_examples/godogs).
 
 ### Step 1
 
-Given we create a new go package **$GOPATH/src/godogs**. From now on, this
-is our work directory `cd $GOPATH/src/godogs`.
+Given we create a new go package **$GOPATH/src/godogs**. From now on, this is our work directory `cd $GOPATH/src/godogs`.
 
-Imagine we have a **godog cart** to serve godogs for lunch. First of all,
-we describe our feature in plain text - `vim
-$GOPATH/src/godogs/features/godogs.feature`:
+Imagine we have a **godog cart** to serve godogs for lunch. First of all, we describe our feature in plain text - `vim $GOPATH/src/godogs/features/godogs.feature`:
 
 ``` gherkin
 # file: $GOPATH/src/godogs/features/godogs.feature
@@ -101,37 +91,29 @@ Feature: eat godogs
     Then there should be 7 remaining
 ```
 
-**NOTE:** same as **go test** godog respects package level isolation. All
-your step definitions should be in your tested package root directory. In
-this case - `$GOPATH/src/godogs`
+**NOTE:** same as **go test** godog respects package level isolation. All your step definitions should be in your tested package root directory. In this case - `$GOPATH/src/godogs`
 
 ### Step 2
 
-If godog is installed in your GOPATH. We can run `godog` inside the
-**$GOPATH/src/godogs** directory. You should see that the steps are
-undefined:
+If godog is installed in your GOPATH. We can run `godog` inside the **$GOPATH/src/godogs** directory. You should see that the steps are undefined:
 
 ![Undefined step snippets](/screenshots/undefined.png?raw=true)
 
-If we wish to vendor godog dependency, we can do it as usual, using tools
-you prefer:
+If we wish to vendor godog dependency, we can do it as usual, using tools you prefer:
 
     git clone https://github.com/cucumber/godog.git $GOPATH/src/godogs/vendor/github.com/cucumber/godog
 
-It gives you undefined step snippets to implement in your test context.
-You may copy these snippets into your `godogs_test.go` file.
+It gives you undefined step snippets to implement in your test context. You may copy these snippets into your `godogs_test.go` file.
 
 Our directory structure should now look like:
 
 ![Directory layout](/screenshots/dir-tree.png?raw=true)
 
-If you copy the snippets into our test file and run godog again. We should
-see the step definition is now pending:
+If you copy the snippets into our test file and run godog again. We should see the step definition is now pending:
 
 ![Pending step definition](/screenshots/pending.png?raw=true)
 
-You may change **ErrPending** to **nil** and the scenario will
-pass successfully.
+You may change **ErrPending** to **nil** and the scenario will pass successfully.
 
 Since we need a working implementation, we may start by implementing only what is necessary.
 
@@ -150,8 +132,7 @@ func main() { /* usual main func */ }
 
 ### Step 4
 
-Now lets implement our step definitions, which we can copy from generated
-console output snippets in order to test our feature requirements:
+Now lets implement our step definitions, which we can copy from generated console output snippets in order to test our feature requirements:
 
 ``` go
 package main
@@ -217,36 +198,24 @@ Now when you run the `godog` again, you should see:
 
 ![Passed suite](/screenshots/passed.png?raw=true)
 
-We have hooked to **BeforeScenario** event in order to reset application
-state before each scenario. You may hook into more events, like
-**AfterStep** to print all state in case of an error. Or
-**BeforeSuite** to prepare a database.
+We have hooked to **BeforeScenario** event in order to reset application state before each scenario. You may hook into more events, like **AfterStep** to print all state in case of an error. Or **BeforeSuite** to prepare a database.
 
-By now, you should have figured out, how to use **godog**. Another advice
-is to make steps orthogonal, small and simple to read for a user. Whether
-the user is a dumb website user or an API developer, who may understand
-a little more technical context - it should target that user.
+By now, you should have figured out, how to use **godog**. Another advice is to make steps orthogonal, small and simple to read for a user. Whether the user is a dumb website user or an API developer, who may understand a little more technical context - it should target that user.
 
-When steps are orthogonal and small, you can combine them just like you do
-with Unix tools. Look how to simplify or remove ones, which can be
-composed.
+When steps are orthogonal and small, you can combine them just like you do with Unix tools. Look how to simplify or remove ones, which can be composed.
 
 ### References and Tutorials
 
-- [cucumber-html-reporter](https://github.com/gkushang/cucumber-html-reporter)
-  may be used in order to generate **html** reports together with
-  **cucumber** output formatter. See the [following docker
-  image](https://github.com/myie/cucumber-html-reporter) for usage
-  details.
+- [cucumber-html-reporter](https://github.com/gkushang/cucumber-html-reporter),
+  may be used in order to generate **html** reports together with **cucumber** output formatter. See the [following docker image](https://github.com/myie/cucumber-html-reporter) for usage details.
 - [how to use godog by semaphoreci](https://semaphoreci.com/community/tutorials/how-to-use-godog-for-behavior-driven-development-in-go)
 - see [examples](https://github.com/cucumber/godog/tree/master/_examples)
-- see extension [AssistDog](https://github.com/hellomd/assistdog), which
-  may have useful **gherkin.DataTable** transformations or comparison
-  methods for assertions.
+- see extension [AssistDog](https://github.com/hellomd/assistdog),
+  which may have useful **gherkin.DataTable** transformations or comparison methods for assertions.
 
 ### Documentation
 
-See [godoc][godoc] for general API details.
+See [pkg documentation][godoc] for general API details.
 See **[Circle Config](/.circleci/config.yml)** for supported **go** versions.
 See `godog -h` for general command options.
 
@@ -260,13 +229,9 @@ See implementation examples:
 
 ### Running Godog with go test
 
-You may integrate running **godog** in your **go test** command. You can
-run it using go [TestMain](https://golang.org/pkg/testing/#hdr-Main) func
-available since **go 1.4**. In this case it is not necessary to have
-**godog** command installed. See the following examples.
+You may integrate running **godog** in your **go test** command. You can run it using go [TestMain](https://golang.org/pkg/testing/#hdr-Main) func available since **go 1.4**. In this case it is not necessary to have **godog** command installed. See the following examples.
 
-The following example binds **godog** flags with specified prefix `godog`
-in order to prevent flag collisions.
+The following example binds **godog** flags with specified prefix `godog` in order to prevent flag collisions.
 
 ``` go
 var opts = godog.Options{
@@ -302,16 +267,14 @@ func TestMain(m *testing.M) {
 }
 ```
 
-Then you may run tests with by specifying flags in order to filter
-features.
+Then you may run tests with by specifying flags in order to filter features.
 
 ```
 go test -v --godog.random --godog.tags=wip
 go test -v --godog.format=pretty --godog.random -race -coverprofile=coverage.txt -covermode=atomic
 ```
 
-The following example does not bind godog flags, instead manually
-configuring needed options.
+The following example does not bind godog flags, instead manually configuring needed options.
 
 ``` go
 func TestMain(m *testing.M) {
@@ -341,9 +304,7 @@ func TestMain(m *testing.M) {
 }
 ```
 
-You can even go one step further and reuse **go test** flags, like
-**verbose** mode in order to switch godog **format**. See the following
-example:
+You can even go one step further and reuse **go test** flags, like **verbose** mode in order to switch godog **format**. See the following example:
 
 ``` go
 func TestMain(m *testing.M) {
@@ -384,9 +345,7 @@ Now when running `go test -v` it will use **pretty** format.
 
 ### Tags
 
-If you want to filter scenarios by tags, you can use the
-`-t=<expression>` or `--tags=<expression>` where `<expression>`
-is one of the following:
+If you want to filter scenarios by tags, you can use the `-t=<expression>` or `--tags=<expression>` where `<expression>` is one of the following:
 
 - `@wip` - run all scenarios with wip tag
 - `~@wip` - exclude all scenarios with wip tag
@@ -427,62 +386,29 @@ func (a *asserter) Errorf(format string, args ...interface{}) {
 
 ### Configure common options for godog CLI
 
-There are no global options or configuration files. Alias your common or
-project based commands: `alias godog-wip="godog --format=progress
---tags=@wip"`
+There are no global options or configuration files. Alias your common or project based commands: `alias godog-wip="godog --format=progress --tags=@wip"`
 
 ### Testing browser interactions
 
-**godog** does not come with builtin packages to connect to the browser.
-You may want to look at [selenium](http://www.seleniumhq.org/) and
-probably [phantomjs](http://phantomjs.org/). See also the following
-components:
+**godog** does not come with builtin packages to connect to the browser. You may want to look at [selenium](http://www.seleniumhq.org/) and probably [phantomjs](http://phantomjs.org/). See also the following components:
 
-1. [browsersteps](https://github.com/llonchj/browsersteps) - provides
-   basic context steps to start selenium and navigate browser content.
+1. [browsersteps](https://github.com/llonchj/browsersteps) - provides basic context steps to start selenium and navigate browser content.
 2. You may wish to have [goquery](https://github.com/PuerkitoBio/goquery)
    in order to work with HTML responses like with JQuery.
 
 ### Concurrency
 
-In order to support concurrency well, you should reset the state and
-isolate each scenario. They should not share any state. It is suggested to
-run the suite concurrently in order to make sure there is no state
-corruption or race conditions in the application.
+In order to support concurrency well, you should reset the state and isolate each scenario. They should not share any state. It is suggested to run the suite concurrently in order to make sure there is no state corruption or race conditions in the application.
 
-It is also useful to randomize the order of scenario execution, which you
-can now do with **--random** command option.
+It is also useful to randomize the order of scenario execution, which you can now do with **--random** command option.
 
-**NOTE:** if suite runs with concurrency option, it concurrently runs
-every feature, not scenario per different features. This gives
-a flexibility to isolate state per feature. For example using
-**BeforeFeature** hook, it is possible to spin up costly service and shut
-it down only in **AfterFeature** hook and share the service between all
-scenarios in that feature. It is not advisable though, because you are
-risking having a state dependency.
-
-## Contributions
-
-Feel free to open a pull request. Note, if you wish to contribute an extension to public (exported methods or types) -
-please open an issue before to discuss whether these changes can be accepted. All backward incompatible changes are
-and will be treated cautiously.
-
-Reach out to the community on our [Cucumber Slack Community](https://cucumberbdd.slack.com/).
-Join [here](https://cucumberbdd-slack-invite.herokuapp.com/).
-
-### Popular Cucumber Slack channels for Godog:
-- [#help-godog](https://cucumberbdd.slack.com/archives/CTNL1JCVA) - General Godog Adoption Help
-- [#committers-go](https://cucumberbdd.slack.com/archives/CA5NJPDJ4) - Golang focused Cucumber Contributors
-- [#committers](https://cucumberbdd.slack.com/archives/C62D0FK0E) - General Cucumber Contributors
+**NOTE:** if suite runs with concurrency option, it concurrently runs every feature, not scenario per different features. This will be updated in release v0.10.0 to run every scenario concurrently.
 
 ## License
-- **Godog** is licensed under the [MIT][license]
-- **Gherkin** is licensed under the [MIT][license] and developed as
-a part of the [cucumber project][cucumber]
+**Godog** and **Gherkin** are licensed under the [MIT][license] and developed as a part of the [cucumber project][cucumber]
 
-[godoc]: http://godoc.org/github.com/cucumber/godog "Documentation on godoc"
+[godoc]: https://pkg.go.dev/github.com/cucumber/godog "Documentation on godog"
 [golang]: https://golang.org/  "GO programming language"
 [behat]: http://docs.behat.org/ "Behavior driven development framework for PHP"
 [cucumber]: https://cucumber.io/ "Behavior driven development framework"
-[gherkin]: https://github.com/cucumber/gherkin-go "Gherkin3 parser for GO"
 [license]: https://en.wikipedia.org/wiki/MIT_License "The MIT license"
