@@ -27,13 +27,15 @@ func TestProgressFormatterWhenStepPanics(t *testing.T) {
 	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(basicGherkinFeature), (&messages.Incrementing{}).NewId)
 	require.NoError(t, err)
 
-	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
+	gd.Uri = path
+	ft := feature{GherkinDocument: gd}
+	ft.pickles = gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
 
 	var buf bytes.Buffer
 	w := colors.Uncolored(&buf)
 	r := runner{
 		fmt:      progressFunc("progress", w),
-		features: []*feature{{GherkinDocument: gd, pickles: pickles}},
+		features: []*feature{&ft},
 		initializer: func(s *Suite) {
 			s.Step(`^one$`, func() error { return nil })
 			s.Step(`^two$`, func() error { panic("omg") })
@@ -41,7 +43,8 @@ func TestProgressFormatterWhenStepPanics(t *testing.T) {
 	}
 
 	r.storage = newStorage()
-	for _, pickle := range pickles {
+	r.storage.mustInsertFeature(&ft)
+	for _, pickle := range ft.pickles {
 		r.storage.mustInsertPickle(pickle)
 	}
 
@@ -49,7 +52,7 @@ func TestProgressFormatterWhenStepPanics(t *testing.T) {
 	require.True(t, failed)
 
 	actual := buf.String()
-	assert.Contains(t, actual, "godog/fmt_progress_test.go:39")
+	assert.Contains(t, actual, "godog/fmt_progress_test.go:41")
 }
 
 func TestProgressFormatterWithPanicInMultistep(t *testing.T) {
@@ -58,13 +61,15 @@ func TestProgressFormatterWithPanicInMultistep(t *testing.T) {
 	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(basicGherkinFeature), (&messages.Incrementing{}).NewId)
 	require.NoError(t, err)
 
-	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
+	gd.Uri = path
+	ft := feature{GherkinDocument: gd}
+	ft.pickles = gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
 
 	var buf bytes.Buffer
 	w := colors.Uncolored(&buf)
 	r := runner{
 		fmt:      progressFunc("progress", w),
-		features: []*feature{{GherkinDocument: gd, pickles: pickles}},
+		features: []*feature{&ft},
 		initializer: func(s *Suite) {
 			s.Step(`^sub1$`, func() error { return nil })
 			s.Step(`^sub-sub$`, func() error { return nil })
@@ -75,7 +80,8 @@ func TestProgressFormatterWithPanicInMultistep(t *testing.T) {
 	}
 
 	r.storage = newStorage()
-	for _, pickle := range pickles {
+	r.storage.mustInsertFeature(&ft)
+	for _, pickle := range ft.pickles {
 		r.storage.mustInsertPickle(pickle)
 	}
 
@@ -89,13 +95,15 @@ func TestProgressFormatterMultistepTemplates(t *testing.T) {
 	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(basicGherkinFeature), (&messages.Incrementing{}).NewId)
 	require.NoError(t, err)
 
-	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
+	gd.Uri = path
+	ft := feature{GherkinDocument: gd}
+	ft.pickles = gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
 
 	var buf bytes.Buffer
 	w := colors.Uncolored(&buf)
 	r := runner{
 		fmt:      progressFunc("progress", w),
-		features: []*feature{{GherkinDocument: gd, pickles: pickles}},
+		features: []*feature{&ft},
 		initializer: func(s *Suite) {
 			s.Step(`^sub-sub$`, func() error { return nil })
 			s.Step(`^substep$`, func() Steps { return Steps{"sub-sub", `unavailable "John" cost 5`, "one", "three"} })
@@ -105,7 +113,8 @@ func TestProgressFormatterMultistepTemplates(t *testing.T) {
 	}
 
 	r.storage = newStorage()
-	for _, pickle := range pickles {
+	r.storage.mustInsertFeature(&ft)
+	for _, pickle := range ft.pickles {
 		r.storage.mustInsertPickle(pickle)
 	}
 
@@ -162,13 +171,15 @@ Feature: basic
 	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(featureSource), (&messages.Incrementing{}).NewId)
 	require.NoError(t, err)
 
-	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
+	gd.Uri = path
+	ft := feature{GherkinDocument: gd}
+	ft.pickles = gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
 
 	var buf bytes.Buffer
 	w := colors.Uncolored(&buf)
 	r := runner{
 		fmt:      progressFunc("progress", w),
-		features: []*feature{{GherkinDocument: gd, pickles: pickles}},
+		features: []*feature{&ft},
 		initializer: func(s *Suite) {
 			s.Step(`^one$`, func() error { return nil })
 			s.Step(`^two:$`, func(doc *messages.PickleStepArgument_PickleDocString) Steps { return Steps{"one"} })
@@ -176,7 +187,8 @@ Feature: basic
 	}
 
 	r.storage = newStorage()
-	for _, pickle := range pickles {
+	r.storage.mustInsertFeature(&ft)
+	for _, pickle := range ft.pickles {
 		r.storage.mustInsertPickle(pickle)
 	}
 
@@ -197,7 +209,9 @@ Feature: basic
 	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(featureSource), (&messages.Incrementing{}).NewId)
 	require.NoError(t, err)
 
-	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
+	gd.Uri = path
+	ft := feature{GherkinDocument: gd}
+	ft.pickles = gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
 
 	var subStep = `three:
 	"""
@@ -208,7 +222,7 @@ Feature: basic
 	w := colors.Uncolored(&buf)
 	r := runner{
 		fmt:      progressFunc("progress", w),
-		features: []*feature{{GherkinDocument: gd, pickles: pickles}},
+		features: []*feature{&ft},
 		initializer: func(s *Suite) {
 			s.Step(`^one$`, func() error { return nil })
 			s.Step(`^two$`, func() Steps { return Steps{subStep} })
@@ -217,7 +231,8 @@ Feature: basic
 	}
 
 	r.storage = newStorage()
-	for _, pickle := range pickles {
+	r.storage.mustInsertFeature(&ft)
+	for _, pickle := range ft.pickles {
 		r.storage.mustInsertPickle(pickle)
 	}
 

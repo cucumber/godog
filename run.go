@@ -237,6 +237,8 @@ func runWithOptions(suite string, runner runner, opt Options) int {
 
 	runner.storage = newStorage()
 	for _, feat := range runner.features {
+		runner.storage.mustInsertFeature(feat)
+
 		for _, pickle := range feat.pickles {
 			runner.storage.mustInsertPickle(pickle)
 		}

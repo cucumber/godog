@@ -64,11 +64,13 @@ func TestFailsOrPassesBasedOnStrictModeWhenHasPendingSteps(t *testing.T) {
 	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(basicGherkinFeature), (&messages.Incrementing{}).NewId)
 	require.NoError(t, err)
 
-	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
+	gd.Uri = path
+	ft := feature{GherkinDocument: gd}
+	ft.pickles = gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
 
 	r := runner{
 		fmt:      progressFunc("progress", ioutil.Discard),
-		features: []*feature{{GherkinDocument: gd, pickles: pickles}},
+		features: []*feature{&ft},
 		initializer: func(s *Suite) {
 			s.Step(`^one$`, func() error { return nil })
 			s.Step(`^two$`, func() error { return ErrPending })
@@ -76,7 +78,8 @@ func TestFailsOrPassesBasedOnStrictModeWhenHasPendingSteps(t *testing.T) {
 	}
 
 	r.storage = newStorage()
-	for _, pickle := range pickles {
+	r.storage.mustInsertFeature(&ft)
+	for _, pickle := range ft.pickles {
 		r.storage.mustInsertPickle(pickle)
 	}
 
@@ -94,11 +97,13 @@ func TestFailsOrPassesBasedOnStrictModeWhenHasUndefinedSteps(t *testing.T) {
 	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(basicGherkinFeature), (&messages.Incrementing{}).NewId)
 	require.NoError(t, err)
 
-	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
+	gd.Uri = path
+	ft := feature{GherkinDocument: gd}
+	ft.pickles = gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
 
 	r := runner{
 		fmt:      progressFunc("progress", ioutil.Discard),
-		features: []*feature{{GherkinDocument: gd, pickles: pickles}},
+		features: []*feature{&ft},
 		initializer: func(s *Suite) {
 			s.Step(`^one$`, func() error { return nil })
 			// two - is undefined
@@ -106,7 +111,8 @@ func TestFailsOrPassesBasedOnStrictModeWhenHasUndefinedSteps(t *testing.T) {
 	}
 
 	r.storage = newStorage()
-	for _, pickle := range pickles {
+	r.storage.mustInsertFeature(&ft)
+	for _, pickle := range ft.pickles {
 		r.storage.mustInsertPickle(pickle)
 	}
 
@@ -124,11 +130,13 @@ func TestShouldFailOnError(t *testing.T) {
 	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(basicGherkinFeature), (&messages.Incrementing{}).NewId)
 	require.NoError(t, err)
 
-	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
+	gd.Uri = path
+	ft := feature{GherkinDocument: gd}
+	ft.pickles = gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
 
 	r := runner{
 		fmt:      progressFunc("progress", ioutil.Discard),
-		features: []*feature{{GherkinDocument: gd, pickles: pickles}},
+		features: []*feature{&ft},
 		initializer: func(s *Suite) {
 			s.Step(`^one$`, func() error { return nil })
 			s.Step(`^two$`, func() error { return fmt.Errorf("error") })
@@ -136,7 +144,8 @@ func TestShouldFailOnError(t *testing.T) {
 	}
 
 	r.storage = newStorage()
-	for _, pickle := range pickles {
+	r.storage.mustInsertFeature(&ft)
+	for _, pickle := range ft.pickles {
 		r.storage.mustInsertPickle(pickle)
 	}
 

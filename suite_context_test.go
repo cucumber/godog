@@ -146,6 +146,8 @@ func (tc *godogFeaturesScenario) iRunFeatureSuiteWithTags(tags string) error {
 
 	tc.testedSuite.storage = newStorage()
 	for _, feat := range tc.testedSuite.features {
+		tc.testedSuite.storage.mustInsertFeature(feat)
+
 		for _, pickle := range feat.pickles {
 			tc.testedSuite.storage.mustInsertPickle(pickle)
 		}
@@ -174,6 +176,8 @@ func (tc *godogFeaturesScenario) iRunFeatureSuiteWithFormatter(name string) erro
 
 	tc.testedSuite.storage = newStorage()
 	for _, feat := range tc.testedSuite.features {
+		tc.testedSuite.storage.mustInsertFeature(feat)
+
 		for _, pickle := range feat.pickles {
 			tc.testedSuite.storage.mustInsertPickle(pickle)
 		}

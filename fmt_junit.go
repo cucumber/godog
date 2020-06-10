@@ -54,19 +54,20 @@ func junitTimeDuration(from, to time.Time) string {
 }
 
 func (f *junitFormatter) buildJUNITPackageSuite() junitPackageSuite {
+	features := f.storage.mustGetFeatures()
+	sort.Sort(sortFeaturesByName(features))
+
 	suite := junitPackageSuite{
 		Name:       f.suiteName,
-		TestSuites: make([]*junitTestSuite, len(f.features)),
+		TestSuites: make([]*junitTestSuite, len(features)),
 		Time:       junitTimeDuration(f.startedAt, timeNowFunc()),
 	}
 
-	sort.Sort(sortByName(f.features))
-
-	for idx, feat := range f.features {
-		pickles := f.storage.mustGetPickles(feat.Uri)
+	for idx, feature := range features {
+		pickles := f.storage.mustGetPickles(feature.Uri)
 		sort.Sort(sortPicklesByID(pickles))
 
-		var finishedAt = feat.startedAt()
+		var finishedAt = feature.startedAt()
 
 		if len(pickles) > 0 {
 			lastPickle := pickles[len(pickles)-1]
@@ -79,8 +80,8 @@ func (f *junitFormatter) buildJUNITPackageSuite() junitPackageSuite {
 		}
 
 		ts := junitTestSuite{
-			Name:      feat.GherkinDocument.Feature.Name,
-			Time:      junitTimeDuration(feat.startedAt(), finishedAt),
+			Name:      feature.Feature.Name,
+			Time:      junitTimeDuration(feature.startedAt(), finishedAt),
 			TestCases: make([]*junitTestCase, len(pickles)),
 		}
 

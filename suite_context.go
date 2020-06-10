@@ -184,6 +184,8 @@ func (s *suiteContext) iRunFeatureSuiteWithTags(tags string) error {
 
 	s.testedSuite.storage = newStorage()
 	for _, feat := range s.testedSuite.features {
+		s.testedSuite.storage.mustInsertFeature(feat)
+
 		for _, pickle := range feat.pickles {
 			s.testedSuite.storage.mustInsertPickle(pickle)
 		}
@@ -212,6 +214,8 @@ func (s *suiteContext) iRunFeatureSuiteWithFormatter(name string) error {
 
 	s.testedSuite.storage = newStorage()
 	for _, feat := range s.testedSuite.features {
+		s.testedSuite.storage.mustInsertFeature(feat)
+
 		for _, pickle := range feat.pickles {
 			s.testedSuite.storage.mustInsertPickle(pickle)
 		}
