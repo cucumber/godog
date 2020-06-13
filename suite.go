@@ -98,11 +98,11 @@ func (f feature) startedAt() time.Time {
 	return f.time
 }
 
-type sortByName []*feature
+type sortFeaturesByName []*feature
 
-func (s sortByName) Len() int           { return len(s) }
-func (s sortByName) Less(i, j int) bool { return s[i].Feature.Name < s[j].Feature.Name }
-func (s sortByName) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s sortFeaturesByName) Len() int           { return len(s) }
+func (s sortFeaturesByName) Less(i, j int) bool { return s[i].Feature.Name < s[j].Feature.Name }
+func (s sortFeaturesByName) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 type sortPicklesByID []*messages.Pickle
 

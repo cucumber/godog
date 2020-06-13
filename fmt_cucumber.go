@@ -34,7 +34,9 @@ type cukefmt struct {
 }
 
 func (f *cukefmt) Summary() {
-	res := f.buildCukeFeatures(f.features)
+	features := f.storage.mustGetFeatures()
+
+	res := f.buildCukeFeatures(features)
 
 	dat, err := json.MarshalIndent(res, "", "    ")
 	if err != nil {
@@ -57,7 +59,7 @@ func (f *cukefmt) Copy(cf ConcurrentFormatter) {
 }
 
 func (f *cukefmt) buildCukeFeatures(features []*feature) (res []cukeFeatureJSON) {
-	sort.Sort(sortByName(features))
+	sort.Sort(sortFeaturesByName(features))
 
 	res = make([]cukeFeatureJSON, len(features))
 
@@ -88,7 +90,7 @@ func (f *cukefmt) buildCukeElements(pickles []*messages.Pickle) (res []cukeEleme
 		pickleResult := f.storage.mustGetPickleResult(pickle.Id)
 		pickleStepResults := f.storage.mustGetPickleStepResultsByPickleID(pickle.Id)
 
-		cukeElement := f.buildCukeElement(pickle.Name, pickle.AstNodeIds)
+		cukeElement := f.buildCukeElement(pickle)
 
 		stepStartedAt := pickleResult.StartedAt
 
@@ -204,10 +206,11 @@ func buildCukeFeature(feat *feature) cukeFeatureJSON {
 	return cukeFeature
 }
 
-func (f *cukefmt) buildCukeElement(pickleName string, pickleAstNodeIDs []string) (cukeElement cukeElement) {
-	scenario := f.findScenario(pickleAstNodeIDs[0])
+func (f *cukefmt) buildCukeElement(pickle *messages.Pickle) (cukeElement cukeElement) {
+	feature := f.storage.mustGetFeature(pickle.Uri)
+	scenario := feature.findScenario(pickle.AstNodeIds[0])
 
-	cukeElement.Name = pickleName
+	cukeElement.Name = pickle.Name
 	cukeElement.Line = int(scenario.Location.Line)
 	cukeElement.Description = scenario.Description
 	cukeElement.Keyword = scenario.Keyword
@@ -219,11 +222,11 @@ func (f *cukefmt) buildCukeElement(pickleName string, pickleAstNodeIDs []string)
 		cukeElement.Tags[idx].Name = element.Name
 	}
 
-	if len(pickleAstNodeIDs) == 1 {
+	if len(pickle.AstNodeIds) == 1 {
 		return
 	}
 
-	example, _ := f.findExample(pickleAstNodeIDs[1])
+	example, _ := feature.findExample(pickle.AstNodeIds[1])
 
 	for _, tag := range example.Tags {
 		tag := cukeTag{Line: int(tag.Location.Line), Name: tag.Name}
@@ -232,7 +235,7 @@ func (f *cukefmt) buildCukeElement(pickleName string, pickleAstNodeIDs []string)
 
 	examples := scenario.GetExamples()
 	if len(examples) > 0 {
-		rowID := pickleAstNodeIDs[1]
+		rowID := pickle.AstNodeIds[1]
 
 		for _, example := range examples {
 			for idx, row := range example.TableBody {
@@ -248,12 +251,13 @@ func (f *cukefmt) buildCukeElement(pickleName string, pickleAstNodeIDs []string)
 }
 
 func (f *cukefmt) buildCukeStep(pickle *messages.Pickle, stepResult pickleStepResult) (cukeStep cukeStep) {
+	feature := f.storage.mustGetFeature(pickle.Uri)
 	pickleStep := f.storage.mustGetPickleStep(stepResult.PickleStepID)
-	step := f.findStep(pickleStep.AstNodeIds[0])
+	step := feature.findStep(pickleStep.AstNodeIds[0])
 
 	line := step.Location.Line
 	if len(pickle.AstNodeIds) == 2 {
-		_, row := f.findExample(pickle.AstNodeIds[1])
+		_, row := feature.findExample(pickle.AstNodeIds[1])
 		line = row.Location.Line
 	}
 

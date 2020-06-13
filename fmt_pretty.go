@@ -130,9 +130,10 @@ func keywordAndName(keyword, name string) string {
 	return title
 }
 
-func (f *pretty) scenarioLengths(scenarioAstID string) (scenarioHeaderLength int, maxLength int) {
-	astScenario := f.findScenario(scenarioAstID)
-	astBackground := f.findBackground(scenarioAstID)
+func (f *pretty) scenarioLengths(pickle *messages.Pickle) (scenarioHeaderLength int, maxLength int) {
+	feature := f.storage.mustGetFeature(pickle.Uri)
+	astScenario := feature.findScenario(pickle.AstNodeIds[0])
+	astBackground := feature.findBackground(pickle.AstNodeIds[0])
 
 	scenarioHeaderLength = f.lengthPickle(astScenario.Keyword, astScenario.Name)
 	maxLength = f.longestStep(astScenario.Steps, scenarioHeaderLength)
@@ -144,17 +145,19 @@ func (f *pretty) scenarioLengths(scenarioAstID string) (scenarioHeaderLength int
 	return scenarioHeaderLength, maxLength
 }
 
-func (f *pretty) printScenarioHeader(astScenario *messages.GherkinDocument_Feature_Scenario, spaceFilling int) {
+func (f *pretty) printScenarioHeader(pickle *messages.Pickle, astScenario *messages.GherkinDocument_Feature_Scenario, spaceFilling int) {
+	feature := f.storage.mustGetFeature(pickle.Uri)
 	text := s(f.indent) + keywordAndName(astScenario.Keyword, astScenario.Name)
-	text += s(spaceFilling) + f.line(f.lastFeature().Uri, astScenario.Location)
+	text += s(spaceFilling) + line(feature.Uri, astScenario.Location)
 	fmt.Fprintln(f.out, "\n"+text)
 }
 
 func (f *pretty) printUndefinedPickle(pickle *messages.Pickle) {
-	astScenario := f.findScenario(pickle.AstNodeIds[0])
-	astBackground := f.findBackground(pickle.AstNodeIds[0])
+	feature := f.storage.mustGetFeature(pickle.Uri)
+	astScenario := feature.findScenario(pickle.AstNodeIds[0])
+	astBackground := feature.findBackground(pickle.AstNodeIds[0])
 
-	scenarioHeaderLength, maxLength := f.scenarioLengths(pickle.AstNodeIds[0])
+	scenarioHeaderLength, maxLength := f.scenarioLengths(pickle)
 
 	if astBackground != nil {
 		fmt.Fprintln(f.out, "\n"+s(f.indent)+keywordAndName(astBackground.Keyword, astBackground.Name))
@@ -166,7 +169,7 @@ func (f *pretty) printUndefinedPickle(pickle *messages.Pickle) {
 
 	//  do not print scenario headers and examples multiple times
 	if len(astScenario.Examples) > 0 {
-		exampleTable, exampleRow := f.findExample(pickle.AstNodeIds[1])
+		exampleTable, exampleRow := feature.findExample(pickle.AstNodeIds[1])
 		firstExampleRow := exampleTable.TableBody[0].Id == exampleRow.Id
 		firstExamplesTable := astScenario.Examples[0].Location.Line == exampleTable.Location.Line
 
@@ -175,7 +178,7 @@ func (f *pretty) printUndefinedPickle(pickle *messages.Pickle) {
 		}
 	}
 
-	f.printScenarioHeader(astScenario, maxLength-scenarioHeaderLength)
+	f.printScenarioHeader(pickle, astScenario, maxLength-scenarioHeaderLength)
 
 	for _, examples := range astScenario.Examples {
 		max := longestExampleRow(examples, cyan, cyan)
@@ -202,17 +205,16 @@ func (f *pretty) Summary() {
 		for _, fail := range failedStepResults {
 			pickle := f.storage.mustGetPickle(fail.PickleID)
 			pickleStep := f.storage.mustGetPickleStep(fail.PickleStepID)
+			feature := f.storage.mustGetFeature(pickle.Uri)
 
-			feature := f.findFeature(pickle.AstNodeIds[0])
-
-			astScenario := f.findScenario(pickle.AstNodeIds[0])
+			astScenario := feature.findScenario(pickle.AstNodeIds[0])
 			scenarioDesc := fmt.Sprintf("%s: %s", astScenario.Keyword, pickle.Name)
 
-			astStep := f.findStep(pickleStep.AstNodeIds[0])
+			astStep := feature.findStep(pickleStep.AstNodeIds[0])
 			stepDesc := strings.TrimSpace(astStep.Keyword) + " " + pickleStep.Text
 
-			fmt.Fprintln(f.out, s(f.indent)+red(scenarioDesc)+f.line(feature.Uri, astScenario.Location))
-			fmt.Fprintln(f.out, s(f.indent*2)+red(stepDesc)+f.line(feature.Uri, astStep.Location))
+			fmt.Fprintln(f.out, s(f.indent)+red(scenarioDesc)+line(feature.Uri, astScenario.Location))
+			fmt.Fprintln(f.out, s(f.indent*2)+red(stepDesc)+line(feature.Uri, astStep.Location))
 			fmt.Fprintln(f.out, s(f.indent*3)+red("Error: ")+redb(fmt.Sprintf("%+v", fail.err))+"\n")
 		}
 	}
@@ -224,10 +226,11 @@ func (f *pretty) printOutlineExample(pickle *messages.Pickle, backgroundSteps in
 	var errorMsg string
 	var clr = green
 
-	astScenario := f.findScenario(pickle.AstNodeIds[0])
-	scenarioHeaderLength, maxLength := f.scenarioLengths(pickle.AstNodeIds[0])
+	feature := f.storage.mustGetFeature(pickle.Uri)
+	astScenario := feature.findScenario(pickle.AstNodeIds[0])
+	scenarioHeaderLength, maxLength := f.scenarioLengths(pickle)
 
-	exampleTable, exampleRow := f.findExample(pickle.AstNodeIds[1])
+	exampleTable, exampleRow := feature.findExample(pickle.AstNodeIds[1])
 	printExampleHeader := exampleTable.TableBody[0].Id == exampleRow.Id
 	firstExamplesTable := astScenario.Examples[0].Location.Line == exampleTable.Location.Line
 
@@ -235,7 +238,7 @@ func (f *pretty) printOutlineExample(pickle *messages.Pickle, backgroundSteps in
 
 	firstExecutedScenarioStep := len(pickleStepResults) == backgroundSteps+1
 	if firstExamplesTable && printExampleHeader && firstExecutedScenarioStep {
-		f.printScenarioHeader(astScenario, maxLength-scenarioHeaderLength)
+		f.printScenarioHeader(pickle, astScenario, maxLength-scenarioHeaderLength)
 	}
 
 	if len(exampleTable.TableBody) == 0 {
@@ -265,7 +268,7 @@ func (f *pretty) printOutlineExample(pickle *messages.Pickle, backgroundSteps in
 			// in first example, we need to print steps
 
 			pickleStep := f.storage.mustGetPickleStep(result.PickleStepID)
-			astStep := f.findStep(pickleStep.AstNodeIds[0])
+			astStep := feature.findStep(pickleStep.AstNodeIds[0])
 
 			var text = ""
 			if result.def != nil {
@@ -282,7 +285,7 @@ func (f *pretty) printOutlineExample(pickle *messages.Pickle, backgroundSteps in
 					text = cyan(astStep.Text)
 				}
 
-				_, maxLength := f.scenarioLengths(pickle.AstNodeIds[0])
+				_, maxLength := f.scenarioLengths(pickle)
 				stepLength := f.lengthPickleStep(astStep.Keyword, astStep.Text)
 
 				text += s(maxLength - stepLength)
@@ -336,9 +339,10 @@ func (f *pretty) printTableHeader(row *messages.GherkinDocument_Feature_TableRow
 }
 
 func (f *pretty) printStep(pickle *messages.Pickle, pickleStep *messages.Pickle_PickleStep) {
-	astBackground := f.findBackground(pickle.AstNodeIds[0])
-	astScenario := f.findScenario(pickle.AstNodeIds[0])
-	astStep := f.findStep(pickleStep.AstNodeIds[0])
+	feature := f.storage.mustGetFeature(pickle.Uri)
+	astBackground := feature.findBackground(pickle.AstNodeIds[0])
+	astScenario := feature.findScenario(pickle.AstNodeIds[0])
+	astStep := feature.findStep(pickleStep.AstNodeIds[0])
 
 	var backgroundSteps int
 	if astBackground != nil {
@@ -374,12 +378,12 @@ func (f *pretty) printStep(pickle *messages.Pickle, pickleStep *messages.Pickle_
 		return
 	}
 
-	scenarioHeaderLength, maxLength := f.scenarioLengths(pickle.AstNodeIds[0])
+	scenarioHeaderLength, maxLength := f.scenarioLengths(pickle)
 	stepLength := f.lengthPickleStep(astStep.Keyword, pickleStep.Text)
 
 	firstExecutedScenarioStep := len(pickleStepResults) == backgroundSteps+1
 	if !astBackgroundStep && firstExecutedScenarioStep {
-		f.printScenarioHeader(astScenario, maxLength-scenarioHeaderLength)
+		f.printScenarioHeader(pickle, astScenario, maxLength-scenarioHeaderLength)
 	}
 
 	pickleStepResult := f.storage.mustGetPickleStepResult(pickleStep.Id)
@@ -519,7 +523,7 @@ func (f *pretty) longestStep(steps []*messages.GherkinDocument_Feature_Step, pic
 }
 
 // a line number representation in feature file
-func (f *pretty) line(path string, loc *messages.Location) string {
+func line(path string, loc *messages.Location) string {
 	return " " + blackb(fmt.Sprintf("# %s:%d", path, loc.Line))
 }
 

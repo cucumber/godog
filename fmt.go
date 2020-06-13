@@ -174,7 +174,6 @@ type basefmt struct {
 	storage *storage
 
 	startedAt time.Time
-	features  []*feature
 
 	firstFeature *bool
 	lock         *sync.Mutex
@@ -182,60 +181,6 @@ type basefmt struct {
 
 func (f *basefmt) setStorage(st *storage) {
 	f.storage = st
-}
-
-func (f *basefmt) lastFeature() *feature {
-	return f.features[len(f.features)-1]
-}
-
-func (f *basefmt) findFeature(scenarioAstID string) *feature {
-	for _, ft := range f.features {
-		if sc := ft.findScenario(scenarioAstID); sc != nil {
-			return ft
-		}
-	}
-
-	panic("Couldn't find scenario for AST ID: " + scenarioAstID)
-}
-
-func (f *basefmt) findScenario(scenarioAstID string) *messages.GherkinDocument_Feature_Scenario {
-	for _, ft := range f.features {
-		if sc := ft.findScenario(scenarioAstID); sc != nil {
-			return sc
-		}
-	}
-
-	panic("Couldn't find scenario for AST ID: " + scenarioAstID)
-}
-
-func (f *basefmt) findBackground(scenarioAstID string) *messages.GherkinDocument_Feature_Background {
-	for _, ft := range f.features {
-		if bg := ft.findBackground(scenarioAstID); bg != nil {
-			return bg
-		}
-	}
-
-	return nil
-}
-
-func (f *basefmt) findExample(exampleAstID string) (*messages.GherkinDocument_Feature_Scenario_Examples, *messages.GherkinDocument_Feature_TableRow) {
-	for _, ft := range f.features {
-		if es, rs := ft.findExample(exampleAstID); es != nil && rs != nil {
-			return es, rs
-		}
-	}
-
-	return nil, nil
-}
-
-func (f *basefmt) findStep(stepAstID string) *messages.GherkinDocument_Feature_Step {
-	for _, ft := range f.features {
-		if st := ft.findStep(stepAstID); st != nil {
-			return st
-		}
-	}
-
-	panic("Couldn't find step for AST ID: " + stepAstID)
 }
 
 func (f *basefmt) TestRunStarted() {
@@ -255,8 +200,6 @@ func (f *basefmt) Feature(ft *messages.GherkinDocument, p string, c []byte) {
 	defer f.lock.Unlock()
 
 	*f.firstFeature = false
-
-	f.features = append(f.features, &feature{GherkinDocument: ft, time: timeNowFunc()})
 }
 
 func (f *basefmt) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
@@ -383,13 +326,7 @@ func (f *basefmt) Sync(cf ConcurrentFormatter) {
 	}
 }
 
-func (f *basefmt) Copy(cf ConcurrentFormatter) {
-	if source, ok := cf.(*basefmt); ok {
-		for _, v := range source.features {
-			f.features = append(f.features, v)
-		}
-	}
-}
+func (f *basefmt) Copy(cf ConcurrentFormatter) {}
 
 func (f *basefmt) snippets() string {
 	undefinedStepResults := f.storage.mustGetPickleStepResultsByStatus(undefined)

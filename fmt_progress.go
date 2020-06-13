@@ -48,12 +48,13 @@ func (f *progress) Summary() {
 		if sr.Status == failed {
 			pickle := f.storage.mustGetPickle(sr.PickleID)
 			pickleStep := f.storage.mustGetPickleStep(sr.PickleStepID)
+			feature := f.storage.mustGetFeature(pickle.Uri)
 
-			sc := f.findScenario(pickle.AstNodeIds[0])
+			sc := feature.findScenario(pickle.AstNodeIds[0])
 			scenarioDesc := fmt.Sprintf("%s: %s", sc.Keyword, pickle.Name)
 			scenarioLine := fmt.Sprintf("%s:%d", pickle.Uri, sc.Location.Line)
 
-			step := f.findStep(pickleStep.AstNodeIds[0])
+			step := feature.findStep(pickleStep.AstNodeIds[0])
 			stepDesc := strings.TrimSpace(step.Keyword) + " " + pickleStep.Text
 			stepLine := fmt.Sprintf("%s:%d", pickle.Uri, step.Location.Line)
 

@@ -11,6 +11,9 @@ const (
 	writeMode bool = true
 	readMode  bool = false
 
+	tableFeature         string = "feature"
+	tableFeatureIndexURI string = "id"
+
 	tablePickle         string = "pickle"
 	tablePickleIndexID  string = "id"
 	tablePickleIndexURI string = "uri"
@@ -35,6 +38,16 @@ func newStorage() *storage {
 	// Create the DB schema
 	schema := memdb.DBSchema{
 		Tables: map[string]*memdb.TableSchema{
+			tableFeature: {
+				Name: tableFeature,
+				Indexes: map[string]*memdb.IndexSchema{
+					tableFeatureIndexURI: {
+						Name:    tableFeatureIndexURI,
+						Unique:  true,
+						Indexer: &memdb.StringFieldIndex{Field: "Uri"},
+					},
+				},
+			},
 			tablePickle: {
 				Name: tablePickle,
 				Indexes: map[string]*memdb.IndexSchema{
@@ -119,29 +132,12 @@ func (s *storage) mustInsertPickle(p *messages.Pickle) {
 }
 
 func (s *storage) mustGetPickle(id string) *messages.Pickle {
-	txn := s.db.Txn(readMode)
-	defer txn.Abort()
-
-	var v interface{}
-	v, err := txn.First(tablePickle, tablePickleIndexID, id)
-	if err != nil {
-		panic(err)
-	} else if v == nil {
-		panic("Couldn't find pickle with ID: " + id)
-	}
-
+	v := s.mustFirst(tablePickle, tablePickleIndexID, id)
 	return v.(*messages.Pickle)
 }
 
 func (s *storage) mustGetPickles(uri string) (ps []*messages.Pickle) {
-	txn := s.db.Txn(readMode)
-	defer txn.Abort()
-
-	it, err := txn.Get(tablePickle, tablePickleIndexURI, uri)
-	if err != nil {
-		panic(err)
-	}
-
+	it := s.mustGet(tablePickle, tablePickleIndexURI, uri)
 	for v := it.Next(); v != nil; v = it.Next() {
 		ps = append(ps, v.(*messages.Pickle))
 	}
@@ -150,58 +146,26 @@ func (s *storage) mustGetPickles(uri string) (ps []*messages.Pickle) {
 }
 
 func (s *storage) mustGetPickleStep(id string) *messages.Pickle_PickleStep {
-	txn := s.db.Txn(readMode)
-	defer txn.Abort()
-
-	var v interface{}
-	v, err := txn.First(tablePickleStep, tablePickleStepIndexID, id)
-	if err != nil {
-		panic(err)
-	} else if v == nil {
-		panic("Couldn't find pickle step with ID: " + id)
-	}
-
+	v := s.mustFirst(tablePickleStep, tablePickleStepIndexID, id)
 	return v.(*messages.Pickle_PickleStep)
 }
 
 func (s *storage) mustInsertPickleResult(pr pickleResult) {
-	txn := s.db.Txn(writeMode)
-
-	if err := txn.Insert(tablePickleResult, pr); err != nil {
-		panic(err)
-	}
-
-	txn.Commit()
+	s.mustInsert(tablePickleResult, pr)
 }
 
 func (s *storage) mustInsertPickleStepResult(psr pickleStepResult) {
-	txn := s.db.Txn(writeMode)
-
-	if err := txn.Insert(tablePickleStepResult, psr); err != nil {
-		panic(err)
-	}
-
-	txn.Commit()
+	s.mustInsert(tablePickleStepResult, psr)
 }
 
 func (s *storage) mustGetPickleResult(id string) pickleResult {
-	pr, err := s.getPickleResult(id)
-	if err != nil {
-		panic(err)
-	}
-
-	return pr
+	v := s.mustFirst(tablePickleResult, tablePickleResultIndexPickleID, id)
+	return v.(pickleResult)
 }
 
 func (s *storage) getPickleResult(id string) (_ pickleResult, err error) {
-	txn := s.db.Txn(readMode)
-	defer txn.Abort()
-
-	v, err := txn.First(tablePickleResult, tablePickleResultIndexPickleID, id)
+	v, err := s.first(tablePickleResult, tablePickleResultIndexPickleID, id)
 	if err != nil {
-		return
-	} else if v == nil {
-		err = fmt.Errorf("Couldn't find pickle result with ID: %s", id)
 		return
 	}
 
@@ -209,14 +173,7 @@ func (s *storage) getPickleResult(id string) (_ pickleResult, err error) {
 }
 
 func (s *storage) mustGetPickleResults() (prs []pickleResult) {
-	txn := s.db.Txn(readMode)
-	defer txn.Abort()
-
-	it, err := txn.Get(tablePickleResult, tablePickleResultIndexPickleID)
-	if err != nil {
-		panic(err)
-	}
-
+	it := s.mustGet(tablePickleResult, tablePickleResultIndexPickleID)
 	for v := it.Next(); v != nil; v = it.Next() {
 		prs = append(prs, v.(pickleResult))
 	}
@@ -225,28 +182,12 @@ func (s *storage) mustGetPickleResults() (prs []pickleResult) {
 }
 
 func (s *storage) mustGetPickleStepResult(id string) pickleStepResult {
-	txn := s.db.Txn(readMode)
-	defer txn.Abort()
-
-	v, err := txn.First(tablePickleStepResult, tablePickleStepResultIndexPickleStepID, id)
-	if err != nil {
-		panic(err)
-	} else if v == nil {
-		panic("Couldn't find pickle step result with ID: " + id)
-	}
-
+	v := s.mustFirst(tablePickleStepResult, tablePickleStepResultIndexPickleStepID, id)
 	return v.(pickleStepResult)
 }
 
 func (s *storage) mustGetPickleStepResultsByPickleID(pickleID string) (psrs []pickleStepResult) {
-	txn := s.db.Txn(readMode)
-	defer txn.Abort()
-
-	it, err := txn.Get(tablePickleStepResult, tablePickleStepResultIndexPickleID, pickleID)
-	if err != nil {
-		panic(err)
-	}
-
+	it := s.mustGet(tablePickleStepResult, tablePickleStepResultIndexPickleID, pickleID)
 	for v := it.Next(); v != nil; v = it.Next() {
 		psrs = append(psrs, v.(pickleStepResult))
 	}
@@ -255,17 +196,74 @@ func (s *storage) mustGetPickleStepResultsByPickleID(pickleID string) (psrs []pi
 }
 
 func (s *storage) mustGetPickleStepResultsByStatus(status stepResultStatus) (psrs []pickleStepResult) {
-	txn := s.db.Txn(readMode)
-	defer txn.Abort()
-
-	it, err := txn.Get(tablePickleStepResult, tablePickleStepResultIndexStatus, status)
-	if err != nil {
-		panic(err)
-	}
-
+	it := s.mustGet(tablePickleStepResult, tablePickleStepResultIndexStatus, status)
 	for v := it.Next(); v != nil; v = it.Next() {
 		psrs = append(psrs, v.(pickleStepResult))
 	}
 
 	return psrs
+}
+
+func (s *storage) mustInsertFeature(f *feature) {
+	s.mustInsert(tableFeature, f)
+}
+
+func (s *storage) mustGetFeature(uri string) *feature {
+	v := s.mustFirst(tableFeature, tableFeatureIndexURI, uri)
+	return v.(*feature)
+}
+
+func (s *storage) mustGetFeatures() (fs []*feature) {
+	it := s.mustGet(tableFeature, tableFeatureIndexURI)
+	for v := it.Next(); v != nil; v = it.Next() {
+		fs = append(fs, v.(*feature))
+	}
+
+	return
+}
+
+func (s *storage) mustInsert(table string, obj interface{}) {
+	txn := s.db.Txn(writeMode)
+
+	if err := txn.Insert(table, obj); err != nil {
+		panic(err)
+	}
+
+	txn.Commit()
+}
+
+func (s *storage) first(table, index string, args ...interface{}) (v interface{}, err error) {
+	txn := s.db.Txn(readMode)
+	defer txn.Abort()
+
+	v, err = txn.First(table, index, args...)
+	if err != nil {
+		return
+	} else if v == nil {
+		err = fmt.Errorf("Couldn't find index: %q in table: %q with args: %+v", index, table, args)
+		return
+	}
+
+	return
+}
+
+func (s *storage) mustFirst(table, index string, args ...interface{}) interface{} {
+	v, err := s.first(table, index, args...)
+	if err != nil {
+		panic(err)
+	}
+
+	return v
+}
+
+func (s *storage) mustGet(table, index string, args ...interface{}) memdb.ResultIterator {
+	txn := s.db.Txn(readMode)
+	defer txn.Abort()
+
+	it, err := txn.Get(table, index, args...)
+	if err != nil {
+		panic(err)
+	}
+
+	return it
 }

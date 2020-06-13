@@ -149,8 +149,9 @@ func (f *events) Copy(cf ConcurrentFormatter) {
 }
 
 func (f *events) step(pickle *messages.Pickle, pickleStep *messages.Pickle_PickleStep) {
+	feature := f.storage.mustGetFeature(pickle.Uri)
 	pickleStepResult := f.storage.mustGetPickleStepResult(pickleStep.Id)
-	step := f.findStep(pickleStep.AstNodeIds[0])
+	step := feature.findStep(pickleStep.AstNodeIds[0])
 
 	var errMsg string
 	if pickleStepResult.err != nil {
@@ -207,7 +208,8 @@ func (f *events) Defined(pickle *messages.Pickle, pickleStep *messages.Pickle_Pi
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
-	step := f.findStep(pickleStep.AstNodeIds[0])
+	feature := f.storage.mustGetFeature(pickle.Uri)
+	step := feature.findStep(pickleStep.AstNodeIds[0])
 
 	if def != nil {
 		m := def.Expr.FindStringSubmatchIndex(pickleStep.Text)[2:]
@@ -294,10 +296,12 @@ func (f *events) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleSt
 }
 
 func (f *events) scenarioLocation(pickle *messages.Pickle) string {
-	scenario := f.findScenario(pickle.AstNodeIds[0])
+	feature := f.storage.mustGetFeature(pickle.Uri)
+	scenario := feature.findScenario(pickle.AstNodeIds[0])
+
 	line := scenario.Location.Line
 	if len(pickle.AstNodeIds) == 2 {
-		_, row := f.findExample(pickle.AstNodeIds[1])
+		_, row := feature.findExample(pickle.AstNodeIds[1])
 		line = row.Location.Line
 	}
 
