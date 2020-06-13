@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"sort"
 	"strings"
 
 	"github.com/cucumber/messages-go/v10"
@@ -39,10 +40,14 @@ func (f *progress) Summary() {
 	}
 
 	var failedStepsOutput []string
-	for _, sr := range f.findStepResults(failed) {
-		if sr.status == failed {
-			pickle := f.storage.mustGetPickle(sr.pickleID)
-			pickleStep := f.storage.mustGetPickleStep(sr.pickleStepID)
+
+	failedSteps := f.storage.mustGetPickleStepResultsByStatus(failed)
+	sort.Sort(sortPickleStepResultsByPickleStepID(failedSteps))
+
+	for _, sr := range failedSteps {
+		if sr.Status == failed {
+			pickle := f.storage.mustGetPickle(sr.PickleID)
+			pickleStep := f.storage.mustGetPickleStep(sr.PickleStepID)
 
 			sc := f.findScenario(pickle.AstNodeIds[0])
 			scenarioDesc := fmt.Sprintf("%s: %s", sc.Keyword, pickle.Name)
@@ -71,8 +76,10 @@ func (f *progress) Summary() {
 	f.basefmt.Summary()
 }
 
-func (f *progress) step(res *stepResult) {
-	switch res.status {
+func (f *progress) step(pickleStepID string) {
+	pickleStepResult := f.storage.mustGetPickleStepResult(pickleStepID)
+
+	switch pickleStepResult.Status {
 	case passed:
 		fmt.Fprint(f.out, green("."))
 	case skipped:
@@ -98,7 +105,7 @@ func (f *progress) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleS
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
-	f.step(f.lastStepResult())
+	f.step(step.Id)
 }
 
 func (f *progress) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
@@ -107,7 +114,7 @@ func (f *progress) Skipped(pickle *messages.Pickle, step *messages.Pickle_Pickle
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
-	f.step(f.lastStepResult())
+	f.step(step.Id)
 }
 
 func (f *progress) Undefined(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
@@ -116,7 +123,7 @@ func (f *progress) Undefined(pickle *messages.Pickle, step *messages.Pickle_Pick
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
-	f.step(f.lastStepResult())
+	f.step(step.Id)
 }
 
 func (f *progress) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition, err error) {
@@ -125,7 +132,7 @@ func (f *progress) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleS
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
-	f.step(f.lastStepResult())
+	f.step(step.Id)
 }
 
 func (f *progress) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
@@ -134,7 +141,7 @@ func (f *progress) Pending(pickle *messages.Pickle, step *messages.Pickle_Pickle
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
-	f.step(f.lastStepResult())
+	f.step(step.Id)
 }
 
 func (f *progress) Sync(cf ConcurrentFormatter) {

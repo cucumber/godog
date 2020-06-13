@@ -23,12 +23,10 @@ var typeOfBytes = reflect.TypeOf([]byte(nil))
 
 type feature struct {
 	*messages.GherkinDocument
-	pickles       []*messages.Pickle
-	pickleResults []*pickleResult
+	pickles []*messages.Pickle
 
 	time    time.Time
 	content []byte
-	path    string
 	order   int
 }
 
@@ -100,51 +98,44 @@ func (f feature) startedAt() time.Time {
 	return f.time
 }
 
-func (f feature) finishedAt() time.Time {
-	if len(f.pickleResults) == 0 {
-		return f.startedAt()
-	}
-
-	return f.pickleResults[len(f.pickleResults)-1].finishedAt()
-}
-
-func (f feature) appendStepResult(s *stepResult) {
-	pickles := f.pickleResults[len(f.pickleResults)-1]
-	pickles.stepResults = append(pickles.stepResults, s)
-}
-
-func (f feature) lastPickleResult() *pickleResult {
-	return f.pickleResults[len(f.pickleResults)-1]
-}
-
-func (f feature) lastStepResult() *stepResult {
-	last := f.lastPickleResult()
-	return last.stepResults[len(last.stepResults)-1]
-}
-
 type sortByName []*feature
 
 func (s sortByName) Len() int           { return len(s) }
 func (s sortByName) Less(i, j int) bool { return s[i].Feature.Name < s[j].Feature.Name }
 func (s sortByName) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
-type pickleResult struct {
-	pickleID string
+type sortPicklesByID []*messages.Pickle
 
-	time        time.Time
-	stepResults []*stepResult
+func (s sortPicklesByID) Len() int { return len(s) }
+func (s sortPicklesByID) Less(i, j int) bool {
+	iID := mustConvertStringToInt(s[i].Id)
+	jID := mustConvertStringToInt(s[j].Id)
+	return iID < jID
 }
+func (s sortPicklesByID) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 
-func (s pickleResult) startedAt() time.Time {
-	return s.time
+type sortPickleStepResultsByPickleStepID []pickleStepResult
+
+func (s sortPickleStepResultsByPickleStepID) Len() int { return len(s) }
+func (s sortPickleStepResultsByPickleStepID) Less(i, j int) bool {
+	iID := mustConvertStringToInt(s[i].PickleStepID)
+	jID := mustConvertStringToInt(s[j].PickleStepID)
+	return iID < jID
 }
+func (s sortPickleStepResultsByPickleStepID) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 
-func (s pickleResult) finishedAt() time.Time {
-	if len(s.stepResults) == 0 {
-		return s.startedAt()
+func mustConvertStringToInt(s string) int {
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		panic(err)
 	}
 
-	return s.stepResults[len(s.stepResults)-1].time
+	return i
+}
+
+type pickleResult struct {
+	PickleID  string
+	StartedAt time.Time
 }
 
 // ErrUndefined is returned in case if step definition was not found
@@ -172,7 +163,9 @@ var ErrPending = fmt.Errorf("step implementation is pending")
 type Suite struct {
 	steps    []*StepDefinition
 	features []*feature
-	fmt      Formatter
+
+	fmt     Formatter
+	storage *storage
 
 	failed        bool
 	randomSeed    int64
@@ -417,12 +410,24 @@ func (s *Suite) runStep(pickle *messages.Pickle, step *messages.Pickle_PickleSte
 			return
 		}
 
+		sr := newStepResult(pickle.Id, step.Id, match)
+
 		switch err {
 		case nil:
+			sr.Status = passed
+			s.storage.mustInsertPickleStepResult(sr)
+
 			s.fmt.Passed(pickle, step, match)
 		case ErrPending:
+			sr.Status = pending
+			s.storage.mustInsertPickleStepResult(sr)
+
 			s.fmt.Pending(pickle, step, match)
 		default:
+			sr.Status = failed
+			sr.err = err
+			s.storage.mustInsertPickleStepResult(sr)
+
 			s.fmt.Failed(pickle, step, match, err)
 		}
 
@@ -445,11 +450,20 @@ func (s *Suite) runStep(pickle *messages.Pickle, step *messages.Pickle_PickleSte
 				undefined: undef,
 			}
 		}
+
+		sr := newStepResult(pickle.Id, step.Id, match)
+		sr.Status = undefined
+		s.storage.mustInsertPickleStepResult(sr)
+
 		s.fmt.Undefined(pickle, step, match)
 		return ErrUndefined
 	}
 
 	if prevStepErr != nil {
+		sr := newStepResult(pickle.Id, step.Id, match)
+		sr.Status = skipped
+		s.storage.mustInsertPickleStepResult(sr)
+
 		s.fmt.Skipped(pickle, step, match)
 		return nil
 	}
@@ -575,7 +589,7 @@ func (s *Suite) runFeature(f *feature) {
 		}
 	}
 
-	s.fmt.Feature(f.GherkinDocument, f.path, f.content)
+	s.fmt.Feature(f.GherkinDocument, f.Uri, f.content)
 
 	defer func() {
 		if !isEmptyFeature(f.pickles) {
@@ -613,6 +627,9 @@ func isEmptyFeature(pickles []*messages.Pickle) bool {
 
 func (s *Suite) runPickle(pickle *messages.Pickle) (err error) {
 	if len(pickle.Steps) == 0 {
+		pr := pickleResult{PickleID: pickle.Id, StartedAt: timeNowFunc()}
+		s.storage.mustInsertPickleResult(pr)
+
 		s.fmt.Pickle(pickle)
 		return ErrUndefined
 	}
@@ -621,6 +638,9 @@ func (s *Suite) runPickle(pickle *messages.Pickle) (err error) {
 	for _, f := range s.beforeScenarioHandlers {
 		f(pickle)
 	}
+
+	pr := pickleResult{PickleID: pickle.Id, StartedAt: timeNowFunc()}
+	s.storage.mustInsertPickleResult(pr)
 
 	s.fmt.Pickle(pickle)
 
@@ -673,6 +693,7 @@ func parseFeatureFile(path string, newIDFunc func() string) (*feature, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	defer reader.Close()
 
 	var buf bytes.Buffer
@@ -681,14 +702,11 @@ func parseFeatureFile(path string, newIDFunc func() string) (*feature, error) {
 		return nil, fmt.Errorf("%s - %v", path, err)
 	}
 
+	gherkinDocument.Uri = path
 	pickles := gherkin.Pickles(*gherkinDocument, path, newIDFunc)
 
-	return &feature{
-		GherkinDocument: gherkinDocument,
-		pickles:         pickles,
-		content:         buf.Bytes(),
-		path:            path,
-	}, nil
+	f := feature{GherkinDocument: gherkinDocument, pickles: pickles, content: buf.Bytes()}
+	return &f, nil
 }
 
 func parseFeatureDir(dir string, newIDFunc func() string) ([]*feature, error) {
@@ -710,6 +728,7 @@ func parseFeatureDir(dir string, newIDFunc func() string) ([]*feature, error) {
 		if err != nil {
 			return err
 		}
+
 		features = append(features, feat)
 		return nil
 	})
@@ -751,10 +770,12 @@ func parsePath(path string) ([]*feature, error) {
 }
 
 func parseFeatures(filter string, paths []string) ([]*feature, error) {
-	byPath := make(map[string]*feature)
 	var order int
+
+	uniqueFeatureURI := make(map[string]*feature)
 	for _, path := range paths {
 		feats, err := parsePath(path)
+
 		switch {
 		case os.IsNotExist(err):
 			return nil, fmt.Errorf(`feature path "%s" is not available`, path)
@@ -765,50 +786,49 @@ func parseFeatures(filter string, paths []string) ([]*feature, error) {
 		}
 
 		for _, ft := range feats {
-			if _, duplicate := byPath[ft.path]; duplicate {
+			if _, duplicate := uniqueFeatureURI[ft.Uri]; duplicate {
 				continue
 			}
 
 			ft.order = order
 			order++
-			byPath[ft.path] = ft
+			uniqueFeatureURI[ft.Uri] = ft
 		}
 	}
 
-	return filterFeatures(filter, byPath), nil
+	return filterFeatures(filter, uniqueFeatureURI), nil
 }
 
-type sortByOrderGiven []*feature
+type sortFeaturesByOrder []*feature
 
-func (s sortByOrderGiven) Len() int           { return len(s) }
-func (s sortByOrderGiven) Less(i, j int) bool { return s[i].order < s[j].order }
-func (s sortByOrderGiven) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s sortFeaturesByOrder) Len() int           { return len(s) }
+func (s sortFeaturesByOrder) Less(i, j int) bool { return s[i].order < s[j].order }
+func (s sortFeaturesByOrder) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 func filterFeatures(tags string, collected map[string]*feature) (features []*feature) {
 	for _, ft := range collected {
-		applyTagFilter(tags, ft)
+		ft.pickles = applyTagFilter(tags, ft.pickles)
 
 		if ft.Feature != nil {
 			features = append(features, ft)
 		}
 	}
 
-	sort.Sort(sortByOrderGiven(features))
+	sort.Sort(sortFeaturesByOrder(features))
 
 	return features
 }
 
-func applyTagFilter(tags string, ft *feature) {
+func applyTagFilter(tags string, pickles []*messages.Pickle) (result []*messages.Pickle) {
 	if len(tags) == 0 {
-		return
+		return pickles
 	}
 
-	var pickles []*messages.Pickle
-	for _, pickle := range ft.pickles {
+	for _, pickle := range pickles {
 		if matchesTags(tags, pickle.Tags) {
-			pickles = append(pickles, pickle)
+			result = append(result, pickle)
 		}
 	}
 
-	ft.pickles = pickles
+	return
 }

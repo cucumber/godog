@@ -17,6 +17,8 @@ import (
 	"io"
 	"sort"
 	"strings"
+
+	"github.com/cucumber/messages-go/v10"
 )
 
 func init() {
@@ -61,7 +63,11 @@ func (f *cukefmt) buildCukeFeatures(features []*feature) (res []cukeFeatureJSON)
 
 	for idx, feat := range features {
 		cukeFeature := buildCukeFeature(feat)
-		cukeFeature.Elements = f.buildCukeElements(feat.pickleResults)
+
+		pickles := f.storage.mustGetPickles(feat.Uri)
+		sort.Sort(sortPicklesByID(pickles))
+
+		cukeFeature.Elements = f.buildCukeElements(pickles)
 
 		for jdx, elem := range cukeFeature.Elements {
 			elem.ID = cukeFeature.ID + ";" + makeCukeID(elem.Name) + elem.ID
@@ -75,26 +81,29 @@ func (f *cukefmt) buildCukeFeatures(features []*feature) (res []cukeFeatureJSON)
 	return res
 }
 
-func (f *cukefmt) buildCukeElements(pickleResults []*pickleResult) (res []cukeElement) {
-	res = make([]cukeElement, len(pickleResults))
+func (f *cukefmt) buildCukeElements(pickles []*messages.Pickle) (res []cukeElement) {
+	res = make([]cukeElement, len(pickles))
 
-	for idx, pickleResult := range pickleResults {
-		pickle := f.storage.mustGetPickle(pickleResult.pickleID)
+	for idx, pickle := range pickles {
+		pickleResult := f.storage.mustGetPickleResult(pickle.Id)
+		pickleStepResults := f.storage.mustGetPickleStepResultsByPickleID(pickle.Id)
 
 		cukeElement := f.buildCukeElement(pickle.Name, pickle.AstNodeIds)
 
-		stepStartedAt := pickleResult.startedAt()
+		stepStartedAt := pickleResult.StartedAt
 
-		cukeElement.Steps = make([]cukeStep, len(pickleResult.stepResults))
-		for jdx, stepResult := range pickleResult.stepResults {
-			cukeStep := f.buildCukeStep(stepResult)
+		cukeElement.Steps = make([]cukeStep, len(pickleStepResults))
+		sort.Sort(sortPickleStepResultsByPickleStepID(pickleStepResults))
 
-			stepResultFinishedAt := stepResult.time
+		for jdx, stepResult := range pickleStepResults {
+			cukeStep := f.buildCukeStep(pickle, stepResult)
+
+			stepResultFinishedAt := stepResult.finishedAt
 			d := int(stepResultFinishedAt.Sub(stepStartedAt).Nanoseconds())
 			stepStartedAt = stepResultFinishedAt
 
 			cukeStep.Result.Duration = &d
-			if stepResult.status == undefined || stepResult.status == pending || stepResult.status == skipped {
+			if stepResult.Status == undefined || stepResult.Status == pending || stepResult.Status == skipped {
 				cukeStep.Result.Duration = nil
 			}
 
@@ -172,7 +181,7 @@ type cukeFeatureJSON struct {
 
 func buildCukeFeature(feat *feature) cukeFeatureJSON {
 	cukeFeature := cukeFeatureJSON{
-		URI:         feat.path,
+		URI:         feat.Uri,
 		ID:          makeCukeID(feat.Feature.Name),
 		Keyword:     feat.Feature.Keyword,
 		Name:        feat.Feature.Name,
@@ -238,9 +247,8 @@ func (f *cukefmt) buildCukeElement(pickleName string, pickleAstNodeIDs []string)
 	return cukeElement
 }
 
-func (f *cukefmt) buildCukeStep(stepResult *stepResult) (cukeStep cukeStep) {
-	pickle := f.storage.mustGetPickle(stepResult.pickleID)
-	pickleStep := f.storage.mustGetPickleStep(stepResult.pickleStepID)
+func (f *cukefmt) buildCukeStep(pickle *messages.Pickle, stepResult pickleStepResult) (cukeStep cukeStep) {
+	pickleStep := f.storage.mustGetPickleStep(stepResult.PickleStepID)
 	step := f.findStep(pickleStep.AstNodeIds[0])
 
 	line := step.Location.Line
@@ -277,12 +285,12 @@ func (f *cukefmt) buildCukeStep(stepResult *stepResult) (cukeStep cukeStep) {
 		cukeStep.Match.Location = strings.Split(stepResult.def.definitionID(), " ")[0]
 	}
 
-	cukeStep.Result.Status = stepResult.status.String()
+	cukeStep.Result.Status = stepResult.Status.String()
 	if stepResult.err != nil {
 		cukeStep.Result.Error = stepResult.err.Error()
 	}
 
-	if stepResult.status == undefined || stepResult.status == pending {
+	if stepResult.Status == undefined || stepResult.Status == pending {
 		cukeStep.Match.Location = fmt.Sprintf("%s:%d", pickle.Uri, step.Location.Line)
 	}
 

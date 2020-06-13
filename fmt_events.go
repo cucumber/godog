@@ -103,10 +103,13 @@ func (f *events) Feature(ft *messages.GherkinDocument, p string, c []byte) {
 func (f *events) Summary() {
 	// @TODO: determine status
 	status := passed
-	if len(f.findStepResults(failed)) > 0 {
+
+	f.storage.mustGetPickleStepResultsByStatus(failed)
+
+	if len(f.storage.mustGetPickleStepResultsByStatus(failed)) > 0 {
 		status = failed
-	} else if len(f.findStepResults(passed)) == 0 {
-		if len(f.findStepResults(undefined)) > len(f.findStepResults(pending)) {
+	} else if len(f.storage.mustGetPickleStepResultsByStatus(passed)) == 0 {
+		if len(f.storage.mustGetPickleStepResultsByStatus(undefined)) > len(f.storage.mustGetPickleStepResultsByStatus(pending)) {
 			status = undefined
 		} else {
 			status = pending
@@ -145,13 +148,13 @@ func (f *events) Copy(cf ConcurrentFormatter) {
 	}
 }
 
-func (f *events) step(pickle *messages.Pickle, res *stepResult) {
-	pickleStep := f.storage.mustGetPickleStep(res.pickleStepID)
+func (f *events) step(pickle *messages.Pickle, pickleStep *messages.Pickle_PickleStep) {
+	pickleStepResult := f.storage.mustGetPickleStepResult(pickleStep.Id)
 	step := f.findStep(pickleStep.AstNodeIds[0])
 
 	var errMsg string
-	if res.err != nil {
-		errMsg = res.err.Error()
+	if pickleStepResult.err != nil {
+		errMsg = pickleStepResult.err.Error()
 	}
 	f.event(&struct {
 		Event     string `json:"event"`
@@ -163,15 +166,16 @@ func (f *events) step(pickle *messages.Pickle, res *stepResult) {
 		"TestStepFinished",
 		fmt.Sprintf("%s:%d", pickle.Uri, step.Location.Line),
 		timeNowFunc().UnixNano() / nanoSec,
-		res.status.String(),
+		pickleStepResult.Status.String(),
 		errMsg,
 	})
 
 	if isLastStep(pickle, pickleStep) {
 		var status string
 
-		for _, stepResult := range f.lastFeature().lastPickleResult().stepResults {
-			switch stepResult.status {
+		pickleStepResults := f.storage.mustGetPickleStepResultsByPickleID(pickle.Id)
+		for _, stepResult := range pickleStepResults {
+			switch stepResult.Status {
 			case passed:
 				status = passed.String()
 			case failed:
@@ -250,7 +254,7 @@ func (f *events) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleSte
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
-	f.step(pickle, f.lastStepResult())
+	f.step(pickle, step)
 }
 
 func (f *events) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
@@ -259,7 +263,7 @@ func (f *events) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleSt
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
-	f.step(pickle, f.lastStepResult())
+	f.step(pickle, step)
 }
 
 func (f *events) Undefined(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
@@ -268,7 +272,7 @@ func (f *events) Undefined(pickle *messages.Pickle, step *messages.Pickle_Pickle
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
-	f.step(pickle, f.lastStepResult())
+	f.step(pickle, step)
 }
 
 func (f *events) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition, err error) {
@@ -277,7 +281,7 @@ func (f *events) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleSte
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
-	f.step(pickle, f.lastStepResult())
+	f.step(pickle, step)
 }
 
 func (f *events) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
@@ -286,7 +290,7 @@ func (f *events) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleSt
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
-	f.step(pickle, f.lastStepResult())
+	f.step(pickle, step)
 }
 
 func (f *events) scenarioLocation(pickle *messages.Pickle) string {

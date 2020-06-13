@@ -33,6 +33,11 @@ func Test_TestContext(t *testing.T) {
 		},
 	}
 
+	r.storage = newStorage()
+	for _, pickle := range pickles {
+		r.storage.mustInsertPickle(pickle)
+	}
+
 	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", w) })
 	require.False(t, failed)
 

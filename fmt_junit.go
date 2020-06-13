@@ -57,30 +57,53 @@ func (f *junitFormatter) buildJUNITPackageSuite() junitPackageSuite {
 	suite := junitPackageSuite{
 		Name:       f.suiteName,
 		TestSuites: make([]*junitTestSuite, len(f.features)),
-		Time:       junitTimeDuration(f.started, timeNowFunc()),
+		Time:       junitTimeDuration(f.startedAt, timeNowFunc()),
 	}
 
 	sort.Sort(sortByName(f.features))
 
 	for idx, feat := range f.features {
+		pickles := f.storage.mustGetPickles(feat.Uri)
+		sort.Sort(sortPicklesByID(pickles))
+
+		var finishedAt = feat.startedAt()
+
+		if len(pickles) > 0 {
+			lastPickle := pickles[len(pickles)-1]
+
+			if len(lastPickle.Steps) > 0 {
+				lastStep := lastPickle.Steps[len(lastPickle.Steps)-1]
+				lastPickleStepResult := f.storage.mustGetPickleStepResult(lastStep.Id)
+				finishedAt = lastPickleStepResult.finishedAt
+			}
+		}
+
 		ts := junitTestSuite{
 			Name:      feat.GherkinDocument.Feature.Name,
-			Time:      junitTimeDuration(feat.startedAt(), feat.finishedAt()),
-			TestCases: make([]*junitTestCase, len(feat.pickleResults)),
+			Time:      junitTimeDuration(feat.startedAt(), finishedAt),
+			TestCases: make([]*junitTestCase, len(pickles)),
 		}
 
 		var testcaseNames = make(map[string]int)
-		for _, pickleResult := range feat.pickleResults {
-			pickle := f.storage.mustGetPickle(pickleResult.pickleID)
+		for _, pickle := range pickles {
 			testcaseNames[pickle.Name] = testcaseNames[pickle.Name] + 1
 		}
 
 		var outlineNo = make(map[string]int)
-		for idx, pickleResult := range feat.pickleResults {
+		for idx, pickle := range pickles {
 			tc := junitTestCase{}
-			tc.Time = junitTimeDuration(pickleResult.startedAt(), pickleResult.finishedAt())
 
-			pickle := f.storage.mustGetPickle(pickleResult.pickleID)
+			pickleResult := f.storage.mustGetPickleResult(pickle.Id)
+
+			var finishedAt = pickleResult.StartedAt
+
+			if len(pickle.Steps) > 0 {
+				lastStep := pickle.Steps[len(pickle.Steps)-1]
+				lastPickleStepResult := f.storage.mustGetPickleStepResult(lastStep.Id)
+				finishedAt = lastPickleStepResult.finishedAt
+			}
+
+			tc.Time = junitTimeDuration(pickleResult.StartedAt, finishedAt)
 
 			tc.Name = pickle.Name
 			if testcaseNames[tc.Name] > 1 {
@@ -91,10 +114,11 @@ func (f *junitFormatter) buildJUNITPackageSuite() junitPackageSuite {
 			ts.Tests++
 			suite.Tests++
 
-			for _, stepResult := range pickleResult.stepResults {
-				pickleStep := f.storage.mustGetPickleStep(stepResult.pickleStepID)
+			pickleStepResults := f.storage.mustGetPickleStepResultsByPickleID(pickle.Id)
+			for _, stepResult := range pickleStepResults {
+				pickleStep := f.storage.mustGetPickleStep(stepResult.PickleStepID)
 
-				switch stepResult.status {
+				switch stepResult.Status {
 				case passed:
 					tc.Status = passed.String()
 				case failed:

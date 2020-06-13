@@ -41,7 +41,6 @@ func InitializeScenario(ctx *ScenarioContext) {
 	ctx.Step(`^(?:a )?failing step`, tc.aFailingStep)
 	ctx.Step(`^this step should fail`, tc.aFailingStep)
 	ctx.Step(`^the following steps? should be (passed|failed|skipped|undefined|pending):`, tc.followingStepsShouldHave)
-	ctx.Step(`^all steps should (?:be|have|have been) (passed|failed|skipped|undefined|pending)$`, tc.allStepsShouldHave)
 	ctx.Step(`^the undefined step snippets should be:$`, tc.theUndefinedStepSnippetsShouldBe)
 
 	// event stream
@@ -142,18 +141,18 @@ func (tc *godogFeaturesScenario) iRunFeatureSuiteWithTags(tags string) error {
 	}
 
 	for _, feat := range tc.testedSuite.features {
-		applyTagFilter(tags, feat)
+		feat.pickles = applyTagFilter(tags, feat.pickles)
 	}
 
-	st := newStorage()
+	tc.testedSuite.storage = newStorage()
 	for _, feat := range tc.testedSuite.features {
 		for _, pickle := range feat.pickles {
-			st.mustInsertPickle(pickle)
+			tc.testedSuite.storage.mustInsertPickle(pickle)
 		}
 	}
 
 	fmt := newBaseFmt("godog", &tc.out)
-	fmt.setStorage(st)
+	fmt.setStorage(tc.testedSuite.storage)
 	tc.testedSuite.fmt = fmt
 
 	tc.testedSuite.fmt.TestRunStarted()
@@ -173,16 +172,16 @@ func (tc *godogFeaturesScenario) iRunFeatureSuiteWithFormatter(name string) erro
 		return fmt.Errorf(`formatter "%s" is not available`, name)
 	}
 
-	st := newStorage()
+	tc.testedSuite.storage = newStorage()
 	for _, feat := range tc.testedSuite.features {
 		for _, pickle := range feat.pickles {
-			st.mustInsertPickle(pickle)
+			tc.testedSuite.storage.mustInsertPickle(pickle)
 		}
 	}
 
 	tc.testedSuite.fmt = f("godog", colors.Uncolored(&tc.out))
 	if fmt, ok := tc.testedSuite.fmt.(storageFormatter); ok {
-		fmt.setStorage(st)
+		fmt.setStorage(tc.testedSuite.storage)
 	}
 
 	tc.testedSuite.fmt.TestRunStarted()
@@ -256,28 +255,28 @@ func (tc *godogFeaturesScenario) followingStepsShouldHave(status string, steps *
 
 	switch status {
 	case "passed":
-		for _, st := range f.findStepResults(passed) {
-			pickleStep := f.storage.mustGetPickleStep(st.pickleStepID)
+		for _, st := range f.storage.mustGetPickleStepResultsByStatus(passed) {
+			pickleStep := f.storage.mustGetPickleStep(st.PickleStepID)
 			actual = append(actual, pickleStep.Text)
 		}
 	case "failed":
-		for _, st := range f.findStepResults(failed) {
-			pickleStep := f.storage.mustGetPickleStep(st.pickleStepID)
+		for _, st := range f.storage.mustGetPickleStepResultsByStatus(failed) {
+			pickleStep := f.storage.mustGetPickleStep(st.PickleStepID)
 			actual = append(actual, pickleStep.Text)
 		}
 	case "skipped":
-		for _, st := range f.findStepResults(skipped) {
-			pickleStep := f.storage.mustGetPickleStep(st.pickleStepID)
+		for _, st := range f.storage.mustGetPickleStepResultsByStatus(skipped) {
+			pickleStep := f.storage.mustGetPickleStep(st.PickleStepID)
 			actual = append(actual, pickleStep.Text)
 		}
 	case "undefined":
-		for _, st := range f.findStepResults(undefined) {
-			pickleStep := f.storage.mustGetPickleStep(st.pickleStepID)
+		for _, st := range f.storage.mustGetPickleStepResultsByStatus(undefined) {
+			pickleStep := f.storage.mustGetPickleStep(st.PickleStepID)
 			actual = append(actual, pickleStep.Text)
 		}
 	case "pending":
-		for _, st := range f.findStepResults(pending) {
-			pickleStep := f.storage.mustGetPickleStep(st.pickleStepID)
+		for _, st := range f.storage.mustGetPickleStepResultsByStatus(pending) {
+			pickleStep := f.storage.mustGetPickleStep(st.PickleStepID)
 			actual = append(actual, pickleStep.Text)
 		}
 	default:
@@ -316,42 +315,6 @@ func (tc *godogFeaturesScenario) followingStepsShouldHave(status string, steps *
 	}
 
 	return fmt.Errorf("the steps: %s - are not %s", strings.Join(unmatched, ", "), status)
-}
-
-func (tc *godogFeaturesScenario) allStepsShouldHave(status string) error {
-	f, ok := tc.testedSuite.fmt.(*basefmt)
-	if !ok {
-		return fmt.Errorf("this step requires *basefmt, but there is: %T", tc.testedSuite.fmt)
-	}
-
-	total := len(f.findStepResults(passed)) +
-		len(f.findStepResults(failed)) +
-		len(f.findStepResults(skipped)) +
-		len(f.findStepResults(undefined)) +
-		len(f.findStepResults(pending))
-
-	var actual int
-
-	switch status {
-	case "passed":
-		actual = len(f.findStepResults(passed))
-	case "failed":
-		actual = len(f.findStepResults(failed))
-	case "skipped":
-		actual = len(f.findStepResults(skipped))
-	case "undefined":
-		actual = len(f.findStepResults(undefined))
-	case "pending":
-		actual = len(f.findStepResults(pending))
-	default:
-		return fmt.Errorf("unexpected step status wanted: %s", status)
-	}
-
-	if total > actual {
-		return fmt.Errorf("number of expected %s steps: %d is less than actual %s steps: %d", status, total, status, actual)
-	}
-
-	return nil
 }
 
 func (tc *godogFeaturesScenario) iAmListeningToSuiteEvents() error {
@@ -397,8 +360,10 @@ func (tc *godogFeaturesScenario) aFailingStep() error {
 // parse a given feature file body as a feature
 func (tc *godogFeaturesScenario) aFeatureFile(path string, body *DocString) error {
 	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(body.Content), (&messages.Incrementing{}).NewId)
+	gd.Uri = path
+
 	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
-	tc.testedSuite.features = append(tc.testedSuite.features, &feature{GherkinDocument: gd, pickles: pickles, path: path})
+	tc.testedSuite.features = append(tc.testedSuite.features, &feature{GherkinDocument: gd, pickles: pickles})
 
 	return err
 }
@@ -441,7 +406,7 @@ func (tc *godogFeaturesScenario) iShouldHaveNumFeatureFiles(num int, files *DocS
 	var actual []string
 
 	for _, ft := range tc.testedSuite.features {
-		actual = append(actual, ft.path)
+		actual = append(actual, ft.Uri)
 	}
 
 	if len(expected) != len(actual) {

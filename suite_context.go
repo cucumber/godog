@@ -57,7 +57,6 @@ func SuiteContext(s *Suite, additionalContextInitializers ...func(suite *Suite))
 	s.Step(`^(?:a )?failing step`, c.aFailingStep)
 	s.Step(`^this step should fail`, c.aFailingStep)
 	s.Step(`^the following steps? should be (passed|failed|skipped|undefined|pending):`, c.followingStepsShouldHave)
-	s.Step(`^all steps should (?:be|have|have been) (passed|failed|skipped|undefined|pending)$`, c.allStepsShouldHave)
 	s.Step(`^the undefined step snippets should be:$`, c.theUndefinedStepSnippetsShouldBe)
 
 	// event stream
@@ -180,18 +179,18 @@ func (s *suiteContext) iRunFeatureSuiteWithTags(tags string) error {
 	}
 
 	for _, feat := range s.testedSuite.features {
-		applyTagFilter(tags, feat)
+		feat.pickles = applyTagFilter(tags, feat.pickles)
 	}
 
-	st := newStorage()
+	s.testedSuite.storage = newStorage()
 	for _, feat := range s.testedSuite.features {
 		for _, pickle := range feat.pickles {
-			st.mustInsertPickle(pickle)
+			s.testedSuite.storage.mustInsertPickle(pickle)
 		}
 	}
 
 	fmt := newBaseFmt("godog", &s.out)
-	fmt.setStorage(st)
+	fmt.setStorage(s.testedSuite.storage)
 	s.testedSuite.fmt = fmt
 
 	s.testedSuite.fmt.TestRunStarted()
@@ -211,16 +210,16 @@ func (s *suiteContext) iRunFeatureSuiteWithFormatter(name string) error {
 		return fmt.Errorf(`formatter "%s" is not available`, name)
 	}
 
-	st := newStorage()
+	s.testedSuite.storage = newStorage()
 	for _, feat := range s.testedSuite.features {
 		for _, pickle := range feat.pickles {
-			st.mustInsertPickle(pickle)
+			s.testedSuite.storage.mustInsertPickle(pickle)
 		}
 	}
 
 	s.testedSuite.fmt = f("godog", colors.Uncolored(&s.out))
 	if fmt, ok := s.testedSuite.fmt.(storageFormatter); ok {
-		fmt.setStorage(st)
+		fmt.setStorage(s.testedSuite.storage)
 	}
 
 	s.testedSuite.fmt.TestRunStarted()
@@ -294,28 +293,28 @@ func (s *suiteContext) followingStepsShouldHave(status string, steps *DocString)
 
 	switch status {
 	case "passed":
-		for _, st := range f.findStepResults(passed) {
-			pickleStep := f.storage.mustGetPickleStep(st.pickleStepID)
+		for _, st := range f.storage.mustGetPickleStepResultsByStatus(passed) {
+			pickleStep := f.storage.mustGetPickleStep(st.PickleStepID)
 			actual = append(actual, pickleStep.Text)
 		}
 	case "failed":
-		for _, st := range f.findStepResults(failed) {
-			pickleStep := f.storage.mustGetPickleStep(st.pickleStepID)
+		for _, st := range f.storage.mustGetPickleStepResultsByStatus(failed) {
+			pickleStep := f.storage.mustGetPickleStep(st.PickleStepID)
 			actual = append(actual, pickleStep.Text)
 		}
 	case "skipped":
-		for _, st := range f.findStepResults(skipped) {
-			pickleStep := f.storage.mustGetPickleStep(st.pickleStepID)
+		for _, st := range f.storage.mustGetPickleStepResultsByStatus(skipped) {
+			pickleStep := f.storage.mustGetPickleStep(st.PickleStepID)
 			actual = append(actual, pickleStep.Text)
 		}
 	case "undefined":
-		for _, st := range f.findStepResults(undefined) {
-			pickleStep := f.storage.mustGetPickleStep(st.pickleStepID)
+		for _, st := range f.storage.mustGetPickleStepResultsByStatus(undefined) {
+			pickleStep := f.storage.mustGetPickleStep(st.PickleStepID)
 			actual = append(actual, pickleStep.Text)
 		}
 	case "pending":
-		for _, st := range f.findStepResults(pending) {
-			pickleStep := f.storage.mustGetPickleStep(st.pickleStepID)
+		for _, st := range f.storage.mustGetPickleStepResultsByStatus(pending) {
+			pickleStep := f.storage.mustGetPickleStep(st.PickleStepID)
 			actual = append(actual, pickleStep.Text)
 		}
 	default:
@@ -354,42 +353,6 @@ func (s *suiteContext) followingStepsShouldHave(status string, steps *DocString)
 	}
 
 	return fmt.Errorf("the steps: %s - are not %s", strings.Join(unmatched, ", "), status)
-}
-
-func (s *suiteContext) allStepsShouldHave(status string) error {
-	f, ok := s.testedSuite.fmt.(*basefmt)
-	if !ok {
-		return fmt.Errorf("this step requires *basefmt, but there is: %T", s.testedSuite.fmt)
-	}
-
-	total := len(f.findStepResults(passed)) +
-		len(f.findStepResults(failed)) +
-		len(f.findStepResults(skipped)) +
-		len(f.findStepResults(undefined)) +
-		len(f.findStepResults(pending))
-
-	var actual int
-
-	switch status {
-	case "passed":
-		actual = len(f.findStepResults(passed))
-	case "failed":
-		actual = len(f.findStepResults(failed))
-	case "skipped":
-		actual = len(f.findStepResults(skipped))
-	case "undefined":
-		actual = len(f.findStepResults(undefined))
-	case "pending":
-		actual = len(f.findStepResults(pending))
-	default:
-		return fmt.Errorf("unexpected step status wanted: %s", status)
-	}
-
-	if total > actual {
-		return fmt.Errorf("number of expected %s steps: %d is less than actual %s steps: %d", status, total, status, actual)
-	}
-
-	return nil
 }
 
 func (s *suiteContext) iAmListeningToSuiteEvents() error {
@@ -435,8 +398,10 @@ func (s *suiteContext) aFailingStep() error {
 // parse a given feature file body as a feature
 func (s *suiteContext) aFeatureFile(path string, body *DocString) error {
 	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(body.Content), (&messages.Incrementing{}).NewId)
+	gd.Uri = path
+
 	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
-	s.testedSuite.features = append(s.testedSuite.features, &feature{GherkinDocument: gd, pickles: pickles, path: path})
+	s.testedSuite.features = append(s.testedSuite.features, &feature{GherkinDocument: gd, pickles: pickles})
 
 	return err
 }
@@ -479,7 +444,7 @@ func (s *suiteContext) iShouldHaveNumFeatureFiles(num int, files *DocString) err
 	var actual []string
 
 	for _, ft := range s.testedSuite.features {
-		actual = append(actual, ft.path)
+		actual = append(actual, ft.Uri)
 	}
 
 	if len(expected) != len(actual) {
