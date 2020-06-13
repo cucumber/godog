@@ -1,8 +1,6 @@
 package godog
 
 import (
-	"time"
-
 	"github.com/cucumber/messages-go/v10"
 )
 
@@ -10,7 +8,6 @@ type feature struct {
 	*messages.GherkinDocument
 	pickles []*messages.Pickle
 
-	time    time.Time
 	content []byte
 	order   int
 }
@@ -89,8 +86,4 @@ func (f feature) findStep(astStepID string) *messages.GherkinDocument_Feature_St
 	}
 
 	return nil
-}
-
-func (f feature) startedAt() time.Time {
-	return f.time
 }
