@@ -195,6 +195,9 @@ func (s *suiteContext) iRunFeatureSuiteWithTags(tags string) error {
 	fmt.setStorage(s.testedSuite.storage)
 	s.testedSuite.fmt = fmt
 
+	testRunStarted := testRunStarted{StartedAt: timeNowFunc()}
+	s.testedSuite.storage.mustInsertTestRunStarted(testRunStarted)
+
 	s.testedSuite.fmt.TestRunStarted()
 	s.testedSuite.run()
 	s.testedSuite.fmt.Summary()
@@ -225,6 +228,9 @@ func (s *suiteContext) iRunFeatureSuiteWithFormatter(name string) error {
 	if fmt, ok := s.testedSuite.fmt.(storageFormatter); ok {
 		fmt.setStorage(s.testedSuite.storage)
 	}
+
+	testRunStarted := testRunStarted{StartedAt: timeNowFunc()}
+	s.testedSuite.storage.mustInsertTestRunStarted(testRunStarted)
 
 	s.testedSuite.fmt.TestRunStarted()
 	s.testedSuite.run()
