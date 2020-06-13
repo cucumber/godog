@@ -6,6 +6,10 @@ import (
 	"github.com/cucumber/godog/colors"
 )
 
+type testRunStarted struct {
+	StartedAt time.Time
+}
+
 type pickleResult struct {
 	PickleID  string
 	StartedAt time.Time

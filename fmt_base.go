@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 	"unicode"
 
 	"github.com/cucumber/messages-go/v10"
@@ -20,7 +19,6 @@ import (
 func newBaseFmt(suite string, out io.Writer) *basefmt {
 	return &basefmt{
 		suiteName: suite,
-		startedAt: timeNowFunc(),
 		indent:    2,
 		out:       out,
 		lock:      new(sync.Mutex),
@@ -35,8 +33,6 @@ type basefmt struct {
 	indent int
 
 	storage *storage
-
-	startedAt time.Time
 
 	firstFeature *bool
 	lock         *sync.Mutex
@@ -145,7 +141,9 @@ func (f *basefmt) Summary() {
 		scenarios = append(scenarios, green(fmt.Sprintf("%d passed", passedSc)))
 	}
 	scenarios = append(scenarios, parts...)
-	elapsed := timeNowFunc().Sub(f.startedAt)
+
+	testRunStartedAt := f.storage.mustGetTestRunStarted().StartedAt
+	elapsed := timeNowFunc().Sub(testRunStartedAt)
 
 	fmt.Fprintln(f.out, "")
 

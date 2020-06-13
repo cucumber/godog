@@ -55,6 +55,8 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 		r.testSuiteInitializer(&testSuiteContext)
 	}
 
+	testRunStarted := testRunStarted{StartedAt: timeNowFunc()}
+	r.storage.mustInsertTestRunStarted(testRunStarted)
 	r.fmt.TestRunStarted()
 
 	// run before suite handlers
