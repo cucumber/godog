@@ -144,16 +144,3 @@ func (f *progress) Pending(pickle *messages.Pickle, step *messages.Pickle_Pickle
 
 	f.step(step.Id)
 }
-
-func (f *progress) Sync(cf ConcurrentFormatter) {
-	if source, ok := cf.(*progress); ok {
-		f.basefmt.Sync(source.basefmt)
-		f.steps = source.steps
-	}
-}
-
-func (f *progress) Copy(cf ConcurrentFormatter) {
-	if source, ok := cf.(*progress); ok {
-		f.basefmt.Copy(source.basefmt)
-	}
-}

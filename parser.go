@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -113,6 +112,7 @@ func parsePath(path string) ([]*feature, error) {
 func parseFeatures(filter string, paths []string) ([]*feature, error) {
 	var order int
 
+	featureIdxs := make(map[string]int)
 	uniqueFeatureURI := make(map[string]*feature)
 	for _, path := range paths {
 		feats, err := parsePath(path)
@@ -131,27 +131,34 @@ func parseFeatures(filter string, paths []string) ([]*feature, error) {
 				continue
 			}
 
-			ft.order = order
-			order++
 			uniqueFeatureURI[ft.Uri] = ft
+			featureIdxs[ft.Uri] = order
+
+			order++
 		}
 	}
 
-	return filterFeatures(filter, uniqueFeatureURI), nil
+	var features = make([]*feature, len(uniqueFeatureURI))
+	for uri, feature := range uniqueFeatureURI {
+		idx := featureIdxs[uri]
+		features[idx] = feature
+	}
+
+	features = filterFeatures(filter, features)
+
+	return features, nil
 }
 
-func filterFeatures(tags string, collected map[string]*feature) (features []*feature) {
-	for _, ft := range collected {
+func filterFeatures(tags string, features []*feature) (result []*feature) {
+	for _, ft := range features {
 		ft.pickles = applyTagFilter(tags, ft.pickles)
 
 		if ft.Feature != nil {
-			features = append(features, ft)
+			result = append(result, ft)
 		}
 	}
 
-	sort.Sort(sortFeaturesByOrder(features))
-
-	return features
+	return
 }
 
 func applyTagFilter(tags string, pickles []*messages.Pickle) (result []*messages.Pickle) {

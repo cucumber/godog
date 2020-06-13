@@ -2,6 +2,7 @@ package godog
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/cucumber/messages-go/v10"
 	"github.com/hashicorp/go-memdb"
@@ -32,6 +33,9 @@ const (
 
 type storage struct {
 	db *memdb.MemDB
+
+	testRunStarted testRunStarted
+	lock           *sync.Mutex
 }
 
 func newStorage() *storage {
@@ -112,7 +116,7 @@ func newStorage() *storage {
 		panic(err)
 	}
 
-	return &storage{db}
+	return &storage{db: db, lock: new(sync.Mutex)}
 }
 
 func (s *storage) mustInsertPickle(p *messages.Pickle) {
@@ -148,6 +152,20 @@ func (s *storage) mustGetPickles(uri string) (ps []*messages.Pickle) {
 func (s *storage) mustGetPickleStep(id string) *messages.Pickle_PickleStep {
 	v := s.mustFirst(tablePickleStep, tablePickleStepIndexID, id)
 	return v.(*messages.Pickle_PickleStep)
+}
+
+func (s *storage) mustInsertTestRunStarted(trs testRunStarted) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	s.testRunStarted = trs
+}
+
+func (s *storage) mustGetTestRunStarted() testRunStarted {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	return s.testRunStarted
 }
 
 func (s *storage) mustInsertPickleResult(pr pickleResult) {

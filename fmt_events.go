@@ -136,18 +136,6 @@ func (f *events) Summary() {
 	})
 }
 
-func (f *events) Sync(cf ConcurrentFormatter) {
-	if source, ok := cf.(*events); ok {
-		f.basefmt.Sync(source.basefmt)
-	}
-}
-
-func (f *events) Copy(cf ConcurrentFormatter) {
-	if source, ok := cf.(*events); ok {
-		f.basefmt.Copy(source.basefmt)
-	}
-}
-
 func (f *events) step(pickle *messages.Pickle, pickleStep *messages.Pickle_PickleStep) {
 	feature := f.storage.mustGetFeature(pickle.Uri)
 	pickleStepResult := f.storage.mustGetPickleStepResult(pickleStep.Id)

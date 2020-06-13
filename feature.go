@@ -7,9 +7,7 @@ import (
 type feature struct {
 	*messages.GherkinDocument
 	pickles []*messages.Pickle
-
 	content []byte
-	order   int
 }
 
 type sortFeaturesByName []*feature
@@ -17,12 +15,6 @@ type sortFeaturesByName []*feature
 func (s sortFeaturesByName) Len() int           { return len(s) }
 func (s sortFeaturesByName) Less(i, j int) bool { return s[i].Feature.Name < s[j].Feature.Name }
 func (s sortFeaturesByName) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-
-type sortFeaturesByOrder []*feature
-
-func (s sortFeaturesByOrder) Len() int           { return len(s) }
-func (s sortFeaturesByOrder) Less(i, j int) bool { return s[i].order < s[j].order }
-func (s sortFeaturesByOrder) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 func (f feature) findScenario(astScenarioID string) *messages.GherkinDocument_Feature_Scenario {
 	for _, child := range f.GherkinDocument.Feature.Children {

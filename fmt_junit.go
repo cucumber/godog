@@ -37,18 +37,6 @@ func (f *junitFormatter) Summary() {
 	}
 }
 
-func (f *junitFormatter) Sync(cf ConcurrentFormatter) {
-	if source, ok := cf.(*junitFormatter); ok {
-		f.basefmt.Sync(source.basefmt)
-	}
-}
-
-func (f *junitFormatter) Copy(cf ConcurrentFormatter) {
-	if source, ok := cf.(*junitFormatter); ok {
-		f.basefmt.Copy(source.basefmt)
-	}
-}
-
 func junitTimeDuration(from, to time.Time) string {
 	return strconv.FormatFloat(to.Sub(from).Seconds(), 'f', -1, 64)
 }
@@ -57,10 +45,12 @@ func (f *junitFormatter) buildJUNITPackageSuite() junitPackageSuite {
 	features := f.storage.mustGetFeatures()
 	sort.Sort(sortFeaturesByName(features))
 
+	testRunStartedAt := f.storage.mustGetTestRunStarted().StartedAt
+
 	suite := junitPackageSuite{
 		Name:       f.suiteName,
 		TestSuites: make([]*junitTestSuite, len(features)),
-		Time:       junitTimeDuration(f.startedAt, timeNowFunc()),
+		Time:       junitTimeDuration(testRunStartedAt, timeNowFunc()),
 	}
 
 	for idx, feature := range features {
@@ -77,8 +67,8 @@ func (f *junitFormatter) buildJUNITPackageSuite() junitPackageSuite {
 			testcaseNames[pickle.Name] = testcaseNames[pickle.Name] + 1
 		}
 
-		firstPickleStartedAt := f.startedAt
-		lastPickleFinishedAt := f.startedAt
+		firstPickleStartedAt := testRunStartedAt
+		lastPickleFinishedAt := testRunStartedAt
 
 		var outlineNo = make(map[string]int)
 		for idx, pickle := range pickles {
