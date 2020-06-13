@@ -34,7 +34,8 @@ func TestPrintsStepDefinitions(t *testing.T) {
 	for _, step := range steps {
 		s.Step(step, okStep)
 	}
-	s.printStepDefinitions(w)
+
+	printStepDefinitions(s.steps, w)
 
 	out := buf.String()
 	ref := `okStep`
@@ -52,7 +53,8 @@ func TestPrintsNoStepDefinitionsIfNoneFound(t *testing.T) {
 	var buf bytes.Buffer
 	w := colors.Uncolored(&buf)
 	s := &Suite{}
-	s.printStepDefinitions(w)
+
+	printStepDefinitions(s.steps, w)
 
 	out := strings.TrimSpace(buf.String())
 	assert.Equal(t, "there were no contexts registered, could not find any step definition..", out)

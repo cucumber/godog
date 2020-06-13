@@ -1,10 +1,12 @@
 package godog
 
 import (
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/cucumber/godog/colors"
+	"github.com/cucumber/messages-go/v10"
 )
 
 var (
@@ -36,4 +38,23 @@ func trimAllLines(s string) string {
 		lines = append(lines, strings.TrimSpace(ln))
 	}
 	return strings.Join(lines, "\n")
+}
+
+type sortPicklesByID []*messages.Pickle
+
+func (s sortPicklesByID) Len() int { return len(s) }
+func (s sortPicklesByID) Less(i, j int) bool {
+	iID := mustConvertStringToInt(s[i].Id)
+	jID := mustConvertStringToInt(s[j].Id)
+	return iID < jID
+}
+func (s sortPicklesByID) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+
+func mustConvertStringToInt(s string) int {
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		panic(err)
+	}
+
+	return i
 }
