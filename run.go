@@ -199,7 +199,7 @@ func runWithOptions(suite string, runner runner, opt Options) int {
 	if opt.ShowStepDefinitions {
 		s := &Suite{}
 		runner.initializer(s)
-		s.printStepDefinitions(output)
+		printStepDefinitions(s.steps, output)
 		return exitOptionError
 	}
 
