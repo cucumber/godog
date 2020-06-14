@@ -46,8 +46,6 @@ type Suite struct {
 	stopOnFailure bool
 	strict        bool
 
-	scenarioInitializer scenarioInitializer
-
 	// suite event handlers
 	beforeSuiteHandlers    []func()
 	beforeFeatureHandlers  []func(*messages.GherkinDocument)
@@ -474,11 +472,6 @@ func (s *Suite) runFeature(f *feature) {
 	}()
 
 	for _, pickle := range f.pickles {
-		if s.scenarioInitializer != nil {
-			sc := ScenarioContext{suite: s}
-			s.scenarioInitializer(&sc)
-		}
-
 		err := s.runPickle(pickle)
 		if s.shouldFail(err) {
 			s.failed = true

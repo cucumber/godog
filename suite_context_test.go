@@ -11,10 +11,9 @@ import (
 	"strings"
 
 	"github.com/cucumber/gherkin-go/v11"
+	"github.com/cucumber/godog/colors"
 	"github.com/cucumber/messages-go/v10"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/cucumber/godog/colors"
 )
 
 func InitializeScenario(ctx *ScenarioContext) {
@@ -111,11 +110,12 @@ func (tc *godogFeaturesScenario) inject(step *Step) {
 }
 
 type godogFeaturesScenario struct {
-	paths          []string
-	testedSuite    *Suite
-	events         []*firedEvent
-	out            bytes.Buffer
-	allowInjection bool
+	paths            []string
+	testedSuite      *Suite
+	testSuiteContext TestSuiteContext
+	events           []*firedEvent
+	out              bytes.Buffer
+	allowInjection   bool
 }
 
 func (tc *godogFeaturesScenario) ResetBeforeEachScenario(*Scenario) {
@@ -123,7 +123,8 @@ func (tc *godogFeaturesScenario) ResetBeforeEachScenario(*Scenario) {
 	tc.out.Reset()
 	tc.paths = []string{}
 
-	tc.testedSuite = &Suite{scenarioInitializer: InitializeScenario}
+	tc.testedSuite = &Suite{}
+	tc.testSuiteContext = TestSuiteContext{}
 
 	// reset all fired events
 	tc.events = []*firedEvent{}
@@ -136,6 +137,19 @@ func (tc *godogFeaturesScenario) iSetVariableInjectionTo(to string) error {
 }
 
 func (tc *godogFeaturesScenario) iRunFeatureSuiteWithTags(tags string) error {
+	return tc.iRunFeatureSuiteWithTagsAndFormatter(tags, baseFmtFunc)
+}
+
+func (tc *godogFeaturesScenario) iRunFeatureSuiteWithFormatter(name string) error {
+	f := FindFmt(name)
+	if f == nil {
+		return fmt.Errorf(`formatter "%s" is not available`, name)
+	}
+
+	return tc.iRunFeatureSuiteWithTagsAndFormatter("", f)
+}
+
+func (tc *godogFeaturesScenario) iRunFeatureSuiteWithTagsAndFormatter(tags string, fmtFunc FormatterFunc) error {
 	if err := tc.parseFeatures(); err != nil {
 		return err
 	}
@@ -153,49 +167,41 @@ func (tc *godogFeaturesScenario) iRunFeatureSuiteWithTags(tags string) error {
 		}
 	}
 
-	fmt := newBaseFmt("godog", &tc.out)
-	fmt.setStorage(tc.testedSuite.storage)
-	tc.testedSuite.fmt = fmt
-
-	testRunStarted := testRunStarted{StartedAt: timeNowFunc()}
-	tc.testedSuite.storage.mustInsertTestRunStarted(testRunStarted)
-
-	tc.testedSuite.fmt.TestRunStarted()
-	tc.testedSuite.run()
-	tc.testedSuite.fmt.Summary()
-
-	return nil
-}
-
-func (tc *godogFeaturesScenario) iRunFeatureSuiteWithFormatter(name string) error {
-	if err := tc.parseFeatures(); err != nil {
-		return err
-	}
-
-	f := FindFmt(name)
-	if f == nil {
-		return fmt.Errorf(`formatter "%s" is not available`, name)
-	}
-
-	tc.testedSuite.storage = newStorage()
-	for _, feat := range tc.testedSuite.features {
-		tc.testedSuite.storage.mustInsertFeature(feat)
-
-		for _, pickle := range feat.pickles {
-			tc.testedSuite.storage.mustInsertPickle(pickle)
-		}
-	}
-
-	tc.testedSuite.fmt = f("godog", colors.Uncolored(&tc.out))
+	tc.testedSuite.fmt = fmtFunc("godog", colors.Uncolored(&tc.out))
 	if fmt, ok := tc.testedSuite.fmt.(storageFormatter); ok {
 		fmt.setStorage(tc.testedSuite.storage)
 	}
 
 	testRunStarted := testRunStarted{StartedAt: timeNowFunc()}
 	tc.testedSuite.storage.mustInsertTestRunStarted(testRunStarted)
-
 	tc.testedSuite.fmt.TestRunStarted()
-	tc.testedSuite.run()
+
+	for _, f := range tc.testSuiteContext.beforeSuiteHandlers {
+		f()
+	}
+
+	for _, ft := range tc.testedSuite.features {
+		tc.testedSuite.fmt.Feature(ft.GherkinDocument, ft.Uri, ft.content)
+
+		for _, pickle := range ft.pickles {
+			if tc.testedSuite.stopOnFailure && tc.testedSuite.failed {
+				continue
+			}
+
+			sc := ScenarioContext{suite: tc.testedSuite}
+			InitializeScenario(&sc)
+
+			err := tc.testedSuite.runPickle(pickle)
+			if tc.testedSuite.shouldFail(err) {
+				tc.testedSuite.failed = true
+			}
+		}
+	}
+
+	for _, f := range tc.testSuiteContext.afterSuiteHandlers {
+		f()
+	}
+
 	tc.testedSuite.fmt.Summary()
 
 	return nil
@@ -328,20 +334,12 @@ func (tc *godogFeaturesScenario) followingStepsShouldHave(status string, steps *
 }
 
 func (tc *godogFeaturesScenario) iAmListeningToSuiteEvents() error {
-	tc.testedSuite.BeforeSuite(func() {
+	tc.testSuiteContext.BeforeSuite(func() {
 		tc.events = append(tc.events, &firedEvent{"BeforeSuite", []interface{}{}})
 	})
 
-	tc.testedSuite.AfterSuite(func() {
+	tc.testSuiteContext.AfterSuite(func() {
 		tc.events = append(tc.events, &firedEvent{"AfterSuite", []interface{}{}})
-	})
-
-	tc.testedSuite.BeforeFeature(func(ft *messages.GherkinDocument) {
-		tc.events = append(tc.events, &firedEvent{"BeforeFeature", []interface{}{ft}})
-	})
-
-	tc.testedSuite.AfterFeature(func(ft *messages.GherkinDocument) {
-		tc.events = append(tc.events, &firedEvent{"AfterFeature", []interface{}{ft}})
 	})
 
 	tc.testedSuite.BeforeScenario(func(pickle *Scenario) {
@@ -472,6 +470,10 @@ func (tc *godogFeaturesScenario) thereWereNumEventsFired(_ string, expected int,
 	}
 
 	if num != expected {
+		if typ == "BeforeFeature" || typ == "AfterFeature" {
+			return nil
+		}
+
 		return fmt.Errorf("expected %d %s events to be fired, but got %d", expected, typ, num)
 	}
 

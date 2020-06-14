@@ -257,7 +257,7 @@ func TestFeatureFilePathParser(t *testing.T) {
 }
 
 func Test_AllFeaturesRun(t *testing.T) {
-	const concurrency = 10
+	const concurrency = 100
 	const format = "progress"
 
 	const expected = `...................................................................... 70
@@ -272,12 +272,21 @@ func Test_AllFeaturesRun(t *testing.T) {
 0s
 `
 
-	actualStatus, actualOutput := testRunWithOptions(t, format, concurrency, []string{"features"})
+	fmtOutputSuiteInitializer := func(s *Suite) { SuiteContext(s) }
+	fmtOutputScenarioInitializer := InitializeScenario
+
+	actualStatus, actualOutput := testRunWithOptions(t,
+		fmtOutputSuiteInitializer,
+		format, concurrency, []string{"features"},
+	)
 
 	assert.Equal(t, exitSuccess, actualStatus)
 	assert.Equal(t, expected, actualOutput)
 
-	actualStatus, actualOutput = testRun(t, format, concurrency, []string{"features"})
+	actualStatus, actualOutput = testRun(t,
+		fmtOutputScenarioInitializer,
+		format, concurrency, []string{"features"},
+	)
 
 	assert.Equal(t, exitSuccess, actualStatus)
 	assert.Equal(t, expected, actualOutput)
@@ -294,20 +303,46 @@ func TestFormatterConcurrencyRun(t *testing.T) {
 
 	featurePaths := []string{"formatter-tests/features"}
 
-	const concurrency = 10
+	const concurrency = 100
+
+	fmtOutputSuiteInitializer := func(s *Suite) {
+		s.Step(`^(?:a )?failing step`, failingStepDef)
+		s.Step(`^(?:a )?pending step$`, pendingStepDef)
+		s.Step(`^(?:a )?passing step$`, passingStepDef)
+		s.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)
+	}
+
+	fmtOutputScenarioInitializer := func(ctx *ScenarioContext) {
+		ctx.Step(`^(?:a )?failing step`, failingStepDef)
+		ctx.Step(`^(?:a )?pending step$`, pendingStepDef)
+		ctx.Step(`^(?:a )?passing step$`, passingStepDef)
+		ctx.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)
+	}
 
 	for _, formatter := range formatters {
 		t.Run(
 			fmt.Sprintf("%s/concurrency/%d", formatter, concurrency),
 			func(t *testing.T) {
-				expectedStatus, expectedOutput := testRunWithOptions(t, formatter, 1, featurePaths)
-				actualStatus, actualOutput := testRunWithOptions(t, formatter, concurrency, featurePaths)
+				expectedStatus, expectedOutput := testRunWithOptions(t,
+					fmtOutputSuiteInitializer,
+					formatter, 1, featurePaths,
+				)
+				actualStatus, actualOutput := testRunWithOptions(t,
+					fmtOutputSuiteInitializer,
+					formatter, concurrency, featurePaths,
+				)
 
 				assert.Equal(t, expectedStatus, actualStatus)
 				assertOutput(t, formatter, expectedOutput, actualOutput)
 
-				expectedStatus, expectedOutput = testRun(t, formatter, 1, featurePaths)
-				actualStatus, actualOutput = testRun(t, formatter, concurrency, featurePaths)
+				expectedStatus, expectedOutput = testRun(t,
+					fmtOutputScenarioInitializer,
+					formatter, 1, featurePaths,
+				)
+				actualStatus, actualOutput = testRun(t,
+					fmtOutputScenarioInitializer,
+					formatter, concurrency, featurePaths,
+				)
 
 				assert.Equal(t, expectedStatus, actualStatus)
 				assertOutput(t, formatter, expectedOutput, actualOutput)
@@ -316,7 +351,7 @@ func TestFormatterConcurrencyRun(t *testing.T) {
 	}
 }
 
-func testRunWithOptions(t *testing.T, format string, concurrency int, featurePaths []string) (int, string) {
+func testRunWithOptions(t *testing.T, initializer func(*Suite), format string, concurrency int, featurePaths []string) (int, string) {
 	output := new(bytes.Buffer)
 
 	opts := Options{
@@ -327,7 +362,7 @@ func testRunWithOptions(t *testing.T, format string, concurrency int, featurePat
 		Output:      output,
 	}
 
-	status := RunWithOptions("succeed", func(s *Suite) { SuiteContext(s) }, opts)
+	status := RunWithOptions("succeed", initializer, opts)
 
 	actual, err := ioutil.ReadAll(output)
 	require.NoError(t, err)
@@ -335,7 +370,7 @@ func testRunWithOptions(t *testing.T, format string, concurrency int, featurePat
 	return status, string(actual)
 }
 
-func testRun(t *testing.T, format string, concurrency int, featurePaths []string) (int, string) {
+func testRun(t *testing.T, scenarioInitializer func(*ScenarioContext), format string, concurrency int, featurePaths []string) (int, string) {
 	output := new(bytes.Buffer)
 
 	opts := Options{
@@ -348,7 +383,7 @@ func testRun(t *testing.T, format string, concurrency int, featurePaths []string
 
 	status := TestSuite{
 		Name:                "succeed",
-		ScenarioInitializer: InitializeScenario,
+		ScenarioInitializer: scenarioInitializer,
 		Options:             &opts,
 	}.Run()
 
@@ -419,41 +454,20 @@ type progressOutput struct {
 	bottomRows      []string
 }
 
-func Test_AllFeaturesRun_v010(t *testing.T) {
-	const concurrency = 10
-	const format = "progress"
+func passingStepDef() error { return nil }
 
-	const expected = `...................................................................... 70
-...................................................................... 140
-...................................................................... 210
-...................................................................... 280
-..........................                                             306
+func oddEvenStepDef(odd, even int) error { return oddOrEven(odd, even) }
 
-
-79 scenarios (79 passed)
-306 steps (306 passed)
-0s
-`
-
-	output := new(bytes.Buffer)
-
-	opts := Options{
-		Format:      format,
-		NoColors:    true,
-		Paths:       []string{"features"},
-		Concurrency: concurrency,
-		Output:      output,
+func oddOrEven(odd, even int) error {
+	if odd%2 == 0 {
+		return fmt.Errorf("%d is not odd", odd)
 	}
-
-	actualStatus := TestSuite{
-		Name:                "godogs",
-		ScenarioInitializer: InitializeScenario,
-		Options:             &opts,
-	}.Run()
-
-	actualOutput, err := ioutil.ReadAll(output)
-	require.NoError(t, err)
-
-	assert.Equal(t, exitSuccess, actualStatus)
-	assert.Equal(t, expected, string(actualOutput))
+	if even%2 != 0 {
+		return fmt.Errorf("%d is not even", even)
+	}
+	return nil
 }
+
+func pendingStepDef() error { return ErrPending }
+
+func failingStepDef() error { return fmt.Errorf("step failed") }

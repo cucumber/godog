@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/cucumber/godog/colors"
+	"github.com/cucumber/messages-go/v10"
 )
 
 const (
@@ -50,19 +51,9 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 		fmt.setStorage(r.storage)
 	}
 
-	testSuiteContext := TestSuiteContext{}
-	if r.testSuiteInitializer != nil {
-		r.testSuiteInitializer(&testSuiteContext)
-	}
-
 	testRunStarted := testRunStarted{StartedAt: timeNowFunc()}
 	r.storage.mustInsertTestRunStarted(testRunStarted)
 	r.fmt.TestRunStarted()
-
-	// run before suite handlers
-	for _, f := range testSuiteContext.beforeSuiteHandlers {
-		f()
-	}
 
 	queue := make(chan int, rate)
 	for i, ft := range r.features {
@@ -105,13 +96,7 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 				fmt.setStorage(r.storage)
 			}
 
-			if r.initializer != nil {
-				r.initializer(suite)
-			}
-
-			if r.scenarioInitializer != nil {
-				suite.scenarioInitializer = r.scenarioInitializer
-			}
+			r.initializer(suite)
 
 			suite.run()
 
@@ -143,6 +128,79 @@ func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool
 	for i := 0; i < rate; i++ {
 		queue <- i
 	}
+	close(queue)
+
+	// print summary
+	r.fmt.Summary()
+	return
+}
+
+func (r *runner) scenarioConcurrent(rate int) (failed bool) {
+	var copyLock sync.Mutex
+
+	if fmt, ok := r.fmt.(storageFormatter); ok {
+		fmt.setStorage(r.storage)
+	}
+
+	testSuiteContext := TestSuiteContext{}
+	if r.testSuiteInitializer != nil {
+		r.testSuiteInitializer(&testSuiteContext)
+	}
+
+	testRunStarted := testRunStarted{StartedAt: timeNowFunc()}
+	r.storage.mustInsertTestRunStarted(testRunStarted)
+	r.fmt.TestRunStarted()
+
+	// run before suite handlers
+	for _, f := range testSuiteContext.beforeSuiteHandlers {
+		f()
+	}
+
+	queue := make(chan int, rate)
+	for _, ft := range r.features {
+		r.fmt.Feature(ft.GherkinDocument, ft.Uri, ft.content)
+
+		for i, p := range ft.pickles {
+			pickle := *p
+
+			queue <- i // reserve space in queue
+
+			go func(fail *bool, pickle *messages.Pickle) {
+				defer func() {
+					<-queue // free a space in queue
+				}()
+
+				if r.stopOnFailure && *fail {
+					return
+				}
+
+				suite := &Suite{
+					fmt:        r.fmt,
+					randomSeed: r.randomSeed,
+					strict:     r.strict,
+					storage:    r.storage,
+				}
+
+				if r.scenarioInitializer != nil {
+					sc := ScenarioContext{suite: suite}
+					r.scenarioInitializer(&sc)
+				}
+
+				err := suite.runPickle(pickle)
+				if suite.shouldFail(err) {
+					copyLock.Lock()
+					*fail = true
+					copyLock.Unlock()
+				}
+			}(&failed, &pickle)
+		}
+	}
+
+	// wait until last are processed
+	for i := 0; i < rate; i++ {
+		queue <- i
+	}
+
 	close(queue)
 
 	// run after suite handlers
@@ -261,7 +319,12 @@ func runWithOptions(suite string, runner runner, opt Options) int {
 	_, filename, _, _ := runtime.Caller(1)
 	os.Setenv("GODOG_TESTED_PACKAGE", runsFromPackage(filename))
 
-	failed := runner.concurrent(opt.Concurrency, func() Formatter { return formatter(suite, output) })
+	var failed bool
+	if runner.initializer != nil {
+		failed = runner.concurrent(opt.Concurrency, func() Formatter { return formatter(suite, output) })
+	} else {
+		failed = runner.scenarioConcurrent(opt.Concurrency)
+	}
 
 	// @TODO: should prevent from having these
 	os.Setenv("GODOG_SEED", "")
