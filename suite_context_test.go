@@ -157,6 +157,9 @@ func (tc *godogFeaturesScenario) iRunFeatureSuiteWithTags(tags string) error {
 	fmt.setStorage(tc.testedSuite.storage)
 	tc.testedSuite.fmt = fmt
 
+	testRunStarted := testRunStarted{StartedAt: timeNowFunc()}
+	tc.testedSuite.storage.mustInsertTestRunStarted(testRunStarted)
+
 	tc.testedSuite.fmt.TestRunStarted()
 	tc.testedSuite.run()
 	tc.testedSuite.fmt.Summary()
@@ -187,6 +190,9 @@ func (tc *godogFeaturesScenario) iRunFeatureSuiteWithFormatter(name string) erro
 	if fmt, ok := tc.testedSuite.fmt.(storageFormatter); ok {
 		fmt.setStorage(tc.testedSuite.storage)
 	}
+
+	testRunStarted := testRunStarted{StartedAt: timeNowFunc()}
+	tc.testedSuite.storage.mustInsertTestRunStarted(testRunStarted)
 
 	tc.testedSuite.fmt.TestRunStarted()
 	tc.testedSuite.run()

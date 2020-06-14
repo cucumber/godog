@@ -46,18 +46,6 @@ func (f *cukefmt) Summary() {
 	fmt.Fprintf(f.out, "%s\n", string(dat))
 }
 
-func (f *cukefmt) Sync(cf ConcurrentFormatter) {
-	if source, ok := cf.(*cukefmt); ok {
-		f.basefmt.Sync(source.basefmt)
-	}
-}
-
-func (f *cukefmt) Copy(cf ConcurrentFormatter) {
-	if source, ok := cf.(*cukefmt); ok {
-		f.basefmt.Copy(source.basefmt)
-	}
-}
-
 func (f *cukefmt) buildCukeFeatures(features []*feature) (res []cukeFeatureJSON) {
 	sort.Sort(sortFeaturesByName(features))
 

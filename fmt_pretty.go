@@ -26,6 +26,17 @@ var outlinePlaceholderRegexp = regexp.MustCompile("<[^>]+>")
 // a built in default pretty formatter
 type pretty struct {
 	*basefmt
+	firstFeature *bool
+}
+
+func (f *pretty) TestRunStarted() {
+	f.basefmt.TestRunStarted()
+
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
+	firstFeature := true
+	f.firstFeature = &firstFeature
 }
 
 func (f *pretty) Feature(gd *messages.GherkinDocument, p string, c []byte) {
@@ -33,6 +44,8 @@ func (f *pretty) Feature(gd *messages.GherkinDocument, p string, c []byte) {
 	if !*f.firstFeature {
 		fmt.Fprintln(f.out, "")
 	}
+
+	*f.firstFeature = false
 	f.lock.Unlock()
 
 	f.basefmt.Feature(gd, p, c)
@@ -99,18 +112,6 @@ func (f *pretty) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleSt
 	defer f.lock.Unlock()
 
 	f.printStep(pickle, step)
-}
-
-func (f *pretty) Sync(cf ConcurrentFormatter) {
-	if source, ok := cf.(*pretty); ok {
-		f.basefmt.Sync(source.basefmt)
-	}
-}
-
-func (f *pretty) Copy(cf ConcurrentFormatter) {
-	if source, ok := cf.(*pretty); ok {
-		f.basefmt.Copy(source.basefmt)
-	}
 }
 
 func (f *pretty) printFeature(feature *messages.GherkinDocument_Feature) {

@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 	"unicode"
 
 	"github.com/cucumber/messages-go/v10"
@@ -20,7 +19,6 @@ import (
 func newBaseFmt(suite string, out io.Writer) *basefmt {
 	return &basefmt{
 		suiteName: suite,
-		startedAt: timeNowFunc(),
 		indent:    2,
 		out:       out,
 		lock:      new(sync.Mutex),
@@ -29,42 +27,24 @@ func newBaseFmt(suite string, out io.Writer) *basefmt {
 
 type basefmt struct {
 	suiteName string
-
-	out    io.Writer
-	owner  interface{}
-	indent int
+	out       io.Writer
+	indent    int
 
 	storage *storage
-
-	startedAt time.Time
-
-	firstFeature *bool
-	lock         *sync.Mutex
+	lock    *sync.Mutex
 }
 
 func (f *basefmt) setStorage(st *storage) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	f.storage = st
 }
 
-func (f *basefmt) TestRunStarted() {
-	f.lock.Lock()
-	defer f.lock.Unlock()
-
-	firstFeature := true
-	f.firstFeature = &firstFeature
-}
-
-func (f *basefmt) Pickle(p *messages.Pickle) {}
-
+func (f *basefmt) TestRunStarted()                                                        {}
+func (f *basefmt) Feature(ft *messages.GherkinDocument, p string, c []byte)               {}
+func (f *basefmt) Pickle(p *messages.Pickle)                                              {}
 func (f *basefmt) Defined(*messages.Pickle, *messages.Pickle_PickleStep, *StepDefinition) {}
-
-func (f *basefmt) Feature(ft *messages.GherkinDocument, p string, c []byte) {
-	f.lock.Lock()
-	defer f.lock.Unlock()
-
-	*f.firstFeature = false
-}
-
 func (f *basefmt) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
 }
 func (f *basefmt) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *StepDefinition) {
@@ -145,7 +125,9 @@ func (f *basefmt) Summary() {
 		scenarios = append(scenarios, green(fmt.Sprintf("%d passed", passedSc)))
 	}
 	scenarios = append(scenarios, parts...)
-	elapsed := timeNowFunc().Sub(f.startedAt)
+
+	testRunStartedAt := f.storage.mustGetTestRunStarted().StartedAt
+	elapsed := timeNowFunc().Sub(testRunStartedAt)
 
 	fmt.Fprintln(f.out, "")
 
@@ -181,15 +163,6 @@ func (f *basefmt) Summary() {
 		fmt.Fprintln(f.out, yellow(text))
 	}
 }
-
-func (f *basefmt) Sync(cf ConcurrentFormatter) {
-	if source, ok := cf.(*basefmt); ok {
-		f.lock = source.lock
-		f.firstFeature = source.firstFeature
-	}
-}
-
-func (f *basefmt) Copy(cf ConcurrentFormatter) {}
 
 func (f *basefmt) snippets() string {
 	undefinedStepResults := f.storage.mustGetPickleStepResultsByStatus(undefined)
