@@ -110,7 +110,6 @@ func newStorage() *storage {
 		},
 	}
 
-	// Create a new data base
 	db, err := memdb.NewMemDB(&schema)
 	if err != nil {
 		panic(err)
@@ -181,15 +180,6 @@ func (s *storage) mustGetPickleResult(id string) pickleResult {
 	return v.(pickleResult)
 }
 
-func (s *storage) getPickleResult(id string) (_ pickleResult, err error) {
-	v, err := s.first(tablePickleResult, tablePickleResultIndexPickleID, id)
-	if err != nil {
-		return
-	}
-
-	return v.(pickleResult), nil
-}
-
 func (s *storage) mustGetPickleResults() (prs []pickleResult) {
 	it := s.mustGet(tablePickleResult, tablePickleResultIndexPickleID)
 	for v := it.Next(); v != nil; v = it.Next() {
@@ -250,24 +240,15 @@ func (s *storage) mustInsert(table string, obj interface{}) {
 	txn.Commit()
 }
 
-func (s *storage) first(table, index string, args ...interface{}) (v interface{}, err error) {
+func (s *storage) mustFirst(table, index string, args ...interface{}) interface{} {
 	txn := s.db.Txn(readMode)
 	defer txn.Abort()
 
-	v, err = txn.First(table, index, args...)
+	v, err := txn.First(table, index, args...)
 	if err != nil {
-		return
+		panic(err)
 	} else if v == nil {
 		err = fmt.Errorf("Couldn't find index: %q in table: %q with args: %+v", index, table, args)
-		return
-	}
-
-	return
-}
-
-func (s *storage) mustFirst(table, index string, args ...interface{}) interface{} {
-	v, err := s.first(table, index, args...)
-	if err != nil {
 		panic(err)
 	}
 

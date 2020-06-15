@@ -345,33 +345,29 @@ func (f *pretty) printStep(pickle *messages.Pickle, pickleStep *messages.Pickle_
 	astScenario := feature.findScenario(pickle.AstNodeIds[0])
 	astStep := feature.findStep(pickleStep.AstNodeIds[0])
 
+	var astBackgroundStep bool
+	var firstExecutedBackgroundStep bool
 	var backgroundSteps int
 	if astBackground != nil {
 		backgroundSteps = len(astBackground.Steps)
-	}
 
-	pickleStepResults := f.storage.mustGetPickleStepResultsByPickleID(pickle.Id)
-	astBackgroundStep := backgroundSteps > 0 && backgroundSteps >= len(pickleStepResults)
-
-	if astBackgroundStep {
-		pickles := f.storage.mustGetPickles(pickle.Uri)
-
-		var pickleResults []pickleResult
-		for _, pickle := range pickles {
-			pr, err := f.storage.getPickleResult(pickle.Id)
-			if err == nil {
-				pickleResults = append(pickleResults, pr)
+		for idx, step := range astBackground.Steps {
+			if step.Id == pickleStep.AstNodeIds[0] {
+				astBackgroundStep = true
+				firstExecutedBackgroundStep = idx == 0
+				break
 			}
 		}
+	}
 
-		if len(pickleResults) > 1 {
-			return
-		}
+	firstPickle := feature.pickles[0].Id == pickle.Id
 
-		firstExecutedBackgroundStep := astBackground != nil && len(pickleStepResults) == 1
-		if firstExecutedBackgroundStep {
-			fmt.Fprintln(f.out, "\n"+s(f.indent)+keywordAndName(astBackground.Keyword, astBackground.Name))
-		}
+	if astBackgroundStep && !firstPickle {
+		return
+	}
+
+	if astBackgroundStep && firstExecutedBackgroundStep {
+		fmt.Fprintln(f.out, "\n"+s(f.indent)+keywordAndName(astBackground.Keyword, astBackground.Name))
 	}
 
 	if !astBackgroundStep && len(astScenario.Examples) > 0 {
@@ -382,7 +378,7 @@ func (f *pretty) printStep(pickle *messages.Pickle, pickleStep *messages.Pickle_
 	scenarioHeaderLength, maxLength := f.scenarioLengths(pickle)
 	stepLength := f.lengthPickleStep(astStep.Keyword, pickleStep.Text)
 
-	firstExecutedScenarioStep := len(pickleStepResults) == backgroundSteps+1
+	firstExecutedScenarioStep := astScenario.Steps[0].Id == pickleStep.AstNodeIds[0]
 	if !astBackgroundStep && firstExecutedScenarioStep {
 		f.printScenarioHeader(pickle, astScenario, maxLength-scenarioHeaderLength)
 	}

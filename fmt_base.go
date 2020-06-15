@@ -16,6 +16,10 @@ import (
 	"github.com/cucumber/godog/colors"
 )
 
+func baseFmtFunc(suite string, out io.Writer) Formatter {
+	return newBaseFmt(suite, out)
+}
+
 func newBaseFmt(suite string, out io.Writer) *basefmt {
 	return &basefmt{
 		suiteName: suite,
