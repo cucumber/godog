@@ -16,17 +16,30 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 - Added concurrency support to the cucumber formatter ([273](https://github.com/cucumber/godog/pull/273) - [lonnblad])
 - Added an example for how to use assertion pkgs like testify with godog ([289](https://github.com/cucumber/godog/pull/289) - [lonnblad])
 - Added the new TestSuiteInitializer and ScenarioInitializer ([294](https://github.com/cucumber/godog/pull/294) - [lonnblad])
+- Added an in-mem storage for pickles ([304](https://github.com/cucumber/godog/pull/304) - [lonnblad])
+- Added Pickle and PickleStep results to the in-mem storage ([305](https://github.com/cucumber/godog/pull/305) - [lonnblad])
+- Added features to the in-mem storage ([306](https://github.com/cucumber/godog/pull/306) - [lonnblad])
+- Broke out some code from massive files into new files ([307](https://github.com/cucumber/godog/pull/307) - [lonnblad])
+- Added support for concurrent scenarios ([311](https://github.com/cucumber/godog/pull/311) - [lonnblad])
 
 ### Changed
 - Broke out snippets gen and added sorting on method name ([271](https://github.com/cucumber/godog/pull/271) - [lonnblad])
 - Updated so that we run all tests concurrent now ([278](https://github.com/cucumber/godog/pull/278) - [lonnblad])
 - Moved fmt tests to a godog_test pkg and restructured the fmt output tests ([295](https://github.com/cucumber/godog/pull/295) - [lonnblad])
 - Moved builder tests to a godog_test pkg ([296](https://github.com/cucumber/godog/pull/296) - [lonnblad])
+- Made the builder tests run in parallel ([298](https://github.com/cucumber/godog/pull/298) - [lonnblad])
+- Refactored suite_context.go  ([300](https://github.com/cucumber/godog/pull/300) - [lonnblad])
+- Added better testing of the Context Initializers and TestSuite{}.Run() ([301](https://github.com/cucumber/godog/pull/301) - [lonnblad])
+- Updated the README.md  ([302](https://github.com/cucumber/godog/pull/302) - [lonnblad])
+- Unexported some exported properties in unexported structs ([303](https://github.com/cucumber/godog/pull/303) - [lonnblad])
+- Refactored some states in the formatters and feature struct ([310](https://github.com/cucumber/godog/pull/310) - [lonnblad])
 
 ### Deprecated
+- Deprecated SuiteContext and ConcurrentFormatter ([314](https://github.com/cucumber/godog/pull/314) - [lonnblad])
 
 ### Removed
 - Removed pre go112 build code ([293](https://github.com/cucumber/godog/pull/293) - [lonnblad])
+- Removed the deprecated feature hooks ([312](https://github.com/cucumber/godog/pull/312) - [lonnblad])
 
 ### Fixed
 - Fixed failing builder tests due to the v0.9.0 change ([lonnblad])
@@ -36,6 +49,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 - Fixed issue with empty feature file causing nil pointer deref ([288](https://github.com/cucumber/godog/pull/288) - [lonnblad])
 - Updated linting checks in circleci config and fixed linting issues ([290](https://github.com/cucumber/godog/pull/290) - [lonnblad])
 - Readded some legacy doc for FeatureContext ([297](https://github.com/cucumber/godog/pull/297) - [lonnblad])
+- Fixed an issue with calculating time for junit testsuite ([308](https://github.com/cucumber/godog/pull/308) - [lonnblad])
 
 ## [0.9.0]
 
