@@ -25,6 +25,8 @@ import (
 // need this, rather it is provided for those developing add-on libraries for godog.
 //
 // For an example of how to use, see godog's own `features/` and `suite_test.go`.
+//
+// Deprecated: Use InitializeScenario instead.
 func SuiteContext(s *Suite, additionalContextInitializers ...func(suite *Suite)) {
 	c := &suiteContext{
 		extraCIs: additionalContextInitializers,

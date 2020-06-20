@@ -77,6 +77,9 @@ type Formatter interface {
 
 // ConcurrentFormatter is an interface for a Concurrent
 // version of the Formatter interface.
+//
+// Deprecated: The formatters need to handle concurrency
+// instead of being copied and synchronized for each thread.
 type ConcurrentFormatter interface {
 	Formatter
 	Copy(ConcurrentFormatter)
