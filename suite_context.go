@@ -374,14 +374,6 @@ func (s *suiteContext) iAmListeningToSuiteEvents() error {
 		s.events = append(s.events, &firedEvent{"AfterSuite", []interface{}{}})
 	})
 
-	s.testedSuite.BeforeFeature(func(ft *messages.GherkinDocument) {
-		s.events = append(s.events, &firedEvent{"BeforeFeature", []interface{}{ft}})
-	})
-
-	s.testedSuite.AfterFeature(func(ft *messages.GherkinDocument) {
-		s.events = append(s.events, &firedEvent{"AfterFeature", []interface{}{ft}})
-	})
-
 	s.testedSuite.BeforeScenario(func(pickle *Scenario) {
 		s.events = append(s.events, &firedEvent{"BeforeScenario", []interface{}{pickle}})
 	})

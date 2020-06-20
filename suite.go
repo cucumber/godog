@@ -48,12 +48,10 @@ type Suite struct {
 
 	// suite event handlers
 	beforeSuiteHandlers    []func()
-	beforeFeatureHandlers  []func(*messages.GherkinDocument)
 	beforeScenarioHandlers []func(*messages.Pickle)
 	beforeStepHandlers     []func(*messages.Pickle_PickleStep)
 	afterStepHandlers      []func(*messages.Pickle_PickleStep, error)
 	afterScenarioHandlers  []func(*messages.Pickle, error)
-	afterFeatureHandlers   []func(*messages.GherkinDocument)
 	afterSuiteHandlers     []func()
 }
 
@@ -137,27 +135,6 @@ func (s *Suite) BeforeSuite(fn func()) {
 	s.beforeSuiteHandlers = append(s.beforeSuiteHandlers, fn)
 }
 
-// BeforeFeature registers a function or method
-// to be run once before every feature execution.
-//
-// If godog is run with concurrency option, it will
-// run every feature per goroutine. So user may choose
-// whether to isolate state within feature context or
-// scenario.
-//
-// Best practice is not to have any state dependency on
-// every scenario, but in some cases if VM for example
-// needs to be started it may take very long for each
-// scenario to restart it.
-//
-// Use it wisely and avoid sharing state between scenarios.
-//
-// Deprecated: BeforeFeature will be removed. Depending on
-// your usecase, do setup in BeforeSuite or BeforeScenario.
-func (s *Suite) BeforeFeature(fn func(*messages.GherkinDocument)) {
-	s.beforeFeatureHandlers = append(s.beforeFeatureHandlers, fn)
-}
-
 // BeforeScenario registers a function or method
 // to be run before every pickle.
 //
@@ -207,16 +184,6 @@ func (s *Suite) AfterStep(fn func(*messages.Pickle_PickleStep, error)) {
 // func (ctx *ScenarioContext) AfterScenario instead.
 func (s *Suite) AfterScenario(fn func(*messages.Pickle, error)) {
 	s.afterScenarioHandlers = append(s.afterScenarioHandlers, fn)
-}
-
-// AfterFeature registers a function or method
-// to be run once after feature executed all scenarios.
-//
-// Deprecated: AfterFeature will be removed. Depending on
-// your usecase, do cleanup and teardowns in AfterScenario
-// or AfterSuite.
-func (s *Suite) AfterFeature(fn func(*messages.GherkinDocument)) {
-	s.afterFeatureHandlers = append(s.afterFeatureHandlers, fn)
 }
 
 // AfterSuite registers a function or method
@@ -455,21 +422,7 @@ func (s *Suite) shouldFail(err error) bool {
 }
 
 func (s *Suite) runFeature(f *feature) {
-	if !isEmptyFeature(f.pickles) {
-		for _, fn := range s.beforeFeatureHandlers {
-			fn(f.GherkinDocument)
-		}
-	}
-
 	s.fmt.Feature(f.GherkinDocument, f.Uri, f.content)
-
-	defer func() {
-		if !isEmptyFeature(f.pickles) {
-			for _, fn := range s.afterFeatureHandlers {
-				fn(f.GherkinDocument)
-			}
-		}
-	}()
 
 	for _, pickle := range f.pickles {
 		err := s.runPickle(pickle)
