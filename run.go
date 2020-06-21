@@ -3,6 +3,7 @@ package godog
 import (
 	"fmt"
 	"io"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -158,12 +159,29 @@ func (r *runner) scenarioConcurrent(rate int) (failed bool) {
 
 	queue := make(chan int, rate)
 	for _, ft := range r.features {
-		r.fmt.Feature(ft.GherkinDocument, ft.Uri, ft.content)
+		pickles := make([]*messages.Pickle, len(ft.pickles))
+		if r.randomSeed != 0 {
+			r := rand.New(rand.NewSource(r.randomSeed))
+			perm := r.Perm(len(ft.pickles))
+			for i, v := range perm {
+				pickles[v] = ft.pickles[i]
+			}
+		} else {
+			copy(pickles, ft.pickles)
+		}
 
-		for i, p := range ft.pickles {
+		if len(pickles) == 0 {
+			r.fmt.Feature(ft.GherkinDocument, ft.Uri, ft.content)
+		}
+
+		for i, p := range pickles {
 			pickle := *p
 
 			queue <- i // reserve space in queue
+
+			if i == 0 {
+				r.fmt.Feature(ft.GherkinDocument, ft.Uri, ft.content)
+			}
 
 			go func(fail *bool, pickle *messages.Pickle) {
 				defer func() {
