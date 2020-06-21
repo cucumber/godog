@@ -170,10 +170,6 @@ func (r *runner) scenarioConcurrent(rate int) (failed bool) {
 			copy(pickles, ft.pickles)
 		}
 
-		if len(pickles) == 0 {
-			r.fmt.Feature(ft.GherkinDocument, ft.Uri, ft.content)
-		}
-
 		for i, p := range pickles {
 			pickle := *p
 
