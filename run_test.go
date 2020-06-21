@@ -6,6 +6,8 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -256,8 +258,61 @@ func TestFeatureFilePathParser(t *testing.T) {
 	}
 }
 
+func Test_RandomizeRun(t *testing.T) {
+	const noRandomFlag = 0
+	const createRandomSeedFlag = -1
+	const noConcurrencyFlag = 1
+	const formatter = "pretty"
+	const featurePath = "formatter-tests/features/with_few_empty_scenarios.feature"
+
+	fmtOutputScenarioInitializer := func(ctx *ScenarioContext) {
+		ctx.Step(`^(?:a )?failing step`, failingStepDef)
+		ctx.Step(`^(?:a )?pending step$`, pendingStepDef)
+		ctx.Step(`^(?:a )?passing step$`, passingStepDef)
+		ctx.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)
+	}
+
+	expectedStatus, expectedOutput := testRun(t,
+		fmtOutputScenarioInitializer,
+		formatter, noConcurrencyFlag,
+		noRandomFlag, []string{featurePath},
+	)
+
+	actualStatus, actualOutput := testRun(t,
+		fmtOutputScenarioInitializer,
+		formatter, noConcurrencyFlag,
+		createRandomSeedFlag, []string{featurePath},
+	)
+
+	expectedSeed := parseSeed(actualOutput)
+	assert.NotZero(t, expectedSeed)
+
+	// Removes "Randomized with seed: <seed>" part of the output
+	actualOutputSplit := strings.Split(actualOutput, "\n")
+	actualOutputSplit = actualOutputSplit[:len(actualOutputSplit)-2]
+	actualOutputReduced := strings.Join(actualOutputSplit, "\n")
+
+	assert.NotEqual(t, expectedOutput, actualOutputReduced)
+	assertOutput(t, formatter, expectedOutput, actualOutputReduced)
+
+	expectedStatus, expectedOutput = actualStatus, actualOutput
+
+	actualStatus, actualOutput = testRun(t,
+		fmtOutputScenarioInitializer,
+		formatter, noConcurrencyFlag,
+		expectedSeed, []string{featurePath},
+	)
+
+	actualSeed := parseSeed(actualOutput)
+
+	assert.Equal(t, expectedSeed, actualSeed)
+	assert.Equal(t, expectedStatus, actualStatus)
+	assert.Equal(t, expectedOutput, actualOutput)
+}
+
 func Test_AllFeaturesRun(t *testing.T) {
 	const concurrency = 100
+	const noRandomFlag = 0
 	const format = "progress"
 
 	const expected = `...................................................................... 70
@@ -285,7 +340,8 @@ func Test_AllFeaturesRun(t *testing.T) {
 
 	actualStatus, actualOutput = testRun(t,
 		fmtOutputScenarioInitializer,
-		format, concurrency, []string{"features"},
+		format, concurrency,
+		noRandomFlag, []string{"features"},
 	)
 
 	assert.Equal(t, exitSuccess, actualStatus)
@@ -304,6 +360,8 @@ func TestFormatterConcurrencyRun(t *testing.T) {
 	featurePaths := []string{"formatter-tests/features"}
 
 	const concurrency = 100
+	const noRandomFlag = 0
+	const noConcurrency = 1
 
 	fmtOutputSuiteInitializer := func(s *Suite) {
 		s.Step(`^(?:a )?failing step`, failingStepDef)
@@ -325,7 +383,7 @@ func TestFormatterConcurrencyRun(t *testing.T) {
 			func(t *testing.T) {
 				expectedStatus, expectedOutput := testRunWithOptions(t,
 					fmtOutputSuiteInitializer,
-					formatter, 1, featurePaths,
+					formatter, noConcurrency, featurePaths,
 				)
 				actualStatus, actualOutput := testRunWithOptions(t,
 					fmtOutputSuiteInitializer,
@@ -337,11 +395,13 @@ func TestFormatterConcurrencyRun(t *testing.T) {
 
 				expectedStatus, expectedOutput = testRun(t,
 					fmtOutputScenarioInitializer,
-					formatter, 1, featurePaths,
+					formatter, noConcurrency,
+					noRandomFlag, featurePaths,
 				)
 				actualStatus, actualOutput = testRun(t,
 					fmtOutputScenarioInitializer,
-					formatter, concurrency, featurePaths,
+					formatter, concurrency,
+					noRandomFlag, featurePaths,
 				)
 
 				assert.Equal(t, expectedStatus, actualStatus)
@@ -370,7 +430,14 @@ func testRunWithOptions(t *testing.T, initializer func(*Suite), format string, c
 	return status, string(actual)
 }
 
-func testRun(t *testing.T, scenarioInitializer func(*ScenarioContext), format string, concurrency int, featurePaths []string) (int, string) {
+func testRun(
+	t *testing.T,
+	scenarioInitializer func(*ScenarioContext),
+	format string,
+	concurrency int,
+	randomSeed int64,
+	featurePaths []string,
+) (int, string) {
 	output := new(bytes.Buffer)
 
 	opts := Options{
@@ -378,6 +445,7 @@ func testRun(t *testing.T, scenarioInitializer func(*ScenarioContext), format st
 		NoColors:    true,
 		Paths:       featurePaths,
 		Concurrency: concurrency,
+		Randomize:   randomSeed,
 		Output:      output,
 	}
 
@@ -471,3 +539,17 @@ func oddOrEven(odd, even int) error {
 func pendingStepDef() error { return ErrPending }
 
 func failingStepDef() error { return fmt.Errorf("step failed") }
+
+func parseSeed(str string) (seed int64) {
+	re := regexp.MustCompile(`Randomized with seed: (\d*)`)
+	match := re.FindStringSubmatch(str)
+
+	if len(match) > 0 {
+		var err error
+		if seed, err = strconv.ParseInt(match[1], 10, 64); err != nil {
+			seed = 0
+		}
+	}
+
+	return
+}

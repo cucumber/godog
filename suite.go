@@ -2,6 +2,7 @@ package godog
 
 import (
 	"fmt"
+	"math/rand"
 	"reflect"
 	"regexp"
 	"strings"
@@ -424,7 +425,18 @@ func (s *Suite) shouldFail(err error) bool {
 func (s *Suite) runFeature(f *feature) {
 	s.fmt.Feature(f.GherkinDocument, f.Uri, f.content)
 
-	for _, pickle := range f.pickles {
+	pickles := make([]*messages.Pickle, len(f.pickles))
+	if s.randomSeed != 0 {
+		r := rand.New(rand.NewSource(s.randomSeed))
+		perm := r.Perm(len(f.pickles))
+		for i, v := range perm {
+			pickles[v] = f.pickles[i]
+		}
+	} else {
+		copy(pickles, f.pickles)
+	}
+
+	for _, pickle := range pickles {
 		err := s.runPickle(pickle)
 		if s.shouldFail(err) {
 			s.failed = true
