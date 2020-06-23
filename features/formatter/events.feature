@@ -9,7 +9,6 @@ Feature: event stream formatter
     Then the following events should be fired:
       """
         TestRunStarted
-        TestSource
         TestRunFinished
       """
 

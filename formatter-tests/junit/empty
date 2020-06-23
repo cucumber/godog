@@ -1,4 +1,2 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="junit" tests="0" skipped="0" failures="0" errors="0" time="0">
-  <testsuite name="empty feature" tests="0" skipped="0" failures="0" errors="0" time="0"></testsuite>
-</testsuites>
+<testsuites name="junit" tests="0" skipped="0" failures="0" errors="0" time="0"></testsuites>

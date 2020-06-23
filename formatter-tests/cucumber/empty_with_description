@@ -1,10 +1,1 @@
-[
-    {
-        "uri": "formatter-tests/features/empty_with_description.feature",
-        "id": "empty-feature",
-        "keyword": "Feature",
-        "name": "empty feature",
-        "description": "  describes\n  an empty\n  feature",
-        "line": 1
-    }
-]
+[]

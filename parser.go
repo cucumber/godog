@@ -153,7 +153,7 @@ func filterFeatures(tags string, features []*feature) (result []*feature) {
 	for _, ft := range features {
 		ft.pickles = applyTagFilter(tags, ft.pickles)
 
-		if ft.Feature != nil {
+		if ft.Feature != nil && len(ft.pickles) > 0 {
 			result = append(result, ft)
 		}
 	}
