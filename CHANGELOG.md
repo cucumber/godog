@@ -50,6 +50,8 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 - Updated linting checks in circleci config and fixed linting issues ([290](https://github.com/cucumber/godog/pull/290) - [lonnblad])
 - Readded some legacy doc for FeatureContext ([297](https://github.com/cucumber/godog/pull/297) - [lonnblad])
 - Fixed an issue with calculating time for junit testsuite ([308](https://github.com/cucumber/godog/pull/308) - [lonnblad])
+- Fixed so that we don't execute features with zero scenarios ([315](https://github.com/cucumber/godog/pull/315) - [lonnblad])
+- Fixed the broken --random flag ([317](https://github.com/cucumber/godog/pull/317) - [lonnblad])
 
 ## [0.9.0]
 
