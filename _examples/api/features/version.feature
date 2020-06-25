@@ -20,6 +20,6 @@ Feature: get version
     And the response should match json:
       """
       {
-        "version": "v0.10.0-rc1"
+        "version": "v0.10.0"
       }
       """

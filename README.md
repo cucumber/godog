@@ -43,13 +43,13 @@ When automated testing is this much fun, teams can easily protect themselves fro
 
 ## Install
 ```
-go get github.com/cucumber/godog/cmd/godog@v0.10.0-rc1
+go get github.com/cucumber/godog/cmd/godog@v0.10.0
 ```
-Adding `@v0.10.0-rc1` will install v0.10.0-rc1 specifically instead of master.
+Adding `@v0.10.0` will install v0.10.0 specifically instead of master.
 
 Running `within the $GOPATH`, you would also need to set `GO111MODULE=on`, like this:
 ```
-GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.10.0-rc1
+GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.10.0
 ```
 
 ## Contributions
@@ -178,7 +178,7 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
 }
 
-// godog v0.10.0-rc1 (latest)
+// godog v0.10.0 (latest)
 func InitializeTestSuite(ctx *godog.TestSuiteContext) {
 	ctx.BeforeSuite(func() { Godogs = 0 })
 }
@@ -252,7 +252,7 @@ func TestMain(m *testing.M) {
 		FeatureContext(s)
 	}, opts)
 
-	// godog v0.10.0-rc1 (latest)
+	// godog v0.10.0 (latest)
 	status := godog.TestSuite{
 		Name: "godogs",
 		TestSuiteInitializer: InitializeTestSuite,
@@ -289,7 +289,7 @@ func TestMain(m *testing.M) {
 		FeatureContext(s)
 	}, opts)
 
-	// godog v0.10.0-rc1 (latest)
+	// godog v0.10.0 (latest)
 	status := godog.TestSuite{
 		Name: "godogs",
 		TestSuiteInitializer: InitializeTestSuite,
@@ -326,7 +326,7 @@ func TestMain(m *testing.M) {
 		FeatureContext(s)
 	}, opts)
 
-	// godog v0.10.0-rc1 (latest)
+	// godog v0.10.0 (latest)
 	status := godog.TestSuite{
 		Name: "godogs",
 		TestSuiteInitializer: InitializeTestSuite,

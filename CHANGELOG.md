@@ -20,7 +20,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Fixed
 
-## [v0.10.0-rc1]
+## [v0.10.0]
 
 ### Added
 - Added concurrency support to the pretty formatter ([275](https://github.com/cucumber/godog/pull/275) - [lonnblad])
