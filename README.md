@@ -8,7 +8,7 @@
 
 **The API is likely to change a few times before we reach 1.0.0**
 
-Please read all the README, you may find it very useful. And do not forget to peek into the [CHANGELOG](https://github.com/cucumber/godog/blob/master/CHANGELOG.md) from time to time.
+Please read the full README, you may find it very useful. And do not forget to peek into the [Release Notes](https://github.com/cucumber/godog/blob/master/release-notes) and the [CHANGELOG](https://github.com/cucumber/godog/blob/master/CHANGELOG.md) from time to time.
 
 Package godog is the official Cucumber BDD framework for Golang, it merges specification and test documentation into one cohesive whole, using Gherkin formatted scenarios in the format of Given, When, Then.
 
@@ -43,13 +43,13 @@ When automated testing is this much fun, teams can easily protect themselves fro
 
 ## Install
 ```
-go get github.com/cucumber/godog/cmd/godog@v0.9.0
+go get github.com/cucumber/godog/cmd/godog@v0.10.0-rc1
 ```
-Adding `@v0.9.0` will install v0.9.0 specifically instead of master.
+Adding `@v0.10.0-rc1` will install v0.10.0-rc1 specifically instead of master.
 
 Running `within the $GOPATH`, you would also need to set `GO111MODULE=on`, like this:
 ```
-GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.9.0
+GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.10.0-rc1
 ```
 
 ## Contributions
@@ -140,7 +140,7 @@ package main
 import (
 	"fmt"
 	
-	messages "github.com/cucumber/messages-go/v10" // needed for godog v0.9.0 (latest) and earlier
+	messages "github.com/cucumber/messages-go/v10" // needed for godog v0.9.0 and earlier
 
 	"github.com/cucumber/godog"
 )
@@ -165,7 +165,7 @@ func thereShouldBeRemaining(remaining int) error {
 	return nil
 }
 
-// godog v0.9.0 (latest) and earlier
+// godog v0.9.0 and earlier
 func FeatureContext(s *godog.Suite) {
 	s.BeforeSuite(func() { Godogs = 0 })
 
@@ -178,7 +178,7 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
 }
 
-// godog v0.10.0 (coming release)
+// godog v0.10.0-rc1 (latest)
 func InitializeTestSuite(ctx *godog.TestSuiteContext) {
 	ctx.BeforeSuite(func() { Godogs = 0 })
 }
@@ -247,12 +247,12 @@ func TestMain(m *testing.M) {
 	flag.Parse()
 	opts.Paths = flag.Args()
 
-	// godog v0.9.0 (latest) and earlier
+	// godog v0.9.0 and earlier
 	status := godog.RunWithOptions("godogs", func(s *godog.Suite) {
 		FeatureContext(s)
 	}, opts)
 
-	// godog v0.10.0 (coming release)
+	// godog v0.10.0-rc1 (latest)
 	status := godog.TestSuite{
 		Name: "godogs",
 		TestSuiteInitializer: InitializeTestSuite,
@@ -284,12 +284,12 @@ func TestMain(m *testing.M) {
 		Randomize: time.Now().UTC().UnixNano(), // randomize scenario execution order
 	}
 
-	// godog v0.9.0 (latest) and earlier
+	// godog v0.9.0 and earlier
 	status := godog.RunWithOptions("godogs", func(s *godog.Suite) {
 		FeatureContext(s)
 	}, opts)
 
-	// godog v0.10.0 (coming release)
+	// godog v0.10.0-rc1 (latest)
 	status := godog.TestSuite{
 		Name: "godogs",
 		TestSuiteInitializer: InitializeTestSuite,
@@ -321,12 +321,12 @@ func TestMain(m *testing.M) {
 		Paths:     []string{"features"},
 	}
 
-	// godog v0.9.0 (latest) and earlier
+	// godog v0.9.0 and earlier
 	status := godog.RunWithOptions("godogs", func(s *godog.Suite) {
 		FeatureContext(s)
 	}, opts)
 
-	// godog v0.10.0 (coming release)
+	// godog v0.10.0-rc1 (latest)
 	status := godog.TestSuite{
 		Name: "godogs",
 		TestSuiteInitializer: InitializeTestSuite,
@@ -398,11 +398,11 @@ There are no global options or configuration files. Alias your common or project
 
 ### Concurrency
 
+When concurrency is configured in options, godog will execute the scenarios concurrently, which is support by all supplied formatters.
+
 In order to support concurrency well, you should reset the state and isolate each scenario. They should not share any state. It is suggested to run the suite concurrently in order to make sure there is no state corruption or race conditions in the application.
 
 It is also useful to randomize the order of scenario execution, which you can now do with **--random** command option.
-
-**NOTE:** if suite runs with concurrency option, it concurrently runs every feature, not scenario per different features. This will be updated in release v0.10.0 to run every scenario concurrently.
 
 ## License
 **Godog** and **Gherkin** are licensed under the [MIT][license] and developed as a part of the [cucumber project][cucumber]

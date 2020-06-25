@@ -11,6 +11,18 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+## [v0.10.0-rc1]
+
+### Added
 - Added concurrency support to the pretty formatter ([275](https://github.com/cucumber/godog/pull/275) - [lonnblad])
 - Added concurrency support to the events formatter ([274](https://github.com/cucumber/godog/pull/274) - [lonnblad])
 - Added concurrency support to the cucumber formatter ([273](https://github.com/cucumber/godog/pull/273) - [lonnblad])
