@@ -1,0 +1,8 @@
+{"event":"TestRunStarted","version":"0.1.0","timestamp":-6795364578871,"suite":"events"}
+{"event":"TestSource","location":"formatter-tests/features/single_scenario_with_passing_step.feature:1","source":"Feature: single passing scenario\n  describes\n  a single scenario\n  feature\n\n  Scenario: one step passing\n    Given a passing step\n"}
+{"event":"TestCaseStarted","location":"formatter-tests/features/single_scenario_with_passing_step.feature:6","timestamp":-6795364578871}
+{"event":"StepDefinitionFound","location":"formatter-tests/features/single_scenario_with_passing_step.feature:7","definition_id":"fmt_output_test.go:101 -\u003e github.com/cucumber/godog/internal/formatters_test.passingStepDef","arguments":[]}
+{"event":"TestStepStarted","location":"formatter-tests/features/single_scenario_with_passing_step.feature:7","timestamp":-6795364578871}
+{"event":"TestStepFinished","location":"formatter-tests/features/single_scenario_with_passing_step.feature:7","timestamp":-6795364578871,"status":"passed"}
+{"event":"TestCaseFinished","location":"formatter-tests/features/single_scenario_with_passing_step.feature:6","timestamp":-6795364578871,"status":"passed"}
+{"event":"TestRunFinished","status":"passed","timestamp":-6795364578871,"snippets":"","memory":""}

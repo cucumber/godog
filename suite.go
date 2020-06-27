@@ -6,10 +6,13 @@ import (
 	"strings"
 
 	"github.com/cucumber/messages-go/v10"
+
+	"github.com/cucumber/godog/internal/models"
+	"github.com/cucumber/godog/internal/storage"
+	"github.com/cucumber/godog/internal/utils"
 )
 
 var errorInterface = reflect.TypeOf((*error)(nil)).Elem()
-var typeOfBytes = reflect.TypeOf([]byte(nil))
 
 // ErrUndefined is returned in case if step definition was not found
 var ErrUndefined = fmt.Errorf("step is undefined")
@@ -19,10 +22,10 @@ var ErrUndefined = fmt.Errorf("step is undefined")
 var ErrPending = fmt.Errorf("step implementation is pending")
 
 type suite struct {
-	steps []*StepDefinition
+	steps []*models.StepDefinition
 
 	fmt     Formatter
-	storage *storage
+	storage *storage.Storage
 
 	failed        bool
 	randomSeed    int64
@@ -36,10 +39,10 @@ type suite struct {
 	afterScenarioHandlers  []func(*Scenario, error)
 }
 
-func (s *suite) matchStep(step *messages.Pickle_PickleStep) *StepDefinition {
+func (s *suite) matchStep(step *messages.Pickle_PickleStep) *models.StepDefinition {
 	def := s.matchStepText(step.Text)
 	if def != nil && step.Argument != nil {
-		def.args = append(def.args, step.Argument)
+		def.Args = append(def.Args, step.Argument)
 	}
 	return def
 }
@@ -70,23 +73,23 @@ func (s *suite) runStep(pickle *messages.Pickle, step *messages.Pickle_PickleSte
 			return
 		}
 
-		sr := newStepResult(pickle.Id, step.Id, match)
+		sr := models.NewStepResult(pickle.Id, step.Id, match)
 
 		switch err {
 		case nil:
-			sr.Status = passed
-			s.storage.mustInsertPickleStepResult(sr)
+			sr.Status = models.Passed
+			s.storage.MustInsertPickleStepResult(sr)
 
 			s.fmt.Passed(pickle, step, match)
 		case ErrPending:
-			sr.Status = pending
-			s.storage.mustInsertPickleStepResult(sr)
+			sr.Status = models.Pending
+			s.storage.MustInsertPickleStepResult(sr)
 
 			s.fmt.Pending(pickle, step, match)
 		default:
-			sr.Status = failed
-			sr.err = err
-			s.storage.mustInsertPickleStepResult(sr)
+			sr.Status = models.Failed
+			sr.Err = err
+			s.storage.MustInsertPickleStepResult(sr)
 
 			s.fmt.Failed(pickle, step, match, err)
 		}
@@ -101,34 +104,34 @@ func (s *suite) runStep(pickle *messages.Pickle, step *messages.Pickle_PickleSte
 		return err
 	} else if len(undef) > 0 {
 		if match != nil {
-			match = &StepDefinition{
-				args:      match.args,
-				hv:        match.hv,
-				Expr:      match.Expr,
-				Handler:   match.Handler,
-				nested:    match.nested,
-				undefined: undef,
+			match = &models.StepDefinition{
+				Args:         match.Args,
+				HandlerValue: match.HandlerValue,
+				Expr:         match.Expr,
+				Handler:      match.Handler,
+				Nested:       match.Nested,
+				Undefined:    undef,
 			}
 		}
 
-		sr := newStepResult(pickle.Id, step.Id, match)
-		sr.Status = undefined
-		s.storage.mustInsertPickleStepResult(sr)
+		sr := models.NewStepResult(pickle.Id, step.Id, match)
+		sr.Status = models.Undefined
+		s.storage.MustInsertPickleStepResult(sr)
 
 		s.fmt.Undefined(pickle, step, match)
 		return ErrUndefined
 	}
 
 	if prevStepErr != nil {
-		sr := newStepResult(pickle.Id, step.Id, match)
-		sr.Status = skipped
-		s.storage.mustInsertPickleStepResult(sr)
+		sr := models.NewStepResult(pickle.Id, step.Id, match)
+		sr.Status = models.Skipped
+		s.storage.MustInsertPickleStepResult(sr)
 
 		s.fmt.Skipped(pickle, step, match)
 		return nil
 	}
 
-	err = s.maybeSubSteps(match.run())
+	err = s.maybeSubSteps(match.Run())
 	return
 }
 
@@ -139,15 +142,15 @@ func (s *suite) maybeUndefined(text string, arg interface{}) ([]string, error) {
 	}
 
 	var undefined []string
-	if !step.nested {
+	if !step.Nested {
 		return undefined, nil
 	}
 
 	if arg != nil {
-		step.args = append(step.args, arg)
+		step.Args = append(step.Args, arg)
 	}
 
-	for _, next := range step.run().(Steps) {
+	for _, next := range step.Run().(Steps) {
 		lines := strings.Split(next, "\n")
 		// @TODO: we cannot currently parse table or content body from nested steps
 		if len(lines) > 1 {
@@ -182,14 +185,14 @@ func (s *suite) maybeSubSteps(result interface{}) error {
 	for _, text := range steps {
 		if def := s.matchStepText(text); def == nil {
 			return ErrUndefined
-		} else if err := s.maybeSubSteps(def.run()); err != nil {
+		} else if err := s.maybeSubSteps(def.Run()); err != nil {
 			return fmt.Errorf("%s: %+v", text, err)
 		}
 	}
 	return nil
 }
 
-func (s *suite) matchStepText(text string) *StepDefinition {
+func (s *suite) matchStepText(text string) *models.StepDefinition {
 	for _, h := range s.steps {
 		if m := h.Expr.FindStringSubmatch(text); len(m) > 0 {
 			var args []interface{}
@@ -199,12 +202,12 @@ func (s *suite) matchStepText(text string) *StepDefinition {
 
 			// since we need to assign arguments
 			// better to copy the step definition
-			return &StepDefinition{
-				args:    args,
-				hv:      h.hv,
-				Expr:    h.Expr,
-				Handler: h.Handler,
-				nested:  h.nested,
+			return &models.StepDefinition{
+				Args:         args,
+				HandlerValue: h.HandlerValue,
+				Expr:         h.Expr,
+				Handler:      h.Handler,
+				Nested:       h.Nested,
 			}
 		}
 	}
@@ -254,8 +257,8 @@ func isEmptyFeature(pickles []*messages.Pickle) bool {
 
 func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 	if len(pickle.Steps) == 0 {
-		pr := pickleResult{PickleID: pickle.Id, StartedAt: timeNowFunc()}
-		s.storage.mustInsertPickleResult(pr)
+		pr := models.PickleResult{PickleID: pickle.Id, StartedAt: utils.TimeNowFunc()}
+		s.storage.MustInsertPickleResult(pr)
 
 		s.fmt.Pickle(pickle)
 		return ErrUndefined
@@ -266,8 +269,8 @@ func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 		f(pickle)
 	}
 
-	pr := pickleResult{PickleID: pickle.Id, StartedAt: timeNowFunc()}
-	s.storage.mustInsertPickleResult(pr)
+	pr := models.PickleResult{PickleID: pickle.Id, StartedAt: utils.TimeNowFunc()}
+	s.storage.MustInsertPickleResult(pr)
 
 	s.fmt.Pickle(pickle)
 

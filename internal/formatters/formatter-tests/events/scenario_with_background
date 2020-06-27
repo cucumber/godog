@@ -1,0 +1,17 @@
+{"event":"TestRunStarted","version":"0.1.0","timestamp":-6795364578871,"suite":"events"}
+{"event":"TestSource","location":"formatter-tests/features/scenario_with_background.feature:1","source":"Feature: single scenario with background\n\n  Background: named\n    Given passing step\n    And passing step\n\n  Scenario: scenario\n    When passing step\n    Then passing step\n"}
+{"event":"TestCaseStarted","location":"formatter-tests/features/scenario_with_background.feature:7","timestamp":-6795364578871}
+{"event":"StepDefinitionFound","location":"formatter-tests/features/scenario_with_background.feature:4","definition_id":"fmt_output_test.go:101 -\u003e github.com/cucumber/godog/internal/formatters_test.passingStepDef","arguments":[]}
+{"event":"TestStepStarted","location":"formatter-tests/features/scenario_with_background.feature:4","timestamp":-6795364578871}
+{"event":"TestStepFinished","location":"formatter-tests/features/scenario_with_background.feature:4","timestamp":-6795364578871,"status":"passed"}
+{"event":"StepDefinitionFound","location":"formatter-tests/features/scenario_with_background.feature:5","definition_id":"fmt_output_test.go:101 -\u003e github.com/cucumber/godog/internal/formatters_test.passingStepDef","arguments":[]}
+{"event":"TestStepStarted","location":"formatter-tests/features/scenario_with_background.feature:5","timestamp":-6795364578871}
+{"event":"TestStepFinished","location":"formatter-tests/features/scenario_with_background.feature:5","timestamp":-6795364578871,"status":"passed"}
+{"event":"StepDefinitionFound","location":"formatter-tests/features/scenario_with_background.feature:8","definition_id":"fmt_output_test.go:101 -\u003e github.com/cucumber/godog/internal/formatters_test.passingStepDef","arguments":[]}
+{"event":"TestStepStarted","location":"formatter-tests/features/scenario_with_background.feature:8","timestamp":-6795364578871}
+{"event":"TestStepFinished","location":"formatter-tests/features/scenario_with_background.feature:8","timestamp":-6795364578871,"status":"passed"}
+{"event":"StepDefinitionFound","location":"formatter-tests/features/scenario_with_background.feature:9","definition_id":"fmt_output_test.go:101 -\u003e github.com/cucumber/godog/internal/formatters_test.passingStepDef","arguments":[]}
+{"event":"TestStepStarted","location":"formatter-tests/features/scenario_with_background.feature:9","timestamp":-6795364578871}
+{"event":"TestStepFinished","location":"formatter-tests/features/scenario_with_background.feature:9","timestamp":-6795364578871,"status":"passed"}
+{"event":"TestCaseFinished","location":"formatter-tests/features/scenario_with_background.feature:7","timestamp":-6795364578871,"status":"passed"}
+{"event":"TestRunFinished","status":"passed","timestamp":-6795364578871,"snippets":"","memory":""}

@@ -12,8 +12,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/cucumber/godog/colors"
 	"github.com/cucumber/messages-go/v10"
+
+	"github.com/cucumber/godog/colors"
+	"github.com/cucumber/godog/internal/models"
+	"github.com/cucumber/godog/internal/storage"
+	"github.com/cucumber/godog/internal/utils"
 )
 
 const (
@@ -29,12 +33,12 @@ type runner struct {
 	randomSeed            int64
 	stopOnFailure, strict bool
 
-	features []*feature
+	features []*models.Feature
 
 	testSuiteInitializer testSuiteInitializer
 	scenarioInitializer  scenarioInitializer
 
-	storage *storage
+	storage *storage.Storage
 	fmt     Formatter
 }
 
@@ -42,7 +46,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 	var copyLock sync.Mutex
 
 	if fmt, ok := r.fmt.(storageFormatter); ok {
-		fmt.setStorage(r.storage)
+		fmt.SetStorage(r.storage)
 	}
 
 	testSuiteContext := TestSuiteContext{}
@@ -50,8 +54,8 @@ func (r *runner) concurrent(rate int) (failed bool) {
 		r.testSuiteInitializer(&testSuiteContext)
 	}
 
-	testRunStarted := testRunStarted{StartedAt: timeNowFunc()}
-	r.storage.mustInsertTestRunStarted(testRunStarted)
+	testRunStarted := models.TestRunStarted{StartedAt: utils.TimeNowFunc()}
+	r.storage.MustInsertTestRunStarted(testRunStarted)
 	r.fmt.TestRunStarted()
 
 	// run before suite handlers
@@ -61,15 +65,15 @@ func (r *runner) concurrent(rate int) (failed bool) {
 
 	queue := make(chan int, rate)
 	for _, ft := range r.features {
-		pickles := make([]*messages.Pickle, len(ft.pickles))
+		pickles := make([]*messages.Pickle, len(ft.Pickles))
 		if r.randomSeed != 0 {
 			r := rand.New(rand.NewSource(r.randomSeed))
-			perm := r.Perm(len(ft.pickles))
+			perm := r.Perm(len(ft.Pickles))
 			for i, v := range perm {
-				pickles[v] = ft.pickles[i]
+				pickles[v] = ft.Pickles[i]
 			}
 		} else {
-			copy(pickles, ft.pickles)
+			copy(pickles, ft.Pickles)
 		}
 
 		for i, p := range pickles {
@@ -78,7 +82,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 			queue <- i // reserve space in queue
 
 			if i == 0 {
-				r.fmt.Feature(ft.GherkinDocument, ft.Uri, ft.content)
+				r.fmt.Feature(ft.GherkinDocument, ft.Uri, ft.Content)
 			}
 
 			go func(fail *bool, pickle *messages.Pickle) {
@@ -181,12 +185,12 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 		return exitOptionError
 	}
 
-	runner.storage = newStorage()
+	runner.storage = storage.NewStorage()
 	for _, feat := range runner.features {
-		runner.storage.mustInsertFeature(feat)
+		runner.storage.MustInsertFeature(feat)
 
-		for _, pickle := range feat.pickles {
-			runner.storage.mustInsertPickle(pickle)
+		for _, pickle := range feat.Pickles {
+			runner.storage.MustInsertPickle(pickle)
 		}
 	}
 

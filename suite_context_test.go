@@ -15,7 +15,11 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/cucumber/godog/colors"
+	"github.com/cucumber/godog/internal/formatters"
+	"github.com/cucumber/godog/internal/models"
+	"github.com/cucumber/godog/internal/storage"
 	"github.com/cucumber/godog/internal/tags"
+	"github.com/cucumber/godog/internal/utils"
 )
 
 // InitializeScenario provides steps for godog suite execution and
@@ -142,7 +146,7 @@ type firedEvent struct {
 
 type godogFeaturesScenario struct {
 	paths            []string
-	features         []*feature
+	features         []*models.Feature
 	testedSuite      *suite
 	testSuiteContext TestSuiteContext
 	events           []*firedEvent
@@ -155,7 +159,7 @@ func (tc *godogFeaturesScenario) ResetBeforeEachScenario(*Scenario) {
 	tc.out.Reset()
 	tc.paths = []string{}
 
-	tc.features = []*feature{}
+	tc.features = []*models.Feature{}
 	tc.testedSuite = &suite{}
 	tc.testSuiteContext = TestSuiteContext{}
 
@@ -170,7 +174,7 @@ func (tc *godogFeaturesScenario) iSetVariableInjectionTo(to string) error {
 }
 
 func (tc *godogFeaturesScenario) iRunFeatureSuiteWithTags(tags string) error {
-	return tc.iRunFeatureSuiteWithTagsAndFormatter(tags, baseFmtFunc)
+	return tc.iRunFeatureSuiteWithTagsAndFormatter(tags, formatters.BaseFormatterFunc)
 }
 
 func (tc *godogFeaturesScenario) iRunFeatureSuiteWithFormatter(name string) error {
@@ -188,25 +192,25 @@ func (tc *godogFeaturesScenario) iRunFeatureSuiteWithTagsAndFormatter(filter str
 	}
 
 	for _, feat := range tc.features {
-		feat.pickles = tags.ApplyTagFilter(filter, feat.pickles)
+		feat.Pickles = tags.ApplyTagFilter(filter, feat.Pickles)
 	}
 
-	tc.testedSuite.storage = newStorage()
+	tc.testedSuite.storage = storage.NewStorage()
 	for _, feat := range tc.features {
-		tc.testedSuite.storage.mustInsertFeature(feat)
+		tc.testedSuite.storage.MustInsertFeature(feat)
 
-		for _, pickle := range feat.pickles {
-			tc.testedSuite.storage.mustInsertPickle(pickle)
+		for _, pickle := range feat.Pickles {
+			tc.testedSuite.storage.MustInsertPickle(pickle)
 		}
 	}
 
 	tc.testedSuite.fmt = fmtFunc("godog", colors.Uncolored(&tc.out))
 	if fmt, ok := tc.testedSuite.fmt.(storageFormatter); ok {
-		fmt.setStorage(tc.testedSuite.storage)
+		fmt.SetStorage(tc.testedSuite.storage)
 	}
 
-	testRunStarted := testRunStarted{StartedAt: timeNowFunc()}
-	tc.testedSuite.storage.mustInsertTestRunStarted(testRunStarted)
+	testRunStarted := models.TestRunStarted{StartedAt: utils.TimeNowFunc()}
+	tc.testedSuite.storage.MustInsertTestRunStarted(testRunStarted)
 	tc.testedSuite.fmt.TestRunStarted()
 
 	for _, f := range tc.testSuiteContext.beforeSuiteHandlers {
@@ -214,9 +218,9 @@ func (tc *godogFeaturesScenario) iRunFeatureSuiteWithTagsAndFormatter(filter str
 	}
 
 	for _, ft := range tc.features {
-		tc.testedSuite.fmt.Feature(ft.GherkinDocument, ft.Uri, ft.content)
+		tc.testedSuite.fmt.Feature(ft.GherkinDocument, ft.Uri, ft.Content)
 
-		for _, pickle := range ft.pickles {
+		for _, pickle := range ft.Pickles {
 			if tc.testedSuite.stopOnFailure && tc.testedSuite.failed {
 				continue
 			}
@@ -278,16 +282,16 @@ func (tc *godogFeaturesScenario) cleanupSnippet(snip string) string {
 }
 
 func (tc *godogFeaturesScenario) theUndefinedStepSnippetsShouldBe(body *DocString) error {
-	f, ok := tc.testedSuite.fmt.(*basefmt)
+	f, ok := tc.testedSuite.fmt.(*formatters.Basefmt)
 	if !ok {
-		return fmt.Errorf("this step requires *basefmt, but there is: %T", tc.testedSuite.fmt)
+		return fmt.Errorf("this step requires *formatters.Basefmt, but there is: %T", tc.testedSuite.fmt)
 	}
 
-	actual := tc.cleanupSnippet(f.snippets())
+	actual := tc.cleanupSnippet(f.Snippets())
 	expected := tc.cleanupSnippet(body.Content)
 
 	if actual != expected {
-		return fmt.Errorf("snippets do not match actual: %s", f.snippets())
+		return fmt.Errorf("snippets do not match actual: %s", f.Snippets())
 	}
 
 	return nil
@@ -297,35 +301,32 @@ func (tc *godogFeaturesScenario) followingStepsShouldHave(status string, steps *
 	var expected = strings.Split(steps.Content, "\n")
 	var actual, unmatched, matched []string
 
-	f, ok := tc.testedSuite.fmt.(*basefmt)
-	if !ok {
-		return fmt.Errorf("this step requires *basefmt, but there is: %T", tc.testedSuite.fmt)
-	}
+	storage := tc.testedSuite.storage
 
 	switch status {
 	case "passed":
-		for _, st := range f.storage.mustGetPickleStepResultsByStatus(passed) {
-			pickleStep := f.storage.mustGetPickleStep(st.PickleStepID)
+		for _, st := range storage.MustGetPickleStepResultsByStatus(models.Passed) {
+			pickleStep := storage.MustGetPickleStep(st.PickleStepID)
 			actual = append(actual, pickleStep.Text)
 		}
 	case "failed":
-		for _, st := range f.storage.mustGetPickleStepResultsByStatus(failed) {
-			pickleStep := f.storage.mustGetPickleStep(st.PickleStepID)
+		for _, st := range storage.MustGetPickleStepResultsByStatus(models.Failed) {
+			pickleStep := storage.MustGetPickleStep(st.PickleStepID)
 			actual = append(actual, pickleStep.Text)
 		}
 	case "skipped":
-		for _, st := range f.storage.mustGetPickleStepResultsByStatus(skipped) {
-			pickleStep := f.storage.mustGetPickleStep(st.PickleStepID)
+		for _, st := range storage.MustGetPickleStepResultsByStatus(models.Skipped) {
+			pickleStep := storage.MustGetPickleStep(st.PickleStepID)
 			actual = append(actual, pickleStep.Text)
 		}
 	case "undefined":
-		for _, st := range f.storage.mustGetPickleStepResultsByStatus(undefined) {
-			pickleStep := f.storage.mustGetPickleStep(st.PickleStepID)
+		for _, st := range storage.MustGetPickleStepResultsByStatus(models.Undefined) {
+			pickleStep := storage.MustGetPickleStep(st.PickleStepID)
 			actual = append(actual, pickleStep.Text)
 		}
 	case "pending":
-		for _, st := range f.storage.mustGetPickleStepResultsByStatus(pending) {
-			pickleStep := f.storage.mustGetPickleStep(st.PickleStepID)
+		for _, st := range storage.MustGetPickleStepResultsByStatus(models.Pending) {
+			pickleStep := storage.MustGetPickleStep(st.PickleStepID)
 			actual = append(actual, pickleStep.Text)
 		}
 	default:
@@ -406,7 +407,7 @@ func (tc *godogFeaturesScenario) aFeatureFile(path string, body *DocString) erro
 	gd.Uri = path
 
 	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
-	tc.features = append(tc.features, &feature{GherkinDocument: gd, pickles: pickles})
+	tc.features = append(tc.features, &models.Feature{GherkinDocument: gd, Pickles: pickles})
 
 	return err
 }
@@ -486,7 +487,7 @@ func (tc *godogFeaturesScenario) iRunFeatureSuite() error {
 func (tc *godogFeaturesScenario) numScenariosRegistered(expected int) (err error) {
 	var num int
 	for _, ft := range tc.features {
-		num += len(ft.pickles)
+		num += len(ft.Pickles)
 	}
 
 	if num != expected {
@@ -571,12 +572,12 @@ func (tc *godogFeaturesScenario) theRenderJSONWillBe(docstring *DocString) error
 	actualString := tc.out.String()
 	actualString = actualSuiteCtxReg.ReplaceAllString(actualString, `suite_context_test.go:0`)
 
-	var expected []cukeFeatureJSON
+	var expected []formatters.CukeFeatureJSON
 	if err := json.Unmarshal([]byte(expectedString), &expected); err != nil {
 		return err
 	}
 
-	var actual []cukeFeatureJSON
+	var actual []formatters.CukeFeatureJSON
 	if err := json.Unmarshal([]byte(actualString), &actual); err != nil {
 		return err
 	}
@@ -614,12 +615,12 @@ func (tc *godogFeaturesScenario) theRenderXMLWillBe(docstring *DocString) error 
 	expectedString := docstring.Content
 	actualString := tc.out.String()
 
-	var expected junitPackageSuite
+	var expected formatters.JunitPackageSuite
 	if err := xml.Unmarshal([]byte(expectedString), &expected); err != nil {
 		return err
 	}
 
-	var actual junitPackageSuite
+	var actual formatters.JunitPackageSuite
 	if err := xml.Unmarshal([]byte(actualString), &actual); err != nil {
 		return err
 	}
@@ -641,4 +642,12 @@ type asserter struct {
 
 func (a *asserter) Errorf(format string, args ...interface{}) {
 	a.err = fmt.Errorf(format, args...)
+}
+
+func trimAllLines(s string) string {
+	var lines []string
+	for _, ln := range strings.Split(strings.TrimSpace(s), "\n") {
+		lines = append(lines, strings.TrimSpace(ln))
+	}
+	return strings.Join(lines, "\n")
 }
