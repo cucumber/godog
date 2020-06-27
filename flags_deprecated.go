@@ -4,10 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"math/rand"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/cucumber/godog/colors"
 	"github.com/cucumber/godog/internal/utils"
@@ -39,6 +37,8 @@ var descRandomOption = "Randomly shuffle the scenario execution order.\n" +
 
 // FlagSet allows to manage flags by external suite runner
 // builds flag.FlagSet with godog flags binded
+//
+// Deprecated:
 func FlagSet(opt *Options) *flag.FlagSet {
 	set := flag.NewFlagSet("godog", flag.ExitOnError)
 	BindFlags("", set, opt)
@@ -48,6 +48,8 @@ func FlagSet(opt *Options) *flag.FlagSet {
 
 // BindFlags binds godog flags to given flag set prefixed
 // by given prefix, without overriding usage
+//
+// Deprecated: Use BindCommandLineFlags(prefix, &opts) instead of BindFlags(prefix, flag.CommandLine, &opts)
 func BindFlags(prefix string, set *flag.FlagSet, opt *Options) {
 	descFormatOption := "How to format tests output. Built-in formats:\n"
 	// @TODO: sort by name
@@ -61,26 +63,32 @@ func BindFlags(prefix string, set *flag.FlagSet, opt *Options) {
 	if opt.Format != "" {
 		defFormatOption = opt.Format
 	}
+
 	defTagsOption := ""
 	if opt.Tags != "" {
 		defTagsOption = opt.Tags
 	}
+
 	defConcurrencyOption := 1
 	if opt.Concurrency != 0 {
 		defConcurrencyOption = opt.Concurrency
 	}
+
 	defShowStepDefinitions := false
 	if opt.ShowStepDefinitions {
 		defShowStepDefinitions = opt.ShowStepDefinitions
 	}
+
 	defStopOnFailure := false
 	if opt.StopOnFailure {
 		defStopOnFailure = opt.StopOnFailure
 	}
+
 	defStrict := false
 	if opt.Strict {
 		defStrict = opt.Strict
 	}
+
 	defNoColors := false
 	if opt.NoColors {
 		defNoColors = opt.NoColors
@@ -196,12 +204,6 @@ func usage(set *flag.FlagSet, w io.Writer) func() {
 // randomSeed implements `flag.Value`, see https://golang.org/pkg/flag/#Value
 type randomSeed struct {
 	ref *int64
-}
-
-// Choose randomly assigns a convenient pseudo-random seed value.
-// The resulting seed will be between `1-99999` for later ease of specification.
-func makeRandomSeed() int64 {
-	return rand.New(rand.NewSource(time.Now().UTC().UnixNano())).Int63n(99998) + 1
 }
 
 func (rs *randomSeed) Set(s string) error {

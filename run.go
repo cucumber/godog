@@ -260,7 +260,7 @@ func (ts TestSuite) Run() int {
 		ts.Options = &Options{}
 		ts.Options.Output = colors.Colored(os.Stdout)
 
-		flagSet := FlagSet(ts.Options)
+		flagSet := flagSet(ts.Options)
 		if err := flagSet.Parse(os.Args[1:]); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return exitOptionError
