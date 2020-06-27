@@ -21,7 +21,7 @@ Feature: basic
 	Then two
 `
 
-func TestProgressFormatterWhenStepPanics(t *testing.T) {
+func Test_ProgressFormatterWhenStepPanics(t *testing.T) {
 	const path = "any.feature"
 
 	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(basicGherkinFeature), (&messages.Incrementing{}).NewId)
@@ -36,9 +36,9 @@ func TestProgressFormatterWhenStepPanics(t *testing.T) {
 	r := runner{
 		fmt:      progressFunc("progress", w),
 		features: []*feature{&ft},
-		initializer: func(s *Suite) {
-			s.Step(`^one$`, func() error { return nil })
-			s.Step(`^two$`, func() error { panic("omg") })
+		scenarioInitializer: func(ctx *ScenarioContext) {
+			ctx.Step(`^one$`, func() error { return nil })
+			ctx.Step(`^two$`, func() error { panic("omg") })
 		},
 	}
 
@@ -48,14 +48,14 @@ func TestProgressFormatterWhenStepPanics(t *testing.T) {
 		r.storage.mustInsertPickle(pickle)
 	}
 
-	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", w) })
+	failed := r.concurrent(1)
 	require.True(t, failed)
 
 	actual := buf.String()
 	assert.Contains(t, actual, "godog/fmt_progress_test.go:41")
 }
 
-func TestProgressFormatterWithPanicInMultistep(t *testing.T) {
+func Test_ProgressFormatterWithPanicInMultistep(t *testing.T) {
 	const path = "any.feature"
 
 	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(basicGherkinFeature), (&messages.Incrementing{}).NewId)
@@ -70,12 +70,12 @@ func TestProgressFormatterWithPanicInMultistep(t *testing.T) {
 	r := runner{
 		fmt:      progressFunc("progress", w),
 		features: []*feature{&ft},
-		initializer: func(s *Suite) {
-			s.Step(`^sub1$`, func() error { return nil })
-			s.Step(`^sub-sub$`, func() error { return nil })
-			s.Step(`^sub2$`, func() []string { return []string{"sub-sub", "sub1", "one"} })
-			s.Step(`^one$`, func() error { return nil })
-			s.Step(`^two$`, func() []string { return []string{"sub1", "sub2"} })
+		scenarioInitializer: func(ctx *ScenarioContext) {
+			ctx.Step(`^sub1$`, func() error { return nil })
+			ctx.Step(`^sub-sub$`, func() error { return nil })
+			ctx.Step(`^sub2$`, func() []string { return []string{"sub-sub", "sub1", "one"} })
+			ctx.Step(`^one$`, func() error { return nil })
+			ctx.Step(`^two$`, func() []string { return []string{"sub1", "sub2"} })
 		},
 	}
 
@@ -85,11 +85,11 @@ func TestProgressFormatterWithPanicInMultistep(t *testing.T) {
 		r.storage.mustInsertPickle(pickle)
 	}
 
-	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", w) })
+	failed := r.concurrent(1)
 	require.True(t, failed)
 }
 
-func TestProgressFormatterMultistepTemplates(t *testing.T) {
+func Test_ProgressFormatterMultistepTemplates(t *testing.T) {
 	const path = "any.feature"
 
 	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(basicGherkinFeature), (&messages.Incrementing{}).NewId)
@@ -104,11 +104,11 @@ func TestProgressFormatterMultistepTemplates(t *testing.T) {
 	r := runner{
 		fmt:      progressFunc("progress", w),
 		features: []*feature{&ft},
-		initializer: func(s *Suite) {
-			s.Step(`^sub-sub$`, func() error { return nil })
-			s.Step(`^substep$`, func() Steps { return Steps{"sub-sub", `unavailable "John" cost 5`, "one", "three"} })
-			s.Step(`^one$`, func() error { return nil })
-			s.Step(`^(t)wo$`, func(s string) Steps { return Steps{"undef", "substep"} })
+		scenarioInitializer: func(ctx *ScenarioContext) {
+			ctx.Step(`^sub-sub$`, func() error { return nil })
+			ctx.Step(`^substep$`, func() Steps { return Steps{"sub-sub", `unavailable "John" cost 5`, "one", "three"} })
+			ctx.Step(`^one$`, func() error { return nil })
+			ctx.Step(`^(t)wo$`, func(s string) Steps { return Steps{"undef", "substep"} })
 		},
 	}
 
@@ -118,7 +118,7 @@ func TestProgressFormatterMultistepTemplates(t *testing.T) {
 		r.storage.mustInsertPickle(pickle)
 	}
 
-	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", w) })
+	failed := r.concurrent(1)
 	require.False(t, failed)
 
 	expected := `.U 2
@@ -154,7 +154,7 @@ func FeatureContext(s *godog.Suite) {
 	assert.Equal(t, expected, actual)
 }
 
-func TestProgressFormatterWhenMultiStepHasArgument(t *testing.T) {
+func Test_ProgressFormatterWhenMultiStepHasArgument(t *testing.T) {
 	const path = "any.feature"
 
 	var featureSource = `
@@ -180,9 +180,9 @@ Feature: basic
 	r := runner{
 		fmt:      progressFunc("progress", w),
 		features: []*feature{&ft},
-		initializer: func(s *Suite) {
-			s.Step(`^one$`, func() error { return nil })
-			s.Step(`^two:$`, func(doc *messages.PickleStepArgument_PickleDocString) Steps { return Steps{"one"} })
+		scenarioInitializer: func(ctx *ScenarioContext) {
+			ctx.Step(`^one$`, func() error { return nil })
+			ctx.Step(`^two:$`, func(doc *messages.PickleStepArgument_PickleDocString) Steps { return Steps{"one"} })
 		},
 	}
 
@@ -192,11 +192,11 @@ Feature: basic
 		r.storage.mustInsertPickle(pickle)
 	}
 
-	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", w) })
+	failed := r.concurrent(1)
 	require.False(t, failed)
 }
 
-func TestProgressFormatterWhenMultiStepHasStepWithArgument(t *testing.T) {
+func Test_ProgressFormatterWhenMultiStepHasStepWithArgument(t *testing.T) {
 	const path = "any.feature"
 
 	var featureSource = `
@@ -223,10 +223,10 @@ Feature: basic
 	r := runner{
 		fmt:      progressFunc("progress", w),
 		features: []*feature{&ft},
-		initializer: func(s *Suite) {
-			s.Step(`^one$`, func() error { return nil })
-			s.Step(`^two$`, func() Steps { return Steps{subStep} })
-			s.Step(`^three:$`, func(doc *messages.PickleStepArgument_PickleDocString) error { return nil })
+		scenarioInitializer: func(ctx *ScenarioContext) {
+			ctx.Step(`^one$`, func() error { return nil })
+			ctx.Step(`^two$`, func() Steps { return Steps{subStep} })
+			ctx.Step(`^three:$`, func(doc *messages.PickleStepArgument_PickleDocString) error { return nil })
 		},
 	}
 
@@ -236,7 +236,7 @@ Feature: basic
 		r.storage.mustInsertPickle(pickle)
 	}
 
-	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", w) })
+	failed := r.concurrent(1)
 	require.True(t, failed)
 
 	expected := `.F 2
