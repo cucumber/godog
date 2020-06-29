@@ -1,19 +1,19 @@
 <bold-white>Feature:</bold-white> some scenarios
 
   <bold-white>Scenario:</bold-white> failing    <bold-black># formatter-tests/features/some_scenarions_including_failing.feature:3</bold-black>
-    <green>Given</green> <green>passing step</green> <bold-black># fmt_output_test.go:116 -> github.com/cucumber/godog_test.passingStepDef</bold-black>
-    <red>When</red> <red>failing step</red>  <bold-black># fmt_output_test.go:132 -> github.com/cucumber/godog_test.failingStepDef</bold-black>
+    <green>Given</green> <green>passing step</green> <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog_test.passingStepDef</bold-black>
+    <red>When</red> <red>failing step</red>  <bold-black># fmt_output_test.go:117 -> github.com/cucumber/godog_test.failingStepDef</bold-black>
     <bold-red>step failed</bold-red>
-    <cyan>Then</cyan> <cyan>passing step</cyan>  <bold-black># fmt_output_test.go:116 -> github.com/cucumber/godog_test.passingStepDef</bold-black>
+    <cyan>Then</cyan> <cyan>passing step</cyan>  <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog_test.passingStepDef</bold-black>
 
   <bold-white>Scenario:</bold-white> pending   <bold-black># formatter-tests/features/some_scenarions_including_failing.feature:8</bold-black>
-    <yellow>When</yellow> <yellow>pending step</yellow> <bold-black># fmt_output_test.go:130 -> github.com/cucumber/godog_test.pendingStepDef</bold-black>
+    <yellow>When</yellow> <yellow>pending step</yellow> <bold-black># fmt_output_test.go:115 -> github.com/cucumber/godog_test.pendingStepDef</bold-black>
       <yellow>TODO: write pending definition</yellow>
-    <cyan>Then</cyan> <cyan>passing step</cyan> <bold-black># fmt_output_test.go:116 -> github.com/cucumber/godog_test.passingStepDef</bold-black>
+    <cyan>Then</cyan> <cyan>passing step</cyan> <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog_test.passingStepDef</bold-black>
 
   <bold-white>Scenario:</bold-white> undefined <bold-black># formatter-tests/features/some_scenarions_including_failing.feature:12</bold-black>
     <yellow>When</yellow> <yellow>undefined</yellow>
-    <cyan>Then</cyan> <cyan>passing step</cyan> <bold-black># fmt_output_test.go:116 -> github.com/cucumber/godog_test.passingStepDef</bold-black>
+    <cyan>Then</cyan> <cyan>passing step</cyan> <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog_test.passingStepDef</bold-black>
 
 --- <red>Failed steps:</red>
 

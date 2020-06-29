@@ -26,7 +26,8 @@ func okStep() error {
 func TestPrintsStepDefinitions(t *testing.T) {
 	var buf bytes.Buffer
 	w := colors.Uncolored(&buf)
-	s := &Suite{}
+	s := suite{}
+	ctx := ScenarioContext{suite: &s}
 
 	steps := []string{
 		"^passing step$",
@@ -34,7 +35,7 @@ func TestPrintsStepDefinitions(t *testing.T) {
 	}
 
 	for _, step := range steps {
-		s.Step(step, okStep)
+		ctx.Step(step, okStep)
 	}
 
 	printStepDefinitions(s.steps, w)
@@ -54,7 +55,7 @@ func TestPrintsStepDefinitions(t *testing.T) {
 func TestPrintsNoStepDefinitionsIfNoneFound(t *testing.T) {
 	var buf bytes.Buffer
 	w := colors.Uncolored(&buf)
-	s := &Suite{}
+	s := &suite{}
 
 	printStepDefinitions(s.steps, w)
 
@@ -62,7 +63,7 @@ func TestPrintsNoStepDefinitionsIfNoneFound(t *testing.T) {
 	assert.Equal(t, "there were no contexts registered, could not find any step definition..", out)
 }
 
-func TestFailsOrPassesBasedOnStrictModeWhenHasPendingSteps(t *testing.T) {
+func Test_FailsOrPassesBasedOnStrictModeWhenHasPendingSteps(t *testing.T) {
 	const path = "any.feature"
 
 	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(basicGherkinFeature), (&messages.Incrementing{}).NewId)
@@ -75,9 +76,9 @@ func TestFailsOrPassesBasedOnStrictModeWhenHasPendingSteps(t *testing.T) {
 	r := runner{
 		fmt:      progressFunc("progress", ioutil.Discard),
 		features: []*feature{&ft},
-		initializer: func(s *Suite) {
-			s.Step(`^one$`, func() error { return nil })
-			s.Step(`^two$`, func() error { return ErrPending })
+		scenarioInitializer: func(ctx *ScenarioContext) {
+			ctx.Step(`^one$`, func() error { return nil })
+			ctx.Step(`^two$`, func() error { return ErrPending })
 		},
 	}
 
@@ -87,15 +88,15 @@ func TestFailsOrPassesBasedOnStrictModeWhenHasPendingSteps(t *testing.T) {
 		r.storage.mustInsertPickle(pickle)
 	}
 
-	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", ioutil.Discard) })
+	failed := r.concurrent(1)
 	require.False(t, failed)
 
 	r.strict = true
-	failed = r.concurrent(1, func() Formatter { return progressFunc("progress", ioutil.Discard) })
+	failed = r.concurrent(1)
 	require.True(t, failed)
 }
 
-func TestFailsOrPassesBasedOnStrictModeWhenHasUndefinedSteps(t *testing.T) {
+func Test_FailsOrPassesBasedOnStrictModeWhenHasUndefinedSteps(t *testing.T) {
 	const path = "any.feature"
 
 	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(basicGherkinFeature), (&messages.Incrementing{}).NewId)
@@ -108,8 +109,8 @@ func TestFailsOrPassesBasedOnStrictModeWhenHasUndefinedSteps(t *testing.T) {
 	r := runner{
 		fmt:      progressFunc("progress", ioutil.Discard),
 		features: []*feature{&ft},
-		initializer: func(s *Suite) {
-			s.Step(`^one$`, func() error { return nil })
+		scenarioInitializer: func(ctx *ScenarioContext) {
+			ctx.Step(`^one$`, func() error { return nil })
 			// two - is undefined
 		},
 	}
@@ -120,15 +121,15 @@ func TestFailsOrPassesBasedOnStrictModeWhenHasUndefinedSteps(t *testing.T) {
 		r.storage.mustInsertPickle(pickle)
 	}
 
-	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", ioutil.Discard) })
+	failed := r.concurrent(1)
 	require.False(t, failed)
 
 	r.strict = true
-	failed = r.concurrent(1, func() Formatter { return progressFunc("progress", ioutil.Discard) })
+	failed = r.concurrent(1)
 	require.True(t, failed)
 }
 
-func TestShouldFailOnError(t *testing.T) {
+func Test_ShouldFailOnError(t *testing.T) {
 	const path = "any.feature"
 
 	gd, err := gherkin.ParseGherkinDocument(strings.NewReader(basicGherkinFeature), (&messages.Incrementing{}).NewId)
@@ -141,9 +142,9 @@ func TestShouldFailOnError(t *testing.T) {
 	r := runner{
 		fmt:      progressFunc("progress", ioutil.Discard),
 		features: []*feature{&ft},
-		initializer: func(s *Suite) {
-			s.Step(`^one$`, func() error { return nil })
-			s.Step(`^two$`, func() error { return fmt.Errorf("error") })
+		scenarioInitializer: func(ctx *ScenarioContext) {
+			ctx.Step(`^one$`, func() error { return nil })
+			ctx.Step(`^two$`, func() error { return fmt.Errorf("error") })
 		},
 	}
 
@@ -153,22 +154,27 @@ func TestShouldFailOnError(t *testing.T) {
 		r.storage.mustInsertPickle(pickle)
 	}
 
-	failed := r.concurrent(1, func() Formatter { return progressFunc("progress", ioutil.Discard) })
+	failed := r.concurrent(1)
 	require.True(t, failed)
 }
 
-func TestFailsWithUnknownFormatterOptionError(t *testing.T) {
+func Test_FailsWithUnknownFormatterOptionError(t *testing.T) {
 	stderr, closer := bufErrorPipe(t)
 	defer closer()
 	defer stderr.Close()
 
-	opt := Options{
+	opts := Options{
 		Format: "unknown",
 		Paths:  []string{"features/load:6"},
 		Output: ioutil.Discard,
 	}
 
-	status := RunWithOptions("fails", func(_ *Suite) {}, opt)
+	status := TestSuite{
+		Name:                "fails",
+		ScenarioInitializer: func(_ *ScenarioContext) {},
+		Options:             &opts,
+	}.Run()
+
 	require.Equal(t, exitOptionError, status)
 
 	closer()
@@ -180,18 +186,23 @@ func TestFailsWithUnknownFormatterOptionError(t *testing.T) {
 	assert.Contains(t, out, `unregistered formatter name: "unknown", use one of`)
 }
 
-func TestFailsWithOptionErrorWhenLookingForFeaturesInUnavailablePath(t *testing.T) {
+func Test_FailsWithOptionErrorWhenLookingForFeaturesInUnavailablePath(t *testing.T) {
 	stderr, closer := bufErrorPipe(t)
 	defer closer()
 	defer stderr.Close()
 
-	opt := Options{
+	opts := Options{
 		Format: "progress",
 		Paths:  []string{"unavailable"},
 		Output: ioutil.Discard,
 	}
 
-	status := RunWithOptions("fails", func(_ *Suite) {}, opt)
+	status := TestSuite{
+		Name:                "fails",
+		ScenarioInitializer: func(_ *ScenarioContext) {},
+		Options:             &opts,
+	}.Run()
+
 	require.Equal(t, exitOptionError, status)
 
 	closer()
@@ -203,19 +214,29 @@ func TestFailsWithOptionErrorWhenLookingForFeaturesInUnavailablePath(t *testing.
 	assert.Equal(t, `feature path "unavailable" is not available`, out)
 }
 
-func TestByDefaultRunsFeaturesPath(t *testing.T) {
-	opt := Options{
+func Test_ByDefaultRunsFeaturesPath(t *testing.T) {
+	opts := Options{
 		Format: "progress",
 		Output: ioutil.Discard,
 		Strict: true,
 	}
 
-	status := RunWithOptions("fails", func(_ *Suite) {}, opt)
+	status := TestSuite{
+		Name:                "fails",
+		ScenarioInitializer: func(_ *ScenarioContext) {},
+		Options:             &opts,
+	}.Run()
+
 	// should fail in strict mode due to undefined steps
 	assert.Equal(t, exitFailure, status)
 
-	opt.Strict = false
-	status = RunWithOptions("succeeds", func(_ *Suite) {}, opt)
+	opts.Strict = false
+	status = TestSuite{
+		Name:                "succeeds",
+		ScenarioInitializer: func(_ *ScenarioContext) {},
+		Options:             &opts,
+	}.Run()
+
 	// should succeed in non strict mode due to undefined steps
 	assert.Equal(t, exitSuccess, status)
 }
@@ -232,7 +253,7 @@ func bufErrorPipe(t *testing.T) (io.ReadCloser, func()) {
 	}
 }
 
-func TestFeatureFilePathParser(t *testing.T) {
+func Test_FeatureFilePathParser(t *testing.T) {
 
 	type Case struct {
 		input string
@@ -327,19 +348,8 @@ func Test_AllFeaturesRun(t *testing.T) {
 0s
 `
 
-	fmtOutputSuiteInitializer := func(s *Suite) { SuiteContext(s) }
-	fmtOutputScenarioInitializer := InitializeScenario
-
-	actualStatus, actualOutput := testRunWithOptions(t,
-		fmtOutputSuiteInitializer,
-		format, concurrency, []string{"features"},
-	)
-
-	assert.Equal(t, exitSuccess, actualStatus)
-	assert.Equal(t, expected, actualOutput)
-
-	actualStatus, actualOutput = testRun(t,
-		fmtOutputScenarioInitializer,
+	actualStatus, actualOutput := testRun(t,
+		InitializeScenario,
 		format, concurrency,
 		noRandomFlag, []string{"features"},
 	)
@@ -348,7 +358,7 @@ func Test_AllFeaturesRun(t *testing.T) {
 	assert.Equal(t, expected, actualOutput)
 }
 
-func TestFormatterConcurrencyRun(t *testing.T) {
+func Test_FormatterConcurrencyRun(t *testing.T) {
 	formatters := []string{
 		"progress",
 		"junit",
@@ -363,13 +373,6 @@ func TestFormatterConcurrencyRun(t *testing.T) {
 	const noRandomFlag = 0
 	const noConcurrency = 1
 
-	fmtOutputSuiteInitializer := func(s *Suite) {
-		s.Step(`^(?:a )?failing step`, failingStepDef)
-		s.Step(`^(?:a )?pending step$`, pendingStepDef)
-		s.Step(`^(?:a )?passing step$`, passingStepDef)
-		s.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)
-	}
-
 	fmtOutputScenarioInitializer := func(ctx *ScenarioContext) {
 		ctx.Step(`^(?:a )?failing step`, failingStepDef)
 		ctx.Step(`^(?:a )?pending step$`, pendingStepDef)
@@ -381,24 +384,12 @@ func TestFormatterConcurrencyRun(t *testing.T) {
 		t.Run(
 			fmt.Sprintf("%s/concurrency/%d", formatter, concurrency),
 			func(t *testing.T) {
-				expectedStatus, expectedOutput := testRunWithOptions(t,
-					fmtOutputSuiteInitializer,
-					formatter, noConcurrency, featurePaths,
-				)
-				actualStatus, actualOutput := testRunWithOptions(t,
-					fmtOutputSuiteInitializer,
-					formatter, concurrency, featurePaths,
-				)
-
-				assert.Equal(t, expectedStatus, actualStatus)
-				assertOutput(t, formatter, expectedOutput, actualOutput)
-
-				expectedStatus, expectedOutput = testRun(t,
+				expectedStatus, expectedOutput := testRun(t,
 					fmtOutputScenarioInitializer,
 					formatter, noConcurrency,
 					noRandomFlag, featurePaths,
 				)
-				actualStatus, actualOutput = testRun(t,
+				actualStatus, actualOutput := testRun(t,
 					fmtOutputScenarioInitializer,
 					formatter, concurrency,
 					noRandomFlag, featurePaths,
@@ -409,25 +400,6 @@ func TestFormatterConcurrencyRun(t *testing.T) {
 			},
 		)
 	}
-}
-
-func testRunWithOptions(t *testing.T, initializer func(*Suite), format string, concurrency int, featurePaths []string) (int, string) {
-	output := new(bytes.Buffer)
-
-	opts := Options{
-		Format:      format,
-		NoColors:    true,
-		Paths:       featurePaths,
-		Concurrency: concurrency,
-		Output:      output,
-	}
-
-	status := RunWithOptions("succeed", initializer, opts)
-
-	actual, err := ioutil.ReadAll(output)
-	require.NoError(t, err)
-
-	return status, string(actual)
 }
 
 func testRun(

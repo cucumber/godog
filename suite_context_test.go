@@ -117,9 +117,31 @@ func (tc *godogFeaturesScenario) inject(step *Step) {
 	}
 }
 
+func injectAll(src string) string {
+	re := regexp.MustCompile(`{{[^{}]+}}`)
+	return re.ReplaceAllStringFunc(
+		src,
+		func(key string) string {
+			injectRegex := regexp.MustCompile(`^{{.+}}$`)
+
+			if injectRegex.MatchString(key) {
+				return "someverylonginjectionsoweacanbesureitsurpasstheinitiallongeststeplenghtanditwillhelptestsmethodsafety"
+			}
+
+			return key
+		},
+	)
+}
+
+type firedEvent struct {
+	name string
+	args []interface{}
+}
+
 type godogFeaturesScenario struct {
 	paths            []string
-	testedSuite      *Suite
+	features         []*feature
+	testedSuite      *suite
 	testSuiteContext TestSuiteContext
 	events           []*firedEvent
 	out              bytes.Buffer
@@ -131,7 +153,8 @@ func (tc *godogFeaturesScenario) ResetBeforeEachScenario(*Scenario) {
 	tc.out.Reset()
 	tc.paths = []string{}
 
-	tc.testedSuite = &Suite{}
+	tc.features = []*feature{}
+	tc.testedSuite = &suite{}
 	tc.testSuiteContext = TestSuiteContext{}
 
 	// reset all fired events
@@ -162,12 +185,12 @@ func (tc *godogFeaturesScenario) iRunFeatureSuiteWithTagsAndFormatter(tags strin
 		return err
 	}
 
-	for _, feat := range tc.testedSuite.features {
+	for _, feat := range tc.features {
 		feat.pickles = applyTagFilter(tags, feat.pickles)
 	}
 
 	tc.testedSuite.storage = newStorage()
-	for _, feat := range tc.testedSuite.features {
+	for _, feat := range tc.features {
 		tc.testedSuite.storage.mustInsertFeature(feat)
 
 		for _, pickle := range feat.pickles {
@@ -188,7 +211,7 @@ func (tc *godogFeaturesScenario) iRunFeatureSuiteWithTagsAndFormatter(tags strin
 		f()
 	}
 
-	for _, ft := range tc.testedSuite.features {
+	for _, ft := range tc.features {
 		tc.testedSuite.fmt.Feature(ft.GherkinDocument, ft.Uri, ft.content)
 
 		for _, pickle := range ft.pickles {
@@ -350,19 +373,21 @@ func (tc *godogFeaturesScenario) iAmListeningToSuiteEvents() error {
 		tc.events = append(tc.events, &firedEvent{"AfterSuite", []interface{}{}})
 	})
 
-	tc.testedSuite.BeforeScenario(func(pickle *Scenario) {
+	scenarioContext := ScenarioContext{suite: tc.testedSuite}
+
+	scenarioContext.BeforeScenario(func(pickle *Scenario) {
 		tc.events = append(tc.events, &firedEvent{"BeforeScenario", []interface{}{pickle}})
 	})
 
-	tc.testedSuite.AfterScenario(func(pickle *Scenario, err error) {
+	scenarioContext.AfterScenario(func(pickle *Scenario, err error) {
 		tc.events = append(tc.events, &firedEvent{"AfterScenario", []interface{}{pickle, err}})
 	})
 
-	tc.testedSuite.BeforeStep(func(step *Step) {
+	scenarioContext.BeforeStep(func(step *Step) {
 		tc.events = append(tc.events, &firedEvent{"BeforeStep", []interface{}{step}})
 	})
 
-	tc.testedSuite.AfterStep(func(step *Step, err error) {
+	scenarioContext.AfterStep(func(step *Step, err error) {
 		tc.events = append(tc.events, &firedEvent{"AfterStep", []interface{}{step, err}})
 	})
 
@@ -379,7 +404,7 @@ func (tc *godogFeaturesScenario) aFeatureFile(path string, body *DocString) erro
 	gd.Uri = path
 
 	pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
-	tc.testedSuite.features = append(tc.testedSuite.features, &feature{GherkinDocument: gd, pickles: pickles})
+	tc.features = append(tc.features, &feature{GherkinDocument: gd, pickles: pickles})
 
 	return err
 }
@@ -395,7 +420,7 @@ func (tc *godogFeaturesScenario) parseFeatures() error {
 		return err
 	}
 
-	tc.testedSuite.features = append(tc.testedSuite.features, fts...)
+	tc.features = append(tc.features, fts...)
 
 	return nil
 }
@@ -413,15 +438,15 @@ func (tc *godogFeaturesScenario) theSuiteShouldHave(state string) error {
 }
 
 func (tc *godogFeaturesScenario) iShouldHaveNumFeatureFiles(num int, files *DocString) error {
-	if len(tc.testedSuite.features) != num {
-		return fmt.Errorf("expected %d features to be parsed, but have %d", num, len(tc.testedSuite.features))
+	if len(tc.features) != num {
+		return fmt.Errorf("expected %d features to be parsed, but have %d", num, len(tc.features))
 	}
 
 	expected := strings.Split(files.Content, "\n")
 
 	var actual []string
 
-	for _, ft := range tc.testedSuite.features {
+	for _, ft := range tc.features {
 		actual = append(actual, ft.Uri)
 	}
 
@@ -458,7 +483,7 @@ func (tc *godogFeaturesScenario) iRunFeatureSuite() error {
 
 func (tc *godogFeaturesScenario) numScenariosRegistered(expected int) (err error) {
 	var num int
-	for _, ft := range tc.testedSuite.features {
+	for _, ft := range tc.features {
 		num += len(ft.pickles)
 	}
 
@@ -598,4 +623,20 @@ func (tc *godogFeaturesScenario) theRenderXMLWillBe(docstring *DocString) error 
 	}
 
 	return assertExpectedAndActual(assert.Equal, expected, actual)
+}
+
+func assertExpectedAndActual(a expectedAndActualAssertion, expected, actual interface{}, msgAndArgs ...interface{}) error {
+	var t asserter
+	a(&t, expected, actual, msgAndArgs...)
+	return t.err
+}
+
+type expectedAndActualAssertion func(t assert.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool
+
+type asserter struct {
+	err error
+}
+
+func (a *asserter) Errorf(format string, args ...interface{}) {
+	a.err = fmt.Errorf(format, args...)
 }

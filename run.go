@@ -21,7 +21,6 @@ const (
 	exitOptionError
 )
 
-type initializer func(*Suite)
 type testSuiteInitializer func(*TestSuiteContext)
 type scenarioInitializer func(*ScenarioContext)
 
@@ -31,7 +30,6 @@ type runner struct {
 
 	features []*feature
 
-	initializer          initializer
 	testSuiteInitializer testSuiteInitializer
 	scenarioInitializer  scenarioInitializer
 
@@ -39,104 +37,7 @@ type runner struct {
 	fmt     Formatter
 }
 
-func (r *runner) concurrent(rate int, formatterFn func() Formatter) (failed bool) {
-	var useFmtCopy bool
-	var copyLock sync.Mutex
-
-	// special mode for concurrent-formatter
-	if _, ok := r.fmt.(ConcurrentFormatter); ok {
-		useFmtCopy = true
-	}
-
-	if fmt, ok := r.fmt.(storageFormatter); ok {
-		fmt.setStorage(r.storage)
-	}
-
-	testRunStarted := testRunStarted{StartedAt: timeNowFunc()}
-	r.storage.mustInsertTestRunStarted(testRunStarted)
-	r.fmt.TestRunStarted()
-
-	queue := make(chan int, rate)
-	for i, ft := range r.features {
-		queue <- i // reserve space in queue
-		ft := *ft
-
-		go func(fail *bool, feat *feature) {
-			var fmtCopy Formatter
-
-			defer func() {
-				<-queue // free a space in queue
-			}()
-
-			if r.stopOnFailure && *fail {
-				return
-			}
-
-			suite := &Suite{
-				fmt:           r.fmt,
-				randomSeed:    r.randomSeed,
-				stopOnFailure: r.stopOnFailure,
-				strict:        r.strict,
-				features:      []*feature{feat},
-				storage:       r.storage,
-			}
-
-			if useFmtCopy {
-				fmtCopy = formatterFn()
-				suite.fmt = fmtCopy
-
-				concurrentDestFmt, dOk := fmtCopy.(ConcurrentFormatter)
-				concurrentSourceFmt, sOk := r.fmt.(ConcurrentFormatter)
-
-				if dOk && sOk {
-					concurrentDestFmt.Sync(concurrentSourceFmt)
-				}
-			}
-
-			if fmt, ok := suite.fmt.(storageFormatter); ok {
-				fmt.setStorage(r.storage)
-			}
-
-			r.initializer(suite)
-
-			suite.run()
-
-			if suite.failed {
-				copyLock.Lock()
-				*fail = true
-				copyLock.Unlock()
-			}
-
-			if useFmtCopy {
-				copyLock.Lock()
-
-				concurrentDestFmt, dOk := r.fmt.(ConcurrentFormatter)
-				concurrentSourceFmt, sOk := fmtCopy.(ConcurrentFormatter)
-
-				if dOk && sOk {
-					concurrentDestFmt.Copy(concurrentSourceFmt)
-				} else if !dOk {
-					panic("cant cast dest formatter to progress-typed")
-				} else if !sOk {
-					panic("cant cast source formatter to progress-typed")
-				}
-
-				copyLock.Unlock()
-			}
-		}(&failed, &ft)
-	}
-	// wait until last are processed
-	for i := 0; i < rate; i++ {
-		queue <- i
-	}
-	close(queue)
-
-	// print summary
-	r.fmt.Summary()
-	return
-}
-
-func (r *runner) scenarioConcurrent(rate int) (failed bool) {
+func (r *runner) concurrent(rate int) (failed bool) {
 	var copyLock sync.Mutex
 
 	if fmt, ok := r.fmt.(storageFormatter); ok {
@@ -188,7 +89,7 @@ func (r *runner) scenarioConcurrent(rate int) (failed bool) {
 					return
 				}
 
-				suite := &Suite{
+				suite := &suite{
 					fmt:        r.fmt,
 					randomSeed: r.randomSeed,
 					strict:     r.strict,
@@ -227,38 +128,7 @@ func (r *runner) scenarioConcurrent(rate int) (failed bool) {
 	return
 }
 
-// RunWithOptions is same as Run function, except
-// it uses Options provided in order to run the
-// test suite without parsing flags
-//
-// This method is useful in case if you run
-// godog in for example TestMain function together
-// with go tests
-//
-// The exit codes may vary from:
-//  0 - success
-//  1 - failed
-//  2 - command line usage error
-//  128 - or higher, os signal related error exit codes
-//
-// If there are flag related errors they will
-// be directed to os.Stderr
-//
-// Deprecated: The current Suite initializer will be removed and replaced by
-// two initializers, one for the Test Suite and one for the Scenarios.
-// Use:
-//   godog.TestSuite{
-//     Name: name,
-//     TestSuiteInitializer: testSuiteInitializer,
-//     ScenarioInitializer: scenarioInitializer,
-//     Options: &opts,
-//   }.Run()
-// instead.
-func RunWithOptions(suite string, initializer func(*Suite), opt Options) int {
-	return runWithOptions(suite, runner{initializer: initializer}, opt)
-}
-
-func runWithOptions(suite string, runner runner, opt Options) int {
+func runWithOptions(suiteName string, runner runner, opt Options) int {
 	var output io.Writer = os.Stdout
 	if nil != opt.Output {
 		output = opt.Output
@@ -271,8 +141,9 @@ func runWithOptions(suite string, runner runner, opt Options) int {
 	}
 
 	if opt.ShowStepDefinitions {
-		s := &Suite{}
-		runner.initializer(s)
+		s := suite{}
+		sc := ScenarioContext{suite: &s}
+		runner.scenarioInitializer(&sc)
 		printStepDefinitions(s.steps, output)
 		return exitOptionError
 	}
@@ -301,7 +172,7 @@ func runWithOptions(suite string, runner runner, opt Options) int {
 		))
 		return exitOptionError
 	}
-	runner.fmt = formatter(suite, output)
+	runner.fmt = formatter(suiteName, output)
 
 	var err error
 	if runner.features, err = parseFeatures(opt.Tags, opt.Paths); err != nil {
@@ -333,12 +204,7 @@ func runWithOptions(suite string, runner runner, opt Options) int {
 	_, filename, _, _ := runtime.Caller(1)
 	os.Setenv("GODOG_TESTED_PACKAGE", runsFromPackage(filename))
 
-	var failed bool
-	if runner.initializer != nil {
-		failed = runner.concurrent(opt.Concurrency, func() Formatter { return formatter(suite, output) })
-	} else {
-		failed = runner.scenarioConcurrent(opt.Concurrency)
-	}
+	failed := runner.concurrent(opt.Concurrency)
 
 	// @TODO: should prevent from having these
 	os.Setenv("GODOG_SEED", "")
@@ -358,52 +224,6 @@ func runsFromPackage(fp string) string {
 		}
 	}
 	return dir
-}
-
-// Run creates and runs the feature suite.
-// Reads all configuration options from flags.
-// uses contextInitializer to register contexts
-//
-// the concurrency option allows runner to
-// initialize a number of suites to be run
-// separately. Only progress formatter
-// is supported when concurrency level is
-// higher than 1
-//
-// contextInitializer must be able to register
-// the step definitions and event handlers.
-//
-// The exit codes may vary from:
-//  0 - success
-//  1 - failed
-//  2 - command line usage error
-//  128 - or higher, os signal related error exit codes
-//
-// If there are flag related errors they will
-// be directed to os.Stderr
-//
-// Deprecated: The current Suite initializer will be removed and replaced by
-// two initializers, one for the Test Suite and one for the Scenarios.
-// Use:
-//   godog.TestSuite{
-//     Name: name,
-//     TestSuiteInitializer: testSuiteInitializer,
-//     ScenarioInitializer: scenarioInitializer,
-//   }.Run()
-// instead.
-func Run(suite string, initializer func(*Suite)) int {
-	var opt Options
-	opt.Output = colors.Colored(os.Stdout)
-
-	flagSet := FlagSet(&opt)
-	if err := flagSet.Parse(os.Args[1:]); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return exitOptionError
-	}
-
-	opt.Paths = flagSet.Args()
-
-	return RunWithOptions(suite, initializer, opt)
 }
 
 // TestSuite allows for configuration

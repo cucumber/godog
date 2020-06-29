@@ -60,13 +60,6 @@ func listFmtOutputTestsFeatureFiles() (featureFiles []string, err error) {
 }
 
 func fmtOutputTest(fmtName, testName, featureFilePath string) func(*testing.T) {
-	fmtOutputSuiteInitializer := func(s *godog.Suite) {
-		s.Step(`^(?:a )?failing step`, failingStepDef)
-		s.Step(`^(?:a )?pending step$`, pendingStepDef)
-		s.Step(`^(?:a )?passing step$`, passingStepDef)
-		s.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)
-	}
-
 	fmtOutputScenarioInitializer := func(ctx *godog.ScenarioContext) {
 		ctx.Step(`^(?:a )?failing step`, failingStepDef)
 		ctx.Step(`^(?:a )?pending step$`, pendingStepDef)
@@ -93,22 +86,14 @@ func fmtOutputTest(fmtName, testName, featureFilePath string) func(*testing.T) {
 			Output: out,
 		}
 
-		godog.RunWithOptions(fmtName, fmtOutputSuiteInitializer, opts)
-
-		expected := string(expectedOutput)
-		actual := buf.String()
-		assert.Equalf(t, expected, actual, "path: %s", expectOutputPath)
-
-		buf.Reset()
-
 		godog.TestSuite{
 			Name:                fmtName,
 			ScenarioInitializer: fmtOutputScenarioInitializer,
 			Options:             &opts,
 		}.Run()
 
-		expected = string(expectedOutput)
-		actual = buf.String()
+		expected := string(expectedOutput)
+		actual := buf.String()
 		assert.Equalf(t, expected, actual, "path: %s", expectOutputPath)
 	}
 }
