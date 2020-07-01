@@ -1,4 +1,4 @@
-package godog
+package builder
 
 import "go/ast"
 

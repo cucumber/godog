@@ -1,4 +1,4 @@
-package godog_test
+package builder_test
 
 import (
 	"fmt"

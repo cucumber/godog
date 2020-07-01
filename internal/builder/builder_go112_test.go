@@ -1,7 +1,7 @@
 // +build go1.12
 // +build !go1.13
 
-package godog_test
+package builder_test
 
 import (
 	"os"

@@ -10,6 +10,7 @@ import (
 
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
+	"github.com/cucumber/godog/internal/builder"
 )
 
 var parsedStatus int
@@ -24,7 +25,7 @@ func buildAndRun() (int, error) {
 	if build.Default.GOOS == "windows" {
 		bin += ".exe"
 	}
-	if err = godog.Build(bin); err != nil {
+	if err = builder.Build(bin); err != nil {
 		return 1, err
 	}
 	defer os.Remove(bin)
@@ -79,7 +80,7 @@ func main() {
 			fmt.Fprintln(os.Stderr, "could not locate absolute path for:", output, err)
 			os.Exit(1)
 		}
-		if err = godog.Build(bin); err != nil {
+		if err = builder.Build(bin); err != nil {
 			fmt.Fprintln(os.Stderr, "could not build binary at:", output, err)
 			os.Exit(1)
 		}
