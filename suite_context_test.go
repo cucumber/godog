@@ -11,9 +11,11 @@ import (
 	"strings"
 
 	"github.com/cucumber/gherkin-go/v11"
-	"github.com/cucumber/godog/colors"
 	"github.com/cucumber/messages-go/v10"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/cucumber/godog/colors"
+	"github.com/cucumber/godog/internal/tags"
 )
 
 // InitializeScenario provides steps for godog suite execution and
@@ -180,13 +182,13 @@ func (tc *godogFeaturesScenario) iRunFeatureSuiteWithFormatter(name string) erro
 	return tc.iRunFeatureSuiteWithTagsAndFormatter("", f)
 }
 
-func (tc *godogFeaturesScenario) iRunFeatureSuiteWithTagsAndFormatter(tags string, fmtFunc FormatterFunc) error {
+func (tc *godogFeaturesScenario) iRunFeatureSuiteWithTagsAndFormatter(filter string, fmtFunc FormatterFunc) error {
 	if err := tc.parseFeatures(); err != nil {
 		return err
 	}
 
 	for _, feat := range tc.features {
-		feat.pickles = applyTagFilter(tags, feat.pickles)
+		feat.pickles = tags.ApplyTagFilter(filter, feat.pickles)
 	}
 
 	tc.testedSuite.storage = newStorage()

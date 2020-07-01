@@ -12,6 +12,8 @@ import (
 
 	"github.com/cucumber/gherkin-go/v11"
 	"github.com/cucumber/messages-go/v10"
+
+	"github.com/cucumber/godog/internal/tags"
 )
 
 var pathLineRe = regexp.MustCompile(`:([\d]+)$`)
@@ -149,26 +151,12 @@ func parseFeatures(filter string, paths []string) ([]*feature, error) {
 	return features, nil
 }
 
-func filterFeatures(tags string, features []*feature) (result []*feature) {
+func filterFeatures(filter string, features []*feature) (result []*feature) {
 	for _, ft := range features {
-		ft.pickles = applyTagFilter(tags, ft.pickles)
+		ft.pickles = tags.ApplyTagFilter(filter, ft.pickles)
 
 		if ft.Feature != nil && len(ft.pickles) > 0 {
 			result = append(result, ft)
-		}
-	}
-
-	return
-}
-
-func applyTagFilter(tags string, pickles []*messages.Pickle) (result []*messages.Pickle) {
-	if len(tags) == 0 {
-		return pickles
-	}
-
-	for _, pickle := range pickles {
-		if matchesTags(tags, pickle.Tags) {
-			result = append(result, pickle)
 		}
 	}
 

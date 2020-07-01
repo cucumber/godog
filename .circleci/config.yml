@@ -32,13 +32,12 @@ commands:
   vet:
     description: "Run go vet"
     steps:
-      - run: go vet github.com/cucumber/godog
-      - run: go vet github.com/cucumber/godog/colors
+      - run: go vet ./...
   go_test:
     description: "Run go test"
     steps:
       - run: sed -i 's#github.com/cucumber/godog_test#_test#g' formatter-tests/*/*
-      - run: go test -v -race -coverprofile=coverage.txt -covermode=atomic
+      - run: go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
   godog:
     description: "Run godog"
     steps:
