@@ -1,4 +1,4 @@
-package godog
+package builder
 
 import (
 	"bytes"
@@ -30,13 +30,13 @@ var (
 
 import (
 	"github.com/cucumber/godog"
-	{{if or .DeprecatedFeatureContexts .TestSuiteContexts .ScenarioContexts}}_test "{{.ImportPath}}"{{end}}
-	{{if or .XDeprecatedFeatureContexts .XTestSuiteContexts .XScenarioContexts}}_xtest "{{.ImportPath}}_test"{{end}}
-	{{if or .XDeprecatedFeatureContexts .XTestSuiteContexts .XScenarioContexts}}"testing/internal/testdeps"{{end}}
+	{{if or .TestSuiteContexts .ScenarioContexts}}_test "{{.ImportPath}}"{{end}}
+	{{if or .XTestSuiteContexts .XScenarioContexts}}_xtest "{{.ImportPath}}_test"{{end}}
+	{{if or .XTestSuiteContexts .XScenarioContexts}}"testing/internal/testdeps"{{end}}
 	"os"
 )
 
-{{if or .XDeprecatedFeatureContexts .XTestSuiteContexts .XScenarioContexts}}
+{{if or .XTestSuiteContexts .XScenarioContexts}}
 func init() {
 	testdeps.ImportPath = "{{.ImportPath}}"
 }
@@ -64,16 +64,6 @@ func main() {
 			{{end}}
 		},
 	}.Run()
-	{{else}}
-	status := godog.Run("{{ .Name }}", func (suite *godog.Suite) {
-		os.Setenv("GODOG_TESTED_PACKAGE", "{{.ImportPath}}")
-		{{range .DeprecatedFeatureContexts}}
-			_test.{{ . }}(suite)
-		{{end}}
-		{{range .XDeprecatedFeatureContexts}}
-			_xtest.{{ . }}(suite)
-		{{end}}
-	})
 	{{end}}
 	os.Exit(status)
 }`))
@@ -352,23 +342,19 @@ func buildTestMain(pkg *build.Package) ([]byte, error) {
 		name = "main"
 	}
 	data := struct {
-		Name                       string
-		ImportPath                 string
-		DeprecatedFeatureContexts  []string
-		TestSuiteContexts          []string
-		ScenarioContexts           []string
-		XDeprecatedFeatureContexts []string
-		XTestSuiteContexts         []string
-		XScenarioContexts          []string
+		Name               string
+		ImportPath         string
+		TestSuiteContexts  []string
+		ScenarioContexts   []string
+		XTestSuiteContexts []string
+		XScenarioContexts  []string
 	}{
-		Name:                       name,
-		ImportPath:                 importPath,
-		DeprecatedFeatureContexts:  ctxs.deprecatedFeatureCtxs,
-		TestSuiteContexts:          ctxs.testSuiteCtxs,
-		ScenarioContexts:           ctxs.scenarioCtxs,
-		XDeprecatedFeatureContexts: xctxs.deprecatedFeatureCtxs,
-		XTestSuiteContexts:         xctxs.testSuiteCtxs,
-		XScenarioContexts:          xctxs.scenarioCtxs,
+		Name:               name,
+		ImportPath:         importPath,
+		TestSuiteContexts:  ctxs.testSuiteCtxs,
+		ScenarioContexts:   ctxs.scenarioCtxs,
+		XTestSuiteContexts: xctxs.testSuiteCtxs,
+		XScenarioContexts:  xctxs.scenarioCtxs,
 	}
 
 	var buf bytes.Buffer
@@ -452,7 +438,6 @@ func processPackageTestFiles(packs ...[]string) (ctxs contexts, _ error) {
 				return ctxs, err
 			}
 
-			ctxs.deprecatedFeatureCtxs = append(ctxs.deprecatedFeatureCtxs, astContexts(node, "Suite")...)
 			ctxs.testSuiteCtxs = append(ctxs.testSuiteCtxs, astContexts(node, "TestSuiteContext")...)
 			ctxs.scenarioCtxs = append(ctxs.scenarioCtxs, astContexts(node, "ScenarioContext")...)
 		}

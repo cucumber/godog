@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"regexp"
 
+	"github.com/cucumber/godog/internal/builder"
 	"github.com/cucumber/messages-go/v10"
 )
 
@@ -172,4 +173,20 @@ func (ctx *ScenarioContext) Step(expr, stepFunc interface{}) {
 	}
 
 	ctx.suite.steps = append(ctx.suite.steps, def)
+}
+
+// Build creates a test package like go test command at given target path.
+// If there are no go files in tested directory, then
+// it simply builds a godog executable to scan features.
+//
+// If there are go test files, it first builds a test
+// package with standard go test command.
+//
+// Finally it generates godog suite executable which
+// registers exported godog contexts from the test files
+// of tested package.
+//
+// Returns the path to generated executable
+func Build(bin string) error {
+	return builder.Build(bin)
 }

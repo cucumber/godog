@@ -2,6 +2,7 @@ package godog
 
 import (
 	"fmt"
+	"go/build"
 	"io"
 	"math/rand"
 	"os"
@@ -217,6 +218,8 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 
 func runsFromPackage(fp string) string {
 	dir := filepath.Dir(fp)
+
+	gopaths := filepath.SplitList(build.Default.GOPATH)
 	for _, gp := range gopaths {
 		gp = filepath.Join(gp, "src")
 		if strings.Index(dir, gp) == 0 {

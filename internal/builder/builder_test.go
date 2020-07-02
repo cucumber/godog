@@ -1,4 +1,4 @@
-package godog_test
+package builder_test
 
 import (
 	"bytes"
@@ -10,9 +10,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cucumber/godog"
 	"github.com/stretchr/testify/require"
+
+	"github.com/cucumber/godog"
+	"github.com/cucumber/godog/internal/builder"
 )
+
+func InitializeScenario(ctx *godog.ScenarioContext) {}
 
 func Test_GodogBuild(t *testing.T) {
 	t.Run("WithSourceNotInGoPath", testWithSourceNotInGoPath)
@@ -49,7 +53,6 @@ import (
 	"fmt"
 
 	"github.com/cucumber/godog"
-	messages "github.com/cucumber/messages-go/v10"
 )
 
 func thereAreGodogs(available int) error {
@@ -72,12 +75,13 @@ func thereShouldBeRemaining(remaining int) error {
 	return nil
 }
 
-func FeatureContext(s *godog.Suite) {
-	s.Step("^there are (\\d+) godogs$", thereAreGodogs)
-	s.Step("^I eat (\\d+)$", iEat)
-	s.Step("^there should be (\\d+) remaining$", thereShouldBeRemaining)
 
-	s.BeforeScenario(func(*messages.Pickle) {
+func InitializeScenario(ctx *godog.ScenarioContext) {
+	ctx.Step("^there are (\\d+) godogs$", thereAreGodogs)
+	ctx.Step("^I eat (\\d+)$", iEat)
+	ctx.Step("^there should be (\\d+) remaining$", thereShouldBeRemaining)
+
+	ctx.BeforeScenario(func(*godog.Scenario) {
 		Godogs = 0 // clean the state before every scenario
 	})
 }
@@ -89,7 +93,6 @@ import (
 	"fmt"
 
 	"github.com/cucumber/godog"
-	messages "github.com/cucumber/messages-go/v10"
 
 	"godogs"
 )
@@ -114,12 +117,12 @@ func thereShouldBeRemaining(remaining int) error {
 	return nil
 }
 
-func FeatureContext(s *godog.Suite) {
-	s.Step("^there are (\\d+) godogs$", thereAreGodogs)
-	s.Step("^I eat (\\d+)$", iEat)
-	s.Step("^there should be (\\d+) remaining$", thereShouldBeRemaining)
+func InitializeScenario(ctx *godog.ScenarioContext) {
+	ctx.Step("^there are (\\d+) godogs$", thereAreGodogs)
+	ctx.Step("^I eat (\\d+)$", iEat)
+	ctx.Step("^there should be (\\d+) remaining$", thereShouldBeRemaining)
 
-	s.BeforeScenario(func(*messages.Pickle) {
+	ctx.BeforeScenario(func(*godog.Scenario) {
 		godogs.Godogs = 0 // clean the state before every scenario
 	})
 }
@@ -159,7 +162,7 @@ func buildTestCommand(t *testing.T, wd, featureFile string) *exec.Cmd {
 		testBin += ".exe"
 	}
 
-	err = godog.Build(testBin)
+	err = builder.Build(testBin)
 	require.Nil(t, err)
 
 	featureFilePath := filepath.Join(wd, featureFile)
