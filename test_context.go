@@ -7,6 +7,8 @@ import (
 
 	"github.com/cucumber/godog/internal/builder"
 	"github.com/cucumber/messages-go/v10"
+
+	"github.com/cucumber/godog/internal/models"
 )
 
 // Scenario represents the executed scenario
@@ -14,6 +16,32 @@ type Scenario = messages.Pickle
 
 // Step represents the executed step
 type Step = messages.Pickle_PickleStep
+
+// Steps allows to nest steps
+// instead of returning an error in step func
+// it is possible to return combined steps:
+//
+//   func multistep(name string) godog.Steps {
+//     return godog.Steps{
+//       fmt.Sprintf(`an user named "%s"`, name),
+//       fmt.Sprintf(`user "%s" is authenticated`, name),
+//     }
+//   }
+//
+// These steps will be matched and executed in
+// sequential order. The first one which fails
+// will result in main step failure.
+type Steps []string
+
+// StepDefinition is a registered step definition
+// contains a StepHandler and regexp which
+// is used to match a step. Args which
+// were matched by last executed step
+//
+// This structure is passed to the formatter
+// when step is matched and is either failed
+// or successful
+type StepDefinition = models.StepDefinition
 
 // DocString represents the DocString argument made to a step definition
 type DocString = messages.PickleStepArgument_PickleDocString
@@ -152,9 +180,9 @@ func (ctx *ScenarioContext) Step(expr, stepFunc interface{}) {
 	}
 
 	def := &StepDefinition{
-		Handler: stepFunc,
-		Expr:    regex,
-		hv:      v,
+		Handler:      stepFunc,
+		Expr:         regex,
+		HandlerValue: v,
 	}
 
 	typ = typ.Out(0)
@@ -167,7 +195,7 @@ func (ctx *ScenarioContext) Step(expr, stepFunc interface{}) {
 		if typ.Elem().Kind() != reflect.String {
 			panic(fmt.Sprintf("expected handler to return []string for multistep, but got: []%s", typ.Kind()))
 		}
-		def.nested = true
+		def.Nested = true
 	default:
 		panic(fmt.Sprintf("expected handler to return an error or []string, but got: %s", typ.Kind()))
 	}

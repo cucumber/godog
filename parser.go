@@ -13,6 +13,7 @@ import (
 	"github.com/cucumber/gherkin-go/v11"
 	"github.com/cucumber/messages-go/v10"
 
+	"github.com/cucumber/godog/internal/models"
 	"github.com/cucumber/godog/internal/tags"
 )
 
@@ -30,7 +31,7 @@ func extractFeaturePathLine(p string) (string, int) {
 	return retPath, line
 }
 
-func parseFeatureFile(path string, newIDFunc func() string) (*feature, error) {
+func parseFeatureFile(path string, newIDFunc func() string) (*models.Feature, error) {
 	reader, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -47,12 +48,12 @@ func parseFeatureFile(path string, newIDFunc func() string) (*feature, error) {
 	gherkinDocument.Uri = path
 	pickles := gherkin.Pickles(*gherkinDocument, path, newIDFunc)
 
-	f := feature{GherkinDocument: gherkinDocument, pickles: pickles, content: buf.Bytes()}
+	f := models.Feature{GherkinDocument: gherkinDocument, Pickles: pickles, Content: buf.Bytes()}
 	return &f, nil
 }
 
-func parseFeatureDir(dir string, newIDFunc func() string) ([]*feature, error) {
-	var features []*feature
+func parseFeatureDir(dir string, newIDFunc func() string) ([]*models.Feature, error) {
+	var features []*models.Feature
 	return features, filepath.Walk(dir, func(p string, f os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -76,8 +77,8 @@ func parseFeatureDir(dir string, newIDFunc func() string) ([]*feature, error) {
 	})
 }
 
-func parsePath(path string) ([]*feature, error) {
-	var features []*feature
+func parsePath(path string) ([]*models.Feature, error) {
+	var features []*models.Feature
 
 	path, line := extractFeaturePathLine(path)
 
@@ -99,23 +100,23 @@ func parsePath(path string) ([]*feature, error) {
 
 	// filter scenario by line number
 	var pickles []*messages.Pickle
-	for _, pickle := range ft.pickles {
-		sc := ft.findScenario(pickle.AstNodeIds[0])
+	for _, pickle := range ft.Pickles {
+		sc := ft.FindScenario(pickle.AstNodeIds[0])
 
 		if line == -1 || uint32(line) == sc.Location.Line {
 			pickles = append(pickles, pickle)
 		}
 	}
-	ft.pickles = pickles
+	ft.Pickles = pickles
 
 	return append(features, ft), nil
 }
 
-func parseFeatures(filter string, paths []string) ([]*feature, error) {
+func parseFeatures(filter string, paths []string) ([]*models.Feature, error) {
 	var order int
 
 	featureIdxs := make(map[string]int)
-	uniqueFeatureURI := make(map[string]*feature)
+	uniqueFeatureURI := make(map[string]*models.Feature)
 	for _, path := range paths {
 		feats, err := parsePath(path)
 
@@ -140,7 +141,7 @@ func parseFeatures(filter string, paths []string) ([]*feature, error) {
 		}
 	}
 
-	var features = make([]*feature, len(uniqueFeatureURI))
+	var features = make([]*models.Feature, len(uniqueFeatureURI))
 	for uri, feature := range uniqueFeatureURI {
 		idx := featureIdxs[uri]
 		features[idx] = feature
@@ -151,11 +152,11 @@ func parseFeatures(filter string, paths []string) ([]*feature, error) {
 	return features, nil
 }
 
-func filterFeatures(filter string, features []*feature) (result []*feature) {
+func filterFeatures(filter string, features []*models.Feature) (result []*models.Feature) {
 	for _, ft := range features {
-		ft.pickles = tags.ApplyTagFilter(filter, ft.pickles)
+		ft.Pickles = tags.ApplyTagFilter(filter, ft.Pickles)
 
-		if ft.Feature != nil && len(ft.pickles) > 0 {
+		if ft.Feature != nil && len(ft.Pickles) > 0 {
 			result = append(result, ft)
 		}
 	}

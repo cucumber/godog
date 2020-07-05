@@ -1,0 +1,38 @@
+<bold-white>Feature:</bold-white> some scenarios
+
+  <bold-white>Scenario:</bold-white> failing    <bold-black># formatter-tests/features/some_scenarions_including_failing.feature:3</bold-black>
+    <green>Given</green> <green>passing step</green> <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
+    <red>When</red> <red>failing step</red>  <bold-black># fmt_output_test.go:117 -> github.com/cucumber/godog/internal/formatters_test.failingStepDef</bold-black>
+    <bold-red>step failed</bold-red>
+    <cyan>Then</cyan> <cyan>passing step</cyan>  <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
+
+  <bold-white>Scenario:</bold-white> pending   <bold-black># formatter-tests/features/some_scenarions_including_failing.feature:8</bold-black>
+    <yellow>When</yellow> <yellow>pending step</yellow> <bold-black># fmt_output_test.go:115 -> github.com/cucumber/godog/internal/formatters_test.pendingStepDef</bold-black>
+      <yellow>TODO: write pending definition</yellow>
+    <cyan>Then</cyan> <cyan>passing step</cyan> <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
+
+  <bold-white>Scenario:</bold-white> undefined <bold-black># formatter-tests/features/some_scenarions_including_failing.feature:12</bold-black>
+    <yellow>When</yellow> <yellow>undefined</yellow>
+    <cyan>Then</cyan> <cyan>passing step</cyan> <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
+
+--- <red>Failed steps:</red>
+
+  <red>Scenario: failing</red> <bold-black># formatter-tests/features/some_scenarions_including_failing.feature:3</bold-black>
+    <red>When failing step</red> <bold-black># formatter-tests/features/some_scenarions_including_failing.feature:5</bold-black>
+      <red>Error: </red><bold-red>step failed</bold-red>
+
+
+3 scenarios (<red>1 failed</red>, <yellow>1 pending</yellow>, <yellow>1 undefined</yellow>)
+7 steps (<green>1 passed</green>, <red>1 failed</red>, <yellow>1 pending</yellow>, <yellow>1 undefined</yellow>, <cyan>3 skipped</cyan>)
+0s
+
+<yellow>You can implement step definitions for undefined steps with these snippets:</yellow>
+<yellow>
+func undefined() error {
+	return godog.ErrPending
+}
+
+func FeatureContext(s *godog.Suite) {
+	s.Step(`^undefined$`, undefined)
+}
+</yellow>

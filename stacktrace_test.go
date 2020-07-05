@@ -24,7 +24,7 @@ func callstack3() *stack {
 	return &st
 }
 
-func TestStacktrace(t *testing.T) {
+func Test_Stacktrace(t *testing.T) {
 	err := &traceError{
 		msg:   "err msg",
 		stack: callstack1(),

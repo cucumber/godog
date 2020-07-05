@@ -10,7 +10,11 @@ import (
 	"time"
 
 	"github.com/cucumber/godog/colors"
+	"github.com/cucumber/godog/internal/utils"
 )
+
+// repeats a space n times
+var s = utils.S
 
 var descFeaturesArgument = "Optional feature(s) to run. Can be:\n" +
 	s(4) + "- dir " + colors.Yellow("(features/)") + "\n" +

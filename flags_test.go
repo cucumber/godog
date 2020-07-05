@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/cucumber/godog/colors"
+	"github.com/cucumber/godog/internal/formatters"
 )
 
 func TestFlagsShouldRandomizeAndGenerateSeed(t *testing.T) {
@@ -61,7 +62,7 @@ func TestFlagsUsageShouldIncludeFormatDescriptons(t *testing.T) {
 	output := colors.Uncolored(&buf)
 
 	// register some custom formatter
-	Format("custom", "custom format description", junitFunc)
+	Format("custom", "custom format description", formatters.JUnitFormatterFunc)
 
 	var opt Options
 	flags := FlagSet(&opt)

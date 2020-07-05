@@ -1,0 +1,11 @@
+<bold-white>Feature:</bold-white> single passing scenario
+  describes
+  a single scenario
+  feature
+
+  <bold-white>Scenario:</bold-white> one step passing <bold-black># formatter-tests/features/single_scenario_with_passing_step.feature:6</bold-black>
+    <green>Given</green> <green>a passing step</green>     <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
+
+1 scenarios (<green>1 passed</green>)
+1 steps (<green>1 passed</green>)
+0s

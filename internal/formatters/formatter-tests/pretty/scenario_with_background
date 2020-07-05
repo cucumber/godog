@@ -1,0 +1,13 @@
+<bold-white>Feature:</bold-white> single scenario with background
+
+  <bold-white>Background:</bold-white> named
+    <green>Given</green> <green>passing step</green> <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
+    <green>And</green> <green>passing step</green>   <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
+
+  <bold-white>Scenario:</bold-white> scenario   <bold-black># formatter-tests/features/scenario_with_background.feature:7</bold-black>
+    <green>When</green> <green>passing step</green>  <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
+    <green>Then</green> <green>passing step</green>  <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
+
+1 scenarios (<green>1 passed</green>)
+4 steps (<green>4 passed</green>)
+0s

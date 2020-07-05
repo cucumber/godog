@@ -17,6 +17,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/cucumber/godog/colors"
+	"github.com/cucumber/godog/internal/formatters"
+	"github.com/cucumber/godog/internal/models"
+	"github.com/cucumber/godog/internal/storage"
 )
 
 func okStep() error {
@@ -70,22 +73,22 @@ func Test_FailsOrPassesBasedOnStrictModeWhenHasPendingSteps(t *testing.T) {
 	require.NoError(t, err)
 
 	gd.Uri = path
-	ft := feature{GherkinDocument: gd}
-	ft.pickles = gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
+	ft := models.Feature{GherkinDocument: gd}
+	ft.Pickles = gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
 
 	r := runner{
-		fmt:      progressFunc("progress", ioutil.Discard),
-		features: []*feature{&ft},
+		fmt:      formatters.ProgressFormatterFunc("progress", ioutil.Discard),
+		features: []*models.Feature{&ft},
 		scenarioInitializer: func(ctx *ScenarioContext) {
 			ctx.Step(`^one$`, func() error { return nil })
 			ctx.Step(`^two$`, func() error { return ErrPending })
 		},
 	}
 
-	r.storage = newStorage()
-	r.storage.mustInsertFeature(&ft)
-	for _, pickle := range ft.pickles {
-		r.storage.mustInsertPickle(pickle)
+	r.storage = storage.NewStorage()
+	r.storage.MustInsertFeature(&ft)
+	for _, pickle := range ft.Pickles {
+		r.storage.MustInsertPickle(pickle)
 	}
 
 	failed := r.concurrent(1)
@@ -103,22 +106,22 @@ func Test_FailsOrPassesBasedOnStrictModeWhenHasUndefinedSteps(t *testing.T) {
 	require.NoError(t, err)
 
 	gd.Uri = path
-	ft := feature{GherkinDocument: gd}
-	ft.pickles = gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
+	ft := models.Feature{GherkinDocument: gd}
+	ft.Pickles = gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
 
 	r := runner{
-		fmt:      progressFunc("progress", ioutil.Discard),
-		features: []*feature{&ft},
+		fmt:      formatters.ProgressFormatterFunc("progress", ioutil.Discard),
+		features: []*models.Feature{&ft},
 		scenarioInitializer: func(ctx *ScenarioContext) {
 			ctx.Step(`^one$`, func() error { return nil })
 			// two - is undefined
 		},
 	}
 
-	r.storage = newStorage()
-	r.storage.mustInsertFeature(&ft)
-	for _, pickle := range ft.pickles {
-		r.storage.mustInsertPickle(pickle)
+	r.storage = storage.NewStorage()
+	r.storage.MustInsertFeature(&ft)
+	for _, pickle := range ft.Pickles {
+		r.storage.MustInsertPickle(pickle)
 	}
 
 	failed := r.concurrent(1)
@@ -136,22 +139,22 @@ func Test_ShouldFailOnError(t *testing.T) {
 	require.NoError(t, err)
 
 	gd.Uri = path
-	ft := feature{GherkinDocument: gd}
-	ft.pickles = gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
+	ft := models.Feature{GherkinDocument: gd}
+	ft.Pickles = gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
 
 	r := runner{
-		fmt:      progressFunc("progress", ioutil.Discard),
-		features: []*feature{&ft},
+		fmt:      formatters.ProgressFormatterFunc("progress", ioutil.Discard),
+		features: []*models.Feature{&ft},
 		scenarioInitializer: func(ctx *ScenarioContext) {
-			ctx.Step(`^one$`, func() error { return nil })
 			ctx.Step(`^two$`, func() error { return fmt.Errorf("error") })
+			ctx.Step(`^one$`, func() error { return nil })
 		},
 	}
 
-	r.storage = newStorage()
-	r.storage.mustInsertFeature(&ft)
-	for _, pickle := range ft.pickles {
-		r.storage.mustInsertPickle(pickle)
+	r.storage = storage.NewStorage()
+	r.storage.MustInsertFeature(&ft)
+	for _, pickle := range ft.Pickles {
+		r.storage.MustInsertPickle(pickle)
 	}
 
 	failed := r.concurrent(1)
@@ -284,7 +287,7 @@ func Test_RandomizeRun(t *testing.T) {
 	const createRandomSeedFlag = -1
 	const noConcurrencyFlag = 1
 	const formatter = "pretty"
-	const featurePath = "formatter-tests/features/with_few_empty_scenarios.feature"
+	const featurePath = "internal/formatters/formatter-tests/features/with_few_empty_scenarios.feature"
 
 	fmtOutputScenarioInitializer := func(ctx *ScenarioContext) {
 		ctx.Step(`^(?:a )?failing step`, failingStepDef)
@@ -367,7 +370,7 @@ func Test_FormatterConcurrencyRun(t *testing.T) {
 		"cucumber",
 	}
 
-	featurePaths := []string{"formatter-tests/features"}
+	featurePaths := []string{"internal/formatters/formatter-tests/features"}
 
 	const concurrency = 100
 	const noRandomFlag = 0
