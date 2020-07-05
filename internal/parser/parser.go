@@ -1,4 +1,4 @@
-package godog
+package parser
 
 import (
 	"bytes"
@@ -19,7 +19,8 @@ import (
 
 var pathLineRe = regexp.MustCompile(`:([\d]+)$`)
 
-func extractFeaturePathLine(p string) (string, int) {
+// ExtractFeaturePathLine ...
+func ExtractFeaturePathLine(p string) (string, int) {
 	line := -1
 	retPath := p
 	if m := pathLineRe.FindStringSubmatch(p); len(m) > 0 {
@@ -80,7 +81,7 @@ func parseFeatureDir(dir string, newIDFunc func() string) ([]*models.Feature, er
 func parsePath(path string) ([]*models.Feature, error) {
 	var features []*models.Feature
 
-	path, line := extractFeaturePathLine(path)
+	path, line := ExtractFeaturePathLine(path)
 
 	fi, err := os.Stat(path)
 	if err != nil {
@@ -112,7 +113,8 @@ func parsePath(path string) ([]*models.Feature, error) {
 	return append(features, ft), nil
 }
 
-func parseFeatures(filter string, paths []string) ([]*models.Feature, error) {
+// ParseFeatures ...
+func ParseFeatures(filter string, paths []string) ([]*models.Feature, error) {
 	var order int
 
 	featureIdxs := make(map[string]int)

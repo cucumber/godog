@@ -17,6 +17,7 @@ import (
 	"github.com/cucumber/godog/colors"
 	"github.com/cucumber/godog/internal/formatters"
 	"github.com/cucumber/godog/internal/models"
+	"github.com/cucumber/godog/internal/parser"
 	"github.com/cucumber/godog/internal/storage"
 	"github.com/cucumber/godog/internal/tags"
 	"github.com/cucumber/godog/internal/utils"
@@ -418,7 +419,7 @@ func (tc *godogFeaturesScenario) featurePath(path string) error {
 }
 
 func (tc *godogFeaturesScenario) parseFeatures() error {
-	fts, err := parseFeatures("", tc.paths)
+	fts, err := parser.ParseFeatures("", tc.paths)
 	if err != nil {
 		return err
 	}
