@@ -404,6 +404,9 @@ In order to support concurrency well, you should reset the state and isolate eac
 
 It is also useful to randomize the order of scenario execution, which you can now do with **--random** command option.
 
+### Building your own custom formatter
+A simple example can be [found here](/_examples/custom-formatter).
+
 ## License
 **Godog** and **Gherkin** are licensed under the [MIT][license] and developed as a part of the [cucumber project][cucumber]
 
