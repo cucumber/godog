@@ -16,6 +16,7 @@ import (
 
 	"github.com/cucumber/godog/colors"
 	"github.com/cucumber/godog/internal/models"
+	"github.com/cucumber/godog/internal/parser"
 	"github.com/cucumber/godog/internal/storage"
 	"github.com/cucumber/godog/internal/utils"
 )
@@ -180,7 +181,7 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 	runner.fmt = formatter(suiteName, output)
 
 	var err error
-	if runner.features, err = parseFeatures(opt.Tags, opt.Paths); err != nil {
+	if runner.features, err = parser.ParseFeatures(opt.Tags, opt.Paths); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return exitOptionError
 	}
