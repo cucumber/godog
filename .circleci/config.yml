@@ -9,10 +9,10 @@ executors:
       - image: circleci/golang:1.12.17
   exec_go_1_13:
     docker:
-      - image: circleci/golang:1.13.9
+      - image: circleci/golang:1.13.11
   exec_go_1_14:
     docker:
-      - image: circleci/golang:1.14.2
+      - image: circleci/golang:1.14.4
 
 commands:
   fmt:
@@ -29,15 +29,18 @@ commands:
     description: "Install dependencies for go1.12"
     steps:
       - run: GO111MODULE=on go mod vendor
+      - run: cd _examples/db && GO111MODULE=on go mod vendor && cd ..
   vet:
     description: "Run go vet"
     steps:
       - run: go vet ./...
+      - run: cd _examples && go vet ./... && cd ..
   go_test:
     description: "Run go test"
     steps:
       - run: sed -i 's#github.com/cucumber/godog/internal/formatters_test#/internal/formatters_test#g' internal/formatters/formatter-tests/*/*
       - run: go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
+      - run: cd _examples && go test -v -race ./... && cd ..
   godog:
     description: "Run godog"
     steps:
