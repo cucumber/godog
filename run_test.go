@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -306,6 +307,79 @@ func Test_RandomizeRun(t *testing.T) {
 	assert.Equal(t, expectedSeed, actualSeed)
 	assert.Equal(t, expectedStatus, actualStatus)
 	assert.Equal(t, expectedOutput, actualOutput)
+}
+
+func Test_FormatOutputRun(t *testing.T) {
+	const noRandomFlag = 0
+	const noConcurrencyFlag = 1
+	const formatter = "junit"
+	const featurePath = "internal/formatters/formatter-tests/features/with_few_empty_scenarios.feature"
+
+	fmtOutputScenarioInitializer := func(ctx *ScenarioContext) {
+		ctx.Step(`^(?:a )?failing step`, failingStepDef)
+		ctx.Step(`^(?:a )?pending step$`, pendingStepDef)
+		ctx.Step(`^(?:a )?passing step$`, passingStepDef)
+		ctx.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)
+	}
+
+	expectedStatus, expectedOutput := testRun(t,
+		fmtOutputScenarioInitializer,
+		formatter, noConcurrencyFlag,
+		noRandomFlag, []string{featurePath},
+	)
+
+	dir := filepath.Join(os.TempDir(), t.Name())
+	err := os.MkdirAll(dir, 0755)
+	require.NoError(t, err)
+
+	defer os.RemoveAll(dir)
+
+	file := filepath.Join(dir, "result.xml")
+
+	actualStatus, actualOutput := testRun(t,
+		fmtOutputScenarioInitializer,
+		formatter+":"+file, noConcurrencyFlag,
+		noRandomFlag, []string{featurePath},
+	)
+
+	result, err := ioutil.ReadFile(file)
+	require.NoError(t, err)
+	actualOutputFromFile := string(result)
+
+	assert.Equal(t, expectedStatus, actualStatus)
+	assert.Empty(t, actualOutput)
+	assert.Equal(t, expectedOutput, actualOutputFromFile)
+}
+
+func Test_FormatOutputRun_Error(t *testing.T) {
+	const noRandomFlag = 0
+	const noConcurrencyFlag = 1
+	const formatter = "junit"
+	const featurePath = "internal/formatters/formatter-tests/features/with_few_empty_scenarios.feature"
+
+	fmtOutputScenarioInitializer := func(ctx *ScenarioContext) {
+		ctx.Step(`^(?:a )?failing step`, failingStepDef)
+		ctx.Step(`^(?:a )?pending step$`, pendingStepDef)
+		ctx.Step(`^(?:a )?passing step$`, passingStepDef)
+		ctx.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)
+	}
+
+	expectedStatus, expectedOutput := exitOptionError, ""
+
+	dir := filepath.Join(os.TempDir(), t.Name())
+	file := filepath.Join(dir, "result.xml")
+
+	actualStatus, actualOutput := testRun(t,
+		fmtOutputScenarioInitializer,
+		formatter+":"+file, noConcurrencyFlag,
+		noRandomFlag, []string{featurePath},
+	)
+
+	assert.Equal(t, expectedStatus, actualStatus)
+	assert.Equal(t, expectedOutput, actualOutput)
+
+	_, err := ioutil.ReadFile(file)
+	assert.Error(t, err)
 }
 
 func Test_AllFeaturesRun(t *testing.T) {

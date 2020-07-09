@@ -15,6 +15,7 @@ import (
 	"github.com/cucumber/messages-go/v10"
 
 	"github.com/cucumber/godog/colors"
+	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/models"
 	"github.com/cucumber/godog/internal/parser"
 	"github.com/cucumber/godog/internal/storage"
@@ -140,6 +141,24 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 		output = opt.Output
 	}
 
+	if formatterParts := strings.SplitN(opt.Format, ":", 2); len(formatterParts) > 1 {
+		f, err := os.Create(formatterParts[1])
+		if err != nil {
+			err = fmt.Errorf(
+				`couldn't create file with name: "%s", error: %s`,
+				formatterParts[1], err.Error(),
+			)
+			fmt.Fprintln(os.Stderr, err)
+
+			return exitOptionError
+		}
+
+		defer f.Close()
+
+		output = f
+		opt.Format = formatterParts[0]
+	}
+
 	if opt.NoColors {
 		output = colors.Uncolored(output)
 	} else {
@@ -165,10 +184,10 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 		opt.Concurrency = 1
 	}
 
-	formatter := FindFmt(opt.Format)
+	formatter := formatters.FindFmt(opt.Format)
 	if nil == formatter {
 		var names []string
-		for name := range AvailableFormatters() {
+		for name := range formatters.AvailableFormatters() {
 			names = append(names, name)
 		}
 		fmt.Fprintln(os.Stderr, fmt.Errorf(
