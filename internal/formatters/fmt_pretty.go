@@ -12,7 +12,6 @@ import (
 
 	"github.com/cucumber/godog/colors"
 	"github.com/cucumber/godog/formatters"
-	"github.com/cucumber/godog/internal/models"
 )
 
 func init() {
@@ -72,7 +71,7 @@ func (f *pretty) Pickle(pickle *messages.Pickle) {
 	}
 }
 
-func (f *pretty) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *models.StepDefinition) {
+func (f *pretty) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Passed(pickle, step, match)
 
 	f.lock.Lock()
@@ -81,7 +80,7 @@ func (f *pretty) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleSte
 	f.printStep(pickle, step)
 }
 
-func (f *pretty) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *models.StepDefinition) {
+func (f *pretty) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Skipped(pickle, step, match)
 
 	f.lock.Lock()
@@ -90,7 +89,7 @@ func (f *pretty) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleSt
 	f.printStep(pickle, step)
 }
 
-func (f *pretty) Undefined(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *models.StepDefinition) {
+func (f *pretty) Undefined(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Undefined(pickle, step, match)
 
 	f.lock.Lock()
@@ -99,7 +98,7 @@ func (f *pretty) Undefined(pickle *messages.Pickle, step *messages.Pickle_Pickle
 	f.printStep(pickle, step)
 }
 
-func (f *pretty) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *models.StepDefinition, err error) {
+func (f *pretty) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition, err error) {
 	f.Basefmt.Failed(pickle, step, match, err)
 
 	f.lock.Lock()
@@ -108,7 +107,7 @@ func (f *pretty) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleSte
 	f.printStep(pickle, step)
 }
 
-func (f *pretty) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *models.StepDefinition) {
+func (f *pretty) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Pending(pickle, step, match)
 
 	f.lock.Lock()

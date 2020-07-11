@@ -63,23 +63,27 @@ func (f *Basefmt) Feature(*messages.GherkinDocument, string, []byte) {}
 func (f *Basefmt) Pickle(*messages.Pickle) {}
 
 // Defined ...
-func (f *Basefmt) Defined(*messages.Pickle, *messages.Pickle_PickleStep, *models.StepDefinition) {}
+func (f *Basefmt) Defined(*messages.Pickle, *messages.Pickle_PickleStep, *formatters.StepDefinition) {
+}
 
 // Passed ...
-func (f *Basefmt) Passed(*messages.Pickle, *messages.Pickle_PickleStep, *models.StepDefinition) {}
+func (f *Basefmt) Passed(*messages.Pickle, *messages.Pickle_PickleStep, *formatters.StepDefinition) {}
 
 // Skipped ...
-func (f *Basefmt) Skipped(*messages.Pickle, *messages.Pickle_PickleStep, *models.StepDefinition) {}
+func (f *Basefmt) Skipped(*messages.Pickle, *messages.Pickle_PickleStep, *formatters.StepDefinition) {
+}
 
 // Undefined ...
-func (f *Basefmt) Undefined(*messages.Pickle, *messages.Pickle_PickleStep, *models.StepDefinition) {}
+func (f *Basefmt) Undefined(*messages.Pickle, *messages.Pickle_PickleStep, *formatters.StepDefinition) {
+}
 
 // Failed ...
-func (f *Basefmt) Failed(*messages.Pickle, *messages.Pickle_PickleStep, *models.StepDefinition, error) {
+func (f *Basefmt) Failed(*messages.Pickle, *messages.Pickle_PickleStep, *formatters.StepDefinition, error) {
 }
 
 // Pending ...
-func (f *Basefmt) Pending(*messages.Pickle, *messages.Pickle_PickleStep, *models.StepDefinition) {}
+func (f *Basefmt) Pending(*messages.Pickle, *messages.Pickle_PickleStep, *formatters.StepDefinition) {
+}
 
 // Summary ...
 func (f *Basefmt) Summary() {

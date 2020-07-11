@@ -5,9 +5,10 @@ import (
 	"reflect"
 	"regexp"
 
-	"github.com/cucumber/godog/internal/builder"
 	"github.com/cucumber/messages-go/v10"
 
+	"github.com/cucumber/godog/formatters"
+	"github.com/cucumber/godog/internal/builder"
 	"github.com/cucumber/godog/internal/models"
 )
 
@@ -41,7 +42,7 @@ type Steps []string
 // This structure is passed to the formatter
 // when step is matched and is either failed
 // or successful
-type StepDefinition = models.StepDefinition
+type StepDefinition = formatters.StepDefinition
 
 // DocString represents the DocString argument made to a step definition
 type DocString = messages.PickleStepArgument_PickleDocString
@@ -179,9 +180,11 @@ func (ctx *ScenarioContext) Step(expr, stepFunc interface{}) {
 		panic(fmt.Sprintf("expected handler to return only one value, but it has: %d", typ.NumOut()))
 	}
 
-	def := &StepDefinition{
-		Handler:      stepFunc,
-		Expr:         regex,
+	def := &models.StepDefinition{
+		StepDefinition: formatters.StepDefinition{
+			Handler: stepFunc,
+			Expr:    regex,
+		},
 		HandlerValue: v,
 	}
 

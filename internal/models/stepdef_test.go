@@ -5,15 +5,19 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cucumber/godog/internal/models"
 	"github.com/cucumber/messages-go/v10"
+
+	"github.com/cucumber/godog/formatters"
+	"github.com/cucumber/godog/internal/models"
 )
 
 func TestShouldSupportIntTypes(t *testing.T) {
 	fn := func(a int64, b int32, c int16, d int8) error { return nil }
 
 	def := &models.StepDefinition{
-		Handler:      fn,
+		StepDefinition: formatters.StepDefinition{
+			Handler: fn,
+		},
 		HandlerValue: reflect.ValueOf(fn),
 	}
 
@@ -32,7 +36,9 @@ func TestShouldSupportFloatTypes(t *testing.T) {
 	fn := func(a float64, b float32) error { return nil }
 
 	def := &models.StepDefinition{
-		Handler:      fn,
+		StepDefinition: formatters.StepDefinition{
+			Handler: fn,
+		},
 		HandlerValue: reflect.ValueOf(fn),
 	}
 
@@ -52,16 +58,36 @@ func TestShouldNotSupportOtherPointerTypesThanGherkin(t *testing.T) {
 	fn2 := func(a *messages.PickleStepArgument_PickleDocString) error { return nil }
 	fn3 := func(a *messages.PickleStepArgument_PickleTable) error { return nil }
 
-	def1 := &models.StepDefinition{Handler: fn1, HandlerValue: reflect.ValueOf(fn1), Args: []interface{}{(*int)(nil)}}
-	def2 := &models.StepDefinition{Handler: fn2, HandlerValue: reflect.ValueOf(fn2), Args: []interface{}{&messages.PickleStepArgument_PickleDocString{}}}
-	def3 := &models.StepDefinition{Handler: fn3, HandlerValue: reflect.ValueOf(fn3), Args: []interface{}{(*messages.PickleStepArgument_PickleTable)(nil)}}
+	def1 := &models.StepDefinition{
+		StepDefinition: formatters.StepDefinition{
+			Handler: fn1,
+		},
+		HandlerValue: reflect.ValueOf(fn1),
+		Args:         []interface{}{(*int)(nil)},
+	}
+	def2 := &models.StepDefinition{
+		StepDefinition: formatters.StepDefinition{
+			Handler: fn2,
+		},
+		HandlerValue: reflect.ValueOf(fn2),
+		Args:         []interface{}{&messages.PickleStepArgument_PickleDocString{}},
+	}
+	def3 := &models.StepDefinition{
+		StepDefinition: formatters.StepDefinition{
+			Handler: fn3,
+		},
+		HandlerValue: reflect.ValueOf(fn3),
+		Args:         []interface{}{(*messages.PickleStepArgument_PickleTable)(nil)},
+	}
 
 	if err := def1.Run(); err == nil {
 		t.Fatalf("expected conversion error, but got none")
 	}
+
 	if err := def2.Run(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+
 	if err := def3.Run(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -71,12 +97,25 @@ func TestShouldSupportOnlyByteSlice(t *testing.T) {
 	fn1 := func(a []byte) error { return nil }
 	fn2 := func(a []string) error { return nil }
 
-	def1 := &models.StepDefinition{Handler: fn1, HandlerValue: reflect.ValueOf(fn1), Args: []interface{}{"str"}}
-	def2 := &models.StepDefinition{Handler: fn2, HandlerValue: reflect.ValueOf(fn2), Args: []interface{}{[]string{}}}
+	def1 := &models.StepDefinition{
+		StepDefinition: formatters.StepDefinition{
+			Handler: fn1,
+		},
+		HandlerValue: reflect.ValueOf(fn1),
+		Args:         []interface{}{"str"},
+	}
+	def2 := &models.StepDefinition{
+		StepDefinition: formatters.StepDefinition{
+			Handler: fn2,
+		},
+		HandlerValue: reflect.ValueOf(fn2),
+		Args:         []interface{}{[]string{}},
+	}
 
 	if err := def1.Run(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+
 	if err := def2.Run(); err == nil {
 		t.Fatalf("expected conversion error, but got none")
 	}
@@ -84,7 +123,12 @@ func TestShouldSupportOnlyByteSlice(t *testing.T) {
 
 func TestUnexpectedArguments(t *testing.T) {
 	fn := func(a, b int) error { return nil }
-	def := &models.StepDefinition{Handler: fn, HandlerValue: reflect.ValueOf(fn)}
+	def := &models.StepDefinition{
+		StepDefinition: formatters.StepDefinition{
+			Handler: fn,
+		},
+		HandlerValue: reflect.ValueOf(fn),
+	}
 
 	def.Args = []interface{}{"1"}
 	if err := def.Run(); err == nil {

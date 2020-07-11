@@ -7,6 +7,7 @@ import (
 
 	"github.com/cucumber/messages-go/v10"
 
+	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/models"
 	"github.com/cucumber/godog/internal/storage"
 	"github.com/cucumber/godog/internal/utils"
@@ -54,7 +55,8 @@ func (s *suite) runStep(pickle *messages.Pickle, step *messages.Pickle_PickleSte
 	}
 
 	match := s.matchStep(step)
-	s.fmt.Defined(pickle, step, match)
+	s.storage.MustInsertStepDefintionMatch(step.AstNodeIds[0], match)
+	s.fmt.Defined(pickle, step, match.GetInternalStepDefinition())
 
 	// user multistep definitions may panic
 	defer func() {
@@ -80,18 +82,18 @@ func (s *suite) runStep(pickle *messages.Pickle, step *messages.Pickle_PickleSte
 			sr.Status = models.Passed
 			s.storage.MustInsertPickleStepResult(sr)
 
-			s.fmt.Passed(pickle, step, match)
+			s.fmt.Passed(pickle, step, match.GetInternalStepDefinition())
 		case ErrPending:
 			sr.Status = models.Pending
 			s.storage.MustInsertPickleStepResult(sr)
 
-			s.fmt.Pending(pickle, step, match)
+			s.fmt.Pending(pickle, step, match.GetInternalStepDefinition())
 		default:
 			sr.Status = models.Failed
 			sr.Err = err
 			s.storage.MustInsertPickleStepResult(sr)
 
-			s.fmt.Failed(pickle, step, match, err)
+			s.fmt.Failed(pickle, step, match.GetInternalStepDefinition(), err)
 		}
 
 		// run after step handlers
@@ -105,10 +107,12 @@ func (s *suite) runStep(pickle *messages.Pickle, step *messages.Pickle_PickleSte
 	} else if len(undef) > 0 {
 		if match != nil {
 			match = &models.StepDefinition{
+				StepDefinition: formatters.StepDefinition{
+					Expr:    match.Expr,
+					Handler: match.Handler,
+				},
 				Args:         match.Args,
 				HandlerValue: match.HandlerValue,
-				Expr:         match.Expr,
-				Handler:      match.Handler,
 				Nested:       match.Nested,
 				Undefined:    undef,
 			}
@@ -118,7 +122,7 @@ func (s *suite) runStep(pickle *messages.Pickle, step *messages.Pickle_PickleSte
 		sr.Status = models.Undefined
 		s.storage.MustInsertPickleStepResult(sr)
 
-		s.fmt.Undefined(pickle, step, match)
+		s.fmt.Undefined(pickle, step, match.GetInternalStepDefinition())
 		return ErrUndefined
 	}
 
@@ -127,7 +131,7 @@ func (s *suite) runStep(pickle *messages.Pickle, step *messages.Pickle_PickleSte
 		sr.Status = models.Skipped
 		s.storage.MustInsertPickleStepResult(sr)
 
-		s.fmt.Skipped(pickle, step, match)
+		s.fmt.Skipped(pickle, step, match.GetInternalStepDefinition())
 		return nil
 	}
 
@@ -203,10 +207,12 @@ func (s *suite) matchStepText(text string) *models.StepDefinition {
 			// since we need to assign arguments
 			// better to copy the step definition
 			return &models.StepDefinition{
+				StepDefinition: formatters.StepDefinition{
+					Expr:    h.Expr,
+					Handler: h.Handler,
+				},
 				Args:         args,
 				HandlerValue: h.HandlerValue,
-				Expr:         h.Expr,
-				Handler:      h.Handler,
 				Nested:       h.Nested,
 			}
 		}
