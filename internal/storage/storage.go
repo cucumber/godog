@@ -31,6 +31,9 @@ const (
 	tablePickleStepResultIndexPickleStepID string = "id"
 	tablePickleStepResultIndexPickleID     string = "pickle_id"
 	tablePickleStepResultIndexStatus       string = "status"
+
+	tableStepDefintionMatch            string = "step_defintion_match"
+	tableStepDefintionMatchIndexStepID string = "id"
 )
 
 // Storage is a thread safe in-mem storage
@@ -108,6 +111,16 @@ func NewStorage() *Storage {
 						Name:    tablePickleStepResultIndexStatus,
 						Unique:  false,
 						Indexer: &memdb.IntFieldIndex{Field: "Status"},
+					},
+				},
+			},
+			tableStepDefintionMatch: {
+				Name: tableStepDefintionMatch,
+				Indexes: map[string]*memdb.IndexSchema{
+					tableStepDefintionMatchIndexStepID: {
+						Name:    tableStepDefintionMatchIndexStepID,
+						Unique:  true,
+						Indexer: &memdb.StringFieldIndex{Field: "StepID"},
 					},
 				},
 			},
@@ -249,6 +262,27 @@ func (s *Storage) MustGetFeatures() (fs []*models.Feature) {
 	}
 
 	return
+}
+
+type stepDefinitionMatch struct {
+	StepID         string
+	StepDefinition *models.StepDefinition
+}
+
+// MustInsertStepDefintionMatch will insert the matched StepDefintion for the step ID and panic on error.
+func (s *Storage) MustInsertStepDefintionMatch(stepID string, match *models.StepDefinition) {
+	d := stepDefinitionMatch{
+		StepID:         stepID,
+		StepDefinition: match,
+	}
+
+	s.mustInsert(tableStepDefintionMatch, d)
+}
+
+// MustGetStepDefintionMatch will retrieve the matched StepDefintion for the step ID and panic on error.
+func (s *Storage) MustGetStepDefintionMatch(stepID string) *models.StepDefinition {
+	v := s.mustFirst(tableStepDefintionMatch, tableStepDefintionMatchIndexStepID, stepID)
+	return v.(stepDefinitionMatch).StepDefinition
 }
 
 func (s *Storage) mustInsert(table string, obj interface{}) {

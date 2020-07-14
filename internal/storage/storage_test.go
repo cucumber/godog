@@ -185,3 +185,15 @@ func Test_MustGetFeatures(t *testing.T) {
 	actual := s.MustGetFeatures()
 	assert.Equal(t, expected, actual)
 }
+
+func Test_MustGetStepDefintionMatch(t *testing.T) {
+	s := storage.NewStorage()
+
+	const stepID = "<step_id>"
+
+	expected := &models.StepDefinition{}
+	s.MustInsertStepDefintionMatch(stepID, expected)
+
+	actual := s.MustGetStepDefintionMatch(stepID)
+	assert.Equal(t, expected, actual)
+}

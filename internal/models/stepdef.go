@@ -3,27 +3,21 @@ package models
 import (
 	"fmt"
 	"reflect"
-	"regexp"
 	"strconv"
 
 	"github.com/cucumber/messages-go/v10"
+
+	"github.com/cucumber/godog/formatters"
 )
 
 var typeOfBytes = reflect.TypeOf([]byte(nil))
 
-// StepDefinition is a registered step definition
-// contains a StepHandler and regexp which
-// is used to match a step. Args which
-// were matched by last executed step
-//
-// This structure is passed to the formatter
-// when step is matched and is either failed
-// or successful
+// StepDefinition ...
 type StepDefinition struct {
+	formatters.StepDefinition
+
 	Args         []interface{}
 	HandlerValue reflect.Value
-	Expr         *regexp.Regexp
-	Handler      interface{}
 
 	// multistep related
 	Nested    bool
@@ -172,4 +166,13 @@ func (sd *StepDefinition) shouldBeString(idx int) (string, error) {
 		return "", fmt.Errorf(`cannot convert argument %d: "%v" of type "%T" to string`, idx, arg, arg)
 	}
 	return s, nil
+}
+
+// GetInternalStepDefinition ...
+func (sd *StepDefinition) GetInternalStepDefinition() *formatters.StepDefinition {
+	if sd == nil {
+		return nil
+	}
+
+	return &sd.StepDefinition
 }

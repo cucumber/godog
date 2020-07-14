@@ -8,7 +8,6 @@ import (
 	"github.com/cucumber/messages-go/v10"
 
 	"github.com/cucumber/godog/formatters"
-	"github.com/cucumber/godog/internal/models"
 	"github.com/cucumber/godog/internal/utils"
 )
 
@@ -189,7 +188,7 @@ func (f *eventsFormatter) step(pickle *messages.Pickle, pickleStep *messages.Pic
 	}
 }
 
-func (f *eventsFormatter) Defined(pickle *messages.Pickle, pickleStep *messages.Pickle_PickleStep, def *models.StepDefinition) {
+func (f *eventsFormatter) Defined(pickle *messages.Pickle, pickleStep *messages.Pickle_PickleStep, def *formatters.StepDefinition) {
 	f.Basefmt.Defined(pickle, pickleStep, def)
 
 	f.lock.Lock()
@@ -199,6 +198,8 @@ func (f *eventsFormatter) Defined(pickle *messages.Pickle, pickleStep *messages.
 	step := feature.FindStep(pickleStep.AstNodeIds[0])
 
 	if def != nil {
+		matchedDef := f.storage.MustGetStepDefintionMatch(pickleStep.AstNodeIds[0])
+
 		m := def.Expr.FindStringSubmatchIndex(pickleStep.Text)[2:]
 		var args [][2]int
 		for i := 0; i < len(m)/2; i++ {
@@ -221,7 +222,7 @@ func (f *eventsFormatter) Defined(pickle *messages.Pickle, pickleStep *messages.
 		}{
 			"StepDefinitionFound",
 			fmt.Sprintf("%s:%d", pickle.Uri, step.Location.Line),
-			DefinitionID(def),
+			DefinitionID(matchedDef),
 			args,
 		})
 	}
@@ -237,7 +238,7 @@ func (f *eventsFormatter) Defined(pickle *messages.Pickle, pickleStep *messages.
 	})
 }
 
-func (f *eventsFormatter) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *models.StepDefinition) {
+func (f *eventsFormatter) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Passed(pickle, step, match)
 
 	f.lock.Lock()
@@ -246,7 +247,7 @@ func (f *eventsFormatter) Passed(pickle *messages.Pickle, step *messages.Pickle_
 	f.step(pickle, step)
 }
 
-func (f *eventsFormatter) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *models.StepDefinition) {
+func (f *eventsFormatter) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Skipped(pickle, step, match)
 
 	f.lock.Lock()
@@ -255,7 +256,7 @@ func (f *eventsFormatter) Skipped(pickle *messages.Pickle, step *messages.Pickle
 	f.step(pickle, step)
 }
 
-func (f *eventsFormatter) Undefined(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *models.StepDefinition) {
+func (f *eventsFormatter) Undefined(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Undefined(pickle, step, match)
 
 	f.lock.Lock()
@@ -264,7 +265,7 @@ func (f *eventsFormatter) Undefined(pickle *messages.Pickle, step *messages.Pick
 	f.step(pickle, step)
 }
 
-func (f *eventsFormatter) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *models.StepDefinition, err error) {
+func (f *eventsFormatter) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition, err error) {
 	f.Basefmt.Failed(pickle, step, match, err)
 
 	f.lock.Lock()
@@ -273,7 +274,7 @@ func (f *eventsFormatter) Failed(pickle *messages.Pickle, step *messages.Pickle_
 	f.step(pickle, step)
 }
 
-func (f *eventsFormatter) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *models.StepDefinition) {
+func (f *eventsFormatter) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Pending(pickle, step, match)
 
 	f.lock.Lock()
