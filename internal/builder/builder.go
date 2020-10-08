@@ -341,6 +341,7 @@ func buildTestMain(pkg *build.Package) ([]byte, error) {
 	} else {
 		name = "main"
 	}
+
 	data := struct {
 		Name               string
 		ImportPath         string
