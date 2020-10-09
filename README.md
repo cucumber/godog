@@ -72,14 +72,23 @@ Join [here](https://cucumberbdd-slack-invite.herokuapp.com/).
 
 The following example can be [found here](/_examples/godogs).
 
-### Step 1
+### Step 1 - Setup a go module
 
-Given we create a new go package **$GOPATH/src/godogs**. From now on, this is our work directory `cd $GOPATH/src/godogs`.
+Given we create a new go module **godogs** in your normal go workspace. - `mkdir godogs`
 
-Imagine we have a **godog cart** to serve godogs for lunch. First of all, we describe our feature in plain text - `vim $GOPATH/src/godogs/features/godogs.feature`:
+From now on, this is our work directory - `cd godogs`
+
+Initiate the go module - `go mod init godogs`
+
+### Step 2 - Install godog
+
+Install the godog binary - `go get github.com/cucumber/godog/cmd/godog`
+
+### Step 3 - Create gherkin feature
+
+Imagine we have a **godog cart** to serve godogs for lunch. First of all, we describe our feature in plain text - `vim features/godogs.feature`:
 
 ``` gherkin
-# file: $GOPATH/src/godogs/features/godogs.feature
 Feature: eat godogs
   In order to be happy
   As a hungry gopher
@@ -91,36 +100,111 @@ Feature: eat godogs
     Then there should be 7 remaining
 ```
 
-**NOTE:** same as **go test** godog respects package level isolation. All your step definitions should be in your tested package root directory. In this case - `$GOPATH/src/godogs`
+### Step 4 - Create godog step definitions
 
-### Step 2
+**NOTE:** same as **go test** godog respects package level isolation. All your step definitions should be in your tested package root directory. In this case - `godogs`
 
-If godog is installed in your GOPATH. We can run `godog` inside the **$GOPATH/src/godogs** directory. You should see that the steps are undefined:
+If we run godog inside the module: - `godog`
 
-![Undefined step snippets](/screenshots/undefined.png?raw=true)
+You should see that the steps are undefined:
+```
+Feature: eat godogs
+  In order to be happy
+  As a hungry gopher
+  I need to be able to eat godogs
 
-If we wish to vendor godog dependency, we can do it as usual, using tools you prefer:
+  Scenario: Eat 5 out of 12          # features/godogs.feature:6
+    Given there are 12 godogs
+    When I eat 5
+    Then there should be 7 remaining
 
-    git clone https://github.com/cucumber/godog.git $GOPATH/src/godogs/vendor/github.com/cucumber/godog
+1 scenarios (1 undefined)
+3 steps (3 undefined)
+220.129µs
 
-It gives you undefined step snippets to implement in your test context. You may copy these snippets into your `godogs_test.go` file.
+You can implement step definitions for undefined steps with these snippets:
 
-Our directory structure should now look like:
+func iEat(arg1 int) error {
+        return godog.ErrPending
+}
 
-![Directory layout](/screenshots/dir-tree.png?raw=true)
+func thereAreGodogs(arg1 int) error {
+        return godog.ErrPending
+}
 
-If you copy the snippets into our test file and run godog again. We should see the step definition is now pending:
+func thereShouldBeRemaining(arg1 int) error {
+        return godog.ErrPending
+}
 
-![Pending step definition](/screenshots/pending.png?raw=true)
+func FeatureContext(s *godog.Suite) {
+        s.Step(`^I eat (\d+)$`, iEat)
+        s.Step(`^there are (\d+) godogs$`, thereAreGodogs)
+        s.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
+}
+```
 
-You may change **ErrPending** to **nil** and the scenario will pass successfully.
+Create a file and copy the step definitions into the file - `vim godogs_test.go`
+``` go
+package main
 
-Since we need a working implementation, we may start by implementing only what is necessary.
+import "github.com/cucumber/godog"
 
-### Step 3
+func iEat(arg1 int) error {
+        return godog.ErrPending
+}
+
+func thereAreGodogs(arg1 int) error {
+        return godog.ErrPending
+}
+
+func thereShouldBeRemaining(arg1 int) error {
+        return godog.ErrPending
+}
+
+func FeatureContext(s *godog.Suite) {
+        s.Step(`^I eat (\d+)$`, iEat)
+        s.Step(`^there are (\d+) godogs$`, thereAreGodogs)
+        s.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
+}
+```
+
+Our module should now look like this:
+```
+godogs
+- features
+  - godogs.feature
+- go.mod
+- go.sum
+- godogs_test.go
+```
+
+Run godog again - `godog`
+
+You should now see that the scenario is pending with one step pending and two steps skipped:
+```
+Feature: eat godogs
+  In order to be happy
+  As a hungry gopher
+  I need to be able to eat godogs
+
+  Scenario: Eat 5 out of 12          # features/godogs.feature:6
+    Given there are 12 godogs        # godogs_test.go:10 -> thereAreGodogs
+      TODO: write pending definition
+    When I eat 5                     # godogs_test.go:6 -> iEat
+    Then there should be 7 remaining # godogs_test.go:14 -> thereShouldBeRemaining
+
+1 scenarios (1 pending)
+3 steps (1 pending, 2 skipped)
+282.123µs
+```
+
+You may change **return godog.ErrPending** to **return nil** in the three step definitions and the scenario will pass successfully.
+
+### Step 5 - Create the main program to test
 
 We only need a number of **godogs** for now. Lets keep it simple.
 
+Create a file and copy the code into the file - `vim godogs.go`
 ``` go
 package main
 
@@ -130,17 +214,27 @@ var Godogs int
 func main() { /* usual main func */ }
 ```
 
-### Step 4
+Our module should now look like this:
+```
+godogs
+- features
+  - godogs.feature
+- go.mod
+- go.sum
+- godogs.go
+- godogs_test.go
+```
+
+### Step 6 - Add some logic to the step defintions
 
 Now lets implement our step definitions, which we can copy from generated console output snippets in order to test our feature requirements:
 
+Lets replace the contents of `godogs_test.go` with the code below - `vim godogs_test.go`
 ``` go
 package main
 
 import (
 	"fmt"
-	
-	messages "github.com/cucumber/messages-go/v10" // needed for godog v0.9.0 and earlier
 
 	"github.com/cucumber/godog"
 )
@@ -165,20 +259,6 @@ func thereShouldBeRemaining(remaining int) error {
 	return nil
 }
 
-// godog v0.9.0 and earlier
-func FeatureContext(s *godog.Suite) {
-	s.BeforeSuite(func() { Godogs = 0 })
-
-	s.BeforeScenario(func(*messages.Pickle) {
-		Godogs = 0 // clean the state before every scenario
-	})
-
-	s.Step(`^there are (\d+) godogs$`, thereAreGodogs)
-	s.Step(`^I eat (\d+)$`, iEat)
-	s.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
-}
-
-// godog v0.10.0 (latest)
 func InitializeTestSuite(ctx *godog.TestSuiteContext) {
 	ctx.BeforeSuite(func() { Godogs = 0 })
 }
@@ -194,11 +274,26 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 }
 ```
 
-Now when you run the `godog` again, you should see:
+When you run godog again - `godog`
 
-![Passed suite](/screenshots/passed.png?raw=true)
+You should see a passing run:
+```
+Feature: eat godogs
+  In order to be happy
+  As a hungry gopher
+  I need to be able to eat godogs
 
-We have hooked to **BeforeScenario** event in order to reset application state before each scenario. You may hook into more events, like **AfterStep** to print all state in case of an error. Or **BeforeSuite** to prepare a database.
+  Scenario: Eat 5 out of 12          # features/godogs.feature:6
+    Given there are 12 godogs        # godogs_test.go:10 -> thereAreGodogs
+    When I eat 5                     # godogs_test.go:14 -> iEat
+    Then there should be 7 remaining # godogs_test.go:22 -> thereShouldBeRemaining
+
+1 scenarios (1 passed)
+3 steps (3 passed)
+258.302µs
+```
+
+We have hooked to **BeforeScenario** event in order to reset the application state before each scenario. You may hook into more events, like **AfterStep** to print all state in case of an error. Or **BeforeSuite** to prepare a database.
 
 By now, you should have figured out, how to use **godog**. Another advice is to make steps orthogonal, small and simple to read for a user. Whether the user is a dumb website user or an API developer, who may understand a little more technical context - it should target that user.
 
@@ -251,12 +346,6 @@ func TestMain(m *testing.M) {
 	flag.Parse()
 	opts.Paths = flag.Args()
 
-	// godog v0.9.0 and earlier
-	status := godog.RunWithOptions("godogs", func(s *godog.Suite) {
-		FeatureContext(s)
-	}, opts)
-
-	// godog v0.10.0 (latest)
 	status := godog.TestSuite{
 		Name: "godogs",
 		TestSuiteInitializer: InitializeTestSuite,
@@ -288,12 +377,6 @@ func TestMain(m *testing.M) {
 		Randomize: time.Now().UTC().UnixNano(), // randomize scenario execution order
 	}
 
-	// godog v0.9.0 and earlier
-	status := godog.RunWithOptions("godogs", func(s *godog.Suite) {
-		FeatureContext(s)
-	}, opts)
-
-	// godog v0.10.0 (latest)
 	status := godog.TestSuite{
 		Name: "godogs",
 		TestSuiteInitializer: InitializeTestSuite,
@@ -325,12 +408,6 @@ func TestMain(m *testing.M) {
 		Paths:     []string{"features"},
 	}
 
-	// godog v0.9.0 and earlier
-	status := godog.RunWithOptions("godogs", func(s *godog.Suite) {
-		FeatureContext(s)
-	}, opts)
-
-	// godog v0.10.0 (latest)
 	status := godog.TestSuite{
 		Name: "godogs",
 		TestSuiteInitializer: InitializeTestSuite,
