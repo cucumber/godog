@@ -21,13 +21,20 @@ func BindRunCmdFlags(prefix string, flagSet *pflag.FlagSet, opts *Options) {
 - "~@wip": exclude all scenarios with wip tag
 - "@wip && ~@new": run wip scenarios, but exclude new
 - "@wip,@undone": run wip or undone scenarios`)
-	flagSet.StringVarP(&opts.Format, prefix+"format", "f", opts.Format, `writes the formatted output to stdout
+	flagSet.StringVarP(&opts.Format, prefix+"format", "f", opts.Format, `will write a report according to the selected formatter
+
+usage:
+-f <formatter> will use the selected formatter and write
+the report on stdout
+-f <formatter>:<file_path> will use the selected formatter
+and write the report to the file path
+
 built-in formatters:
 - progress: prints a character per step
-- cucumber: produces cucumber JSON format output
-- events: produces JSON event stream, based on spec: 0.1.0
-- junit: prints junit compatible xml to stdout
-- pretty: prints every feature with runtime statuses
+- cucumber: produces a Cucumber JSON report
+- events:   produces JSON event stream, based on spec: 0.1.0
+- junit:    produces JUnit compatible XML report
+- pretty:   prints every feature with runtime statuses
 `)
 
 	flagSet.BoolVarP(&opts.ShowStepDefinitions, prefix+"definitions", "d", opts.ShowStepDefinitions, "print all available step definitions")
