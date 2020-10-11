@@ -86,7 +86,9 @@ Install the godog binary - `go get github.com/cucumber/godog/cmd/godog`
 
 ### Step 3 - Create gherkin feature
 
-Imagine we have a **godog cart** to serve godogs for lunch. First of all, we describe our feature in plain text - `vim features/godogs.feature`:
+Imagine we have a **godog cart** to serve godogs for lunch.
+
+First of all, we describe our feature in plain text - `vim features/godogs.feature`
 
 ``` gherkin
 Feature: eat godogs
@@ -102,7 +104,7 @@ Feature: eat godogs
 
 ### Step 4 - Create godog step definitions
 
-**NOTE:** same as **go test** godog respects package level isolation. All your step definitions should be in your tested package root directory. In this case - `godogs`
+**NOTE:** same as **go test** godog respects package level isolation. All your step definitions should be in your tested package root directory. In this case: **godogs**.
 
 If we run godog inside the module: - `godog`
 
@@ -143,7 +145,7 @@ func FeatureContext(s *godog.Suite) {
 }
 ```
 
-Create a file and copy the step definitions into the file - `vim godogs_test.go`
+Create and copy the step definitions into a new file - `vim godogs_test.go`
 ``` go
 package main
 
@@ -204,7 +206,7 @@ You may change **return godog.ErrPending** to **return nil** in the three step d
 
 We only need a number of **godogs** for now. Lets keep it simple.
 
-Create a file and copy the code into the file - `vim godogs.go`
+Create and copy the code into a new file - `vim godogs.go`
 ``` go
 package main
 
@@ -227,9 +229,9 @@ godogs
 
 ### Step 6 - Add some logic to the step defintions
 
-Now lets implement our step definitions, which we can copy from generated console output snippets in order to test our feature requirements:
+Now lets implement our step definitions to test our feature requirements:
 
-Lets replace the contents of `godogs_test.go` with the code below - `vim godogs_test.go`
+Replace the contents of `godogs_test.go` with the code below - `vim godogs_test.go`
 ``` go
 package main
 
