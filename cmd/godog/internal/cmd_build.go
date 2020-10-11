@@ -32,7 +32,8 @@ The test runner can be executed with the same flags as when using godog run.`,
 		Run: buildCmdRunFunc,
 	}
 
-	buildCmd.Flags().StringVarP(&buildOutput, "output", "o", buildOutputDefault, "compiles the test runner to the named file")
+	buildCmd.Flags().StringVarP(&buildOutput, "output", "o", buildOutputDefault, `compiles the test runner to the named file
+`)
 
 	return buildCmd
 }
