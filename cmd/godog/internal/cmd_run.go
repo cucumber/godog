@@ -28,9 +28,9 @@ buildable go source.`,
   godog run <feature> <feature>
 
   Optional feature(s) to run:
-  - dir (features/)
-  - feature (*.feature)
-  - scenario at specific line (*.feature:10)
+    dir (features/)
+    feature (*.feature)
+    scenario at specific line (*.feature:10)
   If no feature arguments are supplied, godog will use "features/" by default.`,
 		Run: runCmdRunFunc,
 	}
