@@ -145,10 +145,10 @@ func undef() error {
 	return godog.ErrPending
 }
 
-func FeatureContext(s *godog.Suite) {
-	s.Step(` + "`^three$`" + `, three)
-	s.Step(` + "`^unavailable \"([^\"]*)\" cost (\\d+)$`" + `, unavailableCost)
-	s.Step(` + "`^undef$`" + `, undef)
+func InitializeScenario(ctx *godog.ScenarioContext) {
+	ctx.Step(` + "`^three$`" + `, three)
+	ctx.Step(` + "`^unavailable \"([^\"]*)\" cost (\\d+)$`" + `, unavailableCost)
+	ctx.Step(` + "`^undef$`" + `, undef)
 }
 
 `

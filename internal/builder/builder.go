@@ -43,7 +43,6 @@ func init() {
 {{end}}
 
 func main() {
-	{{if or .TestSuiteContexts .ScenarioContexts .XTestSuiteContexts .XScenarioContexts}}
 	status := godog.TestSuite{
 		Name: "{{ .Name }}",
 		TestSuiteInitializer: func (ctx *godog.TestSuiteContext) {
@@ -64,7 +63,7 @@ func main() {
 			{{end}}
 		},
 	}.Run()
-	{{end}}
+
 	os.Exit(status)
 }`))
 

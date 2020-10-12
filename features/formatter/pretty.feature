@@ -287,8 +287,8 @@ Feature: pretty formatter
         return godog.ErrPending
       }
 
-      func FeatureContext(s *godog.Suite) {
-        s.Step(`^undefined$`, undefined)
+      func InitializeScenario(ctx *godog.ScenarioContext) {
+        ctx.Step(`^undefined$`, undefined)
       }
     """
 
