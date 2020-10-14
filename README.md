@@ -68,11 +68,17 @@ Join [here](https://cucumberbdd-slack-invite.herokuapp.com/).
 - [#committers-go](https://cucumberbdd.slack.com/archives/CA5NJPDJ4) - Golang focused Cucumber Contributors
 - [#committers](https://cucumberbdd.slack.com/archives/C62D0FK0E) - General Cucumber Contributors
 
-## Example
+## Examples
+
+You can find a few examples [here](/_examples).
+
+**Note** that if you want to execute any of the examples and have the Git repository checked out in the `$GOPATH`, you need to use: `GO111MODULE=off`. [Issue](https://github.com/cucumber/godog/issues/344) for reference.
+
+### Godogs
 
 The following example can be [found here](/_examples/godogs).
 
-### Step 1 - Setup a go module
+#### Step 1 - Setup a go module
 
 Given we create a new go module **godogs** in your normal go workspace. - `mkdir godogs`
 
@@ -80,11 +86,11 @@ From now on, this is our work directory - `cd godogs`
 
 Initiate the go module - `go mod init godogs`
 
-### Step 2 - Install godog
+#### Step 2 - Install godog
 
 Install the godog binary - `go get github.com/cucumber/godog/cmd/godog`
 
-### Step 3 - Create gherkin feature
+#### Step 3 - Create gherkin feature
 
 Imagine we have a **godog cart** to serve godogs for lunch.
 
@@ -102,7 +108,7 @@ Feature: eat godogs
     Then there should be 7 remaining
 ```
 
-### Step 4 - Create godog step definitions
+#### Step 4 - Create godog step definitions
 
 **NOTE:** same as **go test** godog respects package level isolation. All your step definitions should be in your tested package root directory. In this case: **godogs**.
 
@@ -202,7 +208,7 @@ Feature: eat godogs
 
 You may change **return godog.ErrPending** to **return nil** in the three step definitions and the scenario will pass successfully.
 
-### Step 5 - Create the main program to test
+#### Step 5 - Create the main program to test
 
 We only need a number of **godogs** for now. Lets keep it simple.
 
@@ -227,7 +233,7 @@ godogs
 - godogs_test.go
 ```
 
-### Step 6 - Add some logic to the step defintions
+#### Step 6 - Add some logic to the step defintions
 
 Now lets implement our step definitions to test our feature requirements:
 
@@ -301,7 +307,7 @@ By now, you should have figured out, how to use **godog**. Another advice is to 
 
 When steps are orthogonal and small, you can combine them just like you do with Unix tools. Look how to simplify or remove ones, which can be composed.
 
-### References and Tutorials
+## References and Tutorials
 
 - [cucumber-html-reporter](https://github.com/gkushang/cucumber-html-reporter),
   may be used in order to generate **html** reports together with **cucumber** output formatter. See the [following docker image](https://github.com/myie/cucumber-html-reporter) for usage details.
@@ -310,7 +316,7 @@ When steps are orthogonal and small, you can combine them just like you do with 
 - see extension [AssistDog](https://github.com/hellomd/assistdog),
   which may have useful **gherkin.DataTable** transformations or comparison methods for assertions.
 
-### Documentation
+## Documentation
 
 See [pkg documentation][godoc] for general API details.
 See **[Circle Config](/.circleci/config.yml)** for supported **go** versions.
