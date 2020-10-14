@@ -28,9 +28,9 @@ Feature: undefined step snippets
               return godog.ErrPending
       }
 
-      func FeatureContext(s *godog.Suite) {
-              s.Step(`^I send "([^"]*)" request to "([^"]*)"$`, iSendRequestTo)
-              s.Step(`^the response code should be (\d+)$`, theResponseCodeShouldBe)
+      func InitializeScenario(ctx *godog.ScenarioContext) {
+              ctx.Step(`^I send "([^"]*)" request to "([^"]*)"$`, iSendRequestTo)
+              ctx.Step(`^the response code should be (\d+)$`, theResponseCodeShouldBe)
       }
       """
 
@@ -56,9 +56,9 @@ Feature: undefined step snippets
               return godog.ErrPending
       }
 
-      func FeatureContext(s *godog.Suite) {
-              s.Step(`^I send "([^"]*)" request to "([^"]*)" with:$`, iSendRequestToWith)
-              s.Step(`^the response code should be (\d+) and header "([^"]*)" should be "([^"]*)"$`, theResponseCodeShouldBeAndHeaderShouldBe)
+      func InitializeScenario(ctx *godog.ScenarioContext) {
+              ctx.Step(`^I send "([^"]*)" request to "([^"]*)" with:$`, iSendRequestToWith)
+              ctx.Step(`^the response code should be (\d+) and header "([^"]*)" should be "([^"]*)"$`, theResponseCodeShouldBeAndHeaderShouldBe)
       }
       """
 
@@ -87,9 +87,9 @@ Feature: undefined step snippets
               return godog.ErrPending
       }
 
-      func FeatureContext(s *godog.Suite) {
-              s.Step(`^I pull from github\.com$`, iPullFromGithubcom)
-              s.Step(`^the project should be there$`, theProjectShouldBeThere)
+      func InitializeScenario(ctx *godog.ScenarioContext) {
+              ctx.Step(`^I pull from github\.com$`, iPullFromGithubcom)
+              ctx.Step(`^the project should be there$`, theProjectShouldBeThere)
       }
       """
 
@@ -113,9 +113,9 @@ Feature: undefined step snippets
               return godog.ErrPending
       }
 
-      func FeatureContext(s *godog.Suite) {
-              s.Step(`^I add the "([^"]*)" to the basket$`, iAddTheToTheBasket)
-              s.Step(`^there is a "([^"]*)", which costs £(\d+)$`, thereIsAWhichCosts)
+      func InitializeScenario(ctx *godog.ScenarioContext) {
+              ctx.Step(`^I add the "([^"]*)" to the basket$`, iAddTheToTheBasket)
+              ctx.Step(`^there is a "([^"]*)", which costs £(\d+)$`, thereIsAWhichCosts)
       }
       """
 
@@ -139,8 +139,8 @@ Feature: undefined step snippets
               return godog.ErrPending
       }
 
-      func FeatureContext(s *godog.Suite) {
-              s.Step(`^(\d+) godogs$`, godogs)
-              s.Step(`^"([^"]*)", which costs £(\d+)$`, whichCosts)
+      func InitializeScenario(ctx *godog.ScenarioContext) {
+              ctx.Step(`^(\d+) godogs$`, godogs)
+              ctx.Step(`^"([^"]*)", which costs £(\d+)$`, whichCosts)
       }
       """

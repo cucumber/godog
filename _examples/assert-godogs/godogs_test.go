@@ -14,7 +14,7 @@ import (
 var opts = godog.Options{Output: colors.Colored(os.Stdout)}
 
 func init() {
-	godog.BindCommandLineFlags("godog.", &opts)
+	godog.BindFlags("godog.", flag.CommandLine, &opts)
 }
 
 func TestMain(m *testing.M) {

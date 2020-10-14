@@ -138,10 +138,10 @@ func thereShouldBeRemaining(arg1 int) error {
         return godog.ErrPending
 }
 
-func FeatureContext(s *godog.Suite) {
-        s.Step(`^I eat (\d+)$`, iEat)
-        s.Step(`^there are (\d+) godogs$`, thereAreGodogs)
-        s.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
+func InitializeScenario(ctx *godog.ScenarioContext) {
+        ctx.Step(`^I eat (\d+)$`, iEat)
+        ctx.Step(`^there are (\d+) godogs$`, thereAreGodogs)
+        ctx.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
 }
 ```
 
@@ -163,10 +163,10 @@ func thereShouldBeRemaining(arg1 int) error {
         return godog.ErrPending
 }
 
-func FeatureContext(s *godog.Suite) {
-        s.Step(`^I eat (\d+)$`, iEat)
-        s.Step(`^there are (\d+) godogs$`, thereAreGodogs)
-        s.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
+func InitializeScenario(ctx *godog.ScenarioContext) {
+        ctx.Step(`^I eat (\d+)$`, iEat)
+        ctx.Step(`^there are (\d+) godogs$`, thereAreGodogs)
+        ctx.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
 }
 ```
 

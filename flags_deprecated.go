@@ -49,7 +49,8 @@ func FlagSet(opt *Options) *flag.FlagSet {
 // BindFlags binds godog flags to given flag set prefixed
 // by given prefix, without overriding usage
 //
-// Deprecated: Use BindCommandLineFlags(prefix, &opts) instead of BindFlags(prefix, flag.CommandLine, &opts)
+// Deprecated: Use BindCommandLineFlags(prefix, &opts)
+// instead of BindFlags(prefix, flag.CommandLine, &opts)
 func BindFlags(prefix string, set *flag.FlagSet, opt *Options) {
 	descFormatOption := "How to format tests output. Built-in formats:\n"
 	// @TODO: sort by name
