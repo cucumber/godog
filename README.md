@@ -72,7 +72,7 @@ Join [here](https://cucumberbdd-slack-invite.herokuapp.com/).
 
 You can find a few examples [here](/_examples).
 
-**Note** that if you want to execute any of the examples and have the GIT repository checked out in the `$GOPATH`, you need to use: `GO111MODULE=off`. [Issue](https://github.com/cucumber/godog/issues/344) for reference.
+**Note** that if you want to execute any of the examples and have the Git repository checked out in the `$GOPATH`, you need to use: `GO111MODULE=off`. [Issue](https://github.com/cucumber/godog/issues/344) for reference.
 
 ### Godogs
 
