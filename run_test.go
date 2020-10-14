@@ -257,9 +257,8 @@ func bufErrorPipe(t *testing.T) (io.ReadCloser, func()) {
 	}
 }
 
-func Test_RandomizeRun(t *testing.T) {
+func Test_RandomizeRun_WithStaticSeed(t *testing.T) {
 	const noRandomFlag = 0
-	const createRandomSeedFlag = -1
 	const noConcurrencyFlag = 1
 	const formatter = "pretty"
 	const featurePath = "internal/formatters/formatter-tests/features/with_few_empty_scenarios.feature"
@@ -277,26 +276,49 @@ func Test_RandomizeRun(t *testing.T) {
 		noRandomFlag, []string{featurePath},
 	)
 
+	const staticSeed int64 = 1
 	actualStatus, actualOutput := testRun(t,
 		fmtOutputScenarioInitializer,
 		formatter, noConcurrencyFlag,
-		createRandomSeedFlag, []string{featurePath},
+		staticSeed, []string{featurePath},
 	)
 
-	expectedSeed := parseSeed(actualOutput)
-	assert.NotZero(t, expectedSeed)
+	actualSeed := parseSeed(actualOutput)
+	assert.Equal(t, staticSeed, actualSeed)
 
 	// Removes "Randomized with seed: <seed>" part of the output
 	actualOutputSplit := strings.Split(actualOutput, "\n")
 	actualOutputSplit = actualOutputSplit[:len(actualOutputSplit)-2]
 	actualOutputReduced := strings.Join(actualOutputSplit, "\n")
 
+	assert.Equal(t, expectedStatus, actualStatus)
 	assert.NotEqual(t, expectedOutput, actualOutputReduced)
 	assertOutput(t, formatter, expectedOutput, actualOutputReduced)
+}
 
-	expectedStatus, expectedOutput = actualStatus, actualOutput
+func Test_RandomizeRun_RerunWithSeed(t *testing.T) {
+	const createRandomSeedFlag = -1
+	const noConcurrencyFlag = 1
+	const formatter = "pretty"
+	const featurePath = "internal/formatters/formatter-tests/features/with_few_empty_scenarios.feature"
 
-	actualStatus, actualOutput = testRun(t,
+	fmtOutputScenarioInitializer := func(ctx *ScenarioContext) {
+		ctx.Step(`^(?:a )?failing step`, failingStepDef)
+		ctx.Step(`^(?:a )?pending step$`, pendingStepDef)
+		ctx.Step(`^(?:a )?passing step$`, passingStepDef)
+		ctx.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)
+	}
+
+	expectedStatus, expectedOutput := testRun(t,
+		fmtOutputScenarioInitializer,
+		formatter, noConcurrencyFlag,
+		createRandomSeedFlag, []string{featurePath},
+	)
+
+	expectedSeed := parseSeed(expectedOutput)
+	assert.NotZero(t, expectedSeed)
+
+	actualStatus, actualOutput := testRun(t,
 		fmtOutputScenarioInitializer,
 		formatter, noConcurrencyFlag,
 		expectedSeed, []string{featurePath},
