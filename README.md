@@ -343,10 +343,10 @@ var opts = godog.Options{
 }
 
 func init() {
-	// godog v0.10.0 (latest) and earlier
+	// godog v0.10.0 and earlier
 	godog.BindFlags("godog.", flag.CommandLine, &opts)
 
-	// godog v0.11.0
+	// godog v0.11.0-rc1 (latest)
 	godog.BindCommandLineFlags("godog.", &opts)
 }
 

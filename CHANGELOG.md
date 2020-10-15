@@ -20,6 +20,34 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Fixed
 
+## [v0.11.0-rc1]
+
+### Added
+- Created a simple example for a custom formatter ([330](https://github.com/cucumber/godog/pull/330) - [lonnblad])
+- --format junit:result.xml will now write to result.xml ([331](https://github.com/cucumber/godog/pull/331) - [lonnblad])
+- Added make commands to create artifacts and upload them to a github release ([333](https://github.com/cucumber/godog/pull/333) - [lonnblad])
+
+### Changed
+- Added Cobra for the Command Line Interface ([321](https://github.com/cucumber/godog/pull/321) - [lonnblad])
+- Added internal packages for formatters, storage and models ([323](https://github.com/cucumber/godog/pull/323) - [lonnblad])
+- Added an internal package for tags filtering ([326](https://github.com/cucumber/godog/pull/326) - [lonnblad])
+- Added an internal pkg for the builder ([327](https://github.com/cucumber/godog/pull/327) - [lonnblad])
+- Moved the parser code to a new internal pkg ([329](https://github.com/cucumber/godog/pull/329) - [lonnblad])
+- Moved StepDefinition to the formatters pkg ([332](https://github.com/cucumber/godog/pull/332) - [lonnblad])
+
+### Deprecated
+
+### Removed
+- Removed deprecated code ([322](https://github.com/cucumber/godog/pull/322) - [lonnblad])
+
+### Fixed
+- Improved the help text of the formatter flag in the run command ([347](https://github.com/cucumber/godog/pull/347) - [lonnblad])
+- Removed $GOPATH from the README.md and updated the example ([349](https://github.com/cucumber/godog/pull/349) - [lonnblad])
+- Fixed the undefined step definitions help ([350](https://github.com/cucumber/godog/pull/350) - [lonnblad])
+- Added a comment regarding running the examples within the $GOPATH ([352](https://github.com/cucumber/godog/pull/352) - [lonnblad])
+- doc(FAQ/TestMain): `testing.M.Run()` is optional ([353](https://github.com/cucumber/godog/pull/353) - [hansbogert])
+- Made a fix for the unstable Randomize Run tests ([354](https://github.com/cucumber/godog/pull/354) - [lonnblad])
+
 ## [v0.10.0]
 
 ### Added
@@ -126,9 +154,12 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ### Fixed
 
 <!-- Releases -->
-[Unreleased]: https://github.com/cucumber/cucumber/compare/godog/v0.8.1...master
-[0.8.0]:      https://github.com/cucumber/cucumber/compare/godog/v0.8.0...godog/v0.8.1
-[0.8.0]:      https://github.com/cucumber/cucumber/compare/godog/v0.7.13...godog/v0.8.0
+[Unreleased]:  https://github.com/cucumber/godog/compare/v0.11.0-rc1...master
+[v0.11.0-rc1]: https://github.com/cucumber/godog/compare/v0.10.0...v0.11.0-rc1
+[v0.10.0]:     https://github.com/cucumber/godog/compare/v0.9.0...v0.10.0
+[0.9.0]:       https://github.com/cucumber/godog/compare/v0.8.1...v0.9.0
+[0.8.1]:       https://github.com/cucumber/godog/compare/v0.8.0...v0.8.1
+[0.8.0]:       https://github.com/cucumber/godog/compare/v0.7.13...v0.8.0
 
 <!-- Contributors -->
 [axw]:              https://github.com/axw
@@ -140,3 +171,4 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 [titouanfreville]:  https://github.com/titouanfreville
 [denis-trofimov]:   https://github.com/denis-trofimov
 [leviable]:         https://github.com/leviable
+[hansbogert]:       https://github.com/hansbogert
