@@ -307,6 +307,10 @@ By now, you should have figured out, how to use **godog**. Another advice is to 
 
 When steps are orthogonal and small, you can combine them just like you do with Unix tools. Look how to simplify or remove ones, which can be composed.
 
+## Code of Conduct
+
+Everyone interacting in this codebase and issue tracker is expected to follow the Cucumber [code of conduct](https://github.com/cucumber/cucumber/blob/master/CODE_OF_CONDUCT.md).
+
 ## References and Tutorials
 
 - [cucumber-html-reporter](https://github.com/gkushang/cucumber-html-reporter),
