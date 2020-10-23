@@ -4,15 +4,15 @@ orbs:
   codecov: codecov/codecov@1.0.5
 
 executors:
-  exec_go_1_12:
-    docker:
-      - image: circleci/golang:1.12.17
   exec_go_1_13:
     docker:
-      - image: circleci/golang:1.13.11
+      - image: circleci/golang:1.13.15
   exec_go_1_14:
     docker:
-      - image: circleci/golang:1.14.4
+      - image: circleci/golang:1.14.9
+  exec_go_1_15:
+    docker:
+      - image: circleci/golang:1.15.3
 
 commands:
   fmt:
@@ -25,11 +25,6 @@ commands:
       - run: go get -u golang.org/x/lint/golint
       - run: golint -set_exit_status ./...
       - run: cd _examples && golint -set_exit_status ./... && cd ..
-  install:
-    description: "Install dependencies for go1.12"
-    steps:
-      - run: GO111MODULE=on go mod vendor
-      - run: cd _examples/db && GO111MODULE=on go mod vendor && cd ..
   vet:
     description: "Run go vet"
     steps:
@@ -51,33 +46,18 @@ commands:
     steps:
       - codecov/upload:
           file: "coverage.txt"
-  part1:
-    description: "Part1 include all commands that doesn't need dependencies installed"
+  all:
+    description: "Run all commands against godog code"
     steps:
       - checkout
       - fmt
       - lint
-  part2:
-    description: "Part2 is the all other commands"
-    steps:
       - vet
       - go_test
       - godog
       - coverage
-  all:
-    description: "Run all commands against godog code"
-    steps:
-      - part1
-      - part2
 
 jobs:
-  go1_12:
-    working_directory: /go/src/github.com/cucumber/godog
-    executor: exec_go_1_12
-    steps:
-      - part1
-      - install
-      - part2
   go1_13:
     working_directory: /go/src/github.com/cucumber/godog
     executor: exec_go_1_13
@@ -88,11 +68,16 @@ jobs:
     executor: exec_go_1_14
     steps:
       - all
+  go1_15:
+    working_directory: /go/src/github.com/cucumber/godog
+    executor: exec_go_1_15
+    steps:
+      - all
 
 workflows:
   version: 2
   test:
     jobs:
-      - go1_12
       - go1_13
       - go1_14
+      - go1_15
