@@ -341,6 +341,18 @@ You may integrate running **godog** in your **go test** command. You can run it 
 The following example binds **godog** flags with specified prefix `godog` in order to prevent flag collisions.
 
 ``` go
+package main
+
+import (
+	"flag" // godog v0.10.0 and earlier
+	"os"
+	"testing"
+
+	"github.com/cucumber/godog"
+	"github.com/cucumber/godog/colors"
+	flag "github.com/spf13/pflag" // godog v0.11.0-rc1 (latest)
+)
+
 var opts = godog.Options{
 	Output: colors.Colored(os.Stdout),
 	Format: "progress", // can define default values
