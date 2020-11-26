@@ -1,19 +1,19 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"testing"
 
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
+	flag "github.com/spf13/pflag"
 )
 
 var opts = godog.Options{Output: colors.Colored(os.Stdout)}
 
 func init() {
-	godog.BindFlags("godog.", flag.CommandLine, &opts)
+	godog.BindCommandLineFlags("godog.", &opts)
 }
 
 func TestMain(m *testing.M) {
@@ -27,9 +27,6 @@ func TestMain(m *testing.M) {
 		Options:              &opts,
 	}.Run()
 
-	if st := m.Run(); st > status {
-		status = st
-	}
 	os.Exit(status)
 }
 

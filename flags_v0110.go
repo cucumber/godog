@@ -2,6 +2,7 @@ package godog
 
 import (
 	"errors"
+	"flag"
 	"math/rand"
 	"time"
 
@@ -28,4 +29,5 @@ func flagSet(opt *Options) *pflag.FlagSet {
 func BindCommandLineFlags(prefix string, opts *Options) {
 	flagSet := pflag.CommandLine
 	flags.BindRunCmdFlags(prefix, flagSet, opts)
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 }
