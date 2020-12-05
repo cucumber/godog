@@ -20,7 +20,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Fixed
 
-## [v0.11.0-rc1]
+## [v0.11.0-rc2]
 
 ### Added
 - Created a simple example for a custom formatter ([330](https://github.com/cucumber/godog/pull/330) - [lonnblad])
@@ -154,8 +154,8 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ### Fixed
 
 <!-- Releases -->
-[Unreleased]:  https://github.com/cucumber/godog/compare/v0.11.0-rc1...master
-[v0.11.0-rc1]: https://github.com/cucumber/godog/compare/v0.10.0...v0.11.0-rc1
+[Unreleased]:  https://github.com/cucumber/godog/compare/v0.11.0-rc2...master
+[v0.11.0-rc2]: https://github.com/cucumber/godog/compare/v0.10.0...v0.11.0-rc2
 [v0.10.0]:     https://github.com/cucumber/godog/compare/v0.9.0...v0.10.0
 [0.9.0]:       https://github.com/cucumber/godog/compare/v0.8.1...v0.9.0
 [0.8.1]:       https://github.com/cucumber/godog/compare/v0.8.0...v0.8.1
