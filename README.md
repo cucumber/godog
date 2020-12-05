@@ -350,7 +350,7 @@ import (
 
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
-	flag "github.com/spf13/pflag" // godog v0.11.0-rc1 (latest)
+	flag "github.com/spf13/pflag" // godog v0.11.0-rc2 (latest)
 )
 
 var opts = godog.Options{
@@ -362,7 +362,7 @@ func init() {
 	// godog v0.10.0 and earlier
 	godog.BindFlags("godog.", flag.CommandLine, &opts)
 
-	// godog v0.11.0-rc1 (latest)
+	// godog v0.11.0-rc2 (latest)
 	godog.BindCommandLineFlags("godog.", &opts)
 }
 
