@@ -6,7 +6,7 @@ This project adheres to [Semantic Versioning](http://semver.org).
 
 This document is formatted according to the principles of [Keep A CHANGELOG](http://keepachangelog.com).
 
-----
+---
 
 ## [Unreleased]
 
@@ -20,37 +20,46 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Fixed
 
-## [v0.11.0-rc2]
+## [v0.11.0]
 
 ### Added
+
 - Created a simple example for a custom formatter ([330](https://github.com/cucumber/godog/pull/330) - [lonnblad])
 - --format junit:result.xml will now write to result.xml ([331](https://github.com/cucumber/godog/pull/331) - [lonnblad])
 - Added make commands to create artifacts and upload them to a github release ([333](https://github.com/cucumber/godog/pull/333) - [lonnblad])
+- Created release notes and changelog for v0.11.0 ([355](https://github.com/cucumber/godog/pull/355) - [lonnblad])
+- Created v0.11.0-rc2 ([362](https://github.com/cucumber/godog/pull/362) - [lonnblad])
 
 ### Changed
+
 - Added Cobra for the Command Line Interface ([321](https://github.com/cucumber/godog/pull/321) - [lonnblad])
 - Added internal packages for formatters, storage and models ([323](https://github.com/cucumber/godog/pull/323) - [lonnblad])
 - Added an internal package for tags filtering ([326](https://github.com/cucumber/godog/pull/326) - [lonnblad])
 - Added an internal pkg for the builder ([327](https://github.com/cucumber/godog/pull/327) - [lonnblad])
 - Moved the parser code to a new internal pkg ([329](https://github.com/cucumber/godog/pull/329) - [lonnblad])
 - Moved StepDefinition to the formatters pkg ([332](https://github.com/cucumber/godog/pull/332) - [lonnblad])
+- Removed go1.12 and added go1.15 to CI config ([356](https://github.com/cucumber/godog/pull/356) - [lonnblad])
 
 ### Deprecated
 
 ### Removed
+
 - Removed deprecated code ([322](https://github.com/cucumber/godog/pull/322) - [lonnblad])
 
 ### Fixed
+
 - Improved the help text of the formatter flag in the run command ([347](https://github.com/cucumber/godog/pull/347) - [lonnblad])
 - Removed $GOPATH from the README.md and updated the example ([349](https://github.com/cucumber/godog/pull/349) - [lonnblad])
 - Fixed the undefined step definitions help ([350](https://github.com/cucumber/godog/pull/350) - [lonnblad])
 - Added a comment regarding running the examples within the $GOPATH ([352](https://github.com/cucumber/godog/pull/352) - [lonnblad])
 - doc(FAQ/TestMain): `testing.M.Run()` is optional ([353](https://github.com/cucumber/godog/pull/353) - [hansbogert])
 - Made a fix for the unstable Randomize Run tests ([354](https://github.com/cucumber/godog/pull/354) - [lonnblad])
+- Fixed an issue when go test is parsing command-line flags ([359](https://github.com/cucumber/godog/pull/359) - [lonnblad])
 
 ## [v0.10.0]
 
 ### Added
+
 - Added concurrency support to the pretty formatter ([275](https://github.com/cucumber/godog/pull/275) - [lonnblad])
 - Added concurrency support to the events formatter ([274](https://github.com/cucumber/godog/pull/274) - [lonnblad])
 - Added concurrency support to the cucumber formatter ([273](https://github.com/cucumber/godog/pull/273) - [lonnblad])
@@ -63,25 +72,29 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 - Added support for concurrent scenarios ([311](https://github.com/cucumber/godog/pull/311) - [lonnblad])
 
 ### Changed
+
 - Broke out snippets gen and added sorting on method name ([271](https://github.com/cucumber/godog/pull/271) - [lonnblad])
 - Updated so that we run all tests concurrent now ([278](https://github.com/cucumber/godog/pull/278) - [lonnblad])
 - Moved fmt tests to a godog_test pkg and restructured the fmt output tests ([295](https://github.com/cucumber/godog/pull/295) - [lonnblad])
 - Moved builder tests to a godog_test pkg ([296](https://github.com/cucumber/godog/pull/296) - [lonnblad])
 - Made the builder tests run in parallel ([298](https://github.com/cucumber/godog/pull/298) - [lonnblad])
-- Refactored suite_context.go  ([300](https://github.com/cucumber/godog/pull/300) - [lonnblad])
+- Refactored suite_context.go ([300](https://github.com/cucumber/godog/pull/300) - [lonnblad])
 - Added better testing of the Context Initializers and TestSuite{}.Run() ([301](https://github.com/cucumber/godog/pull/301) - [lonnblad])
-- Updated the README.md  ([302](https://github.com/cucumber/godog/pull/302) - [lonnblad])
+- Updated the README.md ([302](https://github.com/cucumber/godog/pull/302) - [lonnblad])
 - Unexported some exported properties in unexported structs ([303](https://github.com/cucumber/godog/pull/303) - [lonnblad])
 - Refactored some states in the formatters and feature struct ([310](https://github.com/cucumber/godog/pull/310) - [lonnblad])
 
 ### Deprecated
+
 - Deprecated SuiteContext and ConcurrentFormatter ([314](https://github.com/cucumber/godog/pull/314) - [lonnblad])
 
 ### Removed
+
 - Removed pre go112 build code ([293](https://github.com/cucumber/godog/pull/293) - [lonnblad])
 - Removed the deprecated feature hooks ([312](https://github.com/cucumber/godog/pull/312) - [lonnblad])
 
 ### Fixed
+
 - Fixed failing builder tests due to the v0.9.0 change ([lonnblad])
 - Update paths to screenshots for examples ([270](https://github.com/cucumber/godog/pull/270) - [leviable])
 - Made progress formatter verification a bit more accurate ([lonnblad])
@@ -154,21 +167,23 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ### Fixed
 
 <!-- Releases -->
-[Unreleased]:  https://github.com/cucumber/godog/compare/v0.11.0-rc2...master
-[v0.11.0-rc2]: https://github.com/cucumber/godog/compare/v0.10.0...v0.11.0-rc2
-[v0.10.0]:     https://github.com/cucumber/godog/compare/v0.9.0...v0.10.0
-[0.9.0]:       https://github.com/cucumber/godog/compare/v0.8.1...v0.9.0
-[0.8.1]:       https://github.com/cucumber/godog/compare/v0.8.0...v0.8.1
-[0.8.0]:       https://github.com/cucumber/godog/compare/v0.7.13...v0.8.0
+
+[unreleased]: https://github.com/cucumber/godog/compare/v0.11.0...master
+[v0.11.0]: https://github.com/cucumber/godog/compare/v0.10.0...v0.11.0
+[v0.10.0]: https://github.com/cucumber/godog/compare/v0.9.0...v0.10.0
+[0.9.0]: https://github.com/cucumber/godog/compare/v0.8.1...v0.9.0
+[0.8.1]: https://github.com/cucumber/godog/compare/v0.8.0...v0.8.1
+[0.8.0]: https://github.com/cucumber/godog/compare/v0.7.13...v0.8.0
 
 <!-- Contributors -->
-[axw]:              https://github.com/axw
-[jaysonesmith]:     https://github.com/jaysonesmith
-[lonnblad]:         https://github.com/lonnblad
-[smikulcik]:        https://github.com/smikulcik
-[ericmcbride]:      https://github.com/ericmcbride
-[gjtaylor]:         https://github.com/gjtaylor
-[titouanfreville]:  https://github.com/titouanfreville
-[denis-trofimov]:   https://github.com/denis-trofimov
-[leviable]:         https://github.com/leviable
-[hansbogert]:       https://github.com/hansbogert
+
+[axw]: https://github.com/axw
+[jaysonesmith]: https://github.com/jaysonesmith
+[lonnblad]: https://github.com/lonnblad
+[smikulcik]: https://github.com/smikulcik
+[ericmcbride]: https://github.com/ericmcbride
+[gjtaylor]: https://github.com/gjtaylor
+[titouanfreville]: https://github.com/titouanfreville
+[denis-trofimov]: https://github.com/denis-trofimov
+[leviable]: https://github.com/leviable
+[hansbogert]: https://github.com/hansbogert

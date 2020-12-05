@@ -43,13 +43,13 @@ When automated testing is this much fun, teams can easily protect themselves fro
 
 ## Install
 ```
-go get github.com/cucumber/godog/cmd/godog@v0.10.0
+go get github.com/cucumber/godog/cmd/godog@v0.11.0
 ```
-Adding `@v0.10.0` will install v0.10.0 specifically instead of master.
+Adding `@v0.11.0` will install v0.11.0 specifically instead of master.
 
 Running `within the $GOPATH`, you would also need to set `GO111MODULE=on`, like this:
 ```
-GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.10.0
+GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.11.0
 ```
 
 ## Contributions
@@ -350,7 +350,7 @@ import (
 
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
-	flag "github.com/spf13/pflag" // godog v0.11.0-rc2 (latest)
+	flag "github.com/spf13/pflag" // godog v0.11.0 (latest)
 )
 
 var opts = godog.Options{
@@ -359,11 +359,8 @@ var opts = godog.Options{
 }
 
 func init() {
-	// godog v0.10.0 and earlier
-	godog.BindFlags("godog.", flag.CommandLine, &opts)
-
-	// godog v0.11.0-rc2 (latest)
-	godog.BindCommandLineFlags("godog.", &opts)
+	godog.BindFlags("godog.", flag.CommandLine, &opts) // godog v0.10.0 and earlier
+	godog.BindCommandLineFlags("godog.", &opts)        // godog v0.11.0 (latest)
 }
 
 func TestMain(m *testing.M) {
