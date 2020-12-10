@@ -12,6 +12,9 @@ import (
 	"github.com/cucumber/godog/internal/models"
 )
 
+// matchable errors
+var ()
+
 // Scenario represents the executed scenario
 type Scenario = messages.Pickle
 
@@ -197,7 +200,7 @@ func (ctx *ScenarioContext) Step(expr, stepFunc interface{}) {
 			}
 		case reflect.Slice:
 			if typ.Elem().Kind() != reflect.String {
-				panic(fmt.Sprintf("expected handler to return []string for multistep, but got: []%s", typ.Kind()))
+				panic(fmt.Sprintf("expected handler to return []string for multistep, but got: []%s", typ.Elem().Kind()))
 			}
 			def.Nested = true
 		default:
