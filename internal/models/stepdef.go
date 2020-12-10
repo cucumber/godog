@@ -156,7 +156,11 @@ func (sd *StepDefinition) Run() interface{} {
 		}
 	}
 
-	return sd.HandlerValue.Call(values)[0].Interface()
+	res := sd.HandlerValue.Call(values)
+	if len(res) == 0 {
+		return nil
+	}
+	return res[0].Interface()
 }
 
 func (sd *StepDefinition) shouldBeString(idx int) (string, error) {

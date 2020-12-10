@@ -12,6 +12,27 @@ import (
 	"github.com/cucumber/godog/internal/models"
 )
 
+func TestShouldSupportEmptyHandlerReturn(t *testing.T) {
+	fn := func(a int64, b int32, c int16, d int8) {}
+
+	def := &models.StepDefinition{
+		StepDefinition: formatters.StepDefinition{
+			Handler: fn,
+		},
+		HandlerValue: reflect.ValueOf(fn),
+	}
+
+	def.Args = []interface{}{"1", "1", "1", "1"}
+	if err := def.Run(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	def.Args = []interface{}{"1", "1", "1", strings.Repeat("1", 9)}
+	if err := def.Run(); err == nil {
+		t.Fatalf("expected convertion fail for int8, but got none")
+	}
+}
+
 func TestShouldSupportIntTypes(t *testing.T) {
 	fn := func(a int64, b int32, c int16, d int8) error { return nil }
 

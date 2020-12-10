@@ -108,6 +108,7 @@ func InitializeScenario(ctx *ScenarioContext) {
 		return nil
 	})
 
+	ctx.Step(`^(?:a )?passing step without return$`, func() {})
 	ctx.BeforeStep(tc.inject)
 }
 
@@ -424,9 +425,8 @@ func (tc *godogFeaturesScenario) aFeatureFile(path string, body *DocString) erro
 	return err
 }
 
-func (tc *godogFeaturesScenario) featurePath(path string) error {
+func (tc *godogFeaturesScenario) featurePath(path string) {
 	tc.paths = append(tc.paths, path)
-	return nil
 }
 
 func (tc *godogFeaturesScenario) parseFeatures() error {

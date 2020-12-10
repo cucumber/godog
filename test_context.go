@@ -176,8 +176,8 @@ func (ctx *ScenarioContext) Step(expr, stepFunc interface{}) {
 		panic(fmt.Sprintf("expected handler to be func, but got: %T", stepFunc))
 	}
 
-	if typ.NumOut() != 1 {
-		panic(fmt.Sprintf("expected handler to return only one value, but it has: %d", typ.NumOut()))
+	if typ.NumOut() > 1 {
+		panic(fmt.Sprintf("expected handler to return either zero or one value, but it has: %d", typ.NumOut()))
 	}
 
 	def := &models.StepDefinition{
@@ -188,19 +188,21 @@ func (ctx *ScenarioContext) Step(expr, stepFunc interface{}) {
 		HandlerValue: v,
 	}
 
-	typ = typ.Out(0)
-	switch typ.Kind() {
-	case reflect.Interface:
-		if !typ.Implements(errorInterface) {
-			panic(fmt.Sprintf("expected handler to return an error, but got: %s", typ.Kind()))
+	if typ.NumOut() == 1 {
+		typ = typ.Out(0)
+		switch typ.Kind() {
+		case reflect.Interface:
+			if !typ.Implements(errorInterface) {
+				panic(fmt.Sprintf("expected handler to return an error, but got: %s", typ.Kind()))
+			}
+		case reflect.Slice:
+			if typ.Elem().Kind() != reflect.String {
+				panic(fmt.Sprintf("expected handler to return []string for multistep, but got: []%s", typ.Kind()))
+			}
+			def.Nested = true
+		default:
+			panic(fmt.Sprintf("expected handler to return an error or []string, but got: %s", typ.Kind()))
 		}
-	case reflect.Slice:
-		if typ.Elem().Kind() != reflect.String {
-			panic(fmt.Sprintf("expected handler to return []string for multistep, but got: []%s", typ.Kind()))
-		}
-		def.Nested = true
-	default:
-		panic(fmt.Sprintf("expected handler to return an error or []string, but got: %s", typ.Kind()))
 	}
 
 	ctx.suite.steps = append(ctx.suite.steps, def)
