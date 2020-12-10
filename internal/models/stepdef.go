@@ -62,7 +62,7 @@ func (sd *StepDefinition) Run() interface{} {
 			if err != nil {
 				return fmt.Errorf(`%w %d: "%s" to int64: %s`, ErrCannotConvert, i, s, err)
 			}
-			values = append(values, reflect.ValueOf(int64(v)))
+			values = append(values, reflect.ValueOf(v))
 		case reflect.Int32:
 			s, err := sd.shouldBeString(i)
 			if err != nil {
