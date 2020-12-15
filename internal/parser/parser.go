@@ -78,7 +78,7 @@ func parseFeatureDir(dir string, newIDFunc func() string) ([]*models.Feature, er
 	})
 }
 
-func parsePath(path string) ([]*models.Feature, error) {
+func parsePath(path string, newIDFunc func() string) ([]*models.Feature, error) {
 	var features []*models.Feature
 
 	path, line := ExtractFeaturePathLine(path)
@@ -87,8 +87,6 @@ func parsePath(path string) ([]*models.Feature, error) {
 	if err != nil {
 		return features, err
 	}
-
-	newIDFunc := (&messages.Incrementing{}).NewId
 
 	if fi.IsDir() {
 		return parseFeatureDir(path, newIDFunc)
@@ -119,8 +117,9 @@ func ParseFeatures(filter string, paths []string) ([]*models.Feature, error) {
 
 	featureIdxs := make(map[string]int)
 	uniqueFeatureURI := make(map[string]*models.Feature)
+	newIDFunc := (&messages.Incrementing{}).NewId
 	for _, path := range paths {
-		feats, err := parsePath(path)
+		feats, err := parsePath(path, newIDFunc)
 
 		switch {
 		case os.IsNotExist(err):
