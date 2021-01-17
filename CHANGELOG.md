@@ -55,6 +55,8 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 - doc(FAQ/TestMain): `testing.M.Run()` is optional ([353](https://github.com/cucumber/godog/pull/353) - [hansbogert])
 - Made a fix for the unstable Randomize Run tests ([354](https://github.com/cucumber/godog/pull/354) - [lonnblad])
 - Fixed an issue when go test is parsing command-line flags ([359](https://github.com/cucumber/godog/pull/359) - [lonnblad])
+- Make pickleStepIDs unique accross multiple paths ([366](https://github.com/cucumber/godog/pull/366) - [rickardenglund])
+
 
 ## [v0.10.0]
 
@@ -187,3 +189,4 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 [denis-trofimov]: https://github.com/denis-trofimov
 [leviable]: https://github.com/leviable
 [hansbogert]: https://github.com/hansbogert
+[rickardenglund]: https://github.com/rickardenglund
