@@ -49,6 +49,9 @@ func thereShouldBeRemaining(remaining int) error {
 	}
 	return nil
 }
+func thisStepIsPending() error {
+	return godog.ErrPending
+}
 
 func InitializeTestSuite(ctx *godog.TestSuiteContext) {
 	ctx.BeforeSuite(func() { Godogs = 0 })
@@ -62,4 +65,5 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^there are (\d+) godogs$`, thereAreGodogs)
 	ctx.Step(`^I eat (\d+)$`, iEat)
 	ctx.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
+	ctx.Step(`^this step is pending$`, thisStepIsPending)
 }

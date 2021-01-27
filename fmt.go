@@ -13,6 +13,14 @@ import (
 	"github.com/cucumber/godog/internal/storage"
 )
 
+var (
+	Passed    = models.Passed
+	Failed    = models.Failed
+	Skipped   = models.Skipped
+	Undefined = models.Undefined
+	Pending   = models.Pending
+)
+
 // FindFmt searches available formatters registered
 // and returns FormaterFunc matched by given
 // format name or nil otherwise

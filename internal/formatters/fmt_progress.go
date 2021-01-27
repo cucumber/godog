@@ -25,37 +25,37 @@ func NewProgressfmt(suite string, out io.Writer) *Progress {
 	steps := 0
 	return &Progress{
 		Basefmt:     NewBaseFmt(suite, out),
-		stepsPerRow: 70,
-		steps:       &steps,
+		StepsPerRow: 70,
+		Steps:       &steps,
 	}
 }
 
 type Progress struct {
 	*Basefmt
-	stepsPerRow int
-	steps       *int
+	StepsPerRow int
+	Steps       *int
 }
 
 func (f *Progress) Summary() {
-	left := math.Mod(float64(*f.steps), float64(f.stepsPerRow))
+	left := math.Mod(float64(*f.Steps), float64(f.StepsPerRow))
 	if left != 0 {
-		if *f.steps > f.stepsPerRow {
-			fmt.Fprintf(f.out, s(f.stepsPerRow-int(left))+fmt.Sprintf(" %d\n", *f.steps))
+		if *f.Steps > f.StepsPerRow {
+			fmt.Fprintf(f.out, s(f.StepsPerRow-int(left))+fmt.Sprintf(" %d\n", *f.Steps))
 		} else {
-			fmt.Fprintf(f.out, " %d\n", *f.steps)
+			fmt.Fprintf(f.out, " %d\n", *f.Steps)
 		}
 	}
 
 	var failedStepsOutput []string
 
-	failedSteps := f.storage.MustGetPickleStepResultsByStatus(failed)
+	failedSteps := f.Storage.MustGetPickleStepResultsByStatus(failed)
 	sort.Sort(sortPickleStepResultsByPickleStepID(failedSteps))
 
 	for _, sr := range failedSteps {
 		if sr.Status == failed {
-			pickle := f.storage.MustGetPickle(sr.PickleID)
-			pickleStep := f.storage.MustGetPickleStep(sr.PickleStepID)
-			feature := f.storage.MustGetFeature(pickle.Uri)
+			pickle := f.Storage.MustGetPickle(sr.PickleID)
+			pickleStep := f.Storage.MustGetPickleStep(sr.PickleStepID)
+			feature := f.Storage.MustGetFeature(pickle.Uri)
 
 			sc := feature.FindScenario(pickle.AstNodeIds[0])
 			scenarioDesc := fmt.Sprintf("%s: %s", sc.Keyword, pickle.Name)
@@ -85,7 +85,7 @@ func (f *Progress) Summary() {
 }
 
 func (f *Progress) step(pickleStepID string) {
-	pickleStepResult := f.storage.MustGetPickleStepResult(pickleStepID)
+	pickleStepResult := f.Storage.MustGetPickleStepResult(pickleStepID)
 
 	switch pickleStepResult.Status {
 	case passed:
@@ -100,18 +100,18 @@ func (f *Progress) step(pickleStepID string) {
 		fmt.Fprint(f.out, yellow("P"))
 	}
 
-	*f.steps++
+	*f.Steps++
 
-	if math.Mod(float64(*f.steps), float64(f.stepsPerRow)) == 0 {
-		fmt.Fprintf(f.out, " %d\n", *f.steps)
+	if math.Mod(float64(*f.Steps), float64(f.StepsPerRow)) == 0 {
+		fmt.Fprintf(f.out, " %d\n", *f.Steps)
 	}
 }
 
 func (f *Progress) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Passed(pickle, step, match)
 
-	f.lock.Lock()
-	defer f.lock.Unlock()
+	f.Lock.Lock()
+	defer f.Lock.Unlock()
 
 	f.step(step.Id)
 }
@@ -119,8 +119,8 @@ func (f *Progress) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleS
 func (f *Progress) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Skipped(pickle, step, match)
 
-	f.lock.Lock()
-	defer f.lock.Unlock()
+	f.Lock.Lock()
+	defer f.Lock.Unlock()
 
 	f.step(step.Id)
 }
@@ -128,8 +128,8 @@ func (f *Progress) Skipped(pickle *messages.Pickle, step *messages.Pickle_Pickle
 func (f *Progress) Undefined(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Undefined(pickle, step, match)
 
-	f.lock.Lock()
-	defer f.lock.Unlock()
+	f.Lock.Lock()
+	defer f.Lock.Unlock()
 
 	f.step(step.Id)
 }
@@ -137,8 +137,8 @@ func (f *Progress) Undefined(pickle *messages.Pickle, step *messages.Pickle_Pick
 func (f *Progress) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition, err error) {
 	f.Basefmt.Failed(pickle, step, match, err)
 
-	f.lock.Lock()
-	defer f.lock.Unlock()
+	f.Lock.Lock()
+	defer f.Lock.Unlock()
 
 	f.step(step.Id)
 }
@@ -146,8 +146,8 @@ func (f *Progress) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleS
 func (f *Progress) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Pending(pickle, step, match)
 
-	f.lock.Lock()
-	defer f.lock.Unlock()
+	f.Lock.Lock()
+	defer f.Lock.Unlock()
 
 	f.step(step.Id)
 }
