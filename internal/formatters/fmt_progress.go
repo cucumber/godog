@@ -18,21 +18,25 @@ func init() {
 
 // ProgressFormatterFunc implements the FormatterFunc for the progress formatter
 func ProgressFormatterFunc(suite string, out io.Writer) formatters.Formatter {
+	return NewProgressfmt(suite, out)
+}
+
+func NewProgressfmt(suite string, out io.Writer) *Progress {
 	steps := 0
-	return &progress{
+	return &Progress{
 		Basefmt:     NewBaseFmt(suite, out),
 		stepsPerRow: 70,
 		steps:       &steps,
 	}
 }
 
-type progress struct {
+type Progress struct {
 	*Basefmt
 	stepsPerRow int
 	steps       *int
 }
 
-func (f *progress) Summary() {
+func (f *Progress) Summary() {
 	left := math.Mod(float64(*f.steps), float64(f.stepsPerRow))
 	if left != 0 {
 		if *f.steps > f.stepsPerRow {
@@ -80,7 +84,7 @@ func (f *progress) Summary() {
 	f.Basefmt.Summary()
 }
 
-func (f *progress) step(pickleStepID string) {
+func (f *Progress) step(pickleStepID string) {
 	pickleStepResult := f.storage.MustGetPickleStepResult(pickleStepID)
 
 	switch pickleStepResult.Status {
@@ -103,7 +107,7 @@ func (f *progress) step(pickleStepID string) {
 	}
 }
 
-func (f *progress) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
+func (f *Progress) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Passed(pickle, step, match)
 
 	f.lock.Lock()
@@ -112,7 +116,7 @@ func (f *progress) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleS
 	f.step(step.Id)
 }
 
-func (f *progress) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
+func (f *Progress) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Skipped(pickle, step, match)
 
 	f.lock.Lock()
@@ -121,7 +125,7 @@ func (f *progress) Skipped(pickle *messages.Pickle, step *messages.Pickle_Pickle
 	f.step(step.Id)
 }
 
-func (f *progress) Undefined(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
+func (f *Progress) Undefined(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Undefined(pickle, step, match)
 
 	f.lock.Lock()
@@ -130,7 +134,7 @@ func (f *progress) Undefined(pickle *messages.Pickle, step *messages.Pickle_Pick
 	f.step(step.Id)
 }
 
-func (f *progress) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition, err error) {
+func (f *Progress) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition, err error) {
 	f.Basefmt.Failed(pickle, step, match, err)
 
 	f.lock.Lock()
@@ -139,7 +143,7 @@ func (f *progress) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleS
 	f.step(step.Id)
 }
 
-func (f *progress) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
+func (f *Progress) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Pending(pickle, step, match)
 
 	f.lock.Lock()

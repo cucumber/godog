@@ -74,3 +74,23 @@ func printStepDefinitions(steps []*models.StepDefinition, w io.Writer) {
 		fmt.Fprintln(w, "there were no contexts registered, could not find any step definition..")
 	}
 }
+
+func NewBasefmt(suite string, out io.Writer) *Basefmt {
+	return &Basefmt{
+		Basefmt: internal_fmt.NewBaseFmt(suite, out),
+	}
+}
+
+func NewProgressfmt(suite string, out io.Writer) *Progress {
+	return &Progress{
+		Progress: internal_fmt.NewProgressfmt(suite, out),
+	}
+}
+
+type Basefmt struct {
+	*internal_fmt.Basefmt
+}
+
+type Progress struct {
+	*internal_fmt.Progress
+}
