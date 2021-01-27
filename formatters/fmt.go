@@ -89,11 +89,3 @@ type StepDefinition struct {
 	Expr    *regexp.Regexp
 	Handler interface{}
 }
-
-// type Basefmt struct {
-// 	*internal_fmt.Basefmt
-// }
-//
-// type Progressfmt struct {
-// 	*internal_fmt.Progressfmt
-// }
