@@ -2,6 +2,8 @@ package flags
 
 import (
 	"io"
+
+	"github.com/cucumber/godog/internal/models"
 )
 
 // Options are suite run options
@@ -51,8 +53,11 @@ type Options struct {
 	// Concurrency rate, not all formatters accepts this
 	Concurrency int
 
-	// All feature file paths
+	// All feature file paths. Cannot be used with Options.Features
 	Paths []string
+
+	// Parsed feature objects. Overrides Options.Paths
+	Features []*models.Feature
 
 	// Where it should print formatter output
 	Output io.Writer

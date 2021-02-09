@@ -200,9 +200,13 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 	runner.fmt = formatter(suiteName, output)
 
 	var err error
-	if runner.features, err = parser.ParseFeatures(opt.Tags, opt.Paths); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return exitOptionError
+	if len(opt.Features) > 0 {
+		runner.features = opt.Features
+	} else {
+		if runner.features, err = parser.ParseFeatures(opt.Tags, opt.Paths); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return exitOptionError
+		}
 	}
 
 	runner.storage = storage.NewStorage()
