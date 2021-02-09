@@ -273,14 +273,14 @@ func Test_RandomizeRun_WithStaticSeed(t *testing.T) {
 	expectedStatus, expectedOutput := testRun(t,
 		fmtOutputScenarioInitializer,
 		formatter, noConcurrencyFlag,
-		noRandomFlag, []string{featurePath},
+		noRandomFlag, []string{featurePath}, nil,
 	)
 
 	const staticSeed int64 = 1
 	actualStatus, actualOutput := testRun(t,
 		fmtOutputScenarioInitializer,
 		formatter, noConcurrencyFlag,
-		staticSeed, []string{featurePath},
+		staticSeed, []string{featurePath}, nil,
 	)
 
 	actualSeed := parseSeed(actualOutput)
@@ -312,7 +312,7 @@ func Test_RandomizeRun_RerunWithSeed(t *testing.T) {
 	expectedStatus, expectedOutput := testRun(t,
 		fmtOutputScenarioInitializer,
 		formatter, noConcurrencyFlag,
-		createRandomSeedFlag, []string{featurePath},
+		createRandomSeedFlag, []string{featurePath}, nil,
 	)
 
 	expectedSeed := parseSeed(expectedOutput)
@@ -321,7 +321,7 @@ func Test_RandomizeRun_RerunWithSeed(t *testing.T) {
 	actualStatus, actualOutput := testRun(t,
 		fmtOutputScenarioInitializer,
 		formatter, noConcurrencyFlag,
-		expectedSeed, []string{featurePath},
+		expectedSeed, []string{featurePath}, nil,
 	)
 
 	actualSeed := parseSeed(actualOutput)
@@ -347,7 +347,7 @@ func Test_FormatOutputRun(t *testing.T) {
 	expectedStatus, expectedOutput := testRun(t,
 		fmtOutputScenarioInitializer,
 		formatter, noConcurrencyFlag,
-		noRandomFlag, []string{featurePath},
+		noRandomFlag, []string{featurePath}, nil,
 	)
 
 	dir := filepath.Join(os.TempDir(), t.Name())
@@ -361,7 +361,7 @@ func Test_FormatOutputRun(t *testing.T) {
 	actualStatus, actualOutput := testRun(t,
 		fmtOutputScenarioInitializer,
 		formatter+":"+file, noConcurrencyFlag,
-		noRandomFlag, []string{featurePath},
+		noRandomFlag, []string{featurePath}, nil,
 	)
 
 	result, err := ioutil.ReadFile(file)
@@ -394,7 +394,7 @@ func Test_FormatOutputRun_Error(t *testing.T) {
 	actualStatus, actualOutput := testRun(t,
 		fmtOutputScenarioInitializer,
 		formatter+":"+file, noConcurrencyFlag,
-		noRandomFlag, []string{featurePath},
+		noRandomFlag, []string{featurePath}, nil,
 	)
 
 	assert.Equal(t, expectedStatus, actualStatus)
@@ -424,7 +424,17 @@ func Test_AllFeaturesRun(t *testing.T) {
 	actualStatus, actualOutput := testRun(t,
 		InitializeScenario,
 		format, concurrency,
-		noRandomFlag, []string{"features"},
+		noRandomFlag, []string{"features"}, nil,
+	)
+
+	assert.Equal(t, exitSuccess, actualStatus)
+	assert.Equal(t, expected, actualOutput)
+
+	features, _ := ParseFeatures("", []string{"features"})
+	actualStatus, actualOutput = testRun(t,
+		InitializeScenario,
+		format, concurrency,
+		noRandomFlag, nil, features,
 	)
 
 	assert.Equal(t, exitSuccess, actualStatus)
@@ -460,12 +470,12 @@ func Test_FormatterConcurrencyRun(t *testing.T) {
 				expectedStatus, expectedOutput := testRun(t,
 					fmtOutputScenarioInitializer,
 					formatter, noConcurrency,
-					noRandomFlag, featurePaths,
+					noRandomFlag, featurePaths, nil,
 				)
 				actualStatus, actualOutput := testRun(t,
 					fmtOutputScenarioInitializer,
 					formatter, concurrency,
-					noRandomFlag, featurePaths,
+					noRandomFlag, featurePaths, nil,
 				)
 
 				assert.Equal(t, expectedStatus, actualStatus)
@@ -482,6 +492,7 @@ func testRun(
 	concurrency int,
 	randomSeed int64,
 	featurePaths []string,
+	features []*models.Feature,
 ) (int, string) {
 	output := new(bytes.Buffer)
 
@@ -491,6 +502,7 @@ func testRun(
 		Paths:       featurePaths,
 		Concurrency: concurrency,
 		Randomize:   randomSeed,
+		Features:    features,
 		Output:      output,
 	}
 
