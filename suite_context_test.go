@@ -101,6 +101,13 @@ func InitializeScenario(ctx *ScenarioContext) {
 		return nil
 	})
 
+	ctx.Step(`^call func\(\*godog\.DocString\) with:$`, func(arg *DocString) error {
+		return nil
+	})
+	ctx.Step(`^call func\(string\) with:$`, func(arg string) error {
+		return nil
+	})
+
 	ctx.BeforeStep(tc.inject)
 }
 

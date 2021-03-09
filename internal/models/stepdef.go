@@ -161,11 +161,16 @@ func (sd *StepDefinition) Run() interface{} {
 
 func (sd *StepDefinition) shouldBeString(idx int) (string, error) {
 	arg := sd.Args[idx]
-	s, ok := arg.(string)
-	if !ok {
+	switch arg := arg.(type) {
+	case string:
+		return arg, nil
+	case *messages.PickleStepArgument:
+		return arg.GetDocString().Content, nil
+	case *messages.PickleStepArgument_PickleDocString:
+		return arg.Content, nil
+	default:
 		return "", fmt.Errorf(`cannot convert argument %d: "%v" of type "%T" to string`, idx, arg, arg)
 	}
-	return s, nil
 }
 
 // GetInternalStepDefinition ...
