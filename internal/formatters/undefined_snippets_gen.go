@@ -70,11 +70,11 @@ func (s undefinedSnippet) Args() (ret string) {
 
 	if s.argument != nil {
 		if s.argument.GetDocString() != nil {
-			args = append(args, "*messages.PickleStepArgument_PickleDocString")
+			args = append(args, "*godog.DocString")
 		}
 
 		if s.argument.GetDataTable() != nil {
-			args = append(args, "*messages.PickleStepArgument_PickleTable")
+			args = append(args, "*godog.Table")
 		}
 	}
 
