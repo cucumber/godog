@@ -11,7 +11,7 @@ Please answer these questions before submitting a bug report.
 
 ### What version of godog are you using?
 ```
-> godog -version
+> godog version
 ```
 
 ### What version of Go are you using?
