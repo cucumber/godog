@@ -13,6 +13,14 @@ import (
 	"github.com/cucumber/godog/internal/storage"
 )
 
+var (
+	Passed    = models.Passed
+	Failed    = models.Failed
+	Skipped   = models.Skipped
+	Undefined = models.Undefined
+	Pending   = models.Pending
+)
+
 // FindFmt searches available formatters registered
 // and returns FormaterFunc matched by given
 // format name or nil otherwise
@@ -73,4 +81,24 @@ func printStepDefinitions(steps []*models.StepDefinition, w io.Writer) {
 	if len(steps) == 0 {
 		fmt.Fprintln(w, "there were no contexts registered, could not find any step definition..")
 	}
+}
+
+func NewBasefmt(suite string, out io.Writer) *Basefmt {
+	return &Basefmt{
+		Basefmt: internal_fmt.NewBaseFmt(suite, out),
+	}
+}
+
+func NewProgressfmt(suite string, out io.Writer) *Progress {
+	return &Progress{
+		Progress: internal_fmt.NewProgressfmt(suite, out),
+	}
+}
+
+type Basefmt struct {
+	*internal_fmt.Basefmt
+}
+
+type Progress struct {
+	*internal_fmt.Progress
 }
