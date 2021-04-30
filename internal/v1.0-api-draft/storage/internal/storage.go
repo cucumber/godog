@@ -3,7 +3,7 @@ package storage
 import (
 	"github.com/cucumber/messages-go/v10"
 
-	"github.com/cucumber/godog/internal/v1.0/storage"
+	"github.com/cucumber/godog/internal/v1.0-api-draft/storage"
 )
 
 // InternalStorage is an interface for storing and retrieving data regarding the test execution.

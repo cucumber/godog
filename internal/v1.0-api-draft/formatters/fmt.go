@@ -3,7 +3,7 @@ package formatters
 import (
 	"io"
 
-	"github.com/cucumber/godog/internal/v1.0/storage"
+	"github.com/cucumber/godog/internal/v1.0-api-draft/storage"
 )
 
 // FindFmt searches available formatters registered
