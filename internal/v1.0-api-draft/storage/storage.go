@@ -51,4 +51,4 @@ type Storage interface {
 type InMemStorage struct{}
 
 // NewInMemStorage will create an in-mem storage that is used across concurrent runners and formatters
-func NewInMemStorage() *InMemStorage
+func NewInMemStorage() *InMemStorage { return &InMemStorage{} }
