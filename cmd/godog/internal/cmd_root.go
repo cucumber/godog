@@ -21,7 +21,7 @@ and contain buildable go source.`,
 
 		// Deprecated: Use godog build, godog run or godog version.
 		// This is to support the legacy direct usage of the root command.
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if version {
 				versionCmdRunFunc(cmd, args)
 			}
@@ -31,7 +31,7 @@ and contain buildable go source.`,
 				buildCmdRunFunc(cmd, args)
 			}
 
-			runCmdRunFunc(cmd, args)
+			return runCmdRunFunc(cmd, args)
 		},
 	}
 

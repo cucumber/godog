@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -32,7 +31,7 @@ buildable go source.`,
     feature (*.feature)
     scenario at specific line (*.feature:10)
   If no feature arguments are supplied, godog will use "features/" by default.`,
-		Run: runCmdRunFunc,
+		RunE: runCmdRunFunc,
 	}
 
 	flags.BindRunCmdFlags("", runCmd.Flags(), &opts)
@@ -40,30 +39,24 @@ buildable go source.`,
 	return runCmd
 }
 
-func runCmdRunFunc(cmd *cobra.Command, args []string) {
+func runCmdRunFunc(cmd *cobra.Command, args []string) error {
 	osArgs := os.Args[1:]
 
 	if len(osArgs) > 0 && osArgs[0] == "run" {
 		osArgs = osArgs[1:]
 	}
 
-	status, err := buildAndRunGodog(osArgs)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-
-	os.Exit(status)
+	return buildAndRunGodog(osArgs)
 }
 
-func buildAndRunGodog(args []string) (_ int, err error) {
+func buildAndRunGodog(args []string) error {
 	bin, err := filepath.Abs(buildOutputDefault)
 	if err != nil {
-		return 1, err
+		return err
 	}
 
 	if err = builder.Build(bin); err != nil {
-		return 1, err
+		return err
 	}
 
 	defer os.Remove(bin)
@@ -71,33 +64,34 @@ func buildAndRunGodog(args []string) (_ int, err error) {
 	return runGodog(bin, args)
 }
 
-func runGodog(bin string, args []string) (_ int, err error) {
+func runGodog(bin string, args []string) error {
 	cmd := exec.Command(bin, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
 	cmd.Env = os.Environ()
 
+	var err error
 	if err = cmd.Start(); err != nil {
-		return 0, err
+		return err
 	}
 
 	if err = cmd.Wait(); err == nil {
-		return 0, nil
+		return nil
 	}
 
 	exiterr, ok := err.(*exec.ExitError)
 	if !ok {
-		return 0, err
+		return err
 	}
 
 	// This works on both Unix and Windows. Although package
 	// syscall is generally platform dependent, WaitStatus is
 	// defined for both Unix and Windows and in both cases has
 	// an ExitStatus() method with the same signature.
-	if st, ok := exiterr.Sys().(syscall.WaitStatus); ok {
-		return st.ExitStatus(), nil
+	if _, ok := exiterr.Sys().(syscall.WaitStatus); ok {
+		return nil
 	}
 
-	return 1, nil
+	return nil
 }
