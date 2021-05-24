@@ -33,11 +33,11 @@ Feature: undefined step snippets
               ctx.Step(`^the response code should be (\d+)$`, theResponseCodeShouldBe)
       }
       """
-
- arguments
+  Scenario: should generate snippets with more arguments
     Given a feature "undefined.feature" file:
       """
       Feature: undefined steps
+      
         Scenario: get version number from api
           When I send "GET" request to "/version" with:
             | col1 | val1 |
@@ -54,12 +54,15 @@ Feature: undefined step snippets
       func iSendRequestToWith(arg1, arg2 string, arg3 *godog.Table) error {
               return godog.ErrPending
       }
+      
       func theResponseBodyShouldBe(arg1 *godog.DocString) error {
               return godog.ErrPending
       }
+      
       func theResponseCodeShouldBeAndHeaderShouldBe(arg1 int, arg2, arg3 string) error {
               return godog.ErrPending
       }
+      
       func InitializeScenario(ctx *godog.ScenarioContext) {
               ctx.Step(`^I send "([^"]*)" request to "([^"]*)" with:$`, iSendRequestToWith)
               ctx.Step(`^the response body should be:$`, theResponseBodyShouldBe)
