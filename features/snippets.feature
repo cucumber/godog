@@ -33,6 +33,7 @@ Feature: undefined step snippets
               ctx.Step(`^the response code should be (\d+)$`, theResponseCodeShouldBe)
       }
       """
+
   Scenario: should generate snippets with more arguments
     Given a feature "undefined.feature" file:
       """
