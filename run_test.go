@@ -416,8 +416,8 @@ func Test_AllFeaturesRun(t *testing.T) {
 ..........................                                             306
 
 
-79 scenarios (79 passed)
-306 steps (306 passed)
+81 scenarios (81 passed)
+308 steps (308 passed)
 0s
 `
 
