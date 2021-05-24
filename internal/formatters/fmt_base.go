@@ -31,7 +31,7 @@ func NewBaseFmt(suite string, out io.Writer) *Basefmt {
 		suiteName: suite,
 		indent:    2,
 		out:       out,
-		Lock:      new(sync.Mutex),
+		lock:      new(sync.Mutex),
 	}
 }
 
@@ -41,16 +41,16 @@ type Basefmt struct {
 	out       io.Writer
 	indent    int
 
-	Storage *storage.Storage
-	Lock    *sync.Mutex
+	storage *storage.Storage
+	lock    *sync.Mutex
 }
 
 // SetStorage ...
 func (f *Basefmt) SetStorage(st *storage.Storage) {
-	f.Lock.Lock()
-	defer f.Lock.Unlock()
+	f.lock.Lock()
+	defer f.lock.Unlock()
 
-	f.Storage = st
+	f.storage = st
 }
 
 // TestRunStarted ...
@@ -90,12 +90,12 @@ func (f *Basefmt) Summary() {
 	var totalSc, passedSc, undefinedSc int
 	var totalSt, passedSt, failedSt, skippedSt, pendingSt, undefinedSt int
 
-	pickleResults := f.Storage.MustGetPickleResults()
+	pickleResults := f.storage.MustGetPickleResults()
 	for _, pr := range pickleResults {
 		var prStatus models.StepResultStatus
 		totalSc++
 
-		pickleStepResults := f.Storage.MustGetPickleStepResultsByPickleID(pr.PickleID)
+		pickleStepResults := f.storage.MustGetPickleStepResultsByPickleID(pr.PickleID)
 
 		if len(pickleStepResults) == 0 {
 			prStatus = undefined
@@ -156,7 +156,7 @@ func (f *Basefmt) Summary() {
 	}
 	scenarios = append(scenarios, parts...)
 
-	testRunStartedAt := f.Storage.MustGetTestRunStarted().StartedAt
+	testRunStartedAt := f.storage.MustGetTestRunStarted().StartedAt
 	elapsed := utils.TimeNowFunc().Sub(testRunStartedAt)
 
 	fmt.Fprintln(f.out, "")
@@ -196,7 +196,7 @@ func (f *Basefmt) Summary() {
 
 // Snippets ...
 func (f *Basefmt) Snippets() string {
-	undefinedStepResults := f.Storage.MustGetPickleStepResultsByStatus(undefined)
+	undefinedStepResults := f.storage.MustGetPickleStepResultsByStatus(undefined)
 	if len(undefinedStepResults) == 0 {
 		return ""
 	}
@@ -205,7 +205,7 @@ func (f *Basefmt) Snippets() string {
 	var snips []undefinedSnippet
 	// build snippets
 	for _, u := range undefinedStepResults {
-		pickleStep := f.Storage.MustGetPickleStep(u.PickleStepID)
+		pickleStep := f.storage.MustGetPickleStep(u.PickleStepID)
 
 		steps := []string{pickleStep.Text}
 		arg := pickleStep.Argument

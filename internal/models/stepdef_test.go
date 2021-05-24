@@ -149,3 +149,26 @@ func TestUnexpectedArguments(t *testing.T) {
 	// 	t.Fatalf("expected an error due to wrong argument type, but got none")
 	// }
 }
+
+func TestShouldSupportDocStringToStringConversion(t *testing.T) {
+	fn := func(a string) error {
+		if a != "hello" {
+			return fmt.Errorf("did not get hello")
+		}
+		return nil
+	}
+
+	def := &models.StepDefinition{
+		StepDefinition: formatters.StepDefinition{
+			Handler: fn,
+		},
+		HandlerValue: reflect.ValueOf(fn),
+		Args: []interface{}{&messages.PickleStepArgument_PickleDocString{
+			Content: "hello",
+		}},
+	}
+
+	if err := def.Run(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}

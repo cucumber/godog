@@ -101,6 +101,13 @@ func InitializeScenario(ctx *ScenarioContext) {
 		return nil
 	})
 
+	ctx.Step(`^call func\(\*godog\.DocString\) with:$`, func(arg *DocString) error {
+		return nil
+	})
+	ctx.Step(`^call func\(string\) with:$`, func(arg string) error {
+		return nil
+	})
+	
 	ctx.BeforeStep(tc.inject)
 }
 
@@ -110,21 +117,17 @@ func (tc *godogFeaturesScenario) inject(step *Step) {
 	}
 
 	step.Text = injectAll(step.Text)
-	
-	fmt.Printf("%+v\n", step)
 
-	if arg := step.Argument; arg != nil {
-		if table := step.Argument.DataTable; table != nil {
-			for i := 0; i < len(table.Rows); i++ {
-				for n, cell := range table.Rows[i].Cells {
-					table.Rows[i].Cells[n].Value = injectAll(cell.Value)
-				}
+	if table := step.Argument.DataTable; table != nil {
+		for i := 0; i < len(table.Rows); i++ {
+			for n, cell := range table.Rows[i].Cells {
+				table.Rows[i].Cells[n].Value = injectAll(cell.Value)
 			}
 		}
+	}
 
-		if doc := step.Argument.DocString; doc != nil {
-			doc.Content = injectAll(doc.Content)
-		}
+	if doc := step.Argument.DocString; doc != nil {
+		doc.Content = injectAll(doc.Content)
 	}
 }
 

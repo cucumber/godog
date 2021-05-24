@@ -46,10 +46,10 @@ func junitTimeDuration(from, to time.Time) string {
 }
 
 func (f *JunitFormatter) buildJUNITPackageSuite() JunitPackageSuite {
-	features := f.Storage.MustGetFeatures()
+	features := f.storage.MustGetFeatures()
 	sort.Sort(sortFeaturesByName(features))
 
-	testRunStartedAt := f.Storage.MustGetTestRunStarted().StartedAt
+	testRunStartedAt := f.storage.MustGetTestRunStarted().StartedAt
 
 	suite := JunitPackageSuite{
 		Name:       f.suiteName,
@@ -58,7 +58,7 @@ func (f *JunitFormatter) buildJUNITPackageSuite() JunitPackageSuite {
 	}
 
 	for idx, feature := range features {
-		pickles := f.Storage.MustGetPickles(feature.Uri)
+		pickles := f.storage.MustGetPickles(feature.Uri)
 		sort.Sort(sortPicklesByID(pickles))
 
 		ts := junitTestSuite{
@@ -78,7 +78,7 @@ func (f *JunitFormatter) buildJUNITPackageSuite() JunitPackageSuite {
 		for idx, pickle := range pickles {
 			tc := junitTestCase{}
 
-			pickleResult := f.Storage.MustGetPickleResult(pickle.Id)
+			pickleResult := f.storage.MustGetPickleResult(pickle.Id)
 
 			if idx == 0 {
 				firstPickleStartedAt = pickleResult.StartedAt
@@ -88,7 +88,7 @@ func (f *JunitFormatter) buildJUNITPackageSuite() JunitPackageSuite {
 
 			if len(pickle.Steps) > 0 {
 				lastStep := pickle.Steps[len(pickle.Steps)-1]
-				lastPickleStepResult := f.Storage.MustGetPickleStepResult(lastStep.Id)
+				lastPickleStepResult := f.storage.MustGetPickleStepResult(lastStep.Id)
 				lastPickleFinishedAt = lastPickleStepResult.FinishedAt
 			}
 
@@ -103,9 +103,9 @@ func (f *JunitFormatter) buildJUNITPackageSuite() JunitPackageSuite {
 			ts.Tests++
 			suite.Tests++
 
-			pickleStepResults := f.Storage.MustGetPickleStepResultsByPickleID(pickle.Id)
+			pickleStepResults := f.storage.MustGetPickleStepResultsByPickleID(pickle.Id)
 			for _, stepResult := range pickleStepResults {
-				pickleStep := f.Storage.MustGetPickleStep(stepResult.PickleStepID)
+				pickleStep := f.storage.MustGetPickleStep(stepResult.PickleStepID)
 
 				switch stepResult.Status {
 				case passed:

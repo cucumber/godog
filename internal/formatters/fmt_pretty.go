@@ -20,50 +20,50 @@ func init() {
 
 // PrettyFormatterFunc implements the FormatterFunc for the pretty formatter
 func PrettyFormatterFunc(suite string, out io.Writer) formatters.Formatter {
-	return &Pretty{Basefmt: NewBaseFmt(suite, out)}
+	return &pretty{Basefmt: NewBaseFmt(suite, out)}
 }
 
 var outlinePlaceholderRegexp = regexp.MustCompile("<[^>]+>")
 
 // a built in default pretty formatter
-type Pretty struct {
+type pretty struct {
 	*Basefmt
 	firstFeature *bool
 }
 
-func (f *Pretty) TestRunStarted() {
+func (f *pretty) TestRunStarted() {
 	f.Basefmt.TestRunStarted()
 
-	f.Lock.Lock()
-	defer f.Lock.Unlock()
+	f.lock.Lock()
+	defer f.lock.Unlock()
 
 	firstFeature := true
 	f.firstFeature = &firstFeature
 }
 
-func (f *Pretty) Feature(gd *messages.GherkinDocument, p string, c []byte) {
-	f.Lock.Lock()
+func (f *pretty) Feature(gd *messages.GherkinDocument, p string, c []byte) {
+	f.lock.Lock()
 	if !*f.firstFeature {
 		fmt.Fprintln(f.out, "")
 	}
 
 	*f.firstFeature = false
-	f.Lock.Unlock()
+	f.lock.Unlock()
 
 	f.Basefmt.Feature(gd, p, c)
 
-	f.Lock.Lock()
-	defer f.Lock.Unlock()
+	f.lock.Lock()
+	defer f.lock.Unlock()
 
 	f.printFeature(gd.Feature)
 }
 
 // Pickle takes a gherkin node for formatting
-func (f *Pretty) Pickle(pickle *messages.Pickle) {
+func (f *pretty) Pickle(pickle *messages.Pickle) {
 	f.Basefmt.Pickle(pickle)
 
-	f.Lock.Lock()
-	defer f.Lock.Unlock()
+	f.lock.Lock()
+	defer f.lock.Unlock()
 
 	if len(pickle.Steps) == 0 {
 		f.printUndefinedPickle(pickle)
@@ -71,52 +71,52 @@ func (f *Pretty) Pickle(pickle *messages.Pickle) {
 	}
 }
 
-func (f *Pretty) Passed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
+func (f *pretty) Passed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Passed(pickle, step, match)
 
-	f.Lock.Lock()
-	defer f.Lock.Unlock()
+	f.lock.Lock()
+	defer f.lock.Unlock()
 
 	f.printStep(pickle, step)
 }
 
-func (f *Pretty) Skipped(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
+func (f *pretty) Skipped(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Skipped(pickle, step, match)
 
-	f.Lock.Lock()
-	defer f.Lock.Unlock()
+	f.lock.Lock()
+	defer f.lock.Unlock()
 
 	f.printStep(pickle, step)
 }
 
-func (f *Pretty) Undefined(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
+func (f *pretty) Undefined(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Undefined(pickle, step, match)
 
-	f.Lock.Lock()
-	defer f.Lock.Unlock()
+	f.lock.Lock()
+	defer f.lock.Unlock()
 
 	f.printStep(pickle, step)
 }
 
-func (f *Pretty) Failed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition, err error) {
+func (f *pretty) Failed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition, err error) {
 	f.Basefmt.Failed(pickle, step, match, err)
 
-	f.Lock.Lock()
-	defer f.Lock.Unlock()
+	f.lock.Lock()
+	defer f.lock.Unlock()
 
 	f.printStep(pickle, step)
 }
 
-func (f *Pretty) Pending(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
+func (f *pretty) Pending(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Pending(pickle, step, match)
 
-	f.Lock.Lock()
-	defer f.Lock.Unlock()
+	f.lock.Lock()
+	defer f.lock.Unlock()
 
 	f.printStep(pickle, step)
 }
 
-func (f *Pretty) printFeature(feature *messages.Feature) {
+func (f *pretty) printFeature(feature *messages.Feature) {
 	fmt.Fprintln(f.out, keywordAndName(feature.Keyword, feature.Name))
 	if strings.TrimSpace(feature.Description) != "" {
 		for _, line := range strings.Split(feature.Description, "\n") {
@@ -133,8 +133,8 @@ func keywordAndName(keyword, name string) string {
 	return title
 }
 
-func (f *Pretty) scenarioLengths(pickle *messages.Pickle) (scenarioHeaderLength int, maxLength int) {
-	feature := f.Storage.MustGetFeature(pickle.Uri)
+func (f *pretty) scenarioLengths(pickle *messages.Pickle) (scenarioHeaderLength int, maxLength int) {
+	feature := f.storage.MustGetFeature(pickle.Uri)
 	astScenario := feature.FindScenario(pickle.AstNodeIds[0])
 	astBackground := feature.FindBackground(pickle.AstNodeIds[0])
 
@@ -148,15 +148,15 @@ func (f *Pretty) scenarioLengths(pickle *messages.Pickle) (scenarioHeaderLength 
 	return scenarioHeaderLength, maxLength
 }
 
-func (f *Pretty) printScenarioHeader(pickle *messages.Pickle, astScenario *messages.Scenario, spaceFilling int) {
-	feature := f.Storage.MustGetFeature(pickle.Uri)
+func (f *pretty) printScenarioHeader(pickle *messages.Pickle, astScenario *messages.Scenario, spaceFilling int) {
+	feature := f.storage.MustGetFeature(pickle.Uri)
 	text := s(f.indent) + keywordAndName(astScenario.Keyword, astScenario.Name)
 	text += s(spaceFilling) + line(feature.Uri, astScenario.Location)
 	fmt.Fprintln(f.out, "\n"+text)
 }
 
-func (f *Pretty) printUndefinedPickle(pickle *messages.Pickle) {
-	feature := f.Storage.MustGetFeature(pickle.Uri)
+func (f *pretty) printUndefinedPickle(pickle *messages.Pickle) {
+	feature := f.storage.MustGetFeature(pickle.Uri)
 	astScenario := feature.FindScenario(pickle.AstNodeIds[0])
 	astBackground := feature.FindBackground(pickle.AstNodeIds[0])
 
@@ -198,17 +198,17 @@ func (f *Pretty) printUndefinedPickle(pickle *messages.Pickle) {
 }
 
 // Summary sumarize the feature formatter output
-func (f *Pretty) Summary() {
-	failedStepResults := f.Storage.MustGetPickleStepResultsByStatus(failed)
+func (f *pretty) Summary() {
+	failedStepResults := f.storage.MustGetPickleStepResultsByStatus(failed)
 	if len(failedStepResults) > 0 {
 		fmt.Fprintln(f.out, "\n--- "+red("Failed steps:")+"\n")
 
 		sort.Sort(sortPickleStepResultsByPickleStepID(failedStepResults))
 
 		for _, fail := range failedStepResults {
-			pickle := f.Storage.MustGetPickle(fail.PickleID)
-			pickleStep := f.Storage.MustGetPickleStep(fail.PickleStepID)
-			feature := f.Storage.MustGetFeature(pickle.Uri)
+			pickle := f.storage.MustGetPickle(fail.PickleID)
+			pickleStep := f.storage.MustGetPickleStep(fail.PickleStepID)
+			feature := f.storage.MustGetFeature(pickle.Uri)
 
 			astScenario := feature.FindScenario(pickle.AstNodeIds[0])
 			scenarioDesc := fmt.Sprintf("%s: %s", astScenario.Keyword, pickle.Name)
@@ -225,11 +225,11 @@ func (f *Pretty) Summary() {
 	f.Basefmt.Summary()
 }
 
-func (f *Pretty) printOutlineExample(pickle *messages.Pickle, backgroundSteps int) {
+func (f *pretty) printOutlineExample(pickle *messages.Pickle, backgroundSteps int) {
 	var errorMsg string
 	var clr = green
 
-	feature := f.Storage.MustGetFeature(pickle.Uri)
+	feature := f.storage.MustGetFeature(pickle.Uri)
 	astScenario := feature.FindScenario(pickle.AstNodeIds[0])
 	scenarioHeaderLength, maxLength := f.scenarioLengths(pickle)
 
@@ -237,7 +237,7 @@ func (f *Pretty) printOutlineExample(pickle *messages.Pickle, backgroundSteps in
 	printExampleHeader := exampleTable.TableBody[0].Id == exampleRow.Id
 	firstExamplesTable := astScenario.Examples[0].Location.Line == exampleTable.Location.Line
 
-	pickleStepResults := f.Storage.MustGetPickleStepResultsByPickleID(pickle.Id)
+	pickleStepResults := f.storage.MustGetPickleStepResultsByPickleID(pickle.Id)
 
 	firstExecutedScenarioStep := len(pickleStepResults) == backgroundSteps+1
 	if firstExamplesTable && printExampleHeader && firstExecutedScenarioStep {
@@ -270,7 +270,7 @@ func (f *Pretty) printOutlineExample(pickle *messages.Pickle, backgroundSteps in
 		if firstExamplesTable && printExampleHeader {
 			// in first example, we need to print steps
 
-			pickleStep := f.Storage.MustGetPickleStep(result.PickleStepID)
+			pickleStep := f.storage.MustGetPickleStep(result.PickleStepID)
 			astStep := feature.FindStep(pickleStep.AstNodeIds[0])
 
 			var text = ""
@@ -325,7 +325,7 @@ func (f *Pretty) printOutlineExample(pickle *messages.Pickle, backgroundSteps in
 	}
 }
 
-func (f *Pretty) printTableRow(row *messages.TableRow, max []int, clr colors.ColorFunc) {
+func (f *pretty) printTableRow(row *messages.TableRow, max []int, clr colors.ColorFunc) {
 	cells := make([]string, len(row.Cells))
 
 	for i, cell := range row.Cells {
@@ -337,12 +337,12 @@ func (f *Pretty) printTableRow(row *messages.TableRow, max []int, clr colors.Col
 	fmt.Fprintln(f.out, s(f.indent*3)+"| "+strings.Join(cells, " | ")+" |")
 }
 
-func (f *Pretty) printTableHeader(row *messages.TableRow, max []int) {
+func (f *pretty) printTableHeader(row *messages.TableRow, max []int) {
 	f.printTableRow(row, max, cyan)
 }
 
-func (f *Pretty) printStep(pickle *messages.Pickle, pickleStep *messages.PickleStep) {
-	feature := f.Storage.MustGetFeature(pickle.Uri)
+func (f *pretty) printStep(pickle *messages.Pickle, pickleStep *messages.PickleStep) {
+	feature := f.storage.MustGetFeature(pickle.Uri)
 	astBackground := feature.FindBackground(pickle.AstNodeIds[0])
 	astScenario := feature.FindScenario(pickle.AstNodeIds[0])
 	astStep := feature.FindStep(pickleStep.AstNodeIds[0])
@@ -385,7 +385,7 @@ func (f *Pretty) printStep(pickle *messages.Pickle, pickleStep *messages.PickleS
 		f.printScenarioHeader(pickle, astScenario, maxLength-scenarioHeaderLength)
 	}
 
-	pickleStepResult := f.Storage.MustGetPickleStepResult(pickleStep.Id)
+	pickleStepResult := f.storage.MustGetPickleStepResult(pickleStep.Id)
 	text := s(f.indent*2) + pickleStepResult.Status.Color()(strings.TrimSpace(astStep.Keyword)) + " " + pickleStepResult.Status.Color()(pickleStep.Text)
 	if pickleStepResult.Def != nil {
 		text += s(maxLength - stepLength + 1)
@@ -410,7 +410,7 @@ func (f *Pretty) printStep(pickle *messages.Pickle, pickleStep *messages.PickleS
 	}
 }
 
-func (f *Pretty) printDocString(docString *messages.DocString) {
+func (f *pretty) printDocString(docString *messages.DocString) {
 	var ct string
 
 	if len(docString.MediaType) > 0 {
@@ -428,7 +428,7 @@ func (f *Pretty) printDocString(docString *messages.DocString) {
 
 // print table with aligned table cells
 // @TODO: need to make example header cells bold
-func (f *Pretty) printTable(t *messages.PickleTable, c colors.ColorFunc) {
+func (f *pretty) printTable(t *messages.PickleTable, c colors.ColorFunc) {
 	maxColLengths := maxColLengths(t, c)
 	var cols = make([]string, len(t.Rows[0].Cells))
 
@@ -508,7 +508,7 @@ func longestExampleRow(t *messages.Examples, clrs ...colors.ColorFunc) []int {
 	return longest
 }
 
-func (f *Pretty) longestStep(steps []*messages.Step, pickleLength int) int {
+func (f *pretty) longestStep(steps []*messages.Step, pickleLength int) int {
 	max := pickleLength
 
 	for _, step := range steps {
@@ -526,10 +526,10 @@ func line(path string, loc *messages.Location) string {
 	return " " + blackb(fmt.Sprintf("# %s:%d", path, loc.Line))
 }
 
-func (f *Pretty) lengthPickleStep(keyword, text string) int {
+func (f *pretty) lengthPickleStep(keyword, text string) int {
 	return f.indent*2 + utf8.RuneCountInString(strings.TrimSpace(keyword)+" "+text)
 }
 
-func (f *Pretty) lengthPickle(keyword, name string) int {
+func (f *pretty) lengthPickle(keyword, name string) int {
 	return f.indent + utf8.RuneCountInString(strings.TrimSpace(keyword)+": "+name)
 }

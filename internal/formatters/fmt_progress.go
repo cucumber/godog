@@ -21,41 +21,41 @@ func ProgressFormatterFunc(suite string, out io.Writer) formatters.Formatter {
 	return NewProgressfmt(suite, out)
 }
 
-func NewProgressfmt(suite string, out io.Writer) *Progress {
+func NewProgressfmt(suite string, out io.Writer) *progress {
 	steps := 0
-	return &Progress{
+	return &progress{
 		Basefmt:     NewBaseFmt(suite, out),
-		StepsPerRow: 70,
-		Steps:       &steps,
+		stepsPerRow: 70,
+		steps:       &steps,
 	}
 }
 
-type Progress struct {
+type progress struct {
 	*Basefmt
-	StepsPerRow int
-	Steps       *int
+	stepsPerRow int
+	steps       *int
 }
 
-func (f *Progress) Summary() {
-	left := math.Mod(float64(*f.Steps), float64(f.StepsPerRow))
+func (f *progress) Summary() {
+	left := math.Mod(float64(*f.steps), float64(f.stepsPerRow))
 	if left != 0 {
-		if *f.Steps > f.StepsPerRow {
-			fmt.Fprintf(f.out, s(f.StepsPerRow-int(left))+fmt.Sprintf(" %d\n", *f.Steps))
+		if *f.steps > f.stepsPerRow {
+			fmt.Fprintf(f.out, s(f.stepsPerRow-int(left))+fmt.Sprintf(" %d\n", *f.steps))
 		} else {
-			fmt.Fprintf(f.out, " %d\n", *f.Steps)
+			fmt.Fprintf(f.out, " %d\n", *f.steps)
 		}
 	}
 
 	var failedStepsOutput []string
 
-	failedSteps := f.Storage.MustGetPickleStepResultsByStatus(failed)
+	failedSteps := f.storage.MustGetPickleStepResultsByStatus(failed)
 	sort.Sort(sortPickleStepResultsByPickleStepID(failedSteps))
 
 	for _, sr := range failedSteps {
 		if sr.Status == failed {
-			pickle := f.Storage.MustGetPickle(sr.PickleID)
-			pickleStep := f.Storage.MustGetPickleStep(sr.PickleStepID)
-			feature := f.Storage.MustGetFeature(pickle.Uri)
+			pickle := f.storage.MustGetPickle(sr.PickleID)
+			pickleStep := f.storage.MustGetPickleStep(sr.PickleStepID)
+			feature := f.storage.MustGetFeature(pickle.Uri)
 
 			sc := feature.FindScenario(pickle.AstNodeIds[0])
 			scenarioDesc := fmt.Sprintf("%s: %s", sc.Keyword, pickle.Name)
@@ -84,8 +84,8 @@ func (f *Progress) Summary() {
 	f.Basefmt.Summary()
 }
 
-func (f *Progress) step(pickleStepID string) {
-	pickleStepResult := f.Storage.MustGetPickleStepResult(pickleStepID)
+func (f *progress) step(pickleStepID string) {
+	pickleStepResult := f.storage.MustGetPickleStepResult(pickleStepID)
 
 	switch pickleStepResult.Status {
 	case passed:
@@ -100,54 +100,54 @@ func (f *Progress) step(pickleStepID string) {
 		fmt.Fprint(f.out, yellow("P"))
 	}
 
-	*f.Steps++
+	*f.steps++
 
-	if math.Mod(float64(*f.Steps), float64(f.StepsPerRow)) == 0 {
-		fmt.Fprintf(f.out, " %d\n", *f.Steps)
+	if math.Mod(float64(*f.steps), float64(f.stepsPerRow)) == 0 {
+		fmt.Fprintf(f.out, " %d\n", *f.steps)
 	}
 }
 
-func (f *Progress) Passed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
+func (f *progress) Passed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Passed(pickle, step, match)
 
-	f.Lock.Lock()
-	defer f.Lock.Unlock()
+	f.lock.Lock()
+	defer f.lock.Unlock()
 
 	f.step(step.Id)
 }
 
-func (f *Progress) Skipped(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
+func (f *progress) Skipped(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Skipped(pickle, step, match)
 
-	f.Lock.Lock()
-	defer f.Lock.Unlock()
+	f.lock.Lock()
+	defer f.lock.Unlock()
 
 	f.step(step.Id)
 }
 
-func (f *Progress) Undefined(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
+func (f *progress) Undefined(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Undefined(pickle, step, match)
 
-	f.Lock.Lock()
-	defer f.Lock.Unlock()
+	f.lock.Lock()
+	defer f.lock.Unlock()
 
 	f.step(step.Id)
 }
 
-func (f *Progress) Failed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition, err error) {
+func (f *progress) Failed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition, err error) {
 	f.Basefmt.Failed(pickle, step, match, err)
 
-	f.Lock.Lock()
-	defer f.Lock.Unlock()
+	f.lock.Lock()
+	defer f.lock.Unlock()
 
 	f.step(step.Id)
 }
 
-func (f *Progress) Pending(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
+func (f *progress) Pending(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Pending(pickle, step, match)
 
-	f.Lock.Lock()
-	defer f.Lock.Unlock()
+	f.lock.Lock()
+	defer f.lock.Unlock()
 
 	f.step(step.Id)
 }
