@@ -11,7 +11,7 @@ import (
 	"sync"
 	"unicode"
 
-	"github.com/cucumber/messages-go/v10"
+	"github.com/cucumber/messages-go/v16"
 
 	"github.com/cucumber/godog/colors"
 	"github.com/cucumber/godog/formatters"
@@ -31,7 +31,7 @@ func NewBaseFmt(suite string, out io.Writer) *Basefmt {
 		suiteName: suite,
 		indent:    2,
 		out:       out,
-		lock:      new(sync.Mutex),
+		Lock:      new(sync.Mutex),
 	}
 }
 
@@ -41,16 +41,16 @@ type Basefmt struct {
 	out       io.Writer
 	indent    int
 
-	storage *storage.Storage
-	lock    *sync.Mutex
+	Storage *storage.Storage
+	Lock    *sync.Mutex
 }
 
 // SetStorage ...
 func (f *Basefmt) SetStorage(st *storage.Storage) {
-	f.lock.Lock()
-	defer f.lock.Unlock()
+	f.Lock.Lock()
+	defer f.Lock.Unlock()
 
-	f.storage = st
+	f.Storage = st
 }
 
 // TestRunStarted ...
@@ -63,26 +63,26 @@ func (f *Basefmt) Feature(*messages.GherkinDocument, string, []byte) {}
 func (f *Basefmt) Pickle(*messages.Pickle) {}
 
 // Defined ...
-func (f *Basefmt) Defined(*messages.Pickle, *messages.Pickle_PickleStep, *formatters.StepDefinition) {
+func (f *Basefmt) Defined(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition) {
 }
 
 // Passed ...
-func (f *Basefmt) Passed(*messages.Pickle, *messages.Pickle_PickleStep, *formatters.StepDefinition) {}
+func (f *Basefmt) Passed(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition) {}
 
 // Skipped ...
-func (f *Basefmt) Skipped(*messages.Pickle, *messages.Pickle_PickleStep, *formatters.StepDefinition) {
+func (f *Basefmt) Skipped(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition) {
 }
 
 // Undefined ...
-func (f *Basefmt) Undefined(*messages.Pickle, *messages.Pickle_PickleStep, *formatters.StepDefinition) {
+func (f *Basefmt) Undefined(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition) {
 }
 
 // Failed ...
-func (f *Basefmt) Failed(*messages.Pickle, *messages.Pickle_PickleStep, *formatters.StepDefinition, error) {
+func (f *Basefmt) Failed(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition, error) {
 }
 
 // Pending ...
-func (f *Basefmt) Pending(*messages.Pickle, *messages.Pickle_PickleStep, *formatters.StepDefinition) {
+func (f *Basefmt) Pending(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition) {
 }
 
 // Summary ...
@@ -90,12 +90,12 @@ func (f *Basefmt) Summary() {
 	var totalSc, passedSc, undefinedSc int
 	var totalSt, passedSt, failedSt, skippedSt, pendingSt, undefinedSt int
 
-	pickleResults := f.storage.MustGetPickleResults()
+	pickleResults := f.Storage.MustGetPickleResults()
 	for _, pr := range pickleResults {
 		var prStatus models.StepResultStatus
 		totalSc++
 
-		pickleStepResults := f.storage.MustGetPickleStepResultsByPickleID(pr.PickleID)
+		pickleStepResults := f.Storage.MustGetPickleStepResultsByPickleID(pr.PickleID)
 
 		if len(pickleStepResults) == 0 {
 			prStatus = undefined
@@ -156,7 +156,7 @@ func (f *Basefmt) Summary() {
 	}
 	scenarios = append(scenarios, parts...)
 
-	testRunStartedAt := f.storage.MustGetTestRunStarted().StartedAt
+	testRunStartedAt := f.Storage.MustGetTestRunStarted().StartedAt
 	elapsed := utils.TimeNowFunc().Sub(testRunStartedAt)
 
 	fmt.Fprintln(f.out, "")
@@ -196,7 +196,7 @@ func (f *Basefmt) Summary() {
 
 // Snippets ...
 func (f *Basefmt) Snippets() string {
-	undefinedStepResults := f.storage.MustGetPickleStepResultsByStatus(undefined)
+	undefinedStepResults := f.Storage.MustGetPickleStepResultsByStatus(undefined)
 	if len(undefinedStepResults) == 0 {
 		return ""
 	}
@@ -205,7 +205,7 @@ func (f *Basefmt) Snippets() string {
 	var snips []undefinedSnippet
 	// build snippets
 	for _, u := range undefinedStepResults {
-		pickleStep := f.storage.MustGetPickleStep(u.PickleStepID)
+		pickleStep := f.Storage.MustGetPickleStep(u.PickleStepID)
 
 		steps := []string{pickleStep.Text}
 		arg := pickleStep.Argument

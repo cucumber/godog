@@ -44,19 +44,11 @@ Feature: undefined step snippets
             | col1 | val1 |
             | col2 | val2 |
           Then the response code should be 200 and header "X-Powered-By" should be "godog"
-          And the response body should be:
-          \"\"\"
-          Hello World
-          \"\"\"
       """
     When I run feature suite
     Then the undefined step snippets should be:
       """
-      func iSendRequestToWith(arg1, arg2 string, arg3 *godog.Table) error {
-              return godog.ErrPending
-      }
-
-      func theResponseBodyShouldBe(arg1 *godog.DocString) error {
+      func iSendRequestToWith(arg1, arg2 string, arg3 *messages.PickleTable) error {
               return godog.ErrPending
       }
 
@@ -66,7 +58,6 @@ Feature: undefined step snippets
 
       func InitializeScenario(ctx *godog.ScenarioContext) {
               ctx.Step(`^I send "([^"]*)" request to "([^"]*)" with:$`, iSendRequestToWith)
-              ctx.Step(`^the response body should be:$`, theResponseBodyShouldBe)
               ctx.Step(`^the response code should be (\d+) and header "([^"]*)" should be "([^"]*)"$`, theResponseCodeShouldBeAndHeaderShouldBe)
       }
       """

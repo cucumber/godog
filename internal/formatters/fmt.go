@@ -12,7 +12,7 @@ import (
 	"github.com/cucumber/godog/colors"
 	"github.com/cucumber/godog/internal/models"
 	"github.com/cucumber/godog/internal/utils"
-	"github.com/cucumber/messages-go/v10"
+	"github.com/cucumber/messages-go/v16"
 )
 
 var (

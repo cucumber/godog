@@ -12,8 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cucumber/gherkin-go/v11"
-	"github.com/cucumber/messages-go/v10"
+	"github.com/cucumber/gherkin-go/v19"
+	"github.com/cucumber/messages-go/v16"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -413,11 +413,11 @@ func Test_AllFeaturesRun(t *testing.T) {
 ...................................................................... 140
 ...................................................................... 210
 ...................................................................... 280
-............................                                           308
+..........................                                             306
 
 
-81 scenarios (81 passed)
-308 steps (308 passed)
+79 scenarios (79 passed)
+306 steps (306 passed)
 0s
 `
 

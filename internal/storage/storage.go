@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/cucumber/messages-go/v10"
+	"github.com/cucumber/messages-go/v16"
 	"github.com/hashicorp/go-memdb"
 
 	"github.com/cucumber/godog/internal/models"
@@ -170,9 +170,9 @@ func (s *Storage) MustGetPickles(uri string) (ps []*messages.Pickle) {
 }
 
 // MustGetPickleStep will retrieve a pickle step and panic on error.
-func (s *Storage) MustGetPickleStep(id string) *messages.Pickle_PickleStep {
+func (s *Storage) MustGetPickleStep(id string) *messages.PickleStep {
 	v := s.mustFirst(tablePickleStep, tablePickleStepIndexID, id)
-	return v.(*messages.Pickle_PickleStep)
+	return v.(*messages.PickleStep)
 }
 
 // MustInsertTestRunStarted will set the test run started event and panic on error.

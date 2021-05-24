@@ -1,12 +1,11 @@
 package models_test
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 	"testing"
 
-	"github.com/cucumber/messages-go/v10"
+	"github.com/cucumber/messages-go/v16"
 
 	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/models"
@@ -56,8 +55,8 @@ func TestShouldSupportFloatTypes(t *testing.T) {
 
 func TestShouldNotSupportOtherPointerTypesThanGherkin(t *testing.T) {
 	fn1 := func(a *int) error { return nil }
-	fn2 := func(a *messages.PickleStepArgument_PickleDocString) error { return nil }
-	fn3 := func(a *messages.PickleStepArgument_PickleTable) error { return nil }
+	fn2 := func(a *messages.PickleDocString) error { return nil }
+	fn3 := func(a *messages.PickleTable) error { return nil }
 
 	def1 := &models.StepDefinition{
 		StepDefinition: formatters.StepDefinition{
@@ -71,14 +70,14 @@ func TestShouldNotSupportOtherPointerTypesThanGherkin(t *testing.T) {
 			Handler: fn2,
 		},
 		HandlerValue: reflect.ValueOf(fn2),
-		Args:         []interface{}{&messages.PickleStepArgument_PickleDocString{}},
+		Args:         []interface{}{&messages.PickleDocString{}},
 	}
 	def3 := &models.StepDefinition{
 		StepDefinition: formatters.StepDefinition{
 			Handler: fn3,
 		},
 		HandlerValue: reflect.ValueOf(fn3),
-		Args:         []interface{}{(*messages.PickleStepArgument_PickleTable)(nil)},
+		Args:         []interface{}{(*messages.PickleTable)(nil)},
 	}
 
 	if err := def1.Run(); err == nil {
@@ -149,27 +148,4 @@ func TestUnexpectedArguments(t *testing.T) {
 	// if err := def.Run(); err == nil {
 	// 	t.Fatalf("expected an error due to wrong argument type, but got none")
 	// }
-}
-
-func TestShouldSupportDocStringToStringConversion(t *testing.T) {
-	fn := func(a string) error {
-		if a != "hello" {
-			return fmt.Errorf("did not get hello")
-		}
-		return nil
-	}
-
-	def := &models.StepDefinition{
-		StepDefinition: formatters.StepDefinition{
-			Handler: fn,
-		},
-		HandlerValue: reflect.ValueOf(fn),
-		Args: []interface{}{&messages.PickleStepArgument_PickleDocString{
-			Content: "hello",
-		}},
-	}
-
-	if err := def.Run(); err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
 }

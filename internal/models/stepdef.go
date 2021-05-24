@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/cucumber/messages-go/v10"
+	"github.com/cucumber/messages-go/v16"
 
 	"github.com/cucumber/godog/formatters"
 )
@@ -113,30 +113,30 @@ func (sd *StepDefinition) Run() interface{} {
 		case reflect.Ptr:
 			arg := sd.Args[i]
 			switch param.Elem().String() {
-			case "messages.PickleStepArgument_PickleDocString":
+			case "messages.PickleDocString":
 				if v, ok := arg.(*messages.PickleStepArgument); ok {
-					values = append(values, reflect.ValueOf(v.GetDocString()))
+					values = append(values, reflect.ValueOf(v.DocString))
 					break
 				}
 
-				if v, ok := arg.(*messages.PickleStepArgument_PickleDocString); ok {
+				if v, ok := arg.(*messages.PickleDocString); ok {
 					values = append(values, reflect.ValueOf(v))
 					break
 				}
 
-				return fmt.Errorf(`cannot convert argument %d: "%v" of type "%T" to *messages.PickleStepArgument_PickleDocString`, i, arg, arg)
-			case "messages.PickleStepArgument_PickleTable":
+				return fmt.Errorf(`cannot convert argument %d: "%v" of type "%T" to *messages.PickleDocString`, i, arg, arg)
+			case "messages.PickleTable":
 				if v, ok := arg.(*messages.PickleStepArgument); ok {
-					values = append(values, reflect.ValueOf(v.GetDataTable()))
+					values = append(values, reflect.ValueOf(v.DataTable))
 					break
 				}
 
-				if v, ok := arg.(*messages.PickleStepArgument_PickleTable); ok {
+				if v, ok := arg.(*messages.PickleTable); ok {
 					values = append(values, reflect.ValueOf(v))
 					break
 				}
 
-				return fmt.Errorf(`cannot convert argument %d: "%v" of type "%T" to *messages.PickleStepArgument_PickleTable`, i, arg, arg)
+				return fmt.Errorf(`cannot convert argument %d: "%v" of type "%T" to *messages.PickleTable`, i, arg, arg)
 			default:
 				return fmt.Errorf("the argument %d type %T is not supported %s", i, arg, param.Elem().String())
 			}
@@ -161,16 +161,11 @@ func (sd *StepDefinition) Run() interface{} {
 
 func (sd *StepDefinition) shouldBeString(idx int) (string, error) {
 	arg := sd.Args[idx]
-	switch arg := arg.(type) {
-	case string:
-		return arg, nil
-	case *messages.PickleStepArgument:
-		return arg.GetDocString().Content, nil
-	case *messages.PickleStepArgument_PickleDocString:
-		return arg.Content, nil
-	default:
+	s, ok := arg.(string)
+	if !ok {
 		return "", fmt.Errorf(`cannot convert argument %d: "%v" of type "%T" to string`, idx, arg, arg)
 	}
+	return s, nil
 }
 
 // GetInternalStepDefinition ...

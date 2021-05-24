@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"regexp"
 
-	"github.com/cucumber/messages-go/v10"
+	"github.com/cucumber/messages-go/v16"
 
 	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/builder"
@@ -16,7 +16,7 @@ import (
 type Scenario = messages.Pickle
 
 // Step represents the executed step
-type Step = messages.Pickle_PickleStep
+type Step = messages.PickleStep
 
 // Steps allows to nest steps
 // instead of returning an error in step func
@@ -45,10 +45,10 @@ type Steps []string
 type StepDefinition = formatters.StepDefinition
 
 // DocString represents the DocString argument made to a step definition
-type DocString = messages.PickleStepArgument_PickleDocString
+type DocString = messages.PickleDocString
 
 // Table represents the Table argument made to a step definition
-type Table = messages.PickleStepArgument_PickleTable
+type Table = messages.PickleTable
 
 // TestSuiteContext allows various contexts
 // to register event handlers.

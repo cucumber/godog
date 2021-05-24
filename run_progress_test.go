@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cucumber/gherkin-go/v11"
-	"github.com/cucumber/messages-go/v10"
+	"github.com/cucumber/gherkin-go/v19"
+	"github.com/cucumber/messages-go/v16"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -185,7 +185,7 @@ Feature: basic
 		features: []*models.Feature{&ft},
 		scenarioInitializer: func(ctx *ScenarioContext) {
 			ctx.Step(`^one$`, func() error { return nil })
-			ctx.Step(`^two:$`, func(doc *messages.PickleStepArgument_PickleDocString) Steps { return Steps{"one"} })
+			ctx.Step(`^two:$`, func(doc *messages.PickleDocString) Steps { return Steps{"one"} })
 		},
 	}
 
@@ -229,7 +229,7 @@ Feature: basic
 		scenarioInitializer: func(ctx *ScenarioContext) {
 			ctx.Step(`^one$`, func() error { return nil })
 			ctx.Step(`^two$`, func() Steps { return Steps{subStep} })
-			ctx.Step(`^three:$`, func(doc *messages.PickleStepArgument_PickleDocString) error { return nil })
+			ctx.Step(`^three:$`, func(doc *messages.PickleDocString) error { return nil })
 		},
 	}
 
