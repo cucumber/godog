@@ -346,13 +346,12 @@ The following example binds **godog** flags with specified prefix `godog` in ord
 package main
 
 import (
-	"flag" // godog v0.10.0 and earlier
 	"os"
 	"testing"
 
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
-	flag "github.com/spf13/pflag" // godog v0.11.0 (latest)
+	"github.com/spf13/pflag" // godog v0.11.0 (latest)
 )
 
 var opts = godog.Options{
@@ -361,13 +360,13 @@ var opts = godog.Options{
 }
 
 func init() {
-	godog.BindFlags("godog.", flag.CommandLine, &opts) // godog v0.10.0 and earlier
+	godog.BindFlags("godog.", pflag.CommandLine, &opts) // godog v0.10.0 and earlier
 	godog.BindCommandLineFlags("godog.", &opts)        // godog v0.11.0 (latest)
 }
 
 func TestMain(m *testing.M) {
-	flag.Parse()
-	opts.Paths = flag.Args()
+	pflag.Parse()
+	opts.Paths = pflag.Args()
 
 	status := godog.TestSuite{
 		Name: "godogs",
