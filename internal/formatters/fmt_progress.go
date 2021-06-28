@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cucumber/messages-go/v10"
+	"github.com/cucumber/messages-go/v16"
 
 	"github.com/cucumber/godog/formatters"
 )
@@ -103,7 +103,7 @@ func (f *progress) step(pickleStepID string) {
 	}
 }
 
-func (f *progress) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
+func (f *progress) Passed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Passed(pickle, step, match)
 
 	f.lock.Lock()
@@ -112,7 +112,7 @@ func (f *progress) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleS
 	f.step(step.Id)
 }
 
-func (f *progress) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
+func (f *progress) Skipped(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Skipped(pickle, step, match)
 
 	f.lock.Lock()
@@ -121,7 +121,7 @@ func (f *progress) Skipped(pickle *messages.Pickle, step *messages.Pickle_Pickle
 	f.step(step.Id)
 }
 
-func (f *progress) Undefined(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
+func (f *progress) Undefined(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Undefined(pickle, step, match)
 
 	f.lock.Lock()
@@ -130,7 +130,7 @@ func (f *progress) Undefined(pickle *messages.Pickle, step *messages.Pickle_Pick
 	f.step(step.Id)
 }
 
-func (f *progress) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition, err error) {
+func (f *progress) Failed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition, err error) {
 	f.Basefmt.Failed(pickle, step, match, err)
 
 	f.lock.Lock()
@@ -139,7 +139,7 @@ func (f *progress) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleS
 	f.step(step.Id)
 }
 
-func (f *progress) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
+func (f *progress) Pending(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Pending(pickle, step, match)
 
 	f.lock.Lock()

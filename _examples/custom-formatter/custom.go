@@ -4,7 +4,7 @@ import (
 	"io"
 
 	"github.com/cucumber/godog"
-	"github.com/cucumber/messages-go/v10"
+	"github.com/cucumber/messages-go/v16"
 )
 
 func init() {
@@ -21,7 +21,7 @@ type customFmt struct {
 }
 
 func (f *customFmt) TestRunStarted()                                                   {}
-func (f *customFmt) Feature(*messages.GherkinDocument, string, []byte)                 {}
+func (f *customFmt) Feature(*messages.GherkinDocument, string, []byte) {}
 func (f *customFmt) Pickle(*godog.Scenario)                                            {}
 func (f *customFmt) Defined(*godog.Scenario, *godog.Step, *godog.StepDefinition)       {}
 func (f *customFmt) Passed(*godog.Scenario, *godog.Step, *godog.StepDefinition)        {}

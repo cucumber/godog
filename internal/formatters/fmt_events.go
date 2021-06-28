@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/cucumber/messages-go/v10"
+	"github.com/cucumber/messages-go/v16"
 
 	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/utils"
@@ -140,7 +140,7 @@ func (f *eventsFormatter) Summary() {
 	})
 }
 
-func (f *eventsFormatter) step(pickle *messages.Pickle, pickleStep *messages.Pickle_PickleStep) {
+func (f *eventsFormatter) step(pickle *messages.Pickle, pickleStep *messages.PickleStep) {
 	feature := f.storage.MustGetFeature(pickle.Uri)
 	pickleStepResult := f.storage.MustGetPickleStepResult(pickleStep.Id)
 	step := feature.FindStep(pickleStep.AstNodeIds[0])
@@ -188,7 +188,7 @@ func (f *eventsFormatter) step(pickle *messages.Pickle, pickleStep *messages.Pic
 	}
 }
 
-func (f *eventsFormatter) Defined(pickle *messages.Pickle, pickleStep *messages.Pickle_PickleStep, def *formatters.StepDefinition) {
+func (f *eventsFormatter) Defined(pickle *messages.Pickle, pickleStep *messages.PickleStep, def *formatters.StepDefinition) {
 	f.Basefmt.Defined(pickle, pickleStep, def)
 
 	f.lock.Lock()
@@ -238,7 +238,7 @@ func (f *eventsFormatter) Defined(pickle *messages.Pickle, pickleStep *messages.
 	})
 }
 
-func (f *eventsFormatter) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
+func (f *eventsFormatter) Passed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Passed(pickle, step, match)
 
 	f.lock.Lock()
@@ -247,7 +247,7 @@ func (f *eventsFormatter) Passed(pickle *messages.Pickle, step *messages.Pickle_
 	f.step(pickle, step)
 }
 
-func (f *eventsFormatter) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
+func (f *eventsFormatter) Skipped(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Skipped(pickle, step, match)
 
 	f.lock.Lock()
@@ -256,7 +256,7 @@ func (f *eventsFormatter) Skipped(pickle *messages.Pickle, step *messages.Pickle
 	f.step(pickle, step)
 }
 
-func (f *eventsFormatter) Undefined(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
+func (f *eventsFormatter) Undefined(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Undefined(pickle, step, match)
 
 	f.lock.Lock()
@@ -265,7 +265,7 @@ func (f *eventsFormatter) Undefined(pickle *messages.Pickle, step *messages.Pick
 	f.step(pickle, step)
 }
 
-func (f *eventsFormatter) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition, err error) {
+func (f *eventsFormatter) Failed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition, err error) {
 	f.Basefmt.Failed(pickle, step, match, err)
 
 	f.lock.Lock()
@@ -274,7 +274,7 @@ func (f *eventsFormatter) Failed(pickle *messages.Pickle, step *messages.Pickle_
 	f.step(pickle, step)
 }
 
-func (f *eventsFormatter) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
+func (f *eventsFormatter) Pending(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Pending(pickle, step, match)
 
 	f.lock.Lock()
@@ -296,6 +296,6 @@ func (f *eventsFormatter) scenarioLocation(pickle *messages.Pickle) string {
 	return fmt.Sprintf("%s:%d", pickle.Uri, line)
 }
 
-func isLastStep(pickle *messages.Pickle, step *messages.Pickle_PickleStep) bool {
+func isLastStep(pickle *messages.Pickle, step *messages.PickleStep) bool {
 	return pickle.Steps[len(pickle.Steps)-1].Id == step.Id
 }

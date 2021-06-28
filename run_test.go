@@ -12,8 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cucumber/gherkin-go/v11"
-	"github.com/cucumber/messages-go/v10"
+	"github.com/cucumber/gherkin-go/v19"
+	"github.com/cucumber/messages-go/v16"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -350,13 +350,7 @@ func Test_FormatOutputRun(t *testing.T) {
 		noRandomFlag, []string{featurePath},
 	)
 
-	dir := filepath.Join(os.TempDir(), t.Name())
-	err := os.MkdirAll(dir, 0755)
-	require.NoError(t, err)
-
-	defer os.RemoveAll(dir)
-
-	file := filepath.Join(dir, "result.xml")
+	file := filepath.Join(t.TempDir(), "result.xml")
 
 	actualStatus, actualOutput := testRun(t,
 		fmtOutputScenarioInitializer,
@@ -391,6 +385,7 @@ func Test_FormatOutputRun_Error(t *testing.T) {
 	dir := filepath.Join(os.TempDir(), t.Name())
 	file := filepath.Join(dir, "result.xml")
 
+	// next test is expected to log: couldn't create file with name: )
 	actualStatus, actualOutput := testRun(t,
 		fmtOutputScenarioInitializer,
 		formatter+":"+file, noConcurrencyFlag,
