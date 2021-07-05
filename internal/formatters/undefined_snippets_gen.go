@@ -7,7 +7,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/cucumber/messages-go/v10"
+	"github.com/cucumber/messages-go/v16"
 )
 
 // some snippet formatting regexps
@@ -69,11 +69,11 @@ func (s undefinedSnippet) Args() (ret string) {
 	}
 
 	if s.argument != nil {
-		if s.argument.GetDocString() != nil {
+		if s.argument.DocString != nil {
 			args = append(args, "*godog.DocString")
 		}
 
-		if s.argument.GetDataTable() != nil {
+		if s.argument.DataTable != nil {
 			args = append(args, "*godog.Table")
 		}
 	}

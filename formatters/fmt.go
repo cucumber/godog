@@ -4,7 +4,7 @@ import (
 	"io"
 	"regexp"
 
-	"github.com/cucumber/messages-go/v10"
+	"github.com/cucumber/messages-go/v16"
 )
 
 type registeredFormatter struct {
@@ -64,12 +64,12 @@ type Formatter interface {
 	TestRunStarted()
 	Feature(*messages.GherkinDocument, string, []byte)
 	Pickle(*messages.Pickle)
-	Defined(*messages.Pickle, *messages.Pickle_PickleStep, *StepDefinition)
-	Failed(*messages.Pickle, *messages.Pickle_PickleStep, *StepDefinition, error)
-	Passed(*messages.Pickle, *messages.Pickle_PickleStep, *StepDefinition)
-	Skipped(*messages.Pickle, *messages.Pickle_PickleStep, *StepDefinition)
-	Undefined(*messages.Pickle, *messages.Pickle_PickleStep, *StepDefinition)
-	Pending(*messages.Pickle, *messages.Pickle_PickleStep, *StepDefinition)
+	Defined(*messages.Pickle, *messages.PickleStep, *StepDefinition)
+	Failed(*messages.Pickle, *messages.PickleStep, *StepDefinition, error)
+	Passed(*messages.Pickle, *messages.PickleStep, *StepDefinition)
+	Skipped(*messages.Pickle, *messages.PickleStep, *StepDefinition)
+	Undefined(*messages.Pickle, *messages.PickleStep, *StepDefinition)
+	Pending(*messages.Pickle, *messages.PickleStep, *StepDefinition)
 	Summary()
 }
 

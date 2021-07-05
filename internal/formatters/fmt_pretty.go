@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/cucumber/messages-go/v10"
+	"github.com/cucumber/messages-go/v16"
 
 	"github.com/cucumber/godog/colors"
 	"github.com/cucumber/godog/formatters"
@@ -71,7 +71,7 @@ func (f *pretty) Pickle(pickle *messages.Pickle) {
 	}
 }
 
-func (f *pretty) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
+func (f *pretty) Passed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Passed(pickle, step, match)
 
 	f.lock.Lock()
@@ -80,7 +80,7 @@ func (f *pretty) Passed(pickle *messages.Pickle, step *messages.Pickle_PickleSte
 	f.printStep(pickle, step)
 }
 
-func (f *pretty) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
+func (f *pretty) Skipped(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Skipped(pickle, step, match)
 
 	f.lock.Lock()
@@ -89,7 +89,7 @@ func (f *pretty) Skipped(pickle *messages.Pickle, step *messages.Pickle_PickleSt
 	f.printStep(pickle, step)
 }
 
-func (f *pretty) Undefined(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
+func (f *pretty) Undefined(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Undefined(pickle, step, match)
 
 	f.lock.Lock()
@@ -98,7 +98,7 @@ func (f *pretty) Undefined(pickle *messages.Pickle, step *messages.Pickle_Pickle
 	f.printStep(pickle, step)
 }
 
-func (f *pretty) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition, err error) {
+func (f *pretty) Failed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition, err error) {
 	f.Basefmt.Failed(pickle, step, match, err)
 
 	f.lock.Lock()
@@ -107,7 +107,7 @@ func (f *pretty) Failed(pickle *messages.Pickle, step *messages.Pickle_PickleSte
 	f.printStep(pickle, step)
 }
 
-func (f *pretty) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleStep, match *formatters.StepDefinition) {
+func (f *pretty) Pending(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Pending(pickle, step, match)
 
 	f.lock.Lock()
@@ -116,7 +116,7 @@ func (f *pretty) Pending(pickle *messages.Pickle, step *messages.Pickle_PickleSt
 	f.printStep(pickle, step)
 }
 
-func (f *pretty) printFeature(feature *messages.GherkinDocument_Feature) {
+func (f *pretty) printFeature(feature *messages.Feature) {
 	fmt.Fprintln(f.out, keywordAndName(feature.Keyword, feature.Name))
 	if strings.TrimSpace(feature.Description) != "" {
 		for _, line := range strings.Split(feature.Description, "\n") {
@@ -148,7 +148,7 @@ func (f *pretty) scenarioLengths(pickle *messages.Pickle) (scenarioHeaderLength 
 	return scenarioHeaderLength, maxLength
 }
 
-func (f *pretty) printScenarioHeader(pickle *messages.Pickle, astScenario *messages.GherkinDocument_Feature_Scenario, spaceFilling int) {
+func (f *pretty) printScenarioHeader(pickle *messages.Pickle, astScenario *messages.Scenario, spaceFilling int) {
 	feature := f.storage.MustGetFeature(pickle.Uri)
 	text := s(f.indent) + keywordAndName(astScenario.Keyword, astScenario.Name)
 	text += s(spaceFilling) + line(feature.Uri, astScenario.Location)
@@ -298,12 +298,14 @@ func (f *pretty) printOutlineExample(pickle *messages.Pickle, backgroundSteps in
 			// print the step outline
 			fmt.Fprintln(f.out, s(f.indent*2)+cyan(strings.TrimSpace(astStep.Keyword))+" "+text)
 
-			if table := pickleStep.Argument.GetDataTable(); table != nil {
-				f.printTable(table, cyan)
-			}
+			if pickleStep.Argument != nil {
+				if table := pickleStep.Argument.DataTable; table != nil {
+					f.printTable(table, cyan)
+				}
 
-			if docString := astStep.GetDocString(); docString != nil {
-				f.printDocString(docString)
+				if docString := astStep.DocString; docString != nil {
+					f.printDocString(docString)
+				}
 			}
 		}
 	}
@@ -325,7 +327,7 @@ func (f *pretty) printOutlineExample(pickle *messages.Pickle, backgroundSteps in
 	}
 }
 
-func (f *pretty) printTableRow(row *messages.GherkinDocument_Feature_TableRow, max []int, clr colors.ColorFunc) {
+func (f *pretty) printTableRow(row *messages.TableRow, max []int, clr colors.ColorFunc) {
 	cells := make([]string, len(row.Cells))
 
 	for i, cell := range row.Cells {
@@ -337,11 +339,11 @@ func (f *pretty) printTableRow(row *messages.GherkinDocument_Feature_TableRow, m
 	fmt.Fprintln(f.out, s(f.indent*3)+"| "+strings.Join(cells, " | ")+" |")
 }
 
-func (f *pretty) printTableHeader(row *messages.GherkinDocument_Feature_TableRow, max []int) {
+func (f *pretty) printTableHeader(row *messages.TableRow, max []int) {
 	f.printTableRow(row, max, cyan)
 }
 
-func (f *pretty) printStep(pickle *messages.Pickle, pickleStep *messages.Pickle_PickleStep) {
+func (f *pretty) printStep(pickle *messages.Pickle, pickleStep *messages.PickleStep) {
 	feature := f.storage.MustGetFeature(pickle.Uri)
 	astBackground := feature.FindBackground(pickle.AstNodeIds[0])
 	astScenario := feature.FindScenario(pickle.AstNodeIds[0])
@@ -393,12 +395,14 @@ func (f *pretty) printStep(pickle *messages.Pickle, pickleStep *messages.Pickle_
 	}
 	fmt.Fprintln(f.out, text)
 
-	if table := pickleStep.Argument.GetDataTable(); table != nil {
-		f.printTable(table, cyan)
-	}
+	if pickleStep.Argument != nil {
+		if table := pickleStep.Argument.DataTable; table != nil {
+			f.printTable(table, cyan)
+		}
 
-	if docString := astStep.GetDocString(); docString != nil {
-		f.printDocString(docString)
+		if docString := astStep.DocString; docString != nil {
+			f.printDocString(docString)
+		}
 	}
 
 	if pickleStepResult.Err != nil {
@@ -410,7 +414,7 @@ func (f *pretty) printStep(pickle *messages.Pickle, pickleStep *messages.Pickle_
 	}
 }
 
-func (f *pretty) printDocString(docString *messages.GherkinDocument_Feature_Step_DocString) {
+func (f *pretty) printDocString(docString *messages.DocString) {
 	var ct string
 
 	if len(docString.MediaType) > 0 {
@@ -428,7 +432,7 @@ func (f *pretty) printDocString(docString *messages.GherkinDocument_Feature_Step
 
 // print table with aligned table cells
 // @TODO: need to make example header cells bold
-func (f *pretty) printTable(t *messages.PickleStepArgument_PickleTable, c colors.ColorFunc) {
+func (f *pretty) printTable(t *messages.PickleTable, c colors.ColorFunc) {
 	maxColLengths := maxColLengths(t, c)
 	var cols = make([]string, len(t.Rows[0].Cells))
 
@@ -444,7 +448,7 @@ func (f *pretty) printTable(t *messages.PickleStepArgument_PickleTable, c colors
 }
 
 // longest gives a list of longest columns of all rows in Table
-func maxColLengths(t *messages.PickleStepArgument_PickleTable, clrs ...colors.ColorFunc) []int {
+func maxColLengths(t *messages.PickleTable, clrs ...colors.ColorFunc) []int {
 	if t == nil {
 		return []int{}
 	}
@@ -469,7 +473,7 @@ func maxColLengths(t *messages.PickleStepArgument_PickleTable, clrs ...colors.Co
 	return longest
 }
 
-func longestExampleRow(t *messages.GherkinDocument_Feature_Scenario_Examples, clrs ...colors.ColorFunc) []int {
+func longestExampleRow(t *messages.Examples, clrs ...colors.ColorFunc) []int {
 	if t == nil {
 		return []int{}
 	}
@@ -508,7 +512,7 @@ func longestExampleRow(t *messages.GherkinDocument_Feature_Scenario_Examples, cl
 	return longest
 }
 
-func (f *pretty) longestStep(steps []*messages.GherkinDocument_Feature_Step, pickleLength int) int {
+func (f *pretty) longestStep(steps []*messages.Step, pickleLength int) int {
 	max := pickleLength
 
 	for _, step := range steps {
