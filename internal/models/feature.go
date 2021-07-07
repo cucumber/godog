@@ -38,7 +38,7 @@ func (f Feature) FindBackground(astScenarioID string) *messages.Background {
 		}
 	}
 
-	return bg
+	return nil
 }
 
 // FindExample ...
