@@ -1,0 +1,29 @@
+<bold-white>Feature:</bold-white> few empty scenarios
+
+  <bold-white>Scenario:</bold-white> one <bold-black># formatter-tests/features/with_few_empty_scenarios.feature:3</bold-black>
+
+  <bold-white>Scenario Outline:</bold-white> two <bold-black># formatter-tests/features/with_few_empty_scenarios.feature:5</bold-black>
+
+    <bold-white>Examples:</bold-white> first group
+      | <cyan>one</cyan> | <cyan>two</cyan> |
+      | <cyan>1</cyan>   | <cyan>2</cyan>   |
+      | <cyan>4</cyan>   | <cyan>7</cyan>   |
+
+    <bold-white>Examples:</bold-white> second group
+      | <cyan>one</cyan> | <cyan>two</cyan> |
+      | <cyan>5</cyan>   | <cyan>9</cyan>   |
+
+  <bold-white>Scenario:</bold-white> three <bold-black># formatter-tests/features/with_few_empty_scenarios.feature:16</bold-black>
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="junit,pretty" tests="5" skipped="0" failures="0" errors="0" time="0">
+  <testsuite name="few empty scenarios" tests="5" skipped="0" failures="0" errors="0" time="0">
+    <testcase name="one" status="" time="0"></testcase>
+    <testcase name="two #1" status="" time="0"></testcase>
+    <testcase name="two #2" status="" time="0"></testcase>
+    <testcase name="two #3" status="" time="0"></testcase>
+    <testcase name="three" status="" time="0"></testcase>
+  </testsuite>
+</testsuites>
+5 scenarios (<yellow>5 undefined</yellow>)
+No steps
+0s
