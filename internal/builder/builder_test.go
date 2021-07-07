@@ -300,8 +300,6 @@ type builderTestCase struct {
 }
 
 func (bt builderTestCase) run(t *testing.T) {
-	t.Parallel()
-
 	err := buildTestPackage(bt.dir, bt.files)
 	defer os.RemoveAll(bt.dir)
 	require.Nil(t, err)
