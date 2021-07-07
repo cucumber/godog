@@ -350,7 +350,13 @@ func Test_FormatOutputRun(t *testing.T) {
 		noRandomFlag, []string{featurePath},
 	)
 
-	file := filepath.Join(t.TempDir(), "result.xml")
+	dir := filepath.Join(os.TempDir(), t.Name())
+	err := os.MkdirAll(dir, 0755)
+	require.NoError(t, err)
+
+	defer os.RemoveAll(dir)
+
+	file := filepath.Join(dir, "result.xml")
 
 	actualStatus, actualOutput := testRun(t,
 		fmtOutputScenarioInitializer,
