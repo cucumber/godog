@@ -27,8 +27,6 @@ func Test_GodogBuild(t *testing.T) {
 	t.Run("WithVendoredGodogAndMod", testWithVendoredGodogAndMod)
 
 	t.Run("WithModule", func(t *testing.T) {
-		t.Parallel()
-
 		t.Run("OutsideGopathAndHavingOnlyFeature", testOutsideGopathAndHavingOnlyFeature)
 		t.Run("OutsideGopath", testOutsideGopath)
 		t.Run("OutsideGopathWithXTest", testOutsideGopathWithXTest)
