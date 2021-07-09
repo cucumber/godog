@@ -77,7 +77,7 @@ jobs:
     steps:
       - all
   go1_16:
-    working_directory: /go/src/github.com/cucumber/godog
+    working_directory: /home/circleci/go/src/github.com/cucumber/godog
     executor: exec_go_1_16
     steps:
       - all
