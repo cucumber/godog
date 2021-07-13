@@ -285,18 +285,50 @@ type TestSuite struct {
 // If there are flag related errors they will be directed to os.Stderr
 func (ts TestSuite) Run() int {
 	if ts.Options == nil {
-		ts.Options = &Options{}
-		ts.Options.Output = colors.Colored(os.Stdout)
-
-		flagSet := flagSet(ts.Options)
-		if err := flagSet.Parse(os.Args[1:]); err != nil {
-			fmt.Fprintln(os.Stderr, err)
+		var err error
+		ts.Options, err = getDefaultOptions()
+		if err != nil {
 			return exitOptionError
 		}
-
-		ts.Options.Paths = flagSet.Args()
 	}
-
 	r := runner{testSuiteInitializer: ts.TestSuiteInitializer, scenarioInitializer: ts.ScenarioInitializer}
 	return runWithOptions(ts.Name, r, *ts.Options)
+}
+
+// RetrieveFeatures will parse and return the features based on test suite option
+// Any modification on the parsed features will not have any impact on the next Run of the Test Suite
+func (ts TestSuite) RetrieveFeatures() ([]*models.Feature, error) {
+	opt := ts.Options
+
+	if opt == nil {
+		var err error
+		opt, err = getDefaultOptions()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if len(opt.Paths) == 0 {
+		inf, err := os.Stat("features")
+		if err == nil && inf.IsDir() {
+			opt.Paths = []string{"features"}
+		}
+	}
+
+	return parser.ParseFeatures(opt.Tags, opt.Paths)
+}
+
+func getDefaultOptions() (*Options, error) {
+	opt := &Options{}
+	opt.Output = colors.Colored(os.Stdout)
+
+	flagSet := flagSet(opt)
+	if err := flagSet.Parse(os.Args[1:]); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return nil, err
+	}
+
+	opt.Paths = flagSet.Args()
+
+	return opt, nil
 }
