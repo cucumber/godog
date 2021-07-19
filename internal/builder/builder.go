@@ -127,6 +127,10 @@ func Build(bin string) error {
 	// we also print back the temp WORK directory
 	// go has built. We will reuse it for our suite workdir.
 	temp := fmt.Sprintf(filepath.Join("%s", "temp-%d.test"), os.TempDir(), time.Now().UnixNano())
+	modTidyOutput, err := exec.Command("go", "mod", "tidy").CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to tidy modules in tested package: %s, reason: %v, output: %s", abs, err, string(modTidyOutput))
+	}
 	testOutput, err := exec.Command("go", "test", "-c", "-work", "-o", temp).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to compile tested package: %s, reason: %v, output: %s", abs, err, string(testOutput))
