@@ -6,9 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/spf13/cobra"
-
 	"github.com/cucumber/godog/internal/builder"
+	"github.com/spf13/cobra"
 )
 
 var buildOutput string

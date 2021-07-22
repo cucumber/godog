@@ -14,6 +14,8 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Changed
 
+* Upgraded gherkin-go to v19 ([402](https://github.com/cucumber/godog/pull/402) - [mbow])
+
 ### Deprecated
 
 ### Removed
@@ -190,3 +192,4 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 [leviable]: https://github.com/leviable
 [hansbogert]: https://github.com/hansbogert
 [rickardenglund]: https://github.com/rickardenglund
+[mbow]: https://github.com/mbow

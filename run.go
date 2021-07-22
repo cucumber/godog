@@ -12,10 +12,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/cucumber/messages-go/v10"
+	"github.com/cucumber/messages-go/v16"
 
 	"github.com/cucumber/godog/colors"
 	"github.com/cucumber/godog/formatters"
+	ifmt "github.com/cucumber/godog/internal/formatters"
 	"github.com/cucumber/godog/internal/models"
 	"github.com/cucumber/godog/internal/parser"
 	"github.com/cucumber/godog/internal/storage"
@@ -141,28 +142,49 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 		output = opt.Output
 	}
 
-	if formatterParts := strings.SplitN(opt.Format, ":", 2); len(formatterParts) > 1 {
-		f, err := os.Create(formatterParts[1])
-		if err != nil {
-			err = fmt.Errorf(
-				`couldn't create file with name: "%s", error: %s`,
-				formatterParts[1], err.Error(),
-			)
-			fmt.Fprintln(os.Stderr, err)
+	multiFmt := ifmt.MultiFormatter{}
 
+	for _, formatter := range strings.Split(opt.Format, ",") {
+		out := output
+		formatterParts := strings.SplitN(formatter, ":", 2)
+
+		if len(formatterParts) > 1 {
+			f, err := os.Create(formatterParts[1])
+			if err != nil {
+				err = fmt.Errorf(
+					`couldn't create file with name: "%s", error: %s`,
+					formatterParts[1], err.Error(),
+				)
+				fmt.Fprintln(os.Stderr, err)
+
+				return exitOptionError
+			}
+
+			defer f.Close()
+
+			out = f
+		}
+
+		if opt.NoColors {
+			out = colors.Uncolored(out)
+		} else {
+			out = colors.Colored(out)
+		}
+
+		if nil == formatters.FindFmt(formatterParts[0]) {
+			var names []string
+			for name := range formatters.AvailableFormatters() {
+				names = append(names, name)
+			}
+			fmt.Fprintln(os.Stderr, fmt.Errorf(
+				`unregistered formatter name: "%s", use one of: %s`,
+				opt.Format,
+				strings.Join(names, ", "),
+			))
 			return exitOptionError
 		}
 
-		defer f.Close()
-
-		output = f
-		opt.Format = formatterParts[0]
-	}
-
-	if opt.NoColors {
-		output = colors.Uncolored(output)
-	} else {
-		output = colors.Colored(output)
+		multiFmt.Add(formatterParts[0], out)
 	}
 
 	if opt.ShowStepDefinitions {
@@ -184,20 +206,7 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 		opt.Concurrency = 1
 	}
 
-	formatter := formatters.FindFmt(opt.Format)
-	if nil == formatter {
-		var names []string
-		for name := range formatters.AvailableFormatters() {
-			names = append(names, name)
-		}
-		fmt.Fprintln(os.Stderr, fmt.Errorf(
-			`unregistered formatter name: "%s", use one of: %s`,
-			opt.Format,
-			strings.Join(names, ", "),
-		))
-		return exitOptionError
-	}
-	runner.fmt = formatter(suiteName, output)
+	runner.fmt = multiFmt.FormatterFunc(suiteName, output)
 
 	var err error
 	if runner.features, err = parser.ParseFeatures(opt.Tags, opt.Paths); err != nil {
@@ -276,18 +285,50 @@ type TestSuite struct {
 // If there are flag related errors they will be directed to os.Stderr
 func (ts TestSuite) Run() int {
 	if ts.Options == nil {
-		ts.Options = &Options{}
-		ts.Options.Output = colors.Colored(os.Stdout)
-
-		flagSet := flagSet(ts.Options)
-		if err := flagSet.Parse(os.Args[1:]); err != nil {
-			fmt.Fprintln(os.Stderr, err)
+		var err error
+		ts.Options, err = getDefaultOptions()
+		if err != nil {
 			return exitOptionError
 		}
-
-		ts.Options.Paths = flagSet.Args()
 	}
-
 	r := runner{testSuiteInitializer: ts.TestSuiteInitializer, scenarioInitializer: ts.ScenarioInitializer}
 	return runWithOptions(ts.Name, r, *ts.Options)
+}
+
+// RetrieveFeatures will parse and return the features based on test suite option
+// Any modification on the parsed features will not have any impact on the next Run of the Test Suite
+func (ts TestSuite) RetrieveFeatures() ([]*models.Feature, error) {
+	opt := ts.Options
+
+	if opt == nil {
+		var err error
+		opt, err = getDefaultOptions()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if len(opt.Paths) == 0 {
+		inf, err := os.Stat("features")
+		if err == nil && inf.IsDir() {
+			opt.Paths = []string{"features"}
+		}
+	}
+
+	return parser.ParseFeatures(opt.Tags, opt.Paths)
+}
+
+func getDefaultOptions() (*Options, error) {
+	opt := &Options{}
+	opt.Output = colors.Colored(os.Stdout)
+
+	flagSet := flagSet(opt)
+	if err := flagSet.Parse(os.Args[1:]); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return nil, err
+	}
+
+	opt.Paths = flagSet.Args()
+
+	return opt, nil
 }

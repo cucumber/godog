@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/cucumber/messages-go/v10"
+	"github.com/cucumber/messages-go/v16"
 
 	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/models"
@@ -40,7 +40,7 @@ type suite struct {
 	afterScenarioHandlers  []func(*Scenario, error)
 }
 
-func (s *suite) matchStep(step *messages.Pickle_PickleStep) *models.StepDefinition {
+func (s *suite) matchStep(step *messages.PickleStep) *models.StepDefinition {
 	def := s.matchStepText(step.Text)
 	if def != nil && step.Argument != nil {
 		def.Args = append(def.Args, step.Argument)
@@ -48,7 +48,7 @@ func (s *suite) matchStep(step *messages.Pickle_PickleStep) *models.StepDefiniti
 	return def
 }
 
-func (s *suite) runStep(pickle *messages.Pickle, step *messages.Pickle_PickleStep, prevStepErr error) (err error) {
+func (s *suite) runStep(pickle *messages.Pickle, step *messages.PickleStep, prevStepErr error) (err error) {
 	// run before step handlers
 	for _, f := range s.beforeStepHandlers {
 		f(step)
@@ -220,7 +220,7 @@ func (s *suite) matchStepText(text string) *models.StepDefinition {
 	return nil
 }
 
-func (s *suite) runSteps(pickle *messages.Pickle, steps []*messages.Pickle_PickleStep) (err error) {
+func (s *suite) runSteps(pickle *messages.Pickle, steps []*messages.PickleStep) (err error) {
 	for _, step := range steps {
 		stepErr := s.runStep(pickle, step, err)
 		switch stepErr {

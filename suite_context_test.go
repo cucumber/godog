@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cucumber/gherkin-go/v11"
-	"github.com/cucumber/messages-go/v10"
+	"github.com/cucumber/gherkin-go/v19"
+	"github.com/cucumber/messages-go/v16"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/cucumber/godog/colors"
@@ -101,6 +101,13 @@ func InitializeScenario(ctx *ScenarioContext) {
 		return nil
 	})
 
+	ctx.Step(`^call func\(\*godog\.DocString\) with:$`, func(arg *DocString) error {
+		return nil
+	})
+	ctx.Step(`^call func\(string\) with:$`, func(arg string) error {
+		return nil
+	})
+
 	ctx.BeforeStep(tc.inject)
 }
 
@@ -111,7 +118,11 @@ func (tc *godogFeaturesScenario) inject(step *Step) {
 
 	step.Text = injectAll(step.Text)
 
-	if table := step.Argument.GetDataTable(); table != nil {
+	if step.Argument == nil {
+		return
+	}
+
+	if table := step.Argument.DataTable; table != nil {
 		for i := 0; i < len(table.Rows); i++ {
 			for n, cell := range table.Rows[i].Cells {
 				table.Rows[i].Cells[n].Value = injectAll(cell.Value)
@@ -119,7 +130,7 @@ func (tc *godogFeaturesScenario) inject(step *Step) {
 		}
 	}
 
-	if doc := step.Argument.GetDocString(); doc != nil {
+	if doc := step.Argument.DocString; doc != nil {
 		doc.Content = injectAll(doc.Content)
 	}
 }

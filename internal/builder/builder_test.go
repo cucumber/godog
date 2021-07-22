@@ -27,8 +27,6 @@ func Test_GodogBuild(t *testing.T) {
 	t.Run("WithVendoredGodogAndMod", testWithVendoredGodogAndMod)
 
 	t.Run("WithModule", func(t *testing.T) {
-		t.Parallel()
-
 		t.Run("OutsideGopathAndHavingOnlyFeature", testOutsideGopathAndHavingOnlyFeature)
 		t.Run("OutsideGopath", testOutsideGopath)
 		t.Run("OutsideGopathWithXTest", testOutsideGopathWithXTest)
@@ -302,8 +300,6 @@ type builderTestCase struct {
 }
 
 func (bt builderTestCase) run(t *testing.T) {
-	t.Parallel()
-
 	err := buildTestPackage(bt.dir, bt.files)
 	defer os.RemoveAll(bt.dir)
 	require.Nil(t, err)

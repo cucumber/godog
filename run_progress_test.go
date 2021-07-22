@@ -2,11 +2,11 @@ package godog
 
 import (
 	"bytes"
+	"github.com/cucumber/messages-go/v16"
 	"strings"
 	"testing"
 
-	"github.com/cucumber/gherkin-go/v11"
-	"github.com/cucumber/messages-go/v10"
+	"github.com/cucumber/gherkin-go/v19"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -55,7 +55,7 @@ func Test_ProgressFormatterWhenStepPanics(t *testing.T) {
 	require.True(t, failed)
 
 	actual := buf.String()
-	assert.Contains(t, actual, "godog/run_progress_test.go:44")
+	assert.Contains(t, actual, "godog/run_progress_test.go:")
 }
 
 func Test_ProgressFormatterWithPanicInMultistep(t *testing.T) {
@@ -185,7 +185,7 @@ Feature: basic
 		features: []*models.Feature{&ft},
 		scenarioInitializer: func(ctx *ScenarioContext) {
 			ctx.Step(`^one$`, func() error { return nil })
-			ctx.Step(`^two:$`, func(doc *messages.PickleStepArgument_PickleDocString) Steps { return Steps{"one"} })
+			ctx.Step(`^two:$`, func(doc *messages.PickleDocString) Steps { return Steps{"one"} })
 		},
 	}
 
@@ -196,6 +196,7 @@ Feature: basic
 	}
 
 	failed := r.concurrent(1)
+
 	require.False(t, failed)
 }
 
@@ -229,7 +230,7 @@ Feature: basic
 		scenarioInitializer: func(ctx *ScenarioContext) {
 			ctx.Step(`^one$`, func() error { return nil })
 			ctx.Step(`^two$`, func() Steps { return Steps{subStep} })
-			ctx.Step(`^three:$`, func(doc *messages.PickleStepArgument_PickleDocString) error { return nil })
+			ctx.Step(`^three:$`, func(doc *messages.PickleDocString) error { return nil })
 		},
 	}
 

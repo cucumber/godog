@@ -2,7 +2,7 @@ package internal
 
 import (
 	"github.com/spf13/cobra"
-	flag "github.com/spf13/pflag"
+	"github.com/spf13/pflag"
 
 	"github.com/cucumber/godog/internal/flags"
 )
@@ -40,7 +40,7 @@ and contain buildable go source.`,
 	return rootCmd
 }
 
-func bindRootCmdFlags(flagSet *flag.FlagSet) {
+func bindRootCmdFlags(flagSet *pflag.FlagSet) {
 	flagSet.StringVarP(&output, "output", "o", "", "compiles the test runner to the named file")
 	flagSet.BoolVar(&version, "version", false, "show current version")
 

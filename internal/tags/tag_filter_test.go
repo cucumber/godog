@@ -3,13 +3,13 @@ package tags_test
 import (
 	"testing"
 
-	"github.com/cucumber/messages-go/v10"
+	"github.com/cucumber/messages-go/v16"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/cucumber/godog/internal/tags"
 )
 
-type tag = messages.Pickle_PickleTag
+type tag = messages.PickleTag
 type pickle = messages.Pickle
 
 type testcase struct {
