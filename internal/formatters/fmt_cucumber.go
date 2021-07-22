@@ -18,7 +18,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cucumber/messages-go/v10"
+	"github.com/cucumber/messages-go/v16"
 
 	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/models"
@@ -33,10 +33,12 @@ func CucumberFormatterFunc(suite string, out io.Writer) formatters.Formatter {
 	return &Cukefmt{Basefmt: NewBaseFmt(suite, out)}
 }
 
+// Cukefmt ...
 type Cukefmt struct {
 	*Basefmt
 }
 
+// Summary ...
 func (f *Cukefmt) Summary() {
 	features := f.Storage.MustGetFeatures()
 
@@ -228,7 +230,7 @@ func (f *Cukefmt) buildCukeElement(pickle *messages.Pickle) (cukeElement cukeEle
 		cukeElement.Tags = append(cukeElement.Tags, tag)
 	}
 
-	examples := scenario.GetExamples()
+	examples := scenario.Examples
 	if len(examples) > 0 {
 		rowID := pickle.AstNodeIds[1]
 
@@ -262,21 +264,25 @@ func (f *Cukefmt) buildCukeStep(pickle *messages.Pickle, stepResult models.Pickl
 
 	arg := pickleStep.Argument
 
-	if arg.GetDocString() != nil && step.GetDocString() != nil {
-		cukeStep.Docstring = &cukeDocstring{}
-		cukeStep.Docstring.ContentType = strings.TrimSpace(arg.GetDocString().MediaType)
-		cukeStep.Docstring.Line = int(step.GetDocString().Location.Line)
-		cukeStep.Docstring.Value = arg.GetDocString().Content
-	}
-
-	if arg.GetDataTable() != nil {
-		cukeStep.DataTable = make([]*cukeDataTableRow, len(arg.GetDataTable().Rows))
-		for i, row := range arg.GetDataTable().Rows {
-			cells := make([]string, len(row.Cells))
-			for j, cell := range row.Cells {
-				cells[j] = cell.Value
+	if arg != nil {
+		if arg.DocString != nil && step.DocString != nil {
+			cukeStep.Docstring = &cukeDocstring{}
+			cukeStep.Docstring.ContentType = strings.TrimSpace(arg.DocString.MediaType)
+			if step.Location != nil {
+				cukeStep.Docstring.Line = int(step.DocString.Location.Line)
 			}
-			cukeStep.DataTable[i] = &cukeDataTableRow{Cells: cells}
+			cukeStep.Docstring.Value = arg.DocString.Content
+		}
+
+		if arg.DataTable != nil {
+			cukeStep.DataTable = make([]*cukeDataTableRow, len(arg.DataTable.Rows))
+			for i, row := range arg.DataTable.Rows {
+				cells := make([]string, len(row.Cells))
+				for j, cell := range row.Cells {
+					cells[j] = cell.Value
+				}
+				cukeStep.DataTable[i] = &cukeDataTableRow{Cells: cells}
+			}
 		}
 	}
 

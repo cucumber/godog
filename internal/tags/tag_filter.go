@@ -3,7 +3,7 @@ package tags
 import (
 	"strings"
 
-	"github.com/cucumber/messages-go/v10"
+	"github.com/cucumber/messages-go/v16"
 )
 
 // ApplyTagFilter will apply a filter string on the
@@ -25,7 +25,7 @@ func ApplyTagFilter(filter string, pickles []*messages.Pickle) []*messages.Pickl
 }
 
 // Based on http://behat.readthedocs.org/en/v2.5/guides/6.cli.html#gherkin-filters
-func match(filter string, tags []*messages.Pickle_PickleTag) (ok bool) {
+func match(filter string, tags []*messages.PickleTag) (ok bool) {
 	ok = true
 
 	for _, andTags := range strings.Split(filter, "&&") {
@@ -49,7 +49,7 @@ func match(filter string, tags []*messages.Pickle_PickleTag) (ok bool) {
 	return
 }
 
-func contains(tags []*messages.Pickle_PickleTag, tag string) bool {
+func contains(tags []*messages.PickleTag, tag string) bool {
 	for _, t := range tags {
 		tagName := strings.Replace(t.Name, "@", "", -1)
 

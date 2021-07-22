@@ -7,7 +7,7 @@ import (
 
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
-	flag "github.com/spf13/pflag"
+	"github.com/spf13/pflag"
 )
 
 var opts = godog.Options{Output: colors.Colored(os.Stdout)}
@@ -17,8 +17,8 @@ func init() {
 }
 
 func TestMain(m *testing.M) {
-	flag.Parse()
-	opts.Paths = flag.Args()
+	pflag.Parse()
+	opts.Paths = pflag.Args()
 
 	status := godog.TestSuite{
 		Name:                 "godogs",

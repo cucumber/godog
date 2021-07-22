@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cucumber/gherkin-go/v11"
-	"github.com/cucumber/messages-go/v10"
+	"github.com/cucumber/gherkin-go/v19"
+	"github.com/cucumber/messages-go/v16"
 
 	"github.com/cucumber/godog/internal/models"
 	"github.com/cucumber/godog/internal/tags"
@@ -102,7 +102,7 @@ func parsePath(path string, newIDFunc func() string) ([]*models.Feature, error) 
 	for _, pickle := range ft.Pickles {
 		sc := ft.FindScenario(pickle.AstNodeIds[0])
 
-		if line == -1 || uint32(line) == sc.Location.Line {
+		if line == -1 || int64(line) == sc.Location.Line {
 			pickles = append(pickles, pickle)
 		}
 	}

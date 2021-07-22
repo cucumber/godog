@@ -22,10 +22,12 @@ func JunitFormatterFunc(suite string, out io.Writer) formatters.Formatter {
 	return &JunitFormatter{Basefmt: NewBaseFmt(suite, out)}
 }
 
+// JunitFormatter ...
 type JunitFormatter struct {
 	*Basefmt
 }
 
+// Summary ...
 func (f *JunitFormatter) Summary() {
 	suite := f.buildJUNITPackageSuite()
 

@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cucumber/messages-go/v10"
+	"github.com/cucumber/messages-go/v16"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/cucumber/godog/internal/models"

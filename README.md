@@ -1,6 +1,8 @@
 [![CircleCI](https://circleci.com/gh/cucumber/godog/tree/master.svg?style=svg)](https://circleci.com/gh/cucumber/godog/tree/master)
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/cucumber/godog)](https://pkg.go.dev/github.com/cucumber/godog)
 [![codecov](https://codecov.io/gh/cucumber/godog/branch/master/graph/badge.svg)](https://codecov.io/gh/cucumber/godog)
+[![pull requests](https://oselvar.com/api/badge?label=pull%20requests&csvUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fcucumber%2Foselvar-github-metrics%2Fmain%2Fdata%2Fcucumber%2Fgodog%2FpullRequests.csv)](https://oselvar.com/github/cucumber/oselvar-github-metrics/main/cucumber/godog)
+[![issues](https://oselvar.com/api/badge?label=issues&csvUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fcucumber%2Foselvar-github-metrics%2Fmain%2Fdata%2Fcucumber%2Fgodog%2Fissues.csv)](https://oselvar.com/github/cucumber/oselvar-github-metrics/main/cucumber/godog)
 
 # Godog
 
@@ -344,13 +346,12 @@ The following example binds **godog** flags with specified prefix `godog` in ord
 package main
 
 import (
-	"flag" // godog v0.10.0 and earlier
 	"os"
 	"testing"
 
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
-	flag "github.com/spf13/pflag" // godog v0.11.0 (latest)
+	"github.com/spf13/pflag" // godog v0.11.0 (latest)
 )
 
 var opts = godog.Options{
@@ -359,13 +360,13 @@ var opts = godog.Options{
 }
 
 func init() {
-	godog.BindFlags("godog.", flag.CommandLine, &opts) // godog v0.10.0 and earlier
+	godog.BindFlags("godog.", pflag.CommandLine, &opts) // godog v0.10.0 and earlier
 	godog.BindCommandLineFlags("godog.", &opts)        // godog v0.11.0 (latest)
 }
 
 func TestMain(m *testing.M) {
-	flag.Parse()
-	opts.Paths = flag.Args()
+	pflag.Parse()
+	opts.Paths = pflag.Args()
 
 	status := godog.TestSuite{
 		Name: "godogs",
