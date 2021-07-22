@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -11,6 +12,13 @@ import (
 )
 
 var typeOfBytes = reflect.TypeOf([]byte(nil))
+
+// matchable errors
+var (
+	ErrUnmatchedStepArgumentNumber = errors.New("func received more arguments than expected")
+	ErrCannotConvert               = errors.New("cannot convert argument")
+	ErrUnsupportedArgumentType     = errors.New("unsupported argument type")
+)
 
 // StepDefinition ...
 type StepDefinition struct {
@@ -28,8 +36,9 @@ type StepDefinition struct {
 func (sd *StepDefinition) Run() interface{} {
 	typ := sd.HandlerValue.Type()
 	if len(sd.Args) < typ.NumIn() {
-		return fmt.Errorf("func expects %d arguments, which is more than %d matched from step", typ.NumIn(), len(sd.Args))
+		return fmt.Errorf("%w: expected %d arguments, matched %d from step", ErrUnmatchedStepArgumentNumber, typ.NumIn(), len(sd.Args))
 	}
+
 	var values []reflect.Value
 	for i := 0; i < typ.NumIn(); i++ {
 		param := typ.In(i)
@@ -41,7 +50,7 @@ func (sd *StepDefinition) Run() interface{} {
 			}
 			v, err := strconv.ParseInt(s, 10, 0)
 			if err != nil {
-				return fmt.Errorf(`cannot convert argument %d: "%s" to int: %s`, i, s, err)
+				return fmt.Errorf(`%w %d: "%s" to int: %s`, ErrCannotConvert, i, s, err)
 			}
 			values = append(values, reflect.ValueOf(int(v)))
 		case reflect.Int64:
@@ -51,9 +60,9 @@ func (sd *StepDefinition) Run() interface{} {
 			}
 			v, err := strconv.ParseInt(s, 10, 64)
 			if err != nil {
-				return fmt.Errorf(`cannot convert argument %d: "%s" to int64: %s`, i, s, err)
+				return fmt.Errorf(`%w %d: "%s" to int64: %s`, ErrCannotConvert, i, s, err)
 			}
-			values = append(values, reflect.ValueOf(int64(v)))
+			values = append(values, reflect.ValueOf(v))
 		case reflect.Int32:
 			s, err := sd.shouldBeString(i)
 			if err != nil {
@@ -61,7 +70,7 @@ func (sd *StepDefinition) Run() interface{} {
 			}
 			v, err := strconv.ParseInt(s, 10, 32)
 			if err != nil {
-				return fmt.Errorf(`cannot convert argument %d: "%s" to int32: %s`, i, s, err)
+				return fmt.Errorf(`%w %d: "%s" to int32: %s`, ErrCannotConvert, i, s, err)
 			}
 			values = append(values, reflect.ValueOf(int32(v)))
 		case reflect.Int16:
@@ -71,7 +80,7 @@ func (sd *StepDefinition) Run() interface{} {
 			}
 			v, err := strconv.ParseInt(s, 10, 16)
 			if err != nil {
-				return fmt.Errorf(`cannot convert argument %d: "%s" to int16: %s`, i, s, err)
+				return fmt.Errorf(`%w %d: "%s" to int16: %s`, ErrCannotConvert, i, s, err)
 			}
 			values = append(values, reflect.ValueOf(int16(v)))
 		case reflect.Int8:
@@ -81,7 +90,7 @@ func (sd *StepDefinition) Run() interface{} {
 			}
 			v, err := strconv.ParseInt(s, 10, 8)
 			if err != nil {
-				return fmt.Errorf(`cannot convert argument %d: "%s" to int8: %s`, i, s, err)
+				return fmt.Errorf(`%w %d: "%s" to int8: %s`, ErrCannotConvert, i, s, err)
 			}
 			values = append(values, reflect.ValueOf(int8(v)))
 		case reflect.String:
@@ -97,7 +106,7 @@ func (sd *StepDefinition) Run() interface{} {
 			}
 			v, err := strconv.ParseFloat(s, 64)
 			if err != nil {
-				return fmt.Errorf(`cannot convert argument %d: "%s" to float64: %s`, i, s, err)
+				return fmt.Errorf(`%w %d: "%s" to float64: %s`, ErrCannotConvert, i, s, err)
 			}
 			values = append(values, reflect.ValueOf(v))
 		case reflect.Float32:
@@ -107,7 +116,7 @@ func (sd *StepDefinition) Run() interface{} {
 			}
 			v, err := strconv.ParseFloat(s, 32)
 			if err != nil {
-				return fmt.Errorf(`cannot convert argument %d: "%s" to float32: %s`, i, s, err)
+				return fmt.Errorf(`%w %d: "%s" to float32: %s`, ErrCannotConvert, i, s, err)
 			}
 			values = append(values, reflect.ValueOf(float32(v)))
 		case reflect.Ptr:
@@ -124,7 +133,7 @@ func (sd *StepDefinition) Run() interface{} {
 					break
 				}
 
-				return fmt.Errorf(`cannot convert argument %d: "%v" of type "%T" to *messages.PickleStepArgument_PickleDocString`, i, arg, arg)
+				return fmt.Errorf(`%w %d: "%v" of type "%T" to *messages.PickleDocString`, ErrCannotConvert, i, arg, arg)
 			case "messages.PickleTable":
 				if v, ok := arg.(*messages.PickleStepArgument); ok {
 					values = append(values, reflect.ValueOf(v.DataTable))
@@ -136,9 +145,9 @@ func (sd *StepDefinition) Run() interface{} {
 					break
 				}
 
-				return fmt.Errorf(`cannot convert argument %d: "%v" of type "%T" to *messages.PickleStepArgument_PickleTable`, i, arg, arg)
+				return fmt.Errorf(`%w %d: "%v" of type "%T" to *messages.PickleStepArgument_PickleTable`, ErrCannotConvert, i, arg, arg)
 			default:
-				return fmt.Errorf("the argument %d type %T is not supported %s", i, arg, param.Elem().String())
+				return fmt.Errorf("%w: the argument %d type %T is not supported %s", ErrUnsupportedArgumentType, i, arg, param.Elem().String())
 			}
 		case reflect.Slice:
 			switch param {
@@ -149,14 +158,19 @@ func (sd *StepDefinition) Run() interface{} {
 				}
 				values = append(values, reflect.ValueOf([]byte(s)))
 			default:
-				return fmt.Errorf("the slice argument %d type %s is not supported", i, param.Kind())
+				return fmt.Errorf("%w: the slice argument %d type %s is not supported", ErrUnsupportedArgumentType, i, param.Kind())
 			}
 		default:
-			return fmt.Errorf("the argument %d type %s is not supported", i, param.Kind())
+			return fmt.Errorf("%w: the argument %d type %s is not supported", ErrUnsupportedArgumentType, i, param.Kind())
 		}
 	}
 
-	return sd.HandlerValue.Call(values)[0].Interface()
+	res := sd.HandlerValue.Call(values)
+	if len(res) == 0 {
+		return nil
+	}
+
+	return res[0].Interface()
 }
 
 func (sd *StepDefinition) shouldBeString(idx int) (string, error) {
@@ -166,13 +180,13 @@ func (sd *StepDefinition) shouldBeString(idx int) (string, error) {
 		return arg, nil
 	case *messages.PickleStepArgument:
 		if arg.DocString == nil {
-			return "", fmt.Errorf(`cannot convert DocString is not set`)
+			return "", fmt.Errorf(`%w %d: "%v" of type "%T": DocString is not set`, ErrCannotConvert, idx, arg, arg)
 		}
 		return arg.DocString.Content, nil
 	case *messages.PickleDocString:
 		return arg.Content, nil
 	default:
-		return "", fmt.Errorf(`cannot convert argument %d: "%v" of type "%T" to string`, idx, arg, arg)
+		return "", fmt.Errorf(`%w %d: "%v" of type "%T" to string`, ErrCannotConvert, idx, arg, arg)
 	}
 }
 

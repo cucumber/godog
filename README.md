@@ -210,6 +210,14 @@ Feature: eat godogs
 
 You may change **return godog.ErrPending** to **return nil** in the three step definitions and the scenario will pass successfully.
 
+Also, you may omit error return if your step does not fail.
+
+```go
+func iEat(arg1 int) {
+	// Eat arg1.
+}
+```
+
 #### Step 5 - Create the main program to test
 
 We only need a number of **godogs** for now. Lets keep it simple.
