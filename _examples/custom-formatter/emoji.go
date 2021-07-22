@@ -9,11 +9,11 @@ import (
 )
 
 const (
-	PassedEmoji    = "✅"
-	SkippedEmoji   = "➖"
-	FailedEmoji    = "❌"
-	UndefinedEmoji = "❓"
-	PendingEmoji   = "🚧"
+	passedEmoji    = "✅"
+	skippedEmoji   = "➖"
+	failedEmoji    = "❌"
+	undefinedEmoji = "❓"
+	pendingEmoji   = "🚧"
 )
 
 func init() {
@@ -91,11 +91,11 @@ func (f *emojiFmt) Summary() {
 
 func (f *emojiFmt) printSummaryLegend() {
 	fmt.Fprint(f.out, "\n\nOutput Legend:\n")
-	fmt.Fprint(f.out, fmt.Sprintf("\t%s Passed\n", PassedEmoji))
-	fmt.Fprint(f.out, fmt.Sprintf("\t%s Failed\n", FailedEmoji))
-	fmt.Fprint(f.out, fmt.Sprintf("\t%s Skipped\n", SkippedEmoji))
-	fmt.Fprint(f.out, fmt.Sprintf("\t%s Undefined\n", UndefinedEmoji))
-	fmt.Fprint(f.out, fmt.Sprintf("\t%s Pending\n", PendingEmoji))
+	fmt.Fprint(f.out, fmt.Sprintf("\t%s Passed\n", passedEmoji))
+	fmt.Fprint(f.out, fmt.Sprintf("\t%s Failed\n", failedEmoji))
+	fmt.Fprint(f.out, fmt.Sprintf("\t%s Skipped\n", skippedEmoji))
+	fmt.Fprint(f.out, fmt.Sprintf("\t%s Undefined\n", undefinedEmoji))
+	fmt.Fprint(f.out, fmt.Sprintf("\t%s Pending\n", pendingEmoji))
 }
 
 func (f *emojiFmt) step(pickleStepID string) {
@@ -103,15 +103,15 @@ func (f *emojiFmt) step(pickleStepID string) {
 
 	switch pickleStepResult.Status {
 	case godog.Passed:
-		fmt.Fprint(f.out, PassedEmoji)
+		fmt.Fprint(f.out, passedEmoji)
 	case godog.Skipped:
-		fmt.Fprint(f.out, SkippedEmoji)
+		fmt.Fprint(f.out, skippedEmoji)
 	case godog.Failed:
-		fmt.Fprint(f.out, FailedEmoji)
+		fmt.Fprint(f.out, failedEmoji)
 	case godog.Undefined:
-		fmt.Fprint(f.out, UndefinedEmoji)
+		fmt.Fprint(f.out, undefinedEmoji)
 	case godog.Pending:
-		fmt.Fprint(f.out, PendingEmoji)
+		fmt.Fprint(f.out, pendingEmoji)
 	}
 
 	*f.Steps++
