@@ -21,6 +21,7 @@ func ProgressFormatterFunc(suite string, out io.Writer) formatters.Formatter {
 	return NewProgressfmt(suite, out)
 }
 
+// NewProgressfmt - creates a new progress formatter
 func NewProgressfmt(suite string, out io.Writer) *Progress {
 	steps := 0
 	return &Progress{
@@ -30,12 +31,14 @@ func NewProgressfmt(suite string, out io.Writer) *Progress {
 	}
 }
 
+// Progress - formatter
 type Progress struct {
 	*Basefmt
 	StepsPerRow int
 	Steps       *int
 }
 
+// Summary ...
 func (f *Progress) Summary() {
 	left := math.Mod(float64(*f.Steps), float64(f.StepsPerRow))
 	if left != 0 {
@@ -107,6 +110,7 @@ func (f *Progress) step(pickleStepID string) {
 	}
 }
 
+// Passed ...
 func (f *Progress) Passed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Passed(pickle, step, match)
 
@@ -116,6 +120,7 @@ func (f *Progress) Passed(pickle *messages.Pickle, step *messages.PickleStep, ma
 	f.step(step.Id)
 }
 
+// Skipped ...
 func (f *Progress) Skipped(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Skipped(pickle, step, match)
 
@@ -125,6 +130,7 @@ func (f *Progress) Skipped(pickle *messages.Pickle, step *messages.PickleStep, m
 	f.step(step.Id)
 }
 
+// Undefined ...
 func (f *Progress) Undefined(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Undefined(pickle, step, match)
 
@@ -134,6 +140,7 @@ func (f *Progress) Undefined(pickle *messages.Pickle, step *messages.PickleStep,
 	f.step(step.Id)
 }
 
+// Failed ...
 func (f *Progress) Failed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition, err error) {
 	f.Basefmt.Failed(pickle, step, match, err)
 
@@ -143,6 +150,7 @@ func (f *Progress) Failed(pickle *messages.Pickle, step *messages.PickleStep, ma
 	f.step(step.Id)
 }
 
+// Pending ...
 func (f *Progress) Pending(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Pending(pickle, step, match)
 

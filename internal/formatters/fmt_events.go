@@ -23,6 +23,7 @@ func EventsFormatterFunc(suite string, out io.Writer) formatters.Formatter {
 	return &EventsFormatter{Basefmt: NewBaseFmt(suite, out)}
 }
 
+// EventsFormatter - Events formatter
 type EventsFormatter struct {
 	*Basefmt
 }
@@ -35,6 +36,7 @@ func (f *EventsFormatter) event(ev interface{}) {
 	fmt.Fprintln(f.out, string(data))
 }
 
+// Pickle ...
 func (f *EventsFormatter) Pickle(pickle *messages.Pickle) {
 	f.Basefmt.Pickle(pickle)
 
@@ -68,6 +70,7 @@ func (f *EventsFormatter) Pickle(pickle *messages.Pickle) {
 	}
 }
 
+// TestRunStarted ...
 func (f *EventsFormatter) TestRunStarted() {
 	f.Basefmt.TestRunStarted()
 
@@ -87,6 +90,7 @@ func (f *EventsFormatter) TestRunStarted() {
 	})
 }
 
+// Feature ...
 func (f *EventsFormatter) Feature(ft *messages.GherkinDocument, p string, c []byte) {
 	f.Basefmt.Feature(ft, p, c)
 
@@ -104,6 +108,7 @@ func (f *EventsFormatter) Feature(ft *messages.GherkinDocument, p string, c []by
 	})
 }
 
+// Summary ...
 func (f *EventsFormatter) Summary() {
 	// @TODO: determine status
 	status := passed
@@ -188,6 +193,7 @@ func (f *EventsFormatter) step(pickle *messages.Pickle, pickleStep *messages.Pic
 	}
 }
 
+// Defined ...
 func (f *EventsFormatter) Defined(pickle *messages.Pickle, pickleStep *messages.PickleStep, def *formatters.StepDefinition) {
 	f.Basefmt.Defined(pickle, pickleStep, def)
 
@@ -238,6 +244,7 @@ func (f *EventsFormatter) Defined(pickle *messages.Pickle, pickleStep *messages.
 	})
 }
 
+// Passed ...
 func (f *EventsFormatter) Passed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Passed(pickle, step, match)
 
@@ -247,6 +254,7 @@ func (f *EventsFormatter) Passed(pickle *messages.Pickle, step *messages.PickleS
 	f.step(pickle, step)
 }
 
+// Skipped ...
 func (f *EventsFormatter) Skipped(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Skipped(pickle, step, match)
 
@@ -256,6 +264,7 @@ func (f *EventsFormatter) Skipped(pickle *messages.Pickle, step *messages.Pickle
 	f.step(pickle, step)
 }
 
+// Undefined ...
 func (f *EventsFormatter) Undefined(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Undefined(pickle, step, match)
 
@@ -265,6 +274,7 @@ func (f *EventsFormatter) Undefined(pickle *messages.Pickle, step *messages.Pick
 	f.step(pickle, step)
 }
 
+// Failed ...
 func (f *EventsFormatter) Failed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition, err error) {
 	f.Basefmt.Failed(pickle, step, match, err)
 
@@ -274,6 +284,7 @@ func (f *EventsFormatter) Failed(pickle *messages.Pickle, step *messages.PickleS
 	f.step(pickle, step)
 }
 
+// Pending ...
 func (f *EventsFormatter) Pending(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Pending(pickle, step, match)
 

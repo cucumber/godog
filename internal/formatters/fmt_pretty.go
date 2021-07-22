@@ -25,12 +25,13 @@ func PrettyFormatterFunc(suite string, out io.Writer) formatters.Formatter {
 
 var outlinePlaceholderRegexp = regexp.MustCompile("<[^>]+>")
 
-// a built in default pretty formatter
+// Pretty - formatter
 type Pretty struct {
 	*Basefmt
 	firstFeature *bool
 }
 
+// TestRunStarted ...
 func (f *Pretty) TestRunStarted() {
 	f.Basefmt.TestRunStarted()
 
@@ -41,6 +42,7 @@ func (f *Pretty) TestRunStarted() {
 	f.firstFeature = &firstFeature
 }
 
+// Feature ...
 func (f *Pretty) Feature(gd *messages.GherkinDocument, p string, c []byte) {
 	f.Lock.Lock()
 	if !*f.firstFeature {
@@ -58,7 +60,7 @@ func (f *Pretty) Feature(gd *messages.GherkinDocument, p string, c []byte) {
 	f.printFeature(gd.Feature)
 }
 
-// Pickle takes a gherkin node for formatting
+// Pickle - takes a gherkin node for formatting
 func (f *Pretty) Pickle(pickle *messages.Pickle) {
 	f.Basefmt.Pickle(pickle)
 
@@ -71,6 +73,7 @@ func (f *Pretty) Pickle(pickle *messages.Pickle) {
 	}
 }
 
+// Passed ...
 func (f *Pretty) Passed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Passed(pickle, step, match)
 
@@ -80,6 +83,7 @@ func (f *Pretty) Passed(pickle *messages.Pickle, step *messages.PickleStep, matc
 	f.printStep(pickle, step)
 }
 
+// Skipped ...
 func (f *Pretty) Skipped(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Skipped(pickle, step, match)
 
@@ -89,6 +93,7 @@ func (f *Pretty) Skipped(pickle *messages.Pickle, step *messages.PickleStep, mat
 	f.printStep(pickle, step)
 }
 
+// Undefined ...
 func (f *Pretty) Undefined(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Undefined(pickle, step, match)
 
@@ -98,6 +103,7 @@ func (f *Pretty) Undefined(pickle *messages.Pickle, step *messages.PickleStep, m
 	f.printStep(pickle, step)
 }
 
+// Failed ...
 func (f *Pretty) Failed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition, err error) {
 	f.Basefmt.Failed(pickle, step, match, err)
 
@@ -107,6 +113,7 @@ func (f *Pretty) Failed(pickle *messages.Pickle, step *messages.PickleStep, matc
 	f.printStep(pickle, step)
 }
 
+// Pending ...
 func (f *Pretty) Pending(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Pending(pickle, step, match)
 
@@ -197,7 +204,7 @@ func (f *Pretty) printUndefinedPickle(pickle *messages.Pickle) {
 	}
 }
 
-// Summary sumarize the feature formatter output
+// Summary - sumarize the feature formatter output
 func (f *Pretty) Summary() {
 	failedStepResults := f.Storage.MustGetPickleStepResultsByStatus(failed)
 	if len(failedStepResults) > 0 {

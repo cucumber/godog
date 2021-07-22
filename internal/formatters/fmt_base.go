@@ -25,7 +25,7 @@ func BaseFormatterFunc(suite string, out io.Writer) formatters.Formatter {
 	return NewBaseFmt(suite, out)
 }
 
-// NewBaseFmt creates a new base formatter
+// NewBaseFmt - creates a new base formatter
 func NewBaseFmt(suite string, out io.Writer) *Basefmt {
 	return &Basefmt{
 		suiteName: suite,
@@ -35,7 +35,7 @@ func NewBaseFmt(suite string, out io.Writer) *Basefmt {
 	}
 }
 
-// Basefmt ...
+// Basefmt - base formatter
 type Basefmt struct {
 	suiteName string
 	out       io.Writer

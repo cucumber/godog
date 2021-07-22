@@ -33,10 +33,12 @@ func CucumberFormatterFunc(suite string, out io.Writer) formatters.Formatter {
 	return &Cukefmt{Basefmt: NewBaseFmt(suite, out)}
 }
 
+// Cukefmt ...
 type Cukefmt struct {
 	*Basefmt
 }
 
+// Summary ...
 func (f *Cukefmt) Summary() {
 	features := f.Storage.MustGetFeatures()
 

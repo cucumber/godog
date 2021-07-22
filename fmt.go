@@ -14,11 +14,16 @@ import (
 )
 
 var (
-	Passed    = models.Passed
-	Failed    = models.Failed
-	Skipped   = models.Skipped
+	// Passed ...
+	Passed = models.Passed
+	// Failed ...
+	Failed = models.Failed
+	// Skipped ...
+	Skipped = models.Skipped
+	// Undefined ...
 	Undefined = models.Undefined
-	Pending   = models.Pending
+	// Pending ...
+	Pending = models.Pending
 )
 
 // FindFmt searches available formatters registered
@@ -83,22 +88,26 @@ func printStepDefinitions(steps []*models.StepDefinition, w io.Writer) {
 	}
 }
 
+// NewBasefmt - creates a new base formatter
 func NewBasefmt(suite string, out io.Writer) *Basefmt {
 	return &Basefmt{
 		Basefmt: internal_fmt.NewBaseFmt(suite, out),
 	}
 }
 
+// NewProgressfmt - creates a new progress formatter
 func NewProgressfmt(suite string, out io.Writer) *Progress {
 	return &Progress{
 		Progress: internal_fmt.NewProgressfmt(suite, out),
 	}
 }
 
+// Basefmt - Base formatter
 type Basefmt struct {
 	*internal_fmt.Basefmt
 }
 
+// Progress - Progress formatter
 type Progress struct {
 	*internal_fmt.Progress
 }
