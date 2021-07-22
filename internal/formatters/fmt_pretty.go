@@ -110,8 +110,8 @@ func (f *Pretty) Failed(pickle *messages.Pickle, step *messages.PickleStep, matc
 func (f *Pretty) Pending(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Basefmt.Pending(pickle, step, match)
 
-	f.lock.Lock()
-	defer f.lock.Unlock()
+	f.Lock.Lock()
+	defer f.Lock.Unlock()
 
 	f.printStep(pickle, step)
 }
