@@ -1,6 +1,7 @@
 package godog
 
 import (
+	"context"
 	"fmt"
 	"go/build"
 	"io"
@@ -35,6 +36,8 @@ type scenarioInitializer func(*ScenarioContext)
 type runner struct {
 	randomSeed            int64
 	stopOnFailure, strict bool
+
+	defaultContext context.Context
 
 	features []*models.Feature
 
@@ -98,10 +101,11 @@ func (r *runner) concurrent(rate int) (failed bool) {
 				}
 
 				suite := &suite{
-					fmt:        r.fmt,
-					randomSeed: r.randomSeed,
-					strict:     r.strict,
-					storage:    r.storage,
+					fmt:            r.fmt,
+					randomSeed:     r.randomSeed,
+					strict:         r.strict,
+					storage:        r.storage,
+					defaultContext: r.defaultContext,
 				}
 
 				if r.scenarioInitializer != nil {
@@ -231,6 +235,7 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 
 	runner.stopOnFailure = opt.StopOnFailure
 	runner.strict = opt.Strict
+	runner.defaultContext = opt.DefaultContext
 
 	// store chosen seed in environment, so it could be seen in formatter summary report
 	os.Setenv("GODOG_SEED", strconv.FormatInt(runner.randomSeed, 10))

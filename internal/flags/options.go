@@ -1,6 +1,7 @@
 package flags
 
 import (
+	"context"
 	"io"
 )
 
@@ -56,4 +57,7 @@ type Options struct {
 
 	// Where it should print formatter output
 	Output io.Writer
+
+	// DefaultContext is used as initial context instead of context.Background().
+	DefaultContext context.Context
 }
