@@ -2,8 +2,10 @@ package godog
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"regexp"
@@ -34,7 +36,7 @@ import (
 func InitializeScenario(ctx *ScenarioContext) {
 	tc := &godogFeaturesScenario{}
 
-	ctx.BeforeScenario(tc.ResetBeforeEachScenario)
+	ctx.Before(tc.ResetBeforeEachScenario)
 
 	ctx.Step(`^(?:a )?feature path "([^"]*)"$`, tc.featurePath)
 	ctx.Step(`^I parse features$`, tc.parseFeatures)
@@ -109,18 +111,33 @@ func InitializeScenario(ctx *ScenarioContext) {
 	})
 
 	ctx.Step(`^(?:a )?passing step without return$`, func() {})
-	ctx.BeforeStep(tc.inject)
+
+	ctx.Step(`^(?:a )?having correct context$`, func(ctx context.Context) (context.Context, error) {
+		if ctx.Value(ctxKey("BeforeScenario")) == nil {
+			return ctx, errors.New("missing BeforeScenario in context")
+		}
+
+		if ctx.Value(ctxKey("BeforeStep")) == nil {
+			return ctx, errors.New("missing BeforeStep in context")
+		}
+
+		return context.WithValue(ctx, ctxKey("Step"), true), nil
+	})
+
+	ctx.StepContext().Before(tc.inject)
 }
 
-func (tc *godogFeaturesScenario) inject(step *Step) {
+type ctxKey string
+
+func (tc *godogFeaturesScenario) inject(ctx context.Context, step *Step) (context.Context, error) {
 	if !tc.allowInjection {
-		return
+		return ctx, nil
 	}
 
 	step.Text = injectAll(step.Text)
 
 	if step.Argument == nil {
-		return
+		return ctx, nil
 	}
 
 	if table := step.Argument.DataTable; table != nil {
@@ -134,6 +151,8 @@ func (tc *godogFeaturesScenario) inject(step *Step) {
 	if doc := step.Argument.DocString; doc != nil {
 		doc.Content = injectAll(doc.Content)
 	}
+
+	return ctx, nil
 }
 
 func injectAll(src string) string {
@@ -167,7 +186,7 @@ type godogFeaturesScenario struct {
 	allowInjection   bool
 }
 
-func (tc *godogFeaturesScenario) ResetBeforeEachScenario(*Scenario) {
+func (tc *godogFeaturesScenario) ResetBeforeEachScenario(ctx context.Context, sc *Scenario) (context.Context, error) {
 	// reset whole suite with the state
 	tc.out.Reset()
 	tc.paths = []string{}
@@ -179,6 +198,8 @@ func (tc *godogFeaturesScenario) ResetBeforeEachScenario(*Scenario) {
 	// reset all fired events
 	tc.events = []*firedEvent{}
 	tc.allowInjection = false
+
+	return ctx, nil
 }
 
 func (tc *godogFeaturesScenario) iSetVariableInjectionTo(to string) error {
@@ -391,20 +412,48 @@ func (tc *godogFeaturesScenario) iAmListeningToSuiteEvents() error {
 
 	scenarioContext := ScenarioContext{suite: tc.testedSuite}
 
-	scenarioContext.BeforeScenario(func(pickle *Scenario) {
+	scenarioContext.Before(func(ctx context.Context, pickle *Scenario) (context.Context, error) {
 		tc.events = append(tc.events, &firedEvent{"BeforeScenario", []interface{}{pickle}})
+
+		return context.WithValue(ctx, ctxKey("BeforeScenario"), true), nil
 	})
 
-	scenarioContext.AfterScenario(func(pickle *Scenario, err error) {
+	scenarioContext.After(func(ctx context.Context, pickle *Scenario, err error) (context.Context, error) {
 		tc.events = append(tc.events, &firedEvent{"AfterScenario", []interface{}{pickle, err}})
+
+		if ctx.Value(ctxKey("BeforeScenario")) == nil {
+			return ctx, errors.New("missing BeforeScenario in context")
+		}
+
+		return context.WithValue(ctx, ctxKey("AfterScenario"), true), nil
 	})
 
-	scenarioContext.BeforeStep(func(step *Step) {
+	scenarioContext.StepContext().Before(func(ctx context.Context, step *Step) (context.Context, error) {
 		tc.events = append(tc.events, &firedEvent{"BeforeStep", []interface{}{step}})
+
+		if ctx.Value(ctxKey("BeforeScenario")) == nil {
+			return ctx, errors.New("missing BeforeScenario in context")
+		}
+
+		return context.WithValue(ctx, ctxKey("BeforeStep"), true), nil
 	})
 
-	scenarioContext.AfterStep(func(step *Step, err error) {
+	scenarioContext.StepContext().After(func(ctx context.Context, step *Step, err error) (context.Context, error) {
 		tc.events = append(tc.events, &firedEvent{"AfterStep", []interface{}{step, err}})
+
+		if ctx.Value(ctxKey("BeforeScenario")) == nil {
+			return ctx, errors.New("missing BeforeScenario in context")
+		}
+
+		if ctx.Value(ctxKey("BeforeStep")) == nil {
+			return ctx, errors.New("missing BeforeStep in context")
+		}
+
+		if step.Text == "having correct context" && ctx.Value(ctxKey("Step")) == nil {
+			return ctx, errors.New("missing Step in context")
+		}
+
+		return context.WithValue(ctx, ctxKey("AfterStep"), true), nil
 	})
 
 	return nil

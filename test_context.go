@@ -1,6 +1,7 @@
 package godog
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -11,9 +12,6 @@ import (
 	"github.com/cucumber/godog/internal/builder"
 	"github.com/cucumber/godog/internal/models"
 )
-
-// matchable errors
-var ()
 
 // Scenario represents the executed scenario
 type Scenario = messages.Pickle
@@ -97,26 +95,86 @@ type ScenarioContext struct {
 	suite *suite
 }
 
+// StepContext allows registering step hooks.
+type StepContext struct {
+	suite *suite
+}
+
+// Before registers a hook to invoke before scenario.
+func (ctx ScenarioContext) Before(h BeforeScenarioHook) {
+	ctx.suite.beforeScenarioHandlers = append(ctx.suite.beforeScenarioHandlers, h)
+}
+
+// BeforeScenarioHook defines a hook before scenario.
+type BeforeScenarioHook func(ctx context.Context, sc *Scenario) (context.Context, error)
+
+// After registers a hook to invoke after scenario.
+func (ctx ScenarioContext) After(h AfterScenarioHook) {
+	ctx.suite.afterScenarioHandlers = append(ctx.suite.afterScenarioHandlers, h)
+}
+
+// AfterScenarioHook defines a hook after scenario.
+type AfterScenarioHook func(ctx context.Context, sc *Scenario, err error) (context.Context, error)
+
+// StepContext exposes StepContext of a scenario.
+func (ctx *ScenarioContext) StepContext() StepContext {
+	return StepContext{suite: ctx.suite}
+}
+
+// Before registers a hook to invoke before step.
+func (ctx StepContext) Before(h BeforeStepHook) {
+	ctx.suite.beforeStepHandlers = append(ctx.suite.beforeStepHandlers, h)
+}
+
+// BeforeStepHook defines a hook before step.
+type BeforeStepHook func(ctx context.Context, st *Step) (context.Context, error)
+
+// After registers a hook to invoke after step.
+func (ctx StepContext) After(h AfterStepHook) {
+	ctx.suite.afterStepHandlers = append(ctx.suite.afterStepHandlers, h)
+}
+
+// AfterStepHook defines a hook after step.
+type AfterStepHook func(ctx context.Context, st *Step, err error) (context.Context, error)
+
 // BeforeScenario registers a function or method
 // to be run before every scenario.
 //
 // It is a good practice to restore the default state
 // before every scenario so it would be isolated from
 // any kind of state.
+//
+// Deprecated: use Before.
 func (ctx *ScenarioContext) BeforeScenario(fn func(sc *Scenario)) {
-	ctx.suite.beforeScenarioHandlers = append(ctx.suite.beforeScenarioHandlers, fn)
+	ctx.Before(func(ctx context.Context, sc *Scenario) (context.Context, error) {
+		fn(sc)
+
+		return ctx, nil
+	})
 }
 
 // AfterScenario registers an function or method
 // to be run after every scenario.
+//
+// Deprecated: use After.
 func (ctx *ScenarioContext) AfterScenario(fn func(sc *Scenario, err error)) {
-	ctx.suite.afterScenarioHandlers = append(ctx.suite.afterScenarioHandlers, fn)
+	ctx.After(func(ctx context.Context, sc *Scenario, err error) (context.Context, error) {
+		fn(sc, err)
+
+		return ctx, nil
+	})
 }
 
 // BeforeStep registers a function or method
 // to be run before every step.
+//
+// Deprecated: use ScenarioContext.StepContext() and StepContext.Before.
 func (ctx *ScenarioContext) BeforeStep(fn func(st *Step)) {
-	ctx.suite.beforeStepHandlers = append(ctx.suite.beforeStepHandlers, fn)
+	ctx.StepContext().Before(func(ctx context.Context, st *Step) (context.Context, error) {
+		fn(st)
+
+		return ctx, nil
+	})
 }
 
 // AfterStep registers an function or method
@@ -128,8 +186,14 @@ func (ctx *ScenarioContext) BeforeStep(fn func(st *Step)) {
 //
 // In some cases, for example when running a headless
 // browser, to take a screenshot after failure.
+//
+// Deprecated: use ScenarioContext.StepContext() and StepContext.After.
 func (ctx *ScenarioContext) AfterStep(fn func(st *Step, err error)) {
-	ctx.suite.afterStepHandlers = append(ctx.suite.afterStepHandlers, fn)
+	ctx.StepContext().After(func(ctx context.Context, st *Step, err error) (context.Context, error) {
+		fn(st, err)
+
+		return ctx, nil
+	})
 }
 
 // Step allows to register a *StepDefinition in the
@@ -179,8 +243,8 @@ func (ctx *ScenarioContext) Step(expr, stepFunc interface{}) {
 		panic(fmt.Sprintf("expected handler to be func, but got: %T", stepFunc))
 	}
 
-	if typ.NumOut() > 1 {
-		panic(fmt.Sprintf("expected handler to return either zero or one value, but it has: %d", typ.NumOut()))
+	if typ.NumOut() > 2 {
+		panic(fmt.Sprintf("expected handler to return either zero, one or two values, but it has: %d", typ.NumOut()))
 	}
 
 	def := &models.StepDefinition{

@@ -41,9 +41,9 @@ func TestScenarioContext_Step(t *testing.T) {
 				So(func() { ctx.Step(".*", 124) }, ShouldPanicWith, fmt.Sprintf("expected handler to be func, but got: %T", 12))
 			})
 
-			Convey("has more than 1 return value", func() {
-				So(func() { ctx.Step(".*", nokLimitCase) }, ShouldPanicWith, fmt.Sprintf("expected handler to return either zero or one value, but it has: 2"))
-				So(func() { ctx.Step(".*", nokMore) }, ShouldPanicWith, fmt.Sprintf("expected handler to return either zero or one value, but it has: 5"))
+			Convey("has more than 2 return values", func() {
+				So(func() { ctx.Step(".*", nokLimitCase) }, ShouldPanicWith, fmt.Sprintf("expected handler to return either zero, one or two values, but it has: 3"))
+				So(func() { ctx.Step(".*", nokMore) }, ShouldPanicWith, fmt.Sprintf("expected handler to return either zero, one or two values, but it has: 5"))
 			})
 
 			Convey("return type is not an error or string slice or void", func() {
@@ -60,7 +60,7 @@ func TestScenarioContext_Step(t *testing.T) {
 func okEmptyResult()                             {}
 func okErrorResult() error                       { return nil }
 func okSliceResult() []string                    { return nil }
-func nokLimitCase() (int, error)                 { return 0, nil }
+func nokLimitCase() (string, int, error)         { return "", 0, nil }
 func nokMore() (int, int, int, int, error)       { return 0, 0, 0, 0, nil }
 func nokInvalidReturnInterfaceType() interface{} { return 0 }
 func nokInvalidReturnSliceType() []int           { return nil }
