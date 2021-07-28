@@ -145,7 +145,7 @@ func (sd *StepDefinition) Run() interface{} {
 					break
 				}
 
-				return fmt.Errorf(`%w %d: "%v" of type "%T" to *messages.PickleStepArgument_PickleTable`, ErrCannotConvert, i, arg, arg)
+				return fmt.Errorf(`%w %d: "%v" of type "%T" to *messages.PickleTable`, ErrCannotConvert, i, arg, arg)
 			default:
 				return fmt.Errorf("%w: the argument %d type %T is not supported %s", ErrUnsupportedArgumentType, i, arg, param.Elem().String())
 			}
