@@ -52,17 +52,7 @@ func (s *suite) matchStep(step *messages.PickleStep) *models.StepDefinition {
 }
 
 func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, prevStepErr error) (rctx context.Context, err error) {
-	// run before step handlers
-	for _, f := range s.beforeStepHandlers {
-		ctx, err = f(ctx, step)
-		if err != nil {
-			return ctx, err
-		}
-	}
-
-	match := s.matchStep(step)
-	s.storage.MustInsertStepDefintionMatch(step.AstNodeIds[0], match)
-	s.fmt.Defined(pickle, step, match.GetInternalStepDefinition())
+	var match *models.StepDefinition
 
 	// user multistep definitions may panic
 	defer func() {
@@ -72,6 +62,24 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, prevS
 				stack: callStack(),
 			}
 		}
+
+		defer func() {
+			// run after step handlers
+			for _, f := range s.afterStepHandlers {
+				hctx, herr := f(rctx, step, err)
+
+				// Adding hook error to resulting error without breaking hooks loop.
+				if herr != nil {
+					if err == nil {
+						err = herr
+					} else {
+						err = fmt.Errorf("%v: %w", herr, err)
+					}
+				}
+
+				rctx = hctx
+			}
+		}()
 
 		if prevStepErr != nil {
 			return
@@ -101,23 +109,19 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, prevS
 
 			s.fmt.Failed(pickle, step, match.GetInternalStepDefinition(), err)
 		}
-
-		// run after step handlers
-		for _, f := range s.afterStepHandlers {
-			hctx, herr := f(rctx, step, err)
-
-			// Adding hook error to resulting error without breaking hooks loop.
-			if herr != nil {
-				if err == nil {
-					err = herr
-				} else {
-					err = fmt.Errorf("%v: %w", herr, err)
-				}
-			}
-
-			rctx = hctx
-		}
 	}()
+
+	// run before step handlers
+	for _, f := range s.beforeStepHandlers {
+		ctx, err = f(ctx, step)
+		if err != nil {
+			return ctx, err
+		}
+	}
+
+	match = s.matchStep(step)
+	s.storage.MustInsertStepDefintionMatch(step.AstNodeIds[0], match)
+	s.fmt.Defined(pickle, step, match.GetInternalStepDefinition())
 
 	if ctx, undef, err := s.maybeUndefined(ctx, step.Text, step.Argument); err != nil {
 		return ctx, err

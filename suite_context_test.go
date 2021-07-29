@@ -425,6 +425,10 @@ func (tc *godogFeaturesScenario) iAmListeningToSuiteEvents() error {
 			return ctx, errors.New("missing BeforeScenario in context")
 		}
 
+		if ctx.Value(ctxKey("AfterStep")) == nil {
+			return ctx, errors.New("missing AfterStep in context")
+		}
+
 		return context.WithValue(ctx, ctxKey("AfterScenario"), true), nil
 	})
 
