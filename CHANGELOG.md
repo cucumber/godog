@@ -23,6 +23,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ### Removed
 
 ### Fixed
+* Incorrect step definition output for Data Tables ([411](https://github.com/cucumber/godog/pull/411) - [karfrank])
 
 ## [v0.11.0]
 
