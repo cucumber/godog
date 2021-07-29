@@ -23,6 +23,22 @@ var ErrUndefined = fmt.Errorf("step is undefined")
 // step implementation is pending
 var ErrPending = fmt.Errorf("step implementation is pending")
 
+// StepResultStatus describes step result.
+type StepResultStatus = models.StepResultStatus
+
+const (
+	// StepPassed indicates step that passed.
+	StepPassed StepResultStatus = models.Passed
+	// StepFailed indicates step that failed.
+	StepFailed = models.Failed
+	// StepSkipped indicates step that was skipped.
+	StepSkipped = models.Skipped
+	// StepUndefined indicates undefined step.
+	StepUndefined = models.Undefined
+	// StepPending indicates step with pending implementation.
+	StepPending = models.Pending
+)
+
 type suite struct {
 	steps []*models.StepDefinition
 
@@ -52,7 +68,10 @@ func (s *suite) matchStep(step *messages.PickleStep) *models.StepDefinition {
 }
 
 func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, prevStepErr error) (rctx context.Context, err error) {
-	var match *models.StepDefinition
+	var (
+		match *models.StepDefinition
+		sr    = models.PickleStepResult{Status: models.Undefined}
+	)
 
 	// user multistep definitions may panic
 	defer func() {
@@ -66,7 +85,7 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, prevS
 		defer func() {
 			// run after step handlers
 			for _, f := range s.afterStepHandlers {
-				hctx, herr := f(rctx, step, err)
+				hctx, herr := f(rctx, step, sr.Status, err)
 
 				// Adding hook error to resulting error without breaking hooks loop.
 				if herr != nil {
@@ -89,7 +108,7 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, prevS
 			return
 		}
 
-		sr := models.NewStepResult(pickle.Id, step.Id, match)
+		sr = models.NewStepResult(pickle.Id, step.Id, match)
 
 		switch err {
 		case nil:
@@ -139,7 +158,7 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, prevS
 			}
 		}
 
-		sr := models.NewStepResult(pickle.Id, step.Id, match)
+		sr = models.NewStepResult(pickle.Id, step.Id, match)
 		sr.Status = models.Undefined
 		s.storage.MustInsertPickleStepResult(sr)
 
@@ -148,7 +167,7 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, prevS
 	}
 
 	if prevStepErr != nil {
-		sr := models.NewStepResult(pickle.Id, step.Id, match)
+		sr = models.NewStepResult(pickle.Id, step.Id, match)
 		sr.Status = models.Skipped
 		s.storage.MustInsertPickleStepResult(sr)
 

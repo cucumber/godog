@@ -442,7 +442,7 @@ func (tc *godogFeaturesScenario) iAmListeningToSuiteEvents() error {
 		return context.WithValue(ctx, ctxKey("BeforeStep"), true), nil
 	})
 
-	scenarioContext.StepContext().After(func(ctx context.Context, step *Step, err error) (context.Context, error) {
+	scenarioContext.StepContext().After(func(ctx context.Context, step *Step, status StepResultStatus, err error) (context.Context, error) {
 		tc.events = append(tc.events, &firedEvent{"AfterStep", []interface{}{step, err}})
 
 		if ctx.Value(ctxKey("BeforeScenario")) == nil {
@@ -454,6 +454,10 @@ func (tc *godogFeaturesScenario) iAmListeningToSuiteEvents() error {
 		}
 
 		if step.Text == "having correct context" && ctx.Value(ctxKey("Step")) == nil {
+			if status != StepSkipped {
+				return ctx, fmt.Errorf("unexpected step result status: %s", status)
+			}
+
 			return ctx, errors.New("missing Step in context")
 		}
 

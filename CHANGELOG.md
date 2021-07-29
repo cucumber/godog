@@ -14,6 +14,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 - Support for step definitions without return ([364](https://github.com/cucumber/godog/pull/364) - [titouanfreville])
 - Contextualized hooks for scenarios and steps ([409](https://github.com/cucumber/godog/pull/409)) - [vearutop])
+- Step result status in After hook ([409](https://github.com/cucumber/godog/pull/409)) - [vearutop])
 
 ### Changed
 

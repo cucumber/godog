@@ -135,7 +135,7 @@ func (ctx StepContext) After(h AfterStepHook) {
 }
 
 // AfterStepHook defines a hook after step.
-type AfterStepHook func(ctx context.Context, st *Step, err error) (context.Context, error)
+type AfterStepHook func(ctx context.Context, st *Step, status StepResultStatus, err error) (context.Context, error)
 
 // BeforeScenario registers a function or method
 // to be run before every scenario.
@@ -189,7 +189,7 @@ func (ctx *ScenarioContext) BeforeStep(fn func(st *Step)) {
 //
 // Deprecated: use ScenarioContext.StepContext() and StepContext.After.
 func (ctx *ScenarioContext) AfterStep(fn func(st *Step, err error)) {
-	ctx.StepContext().After(func(ctx context.Context, st *Step, err error) (context.Context, error) {
+	ctx.StepContext().After(func(ctx context.Context, st *Step, status StepResultStatus, err error) (context.Context, error) {
 		fn(st, err)
 
 		return ctx, nil
