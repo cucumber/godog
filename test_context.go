@@ -100,7 +100,12 @@ type StepContext struct {
 	suite *suite
 }
 
-// Before registers a hook to invoke before scenario.
+// Before registers a a function or method
+// to be run before every scenario.
+//
+// It is a good practice to restore the default state
+// before every scenario so it would be isolated from
+// any kind of state.
 func (ctx ScenarioContext) Before(h BeforeScenarioHook) {
 	ctx.suite.beforeScenarioHandlers = append(ctx.suite.beforeScenarioHandlers, h)
 }
@@ -108,7 +113,8 @@ func (ctx ScenarioContext) Before(h BeforeScenarioHook) {
 // BeforeScenarioHook defines a hook before scenario.
 type BeforeScenarioHook func(ctx context.Context, sc *Scenario) (context.Context, error)
 
-// After registers a hook to invoke after scenario.
+// After registers an function or method
+// to be run after every scenario.
 func (ctx ScenarioContext) After(h AfterScenarioHook) {
 	ctx.suite.afterScenarioHandlers = append(ctx.suite.afterScenarioHandlers, h)
 }
@@ -121,7 +127,8 @@ func (ctx *ScenarioContext) StepContext() StepContext {
 	return StepContext{suite: ctx.suite}
 }
 
-// Before registers a hook to invoke before step.
+// Before registers a function or method
+// to be run before every step.
 func (ctx StepContext) Before(h BeforeStepHook) {
 	ctx.suite.beforeStepHandlers = append(ctx.suite.beforeStepHandlers, h)
 }
@@ -129,7 +136,15 @@ func (ctx StepContext) Before(h BeforeStepHook) {
 // BeforeStepHook defines a hook before step.
 type BeforeStepHook func(ctx context.Context, st *Step) (context.Context, error)
 
-// After registers a hook to invoke after step.
+// After registers an function or method
+// to be run after every step.
+//
+// It may be convenient to return a different kind of error
+// in order to print more state details which may help
+// in case of step failure
+//
+// In some cases, for example when running a headless
+// browser, to take a screenshot after failure.
 func (ctx StepContext) After(h AfterStepHook) {
 	ctx.suite.afterStepHandlers = append(ctx.suite.afterStepHandlers, h)
 }
