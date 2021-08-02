@@ -110,9 +110,9 @@ func InitializeScenario(ctx *ScenarioContext) {
 		return nil
 	})
 
-	ctx.Step(`^(?:a )?passing step without return$`, func() {})
+	ctx.Step(`^passing step without return$`, func() {})
 
-	ctx.Step(`^(?:a )?having correct context$`, func(ctx context.Context) (context.Context, error) {
+	ctx.Step(`^having correct context$`, func(ctx context.Context) (context.Context, error) {
 		if ctx.Value(ctxKey("BeforeScenario")) == nil {
 			return ctx, errors.New("missing BeforeScenario in context")
 		}
@@ -121,7 +121,15 @@ func InitializeScenario(ctx *ScenarioContext) {
 			return ctx, errors.New("missing BeforeStep in context")
 		}
 
+		if ctx.Value(ctxKey("StepState")) == nil {
+			return ctx, errors.New("missing StepState in context")
+		}
+
 		return context.WithValue(ctx, ctxKey("Step"), true), nil
+	})
+
+	ctx.Step(`^adding step state to context$`, func(ctx context.Context) context.Context {
+		return context.WithValue(ctx, ctxKey("StepState"), true)
 	})
 
 	ctx.StepContext().Before(tc.inject)

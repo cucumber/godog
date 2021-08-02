@@ -274,8 +274,8 @@ func (ctx *ScenarioContext) Step(expr, stepFunc interface{}) {
 		typ = typ.Out(0)
 		switch typ.Kind() {
 		case reflect.Interface:
-			if !typ.Implements(errorInterface) {
-				panic(fmt.Sprintf("expected handler to return an error, but got: %s", typ.Kind()))
+			if !typ.Implements(errorInterface) && !typ.Implements(contextInterface) {
+				panic(fmt.Sprintf("expected handler to return an error or context.Context, but got: %s", typ.Kind()))
 			}
 		case reflect.Slice:
 			if typ.Elem().Kind() != reflect.String {

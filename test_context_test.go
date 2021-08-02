@@ -47,7 +47,7 @@ func TestScenarioContext_Step(t *testing.T) {
 			})
 
 			Convey("return type is not an error or string slice or void", func() {
-				So(func() { ctx.Step(".*", nokInvalidReturnInterfaceType) }, ShouldPanicWith, "expected handler to return an error, but got: interface")
+				So(func() { ctx.Step(".*", nokInvalidReturnInterfaceType) }, ShouldPanicWith, "expected handler to return an error or context.Context, but got: interface")
 				So(func() { ctx.Step(".*", nokInvalidReturnSliceType) }, ShouldPanicWith, "expected handler to return []string for multistep, but got: []int")
 				So(func() { ctx.Step(".*", nokInvalidReturnOtherType) }, ShouldPanicWith, "expected handler to return an error or []string, but got: chan")
 			})

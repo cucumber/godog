@@ -14,7 +14,10 @@ import (
 	"github.com/cucumber/godog/internal/utils"
 )
 
-var errorInterface = reflect.TypeOf((*error)(nil)).Elem()
+var (
+	errorInterface   = reflect.TypeOf((*error)(nil)).Elem()
+	contextInterface = reflect.TypeOf((*context.Context)(nil)).Elem()
+)
 
 // ErrUndefined is returned in case if step definition was not found
 var ErrUndefined = fmt.Errorf("step is undefined")
