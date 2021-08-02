@@ -12,6 +12,8 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Added
 
+* Support for step definitions without return ([364](https://github.com/cucumber/godog/pull/364) -[titouanfreville])
+
 ### Changed
 
 * Upgraded gherkin-go to v19 ([402](https://github.com/cucumber/godog/pull/402) - [mbow])
@@ -21,6 +23,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ### Removed
 
 ### Fixed
+* Incorrect step definition output for Data Tables ([411](https://github.com/cucumber/godog/pull/411) - [karfrank])
 
 ## [v0.11.0]
 

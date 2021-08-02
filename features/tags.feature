@@ -10,6 +10,7 @@ Feature: tag filters
 
         Background:
           Given passing step
+          And passing step without return
 
         Scenario Outline: parse a scenario
           Given a feature path "<path>"
