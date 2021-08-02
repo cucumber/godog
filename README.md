@@ -296,6 +296,30 @@ func InitializeScenario(sc *godog.ScenarioContext) {
 }
 ```
 
+You can also pass the state between steps and hooks of a scenario using `context.Context`. 
+Step definitions can receive and return `context.Context`.
+
+```go
+type cntCtxKey struct{} // Key for a particular context value type.
+
+s.Step("^I have a random number of godogs$", func(ctx context.Context) context.Context {
+	// Creating a random number of godog and storing it in context for future reference.
+	cnt := rand.Int()
+	Godogs = cnt
+	return context.WithValue(ctx, cntCtxKey{}, cnt)
+})
+
+s.Step("I eat all available godogs", func(ctx context.Context) error {
+	// Getting previously stored number of godogs from context.
+	cnt := ctx.Value(cntCtxKey{}).(uint32)
+	if Godogs < cnt {
+		return errors.New("can't eat more than I have")
+	}
+	Godogs -= cnt
+	return nil
+})
+```
+
 When you run godog again - `godog`
 
 You should see a passing run:
