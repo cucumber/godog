@@ -12,18 +12,27 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Added
 
-* Support for step definitions without return ([364](https://github.com/cucumber/godog/pull/364) -[titouanfreville])
+- Support for step definitions without return ([364](https://github.com/cucumber/godog/pull/364) - [titouanfreville])
+- Contextualized hooks for scenarios and steps ([409](https://github.com/cucumber/godog/pull/409)) - [vearutop])
+- Step result status in After hook ([409](https://github.com/cucumber/godog/pull/409)) - [vearutop])
 
 ### Changed
 
-* Upgraded gherkin-go to v19 ([402](https://github.com/cucumber/godog/pull/402) - [mbow])
+- Upgraded gherkin-go to v19 ([402](https://github.com/cucumber/godog/pull/402) - [mbow])
 
 ### Deprecated
+
+- `ScenarioContext.BeforeScenario`, use `ScenarioContext.Before` ([409](https://github.com/cucumber/godog/pull/409)) - [vearutop])
+- `ScenarioContext.AfterScenario`, use `ScenarioContext.After` ([409](https://github.com/cucumber/godog/pull/409)) - [vearutop])
+- `ScenarioContext.BeforeStep`, use `ScenarioContext.StepContext().Before` ([409](https://github.com/cucumber/godog/pull/409)) - [vearutop])
+- `ScenarioContext.AfterStep`, use `ScenarioContext.StepContext().After` ([409](https://github.com/cucumber/godog/pull/409)) - [vearutop])
 
 ### Removed
 
 ### Fixed
-* Incorrect step definition output for Data Tables ([411](https://github.com/cucumber/godog/pull/411) - [karfrank])
+
+- Incorrect step definition output for Data Tables ([411](https://github.com/cucumber/godog/pull/411) - [karfrank])
+- `ScenarioContext.AfterStep` not invoked after a failed case (([409](https://github.com/cucumber/godog/pull/409)) - [vearutop]))
 
 ## [v0.11.0]
 
@@ -175,7 +184,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 <!-- Releases -->
 
-[unreleased]: https://github.com/cucumber/godog/compare/v0.11.0...master
+[unreleased]: https://github.com/cucumber/godog/compare/v0.11.0...main
 [v0.11.0]: https://github.com/cucumber/godog/compare/v0.10.0...v0.11.0
 [v0.10.0]: https://github.com/cucumber/godog/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/cucumber/godog/compare/v0.8.1...v0.9.0
@@ -196,3 +205,4 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 [hansbogert]: https://github.com/hansbogert
 [rickardenglund]: https://github.com/rickardenglund
 [mbow]: https://github.com/mbow
+[vearutop]: https://github.com/vearutop

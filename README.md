@@ -223,7 +223,7 @@ func iEat(arg1 int) {
 We only need a number of **godogs** for now. Lets keep it simple.
 
 Create and copy the code into a new file - `vim godogs.go`
-``` go
+```go
 package main
 
 // Godogs available to eat
@@ -248,10 +248,12 @@ godogs
 Now lets implement our step definitions to test our feature requirements:
 
 Replace the contents of `godogs_test.go` with the code below - `vim godogs_test.go`
-``` go
+
+```go
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/cucumber/godog"
@@ -277,25 +279,51 @@ func thereShouldBeRemaining(remaining int) error {
 	return nil
 }
 
-func InitializeTestSuite(ctx *godog.TestSuiteContext) {
-	ctx.BeforeSuite(func() { Godogs = 0 })
+func InitializeTestSuite(sc *godog.TestSuiteContext) {
+	sc.BeforeSuite(func() { Godogs = 0 })
 }
 
-func InitializeScenario(ctx *godog.ScenarioContext) {
-	ctx.BeforeScenario(func(*godog.Scenario) {
+func InitializeScenario(sc *godog.ScenarioContext) {
+	sc.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 		Godogs = 0 // clean the state before every scenario
+
+		return ctx, nil
 	})
 
-	ctx.Step(`^there are (\d+) godogs$`, thereAreGodogs)
-	ctx.Step(`^I eat (\d+)$`, iEat)
-	ctx.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
+	sc.Step(`^there are (\d+) godogs$`, thereAreGodogs)
+	sc.Step(`^I eat (\d+)$`, iEat)
+	sc.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
 }
+```
+
+You can also pass the state between steps and hooks of a scenario using `context.Context`. 
+Step definitions can receive and return `context.Context`.
+
+```go
+type cntCtxKey struct{} // Key for a particular context value type.
+
+s.Step("^I have a random number of godogs$", func(ctx context.Context) context.Context {
+	// Creating a random number of godog and storing it in context for future reference.
+	cnt := rand.Int()
+	Godogs = cnt
+	return context.WithValue(ctx, cntCtxKey{}, cnt)
+})
+
+s.Step("I eat all available godogs", func(ctx context.Context) error {
+	// Getting previously stored number of godogs from context.
+	cnt := ctx.Value(cntCtxKey{}).(uint32)
+	if Godogs < cnt {
+		return errors.New("can't eat more than I have")
+	}
+	Godogs -= cnt
+	return nil
+})
 ```
 
 When you run godog again - `godog`
 
 You should see a passing run:
-```
+```gherkin
 Feature: eat godogs
   In order to be happy
   As a hungry gopher
@@ -305,13 +333,16 @@ Feature: eat godogs
     Given there are 12 godogs        # godogs_test.go:10 -> thereAreGodogs
     When I eat 5                     # godogs_test.go:14 -> iEat
     Then there should be 7 remaining # godogs_test.go:22 -> thereShouldBeRemaining
-
+```
+```
 1 scenarios (1 passed)
 3 steps (3 passed)
 258.302µs
 ```
 
-We have hooked to **BeforeScenario** event in order to reset the application state before each scenario. You may hook into more events, like **AfterStep** to print all state in case of an error. Or **BeforeSuite** to prepare a database.
+We have hooked to `ScenarioContext` **Before** event in order to reset the application state before each scenario. 
+You may hook into more events, like `sc.StepContext()` **After** to print all state in case of an error. 
+Or **BeforeSuite** to prepare a database.
 
 By now, you should have figured out, how to use **godog**. Another advice is to make steps orthogonal, small and simple to read for a user. Whether the user is a dumb website user or an API developer, who may understand a little more technical context - it should target that user.
 
@@ -350,7 +381,7 @@ You may integrate running **godog** in your **go test** command. You can run it 
 
 The following example binds **godog** flags with specified prefix `godog` in order to prevent flag collisions.
 
-``` go
+```go
 package main
 
 import (
@@ -369,7 +400,7 @@ var opts = godog.Options{
 
 func init() {
 	godog.BindFlags("godog.", pflag.CommandLine, &opts) // godog v0.10.0 and earlier
-	godog.BindCommandLineFlags("godog.", &opts)        // godog v0.11.0 (latest)
+	godog.BindCommandLineFlags("godog.", &opts)        // godog v0.11.0 and later
 }
 
 func TestMain(m *testing.M) {
@@ -401,7 +432,7 @@ go test -v --godog.format=pretty --godog.random -race -coverprofile=coverage.txt
 
 The following example does not bind godog flags, instead manually configuring needed options.
 
-``` go
+```go
 func TestMain(m *testing.M) {
 	opts := godog.Options{
 		Format:    "progress",
@@ -427,7 +458,7 @@ func TestMain(m *testing.M) {
 
 You can even go one step further and reuse **go test** flags, like **verbose** mode in order to switch godog **format**. See the following example:
 
-``` go
+```go
 func TestMain(m *testing.M) {
 	format := "progress"
 	for _, arg := range os.Args[1:] {
@@ -472,7 +503,7 @@ If you want to filter scenarios by tags, you can use the `-t=<expression>` or `-
 ### Using assertion packages like testify with Godog
 A more extensive example can be [found here](/_examples/assert-godogs).
 
-``` go
+```go
 func thereShouldBeRemaining(remaining int) error {
 	return assertExpectedAndActual(
 		assert.Equal, Godogs, remaining,
