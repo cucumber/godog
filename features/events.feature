@@ -72,6 +72,9 @@ Feature: suite events
 
         Scenario: two
           Then passing step
+          And failing step
+          And adding step state to context
+          And having correct context
 
         Scenario Outline: three
           Then passing step
@@ -84,7 +87,9 @@ Feature: suite events
     Then these events had to be fired for a number of times:
       | BeforeSuite    | 1 |
       | BeforeScenario | 2 |
-      | BeforeStep     | 2 |
-      | AfterStep      | 2 |
+      | BeforeStep     | 5 |
+      | AfterStep      | 5 |
       | AfterScenario  | 2 |
       | AfterSuite     | 1 |
+
+    And the suite should have failed
