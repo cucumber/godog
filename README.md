@@ -505,14 +505,6 @@ func (a *asserter) Errorf(format string, args ...interface{}) {
 
 There are no global options or configuration files. Alias your common or project based commands: `alias godog-wip="godog --format=progress --tags=@wip"`
 
-### Testing browser interactions
-
-**godog** does not come with builtin packages to connect to the browser. You may want to look at [selenium](http://www.seleniumhq.org/) and probably [phantomjs](http://phantomjs.org/). See also the following components:
-
-1. [browsersteps](https://github.com/llonchj/browsersteps) - provides basic context steps to start selenium and navigate browser content.
-2. You may wish to have [goquery](https://github.com/PuerkitoBio/goquery)
-   in order to work with HTML responses like with JQuery.
-
 ### Concurrency
 
 When concurrency is configured in options, godog will execute the scenarios concurrently, which is support by all supplied formatters.
