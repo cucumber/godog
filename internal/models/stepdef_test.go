@@ -1,6 +1,7 @@
 package models_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"reflect"
@@ -8,11 +9,58 @@ import (
 	"testing"
 
 	"github.com/cucumber/messages-go/v16"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/models"
 )
+
+func TestShouldSupportContext(t *testing.T) {
+	ctx := context.WithValue(context.Background(), "original", 123)
+
+	fn := func(ctx context.Context, a int64, b int32, c int16, d int8) context.Context {
+		assert.Equal(t, 123, ctx.Value("original"))
+
+		return context.WithValue(ctx, "updated", 321)
+	}
+
+	def := &models.StepDefinition{
+		StepDefinition: formatters.StepDefinition{
+			Handler: fn,
+		},
+		HandlerValue: reflect.ValueOf(fn),
+	}
+
+	def.Args = []interface{}{"1", "1", "1", "1"}
+	ctx, err := def.Run(ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, 123, ctx.Value("original"))
+	assert.Equal(t, 321, ctx.Value("updated"))
+}
+
+func TestShouldSupportContextAndError(t *testing.T) {
+	ctx := context.WithValue(context.Background(), "original", 123)
+
+	fn := func(ctx context.Context, a int64, b int32, c int16, d int8) (context.Context, error) {
+		assert.Equal(t, 123, ctx.Value("original"))
+
+		return context.WithValue(ctx, "updated", 321), nil
+	}
+
+	def := &models.StepDefinition{
+		StepDefinition: formatters.StepDefinition{
+			Handler: fn,
+		},
+		HandlerValue: reflect.ValueOf(fn),
+	}
+
+	def.Args = []interface{}{"1", "1", "1", "1"}
+	ctx, err := def.Run(ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, 123, ctx.Value("original"))
+	assert.Equal(t, 321, ctx.Value("updated"))
+}
 
 func TestShouldSupportEmptyHandlerReturn(t *testing.T) {
 	fn := func(a int64, b int32, c int16, d int8) {}
@@ -25,12 +73,12 @@ func TestShouldSupportEmptyHandlerReturn(t *testing.T) {
 	}
 
 	def.Args = []interface{}{"1", "1", "1", "1"}
-	if err := def.Run(); err != nil {
+	if _, err := def.Run(context.Background()); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
 	def.Args = []interface{}{"1", "1", "1", strings.Repeat("1", 9)}
-	if err := def.Run(); err == nil {
+	if _, err := def.Run(context.Background()); err == nil {
 		t.Fatalf("expected convertion fail for int8, but got none")
 	}
 }
@@ -46,12 +94,12 @@ func TestShouldSupportIntTypes(t *testing.T) {
 	}
 
 	def.Args = []interface{}{"1", "1", "1", "1"}
-	if err := def.Run(); err != nil {
+	if _, err := def.Run(context.Background()); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
 	def.Args = []interface{}{"1", "1", "1", strings.Repeat("1", 9)}
-	if err := def.Run(); err == nil {
+	if _, err := def.Run(context.Background()); err == nil {
 		t.Fatalf("expected convertion fail for int8, but got none")
 	}
 }
@@ -67,12 +115,12 @@ func TestShouldSupportFloatTypes(t *testing.T) {
 	}
 
 	def.Args = []interface{}{"1.1", "1.09"}
-	if err := def.Run(); err != nil {
+	if _, err := def.Run(context.Background()); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
 	def.Args = []interface{}{"1.08", strings.Repeat("1", 65) + ".67"}
-	if err := def.Run(); err == nil {
+	if _, err := def.Run(context.Background()); err == nil {
 		t.Fatalf("expected convertion fail for float32, but got none")
 	}
 }
@@ -104,15 +152,15 @@ func TestShouldNotSupportOtherPointerTypesThanGherkin(t *testing.T) {
 		Args:         []interface{}{(*messages.PickleTable)(nil)},
 	}
 
-	if err := def1.Run(); err == nil {
+	if _, err := def1.Run(context.Background()); err == nil {
 		t.Fatalf("expected conversion error, but got none")
 	}
 
-	if err := def2.Run(); err != nil {
+	if _, err := def2.Run(context.Background()); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if err := def3.Run(); err != nil {
+	if _, err := def3.Run(context.Background()); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
@@ -136,11 +184,11 @@ func TestShouldSupportOnlyByteSlice(t *testing.T) {
 		Args:         []interface{}{[]string{}},
 	}
 
-	if err := def1.Run(); err != nil {
+	if _, err := def1.Run(context.Background()); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if err := def2.Run(); err == nil {
+	if _, err := def2.Run(context.Background()); err == nil {
 		t.Fatalf("expected conversion error, but got none")
 	}
 }
@@ -156,7 +204,7 @@ func TestUnexpectedArguments(t *testing.T) {
 
 	def.Args = []interface{}{"1"}
 
-	res := def.Run()
+	_, res := def.Run(context.Background())
 	if res == nil {
 		t.Fatalf("expected an error due to wrong number of arguments, but got none")
 	}
@@ -182,7 +230,7 @@ func TestStepDefinition_Run_StepShouldBeString(t *testing.T) {
 
 		def.Args = []interface{}{12}
 
-		res := def.Run()
+		_, res := def.Run(context.Background())
 		if res == nil {
 			t.Fatalf("expected a string convertion error, but got none")
 		}
@@ -224,7 +272,7 @@ func TestStepDefinition_Run_InvalidHandlerParamConversion(t *testing.T) {
 
 		def.Args = []interface{}{12}
 
-		res := def.Run()
+		_, res := def.Run(context.Background())
 		if res == nil {
 			t.Fatalf("expected an unsupported argument type error, but got none")
 		}
@@ -280,7 +328,7 @@ func TestStepDefinition_Run_StringConversionToFunctionType(t *testing.T) {
 			Args:         args,
 		}
 
-		res := def.Run()
+		_, res := def.Run(context.Background())
 		if res == nil {
 			t.Fatalf("expected a cannot convert argument type error, but got none")
 		}
@@ -321,7 +369,7 @@ func TestStepDefinition_Run_StringConversionToFunctionType(t *testing.T) {
 // def = &models.StepDefinition{Handler: fn2, HandlerValue: reflect.ValueOf(fn2)}
 
 // def.Args = []interface{}{"1"}
-// if err := def.Run(); err == nil {
+// if _, err := def.Run(context.Background()); err == nil {
 // 	t.Fatalf("expected an error due to wrong argument type, but got none")
 // }
 
@@ -347,7 +395,7 @@ func TestShouldSupportDocStringToStringConversion(t *testing.T) {
 		}},
 	}
 
-	if err := def.Run(); err != nil {
+	if _, err := def.Run(context.Background()); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
