@@ -28,6 +28,7 @@ func (s *server) users(w http.ResponseWriter, r *http.Request) {
 	var users []*user
 	rows, err := s.db.Query("SELECT id, email, username FROM users")
 	defer rows.Close()
+	defer s.db.Close()
 	switch err {
 	case nil:
 		for rows.Next() {
