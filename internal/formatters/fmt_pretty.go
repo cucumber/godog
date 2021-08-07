@@ -527,6 +527,9 @@ func (f *pretty) longestStep(steps []*messages.Step, pickleLength int) int {
 
 // a line number representation in feature file
 func line(path string, loc *messages.Location) string {
+	// Path can contain a line number already.
+	// This line number has to be trimmed to avoid duplication.
+	path = strings.TrimSuffix(path, fmt.Sprintf(":%d", loc.Line))
 	return " " + blackb(fmt.Sprintf("# %s:%d", path, loc.Line))
 }
 

@@ -329,3 +329,106 @@ Feature: pretty formatter
       6 steps (6 passed)
       0s
     """
+
+  Scenario: Should scenarios identified with path:line and preserve the order.
+    Given a feature path "features/load.feature:6"
+    And a feature path "features/multistep.feature:6"
+    And a feature path "features/load.feature:26"
+    And a feature path "features/multistep.feature:23"
+    When I run feature suite with formatter "pretty"
+    Then the rendered output will be as follows:
+    """
+    Feature: load features
+      In order to run features
+      As a test suite
+      I need to be able to load features
+
+      Scenario: load features within path    # features/load.feature:6
+        Given a feature path "features"      # suite_context_test.go:0 -> *godogFeaturesScenario
+        When I parse features                # suite_context_test.go:0 -> *godogFeaturesScenario
+        Then I should have 13 feature files: # suite_context_test.go:0 -> *godogFeaturesScenario
+          \"\"\"
+          features/background.feature
+          features/events.feature
+          features/formatter/cucumber.feature
+          features/formatter/events.feature
+          features/formatter/junit.feature
+          features/formatter/pretty.feature
+          features/lang.feature
+          features/load.feature
+          features/multistep.feature
+          features/outline.feature
+          features/run.feature
+          features/snippets.feature
+          features/tags.feature
+          \"\"\"
+
+    Feature: run features with nested steps
+      In order to test multisteps
+      As a test suite
+      I need to be able to execute multisteps
+
+      Scenario: should run passing multistep successfully # features/multistep.feature:6
+        Given a feature "normal.feature" file:            # suite_context_test.go:0 -> *godogFeaturesScenario
+          \"\"\"
+          Feature: normal feature
+
+            Scenario: run passing multistep
+              Given passing step
+              Then passing multistep
+          \"\"\"
+        When I run feature suite                          # suite_context_test.go:0 -> *godogFeaturesScenario
+        Then the suite should have passed                 # suite_context_test.go:0 -> *godogFeaturesScenario
+        And the following steps should be passed:         # suite_context_test.go:0 -> *godogFeaturesScenario
+          \"\"\"
+          passing step
+          passing multistep
+          \"\"\"
+
+    Feature: load features
+      In order to run features
+      As a test suite
+      I need to be able to load features
+
+      Scenario: load a specific feature file         # features/load.feature:26
+        Given a feature path "features/load.feature" # suite_context_test.go:0 -> *godogFeaturesScenario
+        When I parse features                        # suite_context_test.go:0 -> *godogFeaturesScenario
+        Then I should have 1 feature file:           # suite_context_test.go:0 -> *godogFeaturesScenario
+          \"\"\"
+          features/load.feature
+          \"\"\"
+
+    Feature: run features with nested steps
+      In order to test multisteps
+      As a test suite
+      I need to be able to execute multisteps
+
+      Scenario: should fail multistep              # features/multistep.feature:23
+        Given a feature "failed.feature" file:     # suite_context_test.go:0 -> *godogFeaturesScenario
+          \"\"\"
+          Feature: failed feature
+
+            Scenario: run failing multistep
+              Given passing step
+              When failing multistep
+              Then I should have 1 scenario registered
+          \"\"\"
+        When I run feature suite                   # suite_context_test.go:0 -> *godogFeaturesScenario
+        Then the suite should have failed          # suite_context_test.go:0 -> *godogFeaturesScenario
+        And the following step should be failed:   # suite_context_test.go:0 -> *godogFeaturesScenario
+          \"\"\"
+          failing multistep
+          \"\"\"
+        And the following steps should be skipped: # suite_context_test.go:0 -> *godogFeaturesScenario
+          \"\"\"
+          I should have 1 scenario registered
+          \"\"\"
+        And the following steps should be passed:  # suite_context_test.go:0 -> *godogFeaturesScenario
+          \"\"\"
+          passing step
+          \"\"\"
+
+    4 scenarios (4 passed)
+    16 steps (16 passed)
+    0s
+    """
