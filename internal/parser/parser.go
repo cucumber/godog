@@ -99,10 +99,19 @@ func parsePath(path string, newIDFunc func() string) ([]*models.Feature, error) 
 
 	// filter scenario by line number
 	var pickles []*messages.Pickle
+
+	if line != -1 {
+		ft.Uri += ":" + strconv.Itoa(line)
+	}
+
 	for _, pickle := range ft.Pickles {
 		sc := ft.FindScenario(pickle.AstNodeIds[0])
 
 		if line == -1 || int64(line) == sc.Location.Line {
+			if line != -1 {
+				pickle.Uri += ":" + strconv.Itoa(line)
+			}
+
 			pickles = append(pickles, pickle)
 		}
 	}

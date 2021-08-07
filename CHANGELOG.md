@@ -33,6 +33,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 - Incorrect step definition output for Data Tables ([411](https://github.com/cucumber/godog/pull/411) - [karfrank])
 - `ScenarioContext.AfterStep` not invoked after a failed case (([409](https://github.com/cucumber/godog/pull/409)) - [vearutop]))
+- Can't execute multiple specific scenarios in the same feature file (([414](https://github.com/cucumber/godog/pull/414)) - [vearutop]))
 
 ## [v0.11.0]
 
