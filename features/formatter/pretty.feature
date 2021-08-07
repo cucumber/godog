@@ -260,7 +260,13 @@ Feature: pretty formatter
 
         Given passing step
         And pending step
-        And undefined
+        And undefined doc string
+        \"\"\"
+        abc
+        \"\"\"
+        And undefined table
+        | a | b | c |
+        | 1 | 2 | 3 |
         And passing step
 
     """
@@ -270,25 +276,36 @@ Feature: pretty formatter
       Feature: simple feature
         simple feature description
 
-        Scenario: simple scenario # features/simple.feature:4
-          Given passing step      # suite_context.go:0 -> SuiteContext.func2
-          And pending step        # suite_context.go:0 -> SuiteContext.func1
+        Scenario: simple scenario  # features/simple.feature:4
+          Given passing step       # suite_context.go:0 -> SuiteContext.func2
+          And pending step         # suite_context.go:0 -> SuiteContext.func1
             TODO: write pending definition
-          And undefined
-          And passing step        # suite_context.go:0 -> SuiteContext.func2
+          And undefined doc string
+          \"\"\"
+          abc
+          \"\"\"
+          And undefined table
+          | a | b | c |
+          | 1 | 2 | 3 |
+          And passing step         # suite_context.go:0 -> SuiteContext.func2
 
       1 scenarios (1 pending, 1 undefined)
-      4 steps (1 passed, 1 pending, 1 undefined, 1 skipped)
+      5 steps (1 passed, 1 pending, 2 undefined, 1 skipped)
       0s
 
       You can implement step definitions for undefined steps with these snippets:
 
-      func undefined() error {
+      func undefinedDocString(arg1 *godog.DocString) error {
+        return godog.ErrPending
+      }
+
+      func undefinedTable(arg1 *godog.Table) error {
         return godog.ErrPending
       }
 
       func InitializeScenario(ctx *godog.ScenarioContext) {
-        ctx.Step(`^undefined$`, undefined)
+        ctx.Step(`^undefined doc string$`, undefinedDocString)
+        ctx.Step(`^undefined table$`, undefinedTable)
       }
     """
 
