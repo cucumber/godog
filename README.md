@@ -45,13 +45,13 @@ When automated testing is this much fun, teams can easily protect themselves fro
 
 ## Install
 ```
-go get github.com/cucumber/godog/cmd/godog@v0.11.0
+go get github.com/cucumber/godog/cmd/godog@v0.12.0
 ```
-Adding `@v0.11.0` will install v0.11.0 specifically instead of master.
+Adding `@v0.12.0` will install v0.12.0 specifically instead of master.
 
 Running `within the $GOPATH`, you would also need to set `GO111MODULE=on`, like this:
 ```
-GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.11.0
+GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.12.0
 ```
 
 ## Contributions
@@ -390,7 +390,7 @@ import (
 
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
-	"github.com/spf13/pflag" // godog v0.11.0 (latest)
+	"github.com/spf13/pflag" // godog v0.11.0 and later
 )
 
 var opts = godog.Options{
