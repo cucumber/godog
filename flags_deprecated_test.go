@@ -62,7 +62,7 @@ func TestFlagsUsageShouldIncludeFormatDescriptons(t *testing.T) {
 	output := colors.Uncolored(&buf)
 
 	// register some custom formatter
-	Format("custom", "custom format description", formatters.JunitFormatterFunc)
+	Format("custom", "custom format description", formatters.JUnitFormatterFunc)
 
 	var opt Options
 	flags := FlagSet(&opt)

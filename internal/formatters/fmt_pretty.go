@@ -20,20 +20,20 @@ func init() {
 
 // PrettyFormatterFunc implements the FormatterFunc for the pretty formatter
 func PrettyFormatterFunc(suite string, out io.Writer) formatters.Formatter {
-	return &Pretty{Basefmt: NewBaseFmt(suite, out)}
+	return &Pretty{Base: NewBase(suite, out)}
 }
 
 var outlinePlaceholderRegexp = regexp.MustCompile("<[^>]+>")
 
-// Pretty - formatter
+// Pretty is a formatter for readable output.
 type Pretty struct {
-	*Basefmt
+	*Base
 	firstFeature *bool
 }
 
-// TestRunStarted ...
+// TestRunStarted is triggered on test start.
 func (f *Pretty) TestRunStarted() {
-	f.Basefmt.TestRunStarted()
+	f.Base.TestRunStarted()
 
 	f.Lock.Lock()
 	defer f.Lock.Unlock()
@@ -42,7 +42,7 @@ func (f *Pretty) TestRunStarted() {
 	f.firstFeature = &firstFeature
 }
 
-// Feature ...
+// Feature receives gherkin document.
 func (f *Pretty) Feature(gd *messages.GherkinDocument, p string, c []byte) {
 	f.Lock.Lock()
 	if !*f.firstFeature {
@@ -52,7 +52,7 @@ func (f *Pretty) Feature(gd *messages.GherkinDocument, p string, c []byte) {
 	*f.firstFeature = false
 	f.Lock.Unlock()
 
-	f.Basefmt.Feature(gd, p, c)
+	f.Base.Feature(gd, p, c)
 
 	f.Lock.Lock()
 	defer f.Lock.Unlock()
@@ -60,9 +60,9 @@ func (f *Pretty) Feature(gd *messages.GherkinDocument, p string, c []byte) {
 	f.printFeature(gd.Feature)
 }
 
-// Pickle - takes a gherkin node for formatting
+// Pickle takes a gherkin node for formatting.
 func (f *Pretty) Pickle(pickle *messages.Pickle) {
-	f.Basefmt.Pickle(pickle)
+	f.Base.Pickle(pickle)
 
 	f.Lock.Lock()
 	defer f.Lock.Unlock()
@@ -73,9 +73,9 @@ func (f *Pretty) Pickle(pickle *messages.Pickle) {
 	}
 }
 
-// Passed ...
+// Passed captures passed step.
 func (f *Pretty) Passed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
-	f.Basefmt.Passed(pickle, step, match)
+	f.Base.Passed(pickle, step, match)
 
 	f.Lock.Lock()
 	defer f.Lock.Unlock()
@@ -83,9 +83,9 @@ func (f *Pretty) Passed(pickle *messages.Pickle, step *messages.PickleStep, matc
 	f.printStep(pickle, step)
 }
 
-// Skipped ...
+// Skipped captures skipped step.
 func (f *Pretty) Skipped(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
-	f.Basefmt.Skipped(pickle, step, match)
+	f.Base.Skipped(pickle, step, match)
 
 	f.Lock.Lock()
 	defer f.Lock.Unlock()
@@ -93,9 +93,9 @@ func (f *Pretty) Skipped(pickle *messages.Pickle, step *messages.PickleStep, mat
 	f.printStep(pickle, step)
 }
 
-// Undefined ...
+// Undefined captures undefined step.
 func (f *Pretty) Undefined(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
-	f.Basefmt.Undefined(pickle, step, match)
+	f.Base.Undefined(pickle, step, match)
 
 	f.Lock.Lock()
 	defer f.Lock.Unlock()
@@ -103,9 +103,9 @@ func (f *Pretty) Undefined(pickle *messages.Pickle, step *messages.PickleStep, m
 	f.printStep(pickle, step)
 }
 
-// Failed ...
+// Failed captures failed step.
 func (f *Pretty) Failed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition, err error) {
-	f.Basefmt.Failed(pickle, step, match, err)
+	f.Base.Failed(pickle, step, match, err)
 
 	f.Lock.Lock()
 	defer f.Lock.Unlock()
@@ -113,9 +113,9 @@ func (f *Pretty) Failed(pickle *messages.Pickle, step *messages.PickleStep, matc
 	f.printStep(pickle, step)
 }
 
-// Pending ...
+// Pending captures pending step.
 func (f *Pretty) Pending(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
-	f.Basefmt.Pending(pickle, step, match)
+	f.Base.Pending(pickle, step, match)
 
 	f.Lock.Lock()
 	defer f.Lock.Unlock()
@@ -204,7 +204,7 @@ func (f *Pretty) printUndefinedPickle(pickle *messages.Pickle) {
 	}
 }
 
-// Summary - sumarize the feature formatter output
+// Summary renders summary information.
 func (f *Pretty) Summary() {
 	failedStepResults := f.Storage.MustGetPickleStepResultsByStatus(failed)
 	if len(failedStepResults) > 0 {
@@ -229,7 +229,7 @@ func (f *Pretty) Summary() {
 		}
 	}
 
-	f.Basefmt.Summary()
+	f.Base.Summary()
 }
 
 func (f *Pretty) printOutlineExample(pickle *messages.Pickle, backgroundSteps int) {

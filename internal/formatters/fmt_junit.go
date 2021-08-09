@@ -14,21 +14,21 @@ import (
 )
 
 func init() {
-	formatters.Format("junit", "Prints junit compatible xml to stdout", JunitFormatterFunc)
+	formatters.Format("junit", "Prints junit compatible xml to stdout", JUnitFormatterFunc)
 }
 
-// JunitFormatterFunc implements the FormatterFunc for the junit formatter
-func JunitFormatterFunc(suite string, out io.Writer) formatters.Formatter {
-	return &JunitFormatter{Basefmt: NewBaseFmt(suite, out)}
+// JUnitFormatterFunc implements the FormatterFunc for the junit formatter
+func JUnitFormatterFunc(suite string, out io.Writer) formatters.Formatter {
+	return &JUnit{Base: NewBase(suite, out)}
 }
 
-// JunitFormatter ...
-type JunitFormatter struct {
-	*Basefmt
+// JUnit renders test results in JUnit format.
+type JUnit struct {
+	*Base
 }
 
-// Summary ...
-func (f *JunitFormatter) Summary() {
+// Summary renders summary information.
+func (f *JUnit) Summary() {
 	suite := f.buildJUNITPackageSuite()
 
 	_, err := io.WriteString(f.out, xml.Header)
@@ -47,7 +47,7 @@ func junitTimeDuration(from, to time.Time) string {
 	return strconv.FormatFloat(to.Sub(from).Seconds(), 'f', -1, 64)
 }
 
-func (f *JunitFormatter) buildJUNITPackageSuite() JunitPackageSuite {
+func (f *JUnit) buildJUNITPackageSuite() JunitPackageSuite {
 	features := f.Storage.MustGetFeatures()
 	sort.Sort(sortFeaturesByName(features))
 

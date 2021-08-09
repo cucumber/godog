@@ -30,16 +30,16 @@ func init() {
 
 // CucumberFormatterFunc implements the FormatterFunc for the cucumber formatter
 func CucumberFormatterFunc(suite string, out io.Writer) formatters.Formatter {
-	return &Cukefmt{Basefmt: NewBaseFmt(suite, out)}
+	return &Cuke{Base: NewBase(suite, out)}
 }
 
-// Cukefmt ...
-type Cukefmt struct {
-	*Basefmt
+// Cuke ...
+type Cuke struct {
+	*Base
 }
 
-// Summary ...
-func (f *Cukefmt) Summary() {
+// Summary renders test result as Cucumber JSON.
+func (f *Cuke) Summary() {
 	features := f.Storage.MustGetFeatures()
 
 	res := f.buildCukeFeatures(features)
@@ -52,7 +52,7 @@ func (f *Cukefmt) Summary() {
 	fmt.Fprintf(f.out, "%s\n", string(dat))
 }
 
-func (f *Cukefmt) buildCukeFeatures(features []*models.Feature) (res []CukeFeatureJSON) {
+func (f *Cuke) buildCukeFeatures(features []*models.Feature) (res []CukeFeatureJSON) {
 	sort.Sort(sortFeaturesByName(features))
 
 	res = make([]CukeFeatureJSON, len(features))
@@ -77,7 +77,7 @@ func (f *Cukefmt) buildCukeFeatures(features []*models.Feature) (res []CukeFeatu
 	return res
 }
 
-func (f *Cukefmt) buildCukeElements(pickles []*messages.Pickle) (res []cukeElement) {
+func (f *Cuke) buildCukeElements(pickles []*messages.Pickle) (res []cukeElement) {
 	res = make([]cukeElement, len(pickles))
 
 	for idx, pickle := range pickles {
@@ -203,7 +203,7 @@ func buildCukeFeature(feat *models.Feature) CukeFeatureJSON {
 	return cukeFeature
 }
 
-func (f *Cukefmt) buildCukeElement(pickle *messages.Pickle) (cukeElement cukeElement) {
+func (f *Cuke) buildCukeElement(pickle *messages.Pickle) (cukeElement cukeElement) {
 	feature := f.Storage.MustGetFeature(pickle.Uri)
 	scenario := feature.FindScenario(pickle.AstNodeIds[0])
 
@@ -247,7 +247,7 @@ func (f *Cukefmt) buildCukeElement(pickle *messages.Pickle) (cukeElement cukeEle
 	return cukeElement
 }
 
-func (f *Cukefmt) buildCukeStep(pickle *messages.Pickle, stepResult models.PickleStepResult) (cukeStep cukeStep) {
+func (f *Cuke) buildCukeStep(pickle *messages.Pickle, stepResult models.PickleStepResult) (cukeStep cukeStep) {
 	feature := f.Storage.MustGetFeature(pickle.Uri)
 	pickleStep := f.Storage.MustGetPickleStep(stepResult.PickleStepID)
 	step := feature.FindStep(pickleStep.AstNodeIds[0])
