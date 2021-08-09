@@ -426,6 +426,22 @@ func (tc *godogFeaturesScenario) iAmListeningToSuiteEvents() error {
 		return context.WithValue(ctx, ctxKey("BeforeScenario"), true), nil
 	})
 
+	scenarioContext.Before(func(ctx context.Context, sc *Scenario) (context.Context, error) {
+		if sc.Name == "failing before and after scenario" || sc.Name == "failing before scenario" {
+			return context.WithValue(ctx, ctxKey("AfterStep"), true), errors.New("failed in before scenario hook")
+		}
+
+		return ctx, nil
+	})
+
+	scenarioContext.After(func(ctx context.Context, sc *Scenario, err error) (context.Context, error) {
+		if sc.Name == "failing before and after scenario" || sc.Name == "failing after scenario" {
+			return ctx, errors.New("failed in after scenario hook")
+		}
+
+		return ctx, nil
+	})
+
 	scenarioContext.After(func(ctx context.Context, pickle *Scenario, err error) (context.Context, error) {
 		tc.events = append(tc.events, &firedEvent{"AfterScenario", []interface{}{pickle, err}})
 
@@ -678,14 +694,15 @@ func (tc *godogFeaturesScenario) theRenderOutputWillBe(docstring *DocString) err
 	expected = suiteCtxPtrReg.ReplaceAllString(expected, "*godogFeaturesScenario")
 
 	actual := tc.out.String()
-	actual = trimAllLines(actual)
 	actual = actualSuiteCtxReg.ReplaceAllString(actual, "suite_context_test.go:0")
 	actual = actualSuiteCtxFuncReg.ReplaceAllString(actual, "InitializeScenario.func$1")
+	actualTrimmed := actual
+	actual = trimAllLines(actual)
 
 	expectedRows := strings.Split(expected, "\n")
 	actualRows := strings.Split(actual, "\n")
 
-	return assertExpectedAndActual(assert.ElementsMatch, expectedRows, actualRows)
+	return assertExpectedAndActual(assert.ElementsMatch, expectedRows, actualRows, actualTrimmed)
 }
 
 func (tc *godogFeaturesScenario) theRenderXMLWillBe(docstring *DocString) error {
