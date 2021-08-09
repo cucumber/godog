@@ -432,6 +432,39 @@ func Test_AllFeaturesRun(t *testing.T) {
 	assert.Equal(t, expected, actualOutput)
 }
 
+func Test_AllFeaturesRunAsSubtests(t *testing.T) {
+	const concurrency = 100
+	const noRandomFlag = 0
+	const format = "progress"
+
+	const expected = `...................................................................... 70
+...................................................................... 140
+...................................................................... 210
+...................................................................... 280
+........................................                               320
+
+
+83 scenarios (83 passed)
+320 steps (320 passed)
+0s
+`
+
+	actualStatus, actualOutput := testRunWithOptions(
+		t,
+		Options{
+			Format:      format,
+			Concurrency: concurrency,
+			Paths:       []string{"features"},
+			Randomize:   noRandomFlag,
+			TestingT:    t,
+		},
+		InitializeScenario,
+	)
+
+	assert.Equal(t, exitSuccess, actualStatus)
+	assert.Equal(t, expected, actualOutput)
+}
+
 func Test_FormatterConcurrencyRun(t *testing.T) {
 	formatters := []string{
 		"progress",
@@ -484,16 +517,29 @@ func testRun(
 	randomSeed int64,
 	featurePaths []string,
 ) (int, string) {
-	output := new(bytes.Buffer)
+	t.Helper()
 
 	opts := Options{
 		Format:      format,
-		NoColors:    true,
 		Paths:       featurePaths,
 		Concurrency: concurrency,
 		Randomize:   randomSeed,
-		Output:      output,
 	}
+
+	return testRunWithOptions(t, opts, scenarioInitializer)
+}
+
+func testRunWithOptions(
+	t *testing.T,
+	opts Options,
+	scenarioInitializer func(*ScenarioContext),
+) (int, string) {
+	t.Helper()
+
+	output := new(bytes.Buffer)
+
+	opts.Output = output
+	opts.NoColors = true
 
 	status := TestSuite{
 		Name:                "succeed",

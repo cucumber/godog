@@ -3,6 +3,7 @@ package flags
 import (
 	"context"
 	"io"
+	"testing"
 )
 
 // Options are suite run options
@@ -60,4 +61,7 @@ type Options struct {
 
 	// DefaultContext is used as initial context instead of context.Background().
 	DefaultContext context.Context
+
+	// TestingT runs scenarios as subtests.
+	TestingT *testing.T
 }
