@@ -13,11 +13,12 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ### Added
 
 - Support for step definitions without return ([364](https://github.com/cucumber/godog/pull/364) - [titouanfreville])
-- Contextualized hooks for scenarios and steps ([409](https://github.com/cucumber/godog/pull/409)) - [vearutop])
-- Step result status in After hook ([409](https://github.com/cucumber/godog/pull/409)) - [vearutop])
-- Support auto converting doc strings to plain strings ([380](https://github.com/cucumber/godog/pull/380)) - [chirino])
-- Use multiple formatters in the same test run ([392](https://github.com/cucumber/godog/pull/392)) - [vearutop])
-- Added `RetrieveFeatures()` method to `godog.TestSuite` ([276](https://github.com/cucumber/godog/pull/276)) - [radtriste])
+- Contextualized hooks for scenarios and steps ([409](https://github.com/cucumber/godog/pull/409) - [vearutop])
+- Step result status in After hook ([409](https://github.com/cucumber/godog/pull/409) - [vearutop])
+- Support auto converting doc strings to plain strings ([380](https://github.com/cucumber/godog/pull/380) - [chirino])
+- Use multiple formatters in the same test run ([392](https://github.com/cucumber/godog/pull/392) - [vearutop])
+- Added `RetrieveFeatures()` method to `godog.TestSuite` ([276](https://github.com/cucumber/godog/pull/276) - [radtriste])
+- Added support to create custom formatters ([372](https://github.com/cucumber/godog/pull/372) - [leviable])
 
 ### Changed
 
