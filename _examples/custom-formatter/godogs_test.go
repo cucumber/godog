@@ -10,7 +10,10 @@ import (
 	flag "github.com/spf13/pflag"
 )
 
-var opts = godog.Options{Output: colors.Colored(os.Stdout)}
+var opts = godog.Options{
+	Output: colors.Colored(os.Stdout),
+	Format: "emoji",
+}
 
 func init() {
 	godog.BindCommandLineFlags("godog.", &opts)

@@ -103,15 +103,15 @@ func (f *emojiFmt) step(pickleStepID string) {
 
 	switch pickleStepResult.Status {
 	case godog.Passed:
-		fmt.Fprint(f.out, passedEmoji)
+		fmt.Fprint(f.out, fmt.Sprintf(" %s", passedEmoji))
 	case godog.Skipped:
-		fmt.Fprint(f.out, skippedEmoji)
+		fmt.Fprint(f.out, fmt.Sprintf(" %s", skippedEmoji))
 	case godog.Failed:
-		fmt.Fprint(f.out, failedEmoji)
+		fmt.Fprint(f.out, fmt.Sprintf(" %s", failedEmoji))
 	case godog.Undefined:
-		fmt.Fprint(f.out, undefinedEmoji)
+		fmt.Fprint(f.out, fmt.Sprintf(" %s", undefinedEmoji))
 	case godog.Pending:
-		fmt.Fprint(f.out, pendingEmoji)
+		fmt.Fprint(f.out, fmt.Sprintf(" %s", pendingEmoji))
 	}
 
 	*f.Steps++
