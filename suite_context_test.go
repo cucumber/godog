@@ -324,9 +324,9 @@ func (tc *godogFeaturesScenario) cleanupSnippet(snip string) string {
 }
 
 func (tc *godogFeaturesScenario) theUndefinedStepSnippetsShouldBe(body *DocString) error {
-	f, ok := tc.testedSuite.fmt.(*formatters.Basefmt)
+	f, ok := tc.testedSuite.fmt.(*formatters.Base)
 	if !ok {
-		return fmt.Errorf("this step requires *formatters.Basefmt, but there is: %T", tc.testedSuite.fmt)
+		return fmt.Errorf("this step requires *formatters.Base, but there is: %T", tc.testedSuite.fmt)
 	}
 
 	actual := tc.cleanupSnippet(f.Snippets())

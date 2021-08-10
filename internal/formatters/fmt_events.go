@@ -20,14 +20,15 @@ func init() {
 
 // EventsFormatterFunc implements the FormatterFunc for the events formatter
 func EventsFormatterFunc(suite string, out io.Writer) formatters.Formatter {
-	return &eventsFormatter{Basefmt: NewBaseFmt(suite, out)}
+	return &Events{Base: NewBase(suite, out)}
 }
 
-type eventsFormatter struct {
-	*Basefmt
+// Events - Events formatter
+type Events struct {
+	*Base
 }
 
-func (f *eventsFormatter) event(ev interface{}) {
+func (f *Events) event(ev interface{}) {
 	data, err := json.Marshal(ev)
 	if err != nil {
 		panic(fmt.Sprintf("failed to marshal stream event: %+v - %v", ev, err))
@@ -35,11 +36,12 @@ func (f *eventsFormatter) event(ev interface{}) {
 	fmt.Fprintln(f.out, string(data))
 }
 
-func (f *eventsFormatter) Pickle(pickle *messages.Pickle) {
-	f.Basefmt.Pickle(pickle)
+// Pickle receives scenario.
+func (f *Events) Pickle(pickle *messages.Pickle) {
+	f.Base.Pickle(pickle)
 
-	f.lock.Lock()
-	defer f.lock.Unlock()
+	f.Lock.Lock()
+	defer f.Lock.Unlock()
 
 	f.event(&struct {
 		Event     string `json:"event"`
@@ -68,11 +70,12 @@ func (f *eventsFormatter) Pickle(pickle *messages.Pickle) {
 	}
 }
 
-func (f *eventsFormatter) TestRunStarted() {
-	f.Basefmt.TestRunStarted()
+// TestRunStarted is triggered on test start.
+func (f *Events) TestRunStarted() {
+	f.Base.TestRunStarted()
 
-	f.lock.Lock()
-	defer f.lock.Unlock()
+	f.Lock.Lock()
+	defer f.Lock.Unlock()
 
 	f.event(&struct {
 		Event     string `json:"event"`
@@ -87,11 +90,12 @@ func (f *eventsFormatter) TestRunStarted() {
 	})
 }
 
-func (f *eventsFormatter) Feature(ft *messages.GherkinDocument, p string, c []byte) {
-	f.Basefmt.Feature(ft, p, c)
+// Feature receives gherkin document.
+func (f *Events) Feature(ft *messages.GherkinDocument, p string, c []byte) {
+	f.Base.Feature(ft, p, c)
 
-	f.lock.Lock()
-	defer f.lock.Unlock()
+	f.Lock.Lock()
+	defer f.Lock.Unlock()
 
 	f.event(&struct {
 		Event    string `json:"event"`
@@ -104,16 +108,17 @@ func (f *eventsFormatter) Feature(ft *messages.GherkinDocument, p string, c []by
 	})
 }
 
-func (f *eventsFormatter) Summary() {
+// Summary pushes summary information to JSON stream.
+func (f *Events) Summary() {
 	// @TODO: determine status
 	status := passed
 
-	f.storage.MustGetPickleStepResultsByStatus(failed)
+	f.Storage.MustGetPickleStepResultsByStatus(failed)
 
-	if len(f.storage.MustGetPickleStepResultsByStatus(failed)) > 0 {
+	if len(f.Storage.MustGetPickleStepResultsByStatus(failed)) > 0 {
 		status = failed
-	} else if len(f.storage.MustGetPickleStepResultsByStatus(passed)) == 0 {
-		if len(f.storage.MustGetPickleStepResultsByStatus(undefined)) > len(f.storage.MustGetPickleStepResultsByStatus(pending)) {
+	} else if len(f.Storage.MustGetPickleStepResultsByStatus(passed)) == 0 {
+		if len(f.Storage.MustGetPickleStepResultsByStatus(undefined)) > len(f.Storage.MustGetPickleStepResultsByStatus(pending)) {
 			status = undefined
 		} else {
 			status = pending
@@ -140,9 +145,9 @@ func (f *eventsFormatter) Summary() {
 	})
 }
 
-func (f *eventsFormatter) step(pickle *messages.Pickle, pickleStep *messages.PickleStep) {
-	feature := f.storage.MustGetFeature(pickle.Uri)
-	pickleStepResult := f.storage.MustGetPickleStepResult(pickleStep.Id)
+func (f *Events) step(pickle *messages.Pickle, pickleStep *messages.PickleStep) {
+	feature := f.Storage.MustGetFeature(pickle.Uri)
+	pickleStepResult := f.Storage.MustGetPickleStepResult(pickleStep.Id)
 	step := feature.FindStep(pickleStep.AstNodeIds[0])
 
 	var errMsg string
@@ -166,7 +171,7 @@ func (f *eventsFormatter) step(pickle *messages.Pickle, pickleStep *messages.Pic
 	if isLastStep(pickle, pickleStep) {
 		var status string
 
-		pickleStepResults := f.storage.MustGetPickleStepResultsByPickleID(pickle.Id)
+		pickleStepResults := f.Storage.MustGetPickleStepResultsByPickleID(pickle.Id)
 		for _, stepResult := range pickleStepResults {
 			switch stepResult.Status {
 			case passed, failed, undefined, pending:
@@ -188,17 +193,18 @@ func (f *eventsFormatter) step(pickle *messages.Pickle, pickleStep *messages.Pic
 	}
 }
 
-func (f *eventsFormatter) Defined(pickle *messages.Pickle, pickleStep *messages.PickleStep, def *formatters.StepDefinition) {
-	f.Basefmt.Defined(pickle, pickleStep, def)
+// Defined receives step definition.
+func (f *Events) Defined(pickle *messages.Pickle, pickleStep *messages.PickleStep, def *formatters.StepDefinition) {
+	f.Base.Defined(pickle, pickleStep, def)
 
-	f.lock.Lock()
-	defer f.lock.Unlock()
+	f.Lock.Lock()
+	defer f.Lock.Unlock()
 
-	feature := f.storage.MustGetFeature(pickle.Uri)
+	feature := f.Storage.MustGetFeature(pickle.Uri)
 	step := feature.FindStep(pickleStep.AstNodeIds[0])
 
 	if def != nil {
-		matchedDef := f.storage.MustGetStepDefintionMatch(pickleStep.AstNodeIds[0])
+		matchedDef := f.Storage.MustGetStepDefintionMatch(pickleStep.AstNodeIds[0])
 
 		m := def.Expr.FindStringSubmatchIndex(pickleStep.Text)[2:]
 		var args [][2]int
@@ -238,53 +244,58 @@ func (f *eventsFormatter) Defined(pickle *messages.Pickle, pickleStep *messages.
 	})
 }
 
-func (f *eventsFormatter) Passed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
-	f.Basefmt.Passed(pickle, step, match)
+// Passed captures passed step.
+func (f *Events) Passed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
+	f.Base.Passed(pickle, step, match)
 
-	f.lock.Lock()
-	defer f.lock.Unlock()
-
-	f.step(pickle, step)
-}
-
-func (f *eventsFormatter) Skipped(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
-	f.Basefmt.Skipped(pickle, step, match)
-
-	f.lock.Lock()
-	defer f.lock.Unlock()
+	f.Lock.Lock()
+	defer f.Lock.Unlock()
 
 	f.step(pickle, step)
 }
 
-func (f *eventsFormatter) Undefined(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
-	f.Basefmt.Undefined(pickle, step, match)
+// Skipped captures skipped step.
+func (f *Events) Skipped(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
+	f.Base.Skipped(pickle, step, match)
 
-	f.lock.Lock()
-	defer f.lock.Unlock()
-
-	f.step(pickle, step)
-}
-
-func (f *eventsFormatter) Failed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition, err error) {
-	f.Basefmt.Failed(pickle, step, match, err)
-
-	f.lock.Lock()
-	defer f.lock.Unlock()
+	f.Lock.Lock()
+	defer f.Lock.Unlock()
 
 	f.step(pickle, step)
 }
 
-func (f *eventsFormatter) Pending(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
-	f.Basefmt.Pending(pickle, step, match)
+// Undefined captures undefined step.
+func (f *Events) Undefined(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
+	f.Base.Undefined(pickle, step, match)
 
-	f.lock.Lock()
-	defer f.lock.Unlock()
+	f.Lock.Lock()
+	defer f.Lock.Unlock()
 
 	f.step(pickle, step)
 }
 
-func (f *eventsFormatter) scenarioLocation(pickle *messages.Pickle) string {
-	feature := f.storage.MustGetFeature(pickle.Uri)
+// Failed captures failed step.
+func (f *Events) Failed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition, err error) {
+	f.Base.Failed(pickle, step, match, err)
+
+	f.Lock.Lock()
+	defer f.Lock.Unlock()
+
+	f.step(pickle, step)
+}
+
+// Pending captures pending step.
+func (f *Events) Pending(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
+	f.Base.Pending(pickle, step, match)
+
+	f.Lock.Lock()
+	defer f.Lock.Unlock()
+
+	f.step(pickle, step)
+}
+
+func (f *Events) scenarioLocation(pickle *messages.Pickle) string {
+	feature := f.Storage.MustGetFeature(pickle.Uri)
 	scenario := feature.FindScenario(pickle.AstNodeIds[0])
 
 	line := scenario.Location.Line
