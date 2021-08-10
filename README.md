@@ -381,6 +381,9 @@ You may integrate running **godog** in your **go test** command.
 
 #### Subtests of *testing.T
 
+You can run test suite using go [Subtests](https://pkg.go.dev/testing#hdr-Subtests_and_Sub_benchmarks).
+In this case it is not necessary to have **godog** command installed. See the following example.
+
 ```go
 package main_test
 
@@ -420,7 +423,8 @@ go test -test.v -test.run ^TestFeatures$/^my_scenario$
 
 #### TestMain
 
-You can run it using go [TestMain](https://golang.org/pkg/testing/#hdr-Main) func available since **go 1.4**. In this case it is not necessary to have **godog** command installed. See the following examples.
+You can run test suite using go [TestMain](https://golang.org/pkg/testing/#hdr-Main) func available since **go 1.4**. 
+In this case it is not necessary to have **godog** command installed. See the following examples.
 
 The following example binds **godog** flags with specified prefix `godog` in order to prevent flag collisions.
 
