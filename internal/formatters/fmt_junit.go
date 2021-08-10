@@ -19,14 +19,16 @@ func init() {
 
 // JUnitFormatterFunc implements the FormatterFunc for the junit formatter
 func JUnitFormatterFunc(suite string, out io.Writer) formatters.Formatter {
-	return &junitFormatter{Basefmt: NewBaseFmt(suite, out)}
+	return &JUnit{Base: NewBase(suite, out)}
 }
 
-type junitFormatter struct {
-	*Basefmt
+// JUnit renders test results in JUnit format.
+type JUnit struct {
+	*Base
 }
 
-func (f *junitFormatter) Summary() {
+// Summary renders summary information.
+func (f *JUnit) Summary() {
 	suite := f.buildJUNITPackageSuite()
 
 	_, err := io.WriteString(f.out, xml.Header)
@@ -45,11 +47,11 @@ func junitTimeDuration(from, to time.Time) string {
 	return strconv.FormatFloat(to.Sub(from).Seconds(), 'f', -1, 64)
 }
 
-func (f *junitFormatter) buildJUNITPackageSuite() JunitPackageSuite {
-	features := f.storage.MustGetFeatures()
+func (f *JUnit) buildJUNITPackageSuite() JunitPackageSuite {
+	features := f.Storage.MustGetFeatures()
 	sort.Sort(sortFeaturesByName(features))
 
-	testRunStartedAt := f.storage.MustGetTestRunStarted().StartedAt
+	testRunStartedAt := f.Storage.MustGetTestRunStarted().StartedAt
 
 	suite := JunitPackageSuite{
 		Name:       f.suiteName,
@@ -58,7 +60,7 @@ func (f *junitFormatter) buildJUNITPackageSuite() JunitPackageSuite {
 	}
 
 	for idx, feature := range features {
-		pickles := f.storage.MustGetPickles(feature.Uri)
+		pickles := f.Storage.MustGetPickles(feature.Uri)
 		sort.Sort(sortPicklesByID(pickles))
 
 		ts := junitTestSuite{
@@ -78,7 +80,7 @@ func (f *junitFormatter) buildJUNITPackageSuite() JunitPackageSuite {
 		for idx, pickle := range pickles {
 			tc := junitTestCase{}
 
-			pickleResult := f.storage.MustGetPickleResult(pickle.Id)
+			pickleResult := f.Storage.MustGetPickleResult(pickle.Id)
 
 			if idx == 0 {
 				firstPickleStartedAt = pickleResult.StartedAt
@@ -88,7 +90,7 @@ func (f *junitFormatter) buildJUNITPackageSuite() JunitPackageSuite {
 
 			if len(pickle.Steps) > 0 {
 				lastStep := pickle.Steps[len(pickle.Steps)-1]
-				lastPickleStepResult := f.storage.MustGetPickleStepResult(lastStep.Id)
+				lastPickleStepResult := f.Storage.MustGetPickleStepResult(lastStep.Id)
 				lastPickleFinishedAt = lastPickleStepResult.FinishedAt
 			}
 
@@ -103,9 +105,9 @@ func (f *junitFormatter) buildJUNITPackageSuite() JunitPackageSuite {
 			ts.Tests++
 			suite.Tests++
 
-			pickleStepResults := f.storage.MustGetPickleStepResultsByPickleID(pickle.Id)
+			pickleStepResults := f.Storage.MustGetPickleStepResultsByPickleID(pickle.Id)
 			for _, stepResult := range pickleStepResults {
-				pickleStep := f.storage.MustGetPickleStep(stepResult.PickleStepID)
+				pickleStep := f.Storage.MustGetPickleStep(stepResult.PickleStepID)
 
 				switch stepResult.Status {
 				case passed:
