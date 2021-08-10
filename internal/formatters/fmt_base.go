@@ -20,14 +20,14 @@ import (
 	"github.com/cucumber/godog/internal/utils"
 )
 
-// BaseFormatterFunc implements the FormatterFunc for the base formatter
+// BaseFormatterFunc implements the FormatterFunc for the base formatter.
 func BaseFormatterFunc(suite string, out io.Writer) formatters.Formatter {
-	return NewBaseFmt(suite, out)
+	return NewBase(suite, out)
 }
 
-// NewBaseFmt - creates a new base formatter
-func NewBaseFmt(suite string, out io.Writer) *Basefmt {
-	return &Basefmt{
+// NewBase creates a new base formatter.
+func NewBase(suite string, out io.Writer) *Base {
+	return &Base{
 		suiteName: suite,
 		indent:    2,
 		out:       out,
@@ -35,8 +35,8 @@ func NewBaseFmt(suite string, out io.Writer) *Basefmt {
 	}
 }
 
-// Basefmt - base formatter
-type Basefmt struct {
+// Base is a base formatter.
+type Base struct {
 	suiteName string
 	out       io.Writer
 	indent    int
@@ -45,48 +45,48 @@ type Basefmt struct {
 	Lock    *sync.Mutex
 }
 
-// SetStorage ...
-func (f *Basefmt) SetStorage(st *storage.Storage) {
+// SetStorage assigns gherkin data storage.
+func (f *Base) SetStorage(st *storage.Storage) {
 	f.Lock.Lock()
 	defer f.Lock.Unlock()
 
 	f.Storage = st
 }
 
-// TestRunStarted ...
-func (f *Basefmt) TestRunStarted() {}
+// TestRunStarted is triggered on test start.
+func (f *Base) TestRunStarted() {}
 
-// Feature ...
-func (f *Basefmt) Feature(*messages.GherkinDocument, string, []byte) {}
+// Feature receives gherkin document.
+func (f *Base) Feature(*messages.GherkinDocument, string, []byte) {}
 
-// Pickle ...
-func (f *Basefmt) Pickle(*messages.Pickle) {}
+// Pickle receives scenario.
+func (f *Base) Pickle(*messages.Pickle) {}
 
-// Defined ...
-func (f *Basefmt) Defined(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition) {
+// Defined receives step definition.
+func (f *Base) Defined(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition) {
 }
 
-// Passed ...
-func (f *Basefmt) Passed(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition) {}
+// Passed captures passed step.
+func (f *Base) Passed(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition) {}
 
-// Skipped ...
-func (f *Basefmt) Skipped(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition) {
+// Skipped captures skipped step.
+func (f *Base) Skipped(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition) {
 }
 
-// Undefined ...
-func (f *Basefmt) Undefined(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition) {
+// Undefined captures undefined step.
+func (f *Base) Undefined(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition) {
 }
 
-// Failed ...
-func (f *Basefmt) Failed(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition, error) {
+// Failed captures failed step.
+func (f *Base) Failed(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition, error) {
 }
 
-// Pending ...
-func (f *Basefmt) Pending(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition) {
+// Pending captures pending step.
+func (f *Base) Pending(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition) {
 }
 
-// Summary ...
-func (f *Basefmt) Summary() {
+// Summary renders summary information.
+func (f *Base) Summary() {
 	var totalSc, passedSc, undefinedSc int
 	var totalSt, passedSt, failedSt, skippedSt, pendingSt, undefinedSt int
 
@@ -194,8 +194,8 @@ func (f *Basefmt) Summary() {
 	}
 }
 
-// Snippets ...
-func (f *Basefmt) Snippets() string {
+// Snippets returns code suggestions for undefined steps.
+func (f *Base) Snippets() string {
 	undefinedStepResults := f.Storage.MustGetPickleStepResultsByStatus(undefined)
 	if len(undefinedStepResults) == 0 {
 		return ""
