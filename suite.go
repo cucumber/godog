@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"testing"
 
 	"github.com/cucumber/messages-go/v16"
 
@@ -54,6 +55,7 @@ type suite struct {
 	strict        bool
 
 	defaultContext context.Context
+	testingT       *testing.T
 
 	// suite event handlers
 	beforeScenarioHandlers []BeforeScenarioHook
@@ -442,7 +444,7 @@ func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 		return ErrUndefined
 	}
 
-	// Before scenario hooks are aclled in context of first evaluated step
+	// Before scenario hooks are called in context of first evaluated step
 	// so that error from handler can be added to step.
 
 	pr := models.PickleResult{PickleID: pickle.Id, StartedAt: utils.TimeNowFunc()}
@@ -451,7 +453,17 @@ func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 	s.fmt.Pickle(pickle)
 
 	// scenario
-	ctx, err = s.runSteps(ctx, pickle, pickle.Steps)
+	if s.testingT != nil {
+		// Running scenario as a subtest.
+		s.testingT.Run(pickle.Name, func(t *testing.T) {
+			ctx, err = s.runSteps(ctx, pickle, pickle.Steps)
+			if err != nil {
+				t.Error(err)
+			}
+		})
+	} else {
+		ctx, err = s.runSteps(ctx, pickle, pickle.Steps)
+	}
 
 	// After scenario handlers are called in context of last evaluated step
 	// so that error from handler can be added to step.

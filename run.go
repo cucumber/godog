@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"testing"
 
 	"github.com/cucumber/messages-go/v16"
 
@@ -38,6 +39,7 @@ type runner struct {
 	stopOnFailure, strict bool
 
 	defaultContext context.Context
+	testingT       *testing.T
 
 	features []*models.Feature
 
@@ -106,6 +108,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 					strict:         r.strict,
 					storage:        r.storage,
 					defaultContext: r.defaultContext,
+					testingT:       r.testingT,
 				}
 
 				if r.scenarioInitializer != nil {
@@ -236,6 +239,7 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 	runner.stopOnFailure = opt.StopOnFailure
 	runner.strict = opt.Strict
 	runner.defaultContext = opt.DefaultContext
+	runner.testingT = opt.TestingT
 
 	// store chosen seed in environment, so it could be seen in formatter summary report
 	os.Setenv("GODOG_SEED", strconv.FormatInt(runner.randomSeed, 10))
