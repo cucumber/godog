@@ -15,7 +15,10 @@ executors:
       - image: circleci/golang:1.15.5
   exec_go_1_16:
     docker:
-      - image: cimg/go:1.16.5
+      - image: cimg/go:1.16.7
+  exec_go_1_17:
+    docker:
+      - image: cimg/go:1.17.0
 
 commands:
   fmt:
@@ -81,6 +84,11 @@ jobs:
     executor: exec_go_1_16
     steps:
       - all
+  go1_17:
+    working_directory: /home/circleci/go/src/github.com/cucumber/godog
+    executor: exec_go_1_17
+    steps:
+      - all
 
 workflows:
   version: 2
@@ -90,3 +98,4 @@ workflows:
       - go1_14
       - go1_15
       - go1_16
+      - go1_17
