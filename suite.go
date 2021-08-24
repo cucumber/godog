@@ -134,12 +134,12 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, prevS
 		ctx, err = s.runBeforeScenarioHooks(ctx, pickle)
 	}
 
+	// run before step handlers
+	ctx, err = s.runBeforeStepHooks(ctx, step, err)
+
 	match = s.matchStep(step)
 	s.storage.MustInsertStepDefintionMatch(step.AstNodeIds[0], match)
 	s.fmt.Defined(pickle, step, match.GetInternalStepDefinition())
-
-	// run before step handlers
-	ctx, err = s.runBeforeStepHooks(ctx, step, err)
 
 	if err != nil {
 		sr = models.NewStepResult(pickle.Id, step.Id, match)
