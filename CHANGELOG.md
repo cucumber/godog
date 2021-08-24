@@ -8,6 +8,12 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- Unintended change of behavior in before step hook ([424](https://github.com/cucumber/godog/pull/424) - [nhatthm])
+
 ## [v0.12.0]
 
 ### Added
@@ -190,7 +196,8 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 <!-- Releases -->
 
-[unreleased]: https://github.com/cucumber/godog/compare/v0.11.0...main
+[unreleased]: https://github.com/cucumber/godog/compare/v0.12.0...main
+[v0.12.0]: https://github.com/cucumber/godog/compare/v0.11.0...v0.12.0
 [v0.11.0]: https://github.com/cucumber/godog/compare/v0.10.0...v0.11.0
 [v0.10.0]: https://github.com/cucumber/godog/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/cucumber/godog/compare/v0.8.1...v0.9.0
@@ -215,3 +222,4 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 [chirino]: https://github.com/chirino
 [radtriste]: https://github.com/radtriste
 [karfrank]: https://github.com/karfrank
+[nhatthm]: https://github.com/nhatthm
