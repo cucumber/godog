@@ -1,3 +1,4 @@
+[![Build Status](https://github.com/cucumber/godog/workflows/test/badge.svg)](https://github.com/cucumber/godog/actions?query=branch%main+workflow%3Atest)
 [![CircleCI](https://circleci.com/gh/cucumber/godog/tree/master.svg?style=svg)](https://circleci.com/gh/cucumber/godog/tree/master)
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/cucumber/godog)](https://pkg.go.dev/github.com/cucumber/godog)
 [![codecov](https://codecov.io/gh/cucumber/godog/branch/master/graph/badge.svg)](https://codecov.io/gh/cucumber/godog)
