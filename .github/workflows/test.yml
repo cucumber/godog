@@ -8,7 +8,7 @@ jobs:
   test:
     strategy:
       matrix:
-        go-version: [ 1.13.x, 1.14.x, 1.15.x, 1.16.x, 1.17.x ]
+        go-version: [ 1.16.x, 1.17.x ]
     runs-on: ubuntu-latest
     steps:
       - name: Install Go
@@ -27,16 +27,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-cache
       - name: Run gofmt
-        if: matrix.go-version == '1.17.x'
         run: gofmt -d -e . 2>&1 | tee outfile && test -z "$(cat outfile)" && rm outfile
       - name: Run golint
-        if: matrix.go-version == '1.17.x'
         run: |
           go install golang.org/x/lint/golint@latest
           golint -set_exit_status ./...
           cd _examples && golint -set_exit_status ./... && cd ..
       - name: Run go vet
-        if: matrix.go-version == '1.17.x'
         run: |
           go vet ./...
           cd _examples && go vet ./... && cd ..
@@ -49,6 +46,7 @@ jobs:
           go install ./cmd/godog
           godog -f progress --strict
       - name: Report on code coverage
+        if: matrix.go-version == '1.17.x'
         uses: codecov/codecov-action@v1
         with:
           file: ./coverage.txt
