@@ -30,7 +30,7 @@ jobs:
         run: gofmt -d -e . 2>&1 | tee outfile && test -z "$(cat outfile)" && rm outfile
       - name: Run golint
         run: |
-          go get -u golang.org/x/lint/golint
+          go install golang.org/x/lint/golint@latest
           golint -set_exit_status ./...
           cd _examples && golint -set_exit_status ./... && cd ..
       - name: Run go vet
@@ -39,7 +39,6 @@ jobs:
           cd _examples && go vet ./... && cd ..
       - name: Run go test
         run: |
-          sed -i 's#github.com/cucumber/godog/internal/formatters_test#/internal/formatters_test#g' internal/formatters/formatter-tests/*/*
           go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
           cd _examples && go test -v -race ./... && cd ..
       - name: Run godog
