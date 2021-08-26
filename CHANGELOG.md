@@ -8,7 +8,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ---
 
-## [Unreleased]
+## [v0.12.1]
 
 ### Fixed
 
@@ -196,7 +196,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 <!-- Releases -->
 
-[unreleased]: https://github.com/cucumber/godog/compare/v0.12.0...main
+[v0.12.1]: https://github.com/cucumber/godog/compare/v0.12.0...v0.12.1
 [v0.12.0]: https://github.com/cucumber/godog/compare/v0.11.0...v0.12.0
 [v0.11.0]: https://github.com/cucumber/godog/compare/v0.10.0...v0.11.0
 [v0.10.0]: https://github.com/cucumber/godog/compare/v0.9.0...v0.10.0
