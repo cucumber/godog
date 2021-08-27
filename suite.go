@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cucumber/godog/messages"
+	"github.com/cucumber/godog/internal/messages"
 
 	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/models"

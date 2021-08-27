@@ -4,8 +4,8 @@ import (
 	"io"
 
 	"github.com/cucumber/godog/formatters"
+	"github.com/cucumber/godog/internal/messages"
 	"github.com/cucumber/godog/internal/storage"
-	"github.com/cucumber/godog/messages"
 )
 
 // MultiFormatter passes test progress to multiple formatters.

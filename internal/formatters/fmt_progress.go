@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cucumber/godog/messages"
+	"github.com/cucumber/godog/internal/messages"
 
 	"github.com/cucumber/godog/formatters"
 )

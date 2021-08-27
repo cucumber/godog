@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cucumber/godog/messages"
+	"github.com/cucumber/godog/internal/messages"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/cucumber/godog"

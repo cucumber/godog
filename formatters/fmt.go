@@ -4,7 +4,7 @@ import (
 	"io"
 	"regexp"
 
-	"github.com/cucumber/godog/messages"
+	"github.com/cucumber/godog/internal/messages"
 )
 
 type registeredFormatter struct {
