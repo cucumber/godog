@@ -3,8 +3,7 @@ module github.com/cucumber/godog
 go 1.13
 
 require (
-	github.com/cucumber/gherkin-go/v19 v19.0.3
-	github.com/cucumber/messages-go/v16 v16.0.1
+	github.com/gofrs/uuid v4.0.0+incompatible
 	github.com/hashicorp/go-memdb v1.3.0
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	github.com/smartystreets/goconvey v1.6.4

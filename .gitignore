@@ -8,3 +8,4 @@ Gopkg.toml
 .idea
 
 _artifacts
+_cucumber-common

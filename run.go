@@ -14,7 +14,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/cucumber/messages-go/v16"
+	"github.com/cucumber/godog/messages"
 
 	"github.com/cucumber/godog/colors"
 	"github.com/cucumber/godog/formatters"

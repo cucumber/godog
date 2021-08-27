@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/cucumber/messages-go/v16"
+	"github.com/cucumber/godog/messages"
 )
 
 // Feature is an internal object to group together

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/cucumber/messages-go/v16"
+	"github.com/cucumber/godog/messages"
 )
 
 // some snippet formatting regexps

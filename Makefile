@@ -50,6 +50,23 @@ artifacts:
 	$(call _build,linux,amd64)
 	$(call _build,linux,arm64)
 
+
+# To update packages from common monorepo;
+# execute: make common
+common:
+	rm -rf ./_cucumber-common
+	git clone https://github.com/cucumber/common.git --depth 1 ./_cucumber-common
+	mkdir -p ./internal/messages
+	mkdir -p ./internal/gherkin
+	cp -f ./_cucumber-common/messages/go/*.go ./internal/messages/
+	cp -f ./_cucumber-common/gherkin/go/*.go ./internal/gherkin/
+	rm -rf ./_cucumber-common
+	find . -type f -path '*/.go' -print0 | xargs -0 perl -i -pe "s|github.com/cucumber/common/messages/go/v\d+|github.com/cucumber/godog/internal/messages|g"
+	find . -type f -path '*/.go' -print0 | xargs -0 perl -i -pe "s|github.com/cucumber/common/gherkin/go/v\d+|github.com/cucumber/godog/internal/gherkin|g"
+	find ./internal/gherkin -type f -print0 | xargs -0 perl -i -pe "s|ExampleCompilePickles|ExamplePickles|g"
+	git add ./internal/messages
+	git add ./internal/gherkin
+
 define _build
 	mkdir $(ARTIFACT_DIR)/godog-$(VERS)-$1-$2
 	env GOOS=$1 GOARCH=$2 go build -o $(ARTIFACT_DIR)/godog-$(VERS)-$1-$2/godog ./cmd/godog

@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"regexp"
 
-	"github.com/cucumber/messages-go/v16"
+	"github.com/cucumber/godog/messages"
 
 	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/builder"

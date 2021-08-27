@@ -3,7 +3,7 @@ package tags
 import (
 	"strings"
 
-	"github.com/cucumber/messages-go/v16"
+	"github.com/cucumber/godog/messages"
 )
 
 // ApplyTagFilter will apply a filter string on the
