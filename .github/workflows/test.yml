@@ -31,7 +31,7 @@ jobs:
       - name: Run golint
         run: |
           go install golang.org/x/lint/golint@latest
-          golint -set_exit_status ./...
+          golint -set_exit_status $(go list ./... | grep -v internal/gherkin | grep -v internal/messages)
           cd _examples && golint -set_exit_status ./... && cd ..
       - name: Run go vet
         run: |
