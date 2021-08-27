@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/cucumber/messages-go/v16"
+	"github.com/cucumber/common/messages/go/v17"
 
 	"github.com/cucumber/godog/colors"
 	"github.com/cucumber/godog/formatters"
