@@ -324,9 +324,9 @@ func (tc *godogFeaturesScenario) cleanupSnippet(snip string) string {
 }
 
 func (tc *godogFeaturesScenario) theUndefinedStepSnippetsShouldBe(body *DocString) error {
-	f, ok := tc.testedSuite.fmt.(*formatters.Basefmt)
+	f, ok := tc.testedSuite.fmt.(*formatters.Base)
 	if !ok {
-		return fmt.Errorf("this step requires *formatters.Basefmt, but there is: %T", tc.testedSuite.fmt)
+		return fmt.Errorf("this step requires *formatters.Base, but there is: %T", tc.testedSuite.fmt)
 	}
 
 	actual := tc.cleanupSnippet(f.Snippets())
@@ -424,6 +424,22 @@ func (tc *godogFeaturesScenario) iAmListeningToSuiteEvents() error {
 		tc.events = append(tc.events, &firedEvent{"BeforeScenario", []interface{}{pickle}})
 
 		return context.WithValue(ctx, ctxKey("BeforeScenario"), true), nil
+	})
+
+	scenarioContext.Before(func(ctx context.Context, sc *Scenario) (context.Context, error) {
+		if sc.Name == "failing before and after scenario" || sc.Name == "failing before scenario" {
+			return context.WithValue(ctx, ctxKey("AfterStep"), true), errors.New("failed in before scenario hook")
+		}
+
+		return ctx, nil
+	})
+
+	scenarioContext.After(func(ctx context.Context, sc *Scenario, err error) (context.Context, error) {
+		if sc.Name == "failing before and after scenario" || sc.Name == "failing after scenario" {
+			return ctx, errors.New("failed in after scenario hook")
+		}
+
+		return ctx, nil
 	})
 
 	scenarioContext.After(func(ctx context.Context, pickle *Scenario, err error) (context.Context, error) {
@@ -678,14 +694,15 @@ func (tc *godogFeaturesScenario) theRenderOutputWillBe(docstring *DocString) err
 	expected = suiteCtxPtrReg.ReplaceAllString(expected, "*godogFeaturesScenario")
 
 	actual := tc.out.String()
-	actual = trimAllLines(actual)
 	actual = actualSuiteCtxReg.ReplaceAllString(actual, "suite_context_test.go:0")
 	actual = actualSuiteCtxFuncReg.ReplaceAllString(actual, "InitializeScenario.func$1")
+	actualTrimmed := actual
+	actual = trimAllLines(actual)
 
 	expectedRows := strings.Split(expected, "\n")
 	actualRows := strings.Split(actual, "\n")
 
-	return assertExpectedAndActual(assert.ElementsMatch, expectedRows, actualRows)
+	return assertExpectedAndActual(assert.ElementsMatch, expectedRows, actualRows, actualTrimmed)
 }
 
 func (tc *godogFeaturesScenario) theRenderXMLWillBe(docstring *DocString) error {

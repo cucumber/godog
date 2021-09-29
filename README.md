@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/cucumber/godog/tree/master.svg?style=svg)](https://circleci.com/gh/cucumber/godog/tree/master)
+[![Build Status](https://github.com/cucumber/godog/workflows/test/badge.svg)](https://github.com/cucumber/godog/actions?query=branch%main+workflow%3Atest)
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/cucumber/godog)](https://pkg.go.dev/github.com/cucumber/godog)
 [![codecov](https://codecov.io/gh/cucumber/godog/branch/master/graph/badge.svg)](https://codecov.io/gh/cucumber/godog)
 [![pull requests](https://oselvar.com/api/badge?label=pull%20requests&csvUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fcucumber%2Foselvar-github-metrics%2Fmain%2Fdata%2Fcucumber%2Fgodog%2FpullRequests.csv)](https://oselvar.com/github/cucumber/oselvar-github-metrics/main/cucumber/godog)
@@ -45,13 +45,13 @@ When automated testing is this much fun, teams can easily protect themselves fro
 
 ## Install
 ```
-go get github.com/cucumber/godog/cmd/godog@v0.11.0
+go get github.com/cucumber/godog/cmd/godog@v0.12.0
 ```
-Adding `@v0.11.0` will install v0.11.0 specifically instead of master.
+Adding `@v0.12.0` will install v0.12.0 specifically instead of master.
 
 Running `within the $GOPATH`, you would also need to set `GO111MODULE=on`, like this:
 ```
-GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.11.0
+GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.12.0
 ```
 
 ## Contributions
@@ -377,7 +377,54 @@ See implementation examples:
 
 ### Running Godog with go test
 
-You may integrate running **godog** in your **go test** command. You can run it using go [TestMain](https://golang.org/pkg/testing/#hdr-Main) func available since **go 1.4**. In this case it is not necessary to have **godog** command installed. See the following examples.
+You may integrate running **godog** in your **go test** command. 
+
+#### Subtests of *testing.T
+
+You can run test suite using go [Subtests](https://pkg.go.dev/testing#hdr-Subtests_and_Sub_benchmarks).
+In this case it is not necessary to have **godog** command installed. See the following example.
+
+```go
+package main_test
+
+import (
+	"testing"
+
+	"github.com/cucumber/godog"
+)
+
+func TestFeatures(t *testing.T) {
+  suite := godog.TestSuite{
+    ScenarioInitializer: func(s *godog.ScenarioContext) {
+      // Add step definitions here.
+    },
+    Options: &godog.Options{
+      Format:   "pretty",
+      Paths:    []string{"features"},
+      TestingT: t, // Testing instance that will run subtests.
+    },
+  }
+
+  if suite.Run() != 0 {
+    t.Fatal("non-zero status returned, failed to run feature tests")
+  }
+}
+```
+
+Then you can run suite.
+```
+go test -test.v -test.run ^TestFeatures$
+```
+
+Or a particular scenario.
+```
+go test -test.v -test.run ^TestFeatures$/^my_scenario$
+```
+
+#### TestMain
+
+You can run test suite using go [TestMain](https://golang.org/pkg/testing/#hdr-Main) func available since **go 1.4**. 
+In this case it is not necessary to have **godog** command installed. See the following examples.
 
 The following example binds **godog** flags with specified prefix `godog` in order to prevent flag collisions.
 
@@ -390,7 +437,7 @@ import (
 
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
-	"github.com/spf13/pflag" // godog v0.11.0 (latest)
+	"github.com/spf13/pflag" // godog v0.11.0 and later
 )
 
 var opts = godog.Options{

@@ -13,6 +13,9 @@ import (
 	"github.com/cucumber/godog/internal/models"
 )
 
+// GherkinDocument represents gherkin document.
+type GherkinDocument = messages.GherkinDocument
+
 // Scenario represents the executed scenario
 type Scenario = messages.Pickle
 

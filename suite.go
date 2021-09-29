@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"testing"
 
 	"github.com/cucumber/messages-go/v16"
 
@@ -54,6 +55,7 @@ type suite struct {
 	strict        bool
 
 	defaultContext context.Context
+	testingT       *testing.T
 
 	// suite event handlers
 	beforeScenarioHandlers []BeforeScenarioHook
@@ -70,11 +72,13 @@ func (s *suite) matchStep(step *messages.PickleStep) *models.StepDefinition {
 	return def
 }
 
-func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, prevStepErr error) (rctx context.Context, err error) {
+func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, prevStepErr error, isFirst, isLast bool) (rctx context.Context, err error) {
 	var (
 		match *models.StepDefinition
 		sr    = models.PickleStepResult{Status: models.Undefined}
 	)
+
+	rctx = ctx
 
 	// user multistep definitions may panic
 	defer func() {
@@ -87,20 +91,7 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, prevS
 
 		defer func() {
 			// run after step handlers
-			for _, f := range s.afterStepHandlers {
-				hctx, herr := f(rctx, step, sr.Status, err)
-
-				// Adding hook error to resulting error without breaking hooks loop.
-				if herr != nil {
-					if err == nil {
-						err = herr
-					} else {
-						err = fmt.Errorf("%v: %w", herr, err)
-					}
-				}
-
-				rctx = hctx
-			}
+			rctx, err = s.runAfterStepHooks(ctx, step, sr.Status, err)
 		}()
 
 		if prevStepErr != nil {
@@ -112,6 +103,11 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, prevS
 		}
 
 		sr = models.NewStepResult(pickle.Id, step.Id, match)
+
+		// Trigger after scenario on failing or last step to attach possible hook error to step.
+		if (err == nil && isLast) || err != nil {
+			rctx, err = s.runAfterScenarioHooks(rctx, pickle, err)
+		}
 
 		switch err {
 		case nil:
@@ -133,17 +129,25 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, prevS
 		}
 	}()
 
-	// run before step handlers
-	for _, f := range s.beforeStepHandlers {
-		ctx, err = f(ctx, step)
-		if err != nil {
-			return ctx, err
-		}
+	// run before scenario handlers
+	if isFirst {
+		ctx, err = s.runBeforeScenarioHooks(ctx, pickle)
 	}
+
+	// run before step handlers
+	ctx, err = s.runBeforeStepHooks(ctx, step, err)
 
 	match = s.matchStep(step)
 	s.storage.MustInsertStepDefintionMatch(step.AstNodeIds[0], match)
 	s.fmt.Defined(pickle, step, match.GetInternalStepDefinition())
+
+	if err != nil {
+		sr = models.NewStepResult(pickle.Id, step.Id, match)
+		sr.Status = models.Failed
+		s.storage.MustInsertPickleStepResult(sr)
+
+		return ctx, err
+	}
 
 	if ctx, undef, err := s.maybeUndefined(ctx, step.Text, step.Argument); err != nil {
 		return ctx, err
@@ -179,6 +183,118 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, prevS
 	}
 
 	ctx, err = s.maybeSubSteps(match.Run(ctx))
+
+	return ctx, err
+}
+
+func (s *suite) runBeforeStepHooks(ctx context.Context, step *Step, err error) (context.Context, error) {
+	hooksFailed := false
+
+	for _, f := range s.beforeStepHandlers {
+		hctx, herr := f(ctx, step)
+		if herr != nil {
+			hooksFailed = true
+
+			if err == nil {
+				err = herr
+			} else {
+				err = fmt.Errorf("%v, %w", herr, err)
+			}
+		}
+
+		if hctx != nil {
+			ctx = hctx
+		}
+	}
+
+	if hooksFailed {
+		err = fmt.Errorf("before step hook failed: %w", err)
+	}
+
+	return ctx, err
+}
+
+func (s *suite) runAfterStepHooks(ctx context.Context, step *Step, status StepResultStatus, err error) (context.Context, error) {
+	for _, f := range s.afterStepHandlers {
+		hctx, herr := f(ctx, step, status, err)
+
+		// Adding hook error to resulting error without breaking hooks loop.
+		if herr != nil {
+			if err == nil {
+				err = herr
+			} else {
+				err = fmt.Errorf("%v, %w", herr, err)
+			}
+		}
+
+		if hctx != nil {
+			ctx = hctx
+		}
+	}
+
+	return ctx, err
+}
+
+func (s *suite) runBeforeScenarioHooks(ctx context.Context, pickle *messages.Pickle) (context.Context, error) {
+	var err error
+
+	// run before scenario handlers
+	for _, f := range s.beforeScenarioHandlers {
+		hctx, herr := f(ctx, pickle)
+		if herr != nil {
+			if err == nil {
+				err = herr
+			} else {
+				err = fmt.Errorf("%v, %w", herr, err)
+			}
+		}
+
+		if hctx != nil {
+			ctx = hctx
+		}
+	}
+
+	if err != nil {
+		err = fmt.Errorf("before scenario hook failed: %w", err)
+	}
+
+	return ctx, err
+}
+
+func (s *suite) runAfterScenarioHooks(ctx context.Context, pickle *messages.Pickle, lastStepErr error) (context.Context, error) {
+	err := lastStepErr
+
+	hooksFailed := false
+	isStepErr := true
+
+	// run after scenario handlers
+	for _, f := range s.afterScenarioHandlers {
+		hctx, herr := f(ctx, pickle, err)
+
+		// Adding hook error to resulting error without breaking hooks loop.
+		if herr != nil {
+			hooksFailed = true
+
+			if err == nil {
+				isStepErr = false
+				err = herr
+			} else {
+				if isStepErr {
+					err = fmt.Errorf("step error: %w", err)
+					isStepErr = false
+				}
+				err = fmt.Errorf("%v, %w", herr, err)
+			}
+		}
+
+		if hctx != nil {
+			ctx = hctx
+		}
+	}
+
+	if hooksFailed {
+		err = fmt.Errorf("after scenario hook failed: %w", err)
+	}
 
 	return ctx, err
 }
@@ -271,8 +387,10 @@ func (s *suite) runSteps(ctx context.Context, pickle *Scenario, steps []*Step) (
 		stepErr, err error
 	)
 
-	for _, step := range steps {
-		ctx, stepErr = s.runStep(ctx, pickle, step, err)
+	for i, step := range steps {
+		isLast := i == len(steps)-1
+		isFirst := i == 0
+		ctx, stepErr = s.runStep(ctx, pickle, step, err, isFirst, isLast)
 		switch stepErr {
 		case ErrUndefined:
 			// do not overwrite failed error
@@ -326,13 +444,8 @@ func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 		return ErrUndefined
 	}
 
-	// run before scenario handlers
-	for _, f := range s.beforeScenarioHandlers {
-		ctx, err = f(ctx, pickle)
-		if err != nil {
-			return err
-		}
-	}
+	// Before scenario hooks are called in context of first evaluated step
+	// so that error from handler can be added to step.
 
 	pr := models.PickleResult{PickleID: pickle.Id, StartedAt: utils.TimeNowFunc()}
 	s.storage.MustInsertPickleResult(pr)
@@ -340,23 +453,20 @@ func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 	s.fmt.Pickle(pickle)
 
 	// scenario
-	ctx, err = s.runSteps(ctx, pickle, pickle.Steps)
-
-	// run after scenario handlers
-	for _, f := range s.afterScenarioHandlers {
-		hctx, herr := f(ctx, pickle, err)
-
-		// Adding hook error to resulting error without breaking hooks loop.
-		if herr != nil {
-			if err == nil {
-				err = herr
-			} else {
-				err = fmt.Errorf("%v: %w", herr, err)
+	if s.testingT != nil {
+		// Running scenario as a subtest.
+		s.testingT.Run(pickle.Name, func(t *testing.T) {
+			ctx, err = s.runSteps(ctx, pickle, pickle.Steps)
+			if err != nil {
+				t.Error(err)
 			}
-		}
-
-		ctx = hctx
+		})
+	} else {
+		ctx, err = s.runSteps(ctx, pickle, pickle.Steps)
 	}
+
+	// After scenario handlers are called in context of last evaluated step
+	// so that error from handler can be added to step.
 
 	return err
 }
