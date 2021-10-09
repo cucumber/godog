@@ -44,11 +44,6 @@ func fail(w http.ResponseWriter, msg string, status int) {
 func ok(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 
-	if s, ok := data.(string); ok {
-		fmt.Fprintf(w, s)
-		return
-	}
-
 	resp, err := json.Marshal(data)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
