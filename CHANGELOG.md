@@ -8,6 +8,12 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ---
 
+## [v0.12.2]
+
+### Fixed
+
+- Error in `go mod tidy` with `GO111MODULE=off` ([436]((https://github.com/cucumber/godog/pull/436) - [vearutop])
+
 ## [v0.12.1]
 
 ### Fixed
@@ -196,6 +202,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 <!-- Releases -->
 
+[v0.12.2]: https://github.com/cucumber/godog/compare/v0.12.1...v0.12.2
 [v0.12.1]: https://github.com/cucumber/godog/compare/v0.12.0...v0.12.1
 [v0.12.0]: https://github.com/cucumber/godog/compare/v0.11.0...v0.12.0
 [v0.11.0]: https://github.com/cucumber/godog/compare/v0.10.0...v0.11.0
