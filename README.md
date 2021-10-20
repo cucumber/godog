@@ -244,7 +244,7 @@ godogs
 - godogs_test.go
 ```
 
-#### Step 6 - Add some logic to the step defintions
+#### Step 6 - Add some logic to the step definitions
 
 Now lets implement our step definitions to test our feature requirements:
 
