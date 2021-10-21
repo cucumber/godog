@@ -62,5 +62,5 @@ define _build
 	cp README.md $(ARTIFACT_DIR)/godog-$(VERS)-$1-$2/README.md
 	cp LICENSE $(ARTIFACT_DIR)/godog-$(VERS)-$1-$2/LICENSE
 	cd $(ARTIFACT_DIR) && tar -c --use-compress-program="pigz --fast" -f godog-$(VERS)-$1-$2.tar.gz godog-$(VERS)-$1-$2 && cd ..
-	#rm -rf $(ARTIFACT_DIR)/godog-$(VERS)-$1-$2
+	rm -rf $(ARTIFACT_DIR)/godog-$(VERS)-$1-$2
 endef
