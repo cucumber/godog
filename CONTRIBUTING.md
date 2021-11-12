@@ -23,6 +23,6 @@ Once that's done, try running the tests:
 
 If everything passes, you're ready to hack!
 
-[install go](https://golang.org/doc/install)
+[install go]: https://golang.org/doc/install
 [community Slack]: https://cucumber.io/community#slack
 [raise an issue]: https://github.com/cucumber/godog/issues/new/choose
