@@ -602,5 +602,5 @@ A simple example can be [found here](/_examples/custom-formatter).
 [behat]: http://docs.behat.org/ "Behavior driven development framework for PHP"
 [cucumber]: https://cucumber.io/ "Behavior driven development framework"
 [license]: https://en.wikipedia.org/wiki/MIT_License "The MIT license"
-[contributing guide]: [https://github.com/cucumber/godog/blob/main/CONTRIBUTING.md]
+[contributing guide]: https://github.com/cucumber/godog/blob/main/CONTRIBUTING.md
 [community Slack]: https://cucumber.io/community#slack
