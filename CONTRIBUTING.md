@@ -13,9 +13,13 @@ You can chat with us in the [#committers-go](https://cucumberbdd.slack.com/archi
 
 To get your development environment set up, you'll need to [install Go].
 
+Now install golint:
+
+    go install golang.org/x/lint/golint@latest
+
 Once that's done, try running the tests:
 
-    go test
+    make
 
 If everything passes, you're ready to hack!
 
