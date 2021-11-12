@@ -56,16 +56,16 @@ GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.12.0
 
 ## Contributions
 
-Godog is a community driven Open Source Project within the Cucumber organization, it is maintained by a handfull of developers, but we appreciate contributions from everyone.
+Godog is a community driven Open Source Project within the Cucumber organization. We [welcome contributions from everyone](https://cucumber.io/blog/open-source/tackling-structural-racism-(and-sexism)-in-open-so/), and we're ready to support you if you have the enthusiasm to contribute.
 
-If you are interested in developing Godog, we suggest you to visit one of our slack channels.
+See the [contributing guide] for more detail on how to get started.
 
-Feel free to open a pull request. Note, if you wish to contribute larger changes or an extension to the exported methods or types, please open an issue before and visit us in slack to discuss the changes.
+## Getting help
 
-Reach out to the community on our [Cucumber Slack Community](https://cucumberbdd.slack.com/).
-Join [here](https://cucumberbdd-slack-invite.herokuapp.com/).
+We have a [community Slack] where you can chat with other users, developers, and BDD practitioners.
 
-### Popular Cucumber Slack channels for Godog:
+Here are some useful channels to try:
+
 - [#help-godog](https://cucumberbdd.slack.com/archives/CTNL1JCVA) - General Godog Adoption Help
 - [#committers-go](https://cucumberbdd.slack.com/archives/CA5NJPDJ4) - Golang focused Cucumber Contributors
 - [#committers](https://cucumberbdd.slack.com/archives/C62D0FK0E) - General Cucumber Contributors
@@ -602,3 +602,5 @@ A simple example can be [found here](/_examples/custom-formatter).
 [behat]: http://docs.behat.org/ "Behavior driven development framework for PHP"
 [cucumber]: https://cucumber.io/ "Behavior driven development framework"
 [license]: https://en.wikipedia.org/wiki/MIT_License "The MIT license"
+[contributing guide]: [https://github.com/cucumber/godog/blob/main/CONTRIBUTING.md]
+[community Slack]: https://cucumber.io/community#slack
