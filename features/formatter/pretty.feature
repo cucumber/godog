@@ -23,6 +23,181 @@ Feature: pretty formatter
       0s
     """
 
+  Scenario: Support of Feature Plus Background and Scenario Node
+    Given a feature "features/simple.feature" file:
+    """
+        Feature: simple feature
+            simple feature description
+        Background: simple background
+            Given passing step
+            And passing step
+        Scenario: simple scenario
+            simple scenario description
+    """
+    When I run feature suite with formatter "pretty"
+    Then the rendered output will be as follows:
+    """
+      Feature: simple feature
+        simple feature description
+
+        Background: simple background
+            Given passing step
+            And passing step
+
+        Scenario: simple scenario # features/simple.feature:6
+
+      1 scenarios (1 undefined)
+      No steps
+      0s
+    """
+
+  Scenario: Support of Feature Plus Rule Node
+    Given a feature "features/simple.feature" file:
+    """
+        Feature: simple feature
+            simple feature description
+        Rule: simple rule
+            Scenario: simple scenario
+                simple scenario description
+    """
+    When I run feature suite with formatter "pretty"
+    Then the rendered output will be as follows:
+    """
+      Feature: simple feature
+        simple feature description
+
+        Rule: simple rule
+
+          Scenario: simple scenario # features/simple.feature:4
+
+      1 scenarios (1 undefined)
+      No steps
+      0s
+    """
+
+  Scenario: Support of Feature Plus Rule Node with Background
+    Given a feature "features/simple.feature" file:
+    """
+        Feature: simple feature
+            simple feature description
+
+        Rule: simple rule
+
+        Background: simple background
+            Given something
+            And another thing
+
+        Scenario: simple scenario
+            simple scenario description
+    """
+    When I run feature suite with formatter "pretty"
+    Then the rendered output will be as follows:
+    """
+      Feature: simple feature
+        simple feature description
+
+        Rule: simple rule
+
+        Background: simple background
+            Given something
+            And another thing
+
+          Scenario: simple scenario # features/simple.feature:10
+
+      1 scenarios (1 undefined)
+      No steps
+      0s
+    """
+
+  Scenario: Support of Feature Plus Rule Node with multiple scenarios
+    Given a feature "features/simple.feature" file:
+    """
+        Feature: simple feature
+            simple feature description
+
+        Rule: simple rule
+
+        Scenario: simple scenario
+            simple scenario description
+
+            Given passing step
+            Then passing step
+
+        Scenario: simple second scenario
+            simple second scenario description
+
+            Given passing step
+            Then passing step
+    """
+    When I run feature suite with formatter "pretty"
+    Then the rendered output will be as follows:
+    """
+      Feature: simple feature
+        simple feature description
+
+        Rule: simple rule
+
+          Scenario: simple scenario # features/simple.feature:6
+            Given passing step      # suite_context_test.go:0 -> InitializeScenario.func2
+            Then passing step       # suite_context_test.go:0 -> InitializeScenario.func2
+
+          Scenario: simple second scenario # features/simple.feature:12
+            Given passing step             # suite_context_test.go:0 -> InitializeScenario.func2
+            Then passing step              # suite_context_test.go:0 -> InitializeScenario.func2
+
+      2 scenarios (2 passed)
+      4 steps (4 passed)
+      0s
+    """
+
+  Scenario: Support of Feature Plus Rule Node with Background and multiple scenarios
+    Given a feature "features/simple.feature" file:
+    """
+        Feature: simple feature
+            simple feature description
+        Rule: simple rule
+
+        Background: simple background
+            Given passing step
+            And passing step
+
+        Scenario: simple scenario
+            simple scenario description
+
+            Given passing step
+            Then passing step
+
+        Scenario: simple second scenario
+            simple second scenario description
+
+            Given passing step
+            Then passing step
+    """
+    When I run feature suite with formatter "pretty"
+    Then the rendered output will be as follows:
+    """
+      Feature: simple feature
+        simple feature description
+
+        Rule: simple rule
+
+        Background: simple background
+            Given passing step      # suite_context_test.go:0 -> InitializeScenario.func2
+            And passing step        # suite_context_test.go:0 -> InitializeScenario.func2
+
+          Scenario: simple scenario # features/simple.feature:9
+            Given passing step      # suite_context_test.go:0 -> InitializeScenario.func2
+            Then passing step       # suite_context_test.go:0 -> InitializeScenario.func2
+
+          Scenario: simple second scenario # features/simple.feature:15
+            Given passing step             # suite_context_test.go:0 -> InitializeScenario.func2
+            Then passing step              # suite_context_test.go:0 -> InitializeScenario.func2
+
+      2 scenarios (2 passed)
+      8 steps (8 passed)
+      0s
+    """
+
   Scenario: Support of Feature Plus Scenario Node With Tags
     Given a feature "features/simple.feature" file:
     """

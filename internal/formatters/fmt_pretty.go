@@ -123,6 +123,7 @@ func (f *Pretty) Pending(pickle *messages.Pickle, step *messages.PickleStep, mat
 	f.printStep(pickle, step)
 }
 
+// printFeature prints given feature (with title and description) to f.out.
 func (f *Pretty) printFeature(feature *messages.Feature) {
 	fmt.Fprintln(f.out, keywordAndName(feature.Keyword, feature.Name))
 	if strings.TrimSpace(feature.Description) != "" {
@@ -132,6 +133,7 @@ func (f *Pretty) printFeature(feature *messages.Feature) {
 	}
 }
 
+// keywordAndName returns formatted keyword and name.
 func keywordAndName(keyword, name string) string {
 	title := whiteb(keyword + ":")
 	if len(name) > 0 {
@@ -140,8 +142,11 @@ func keywordAndName(keyword, name string) string {
 	return title
 }
 
+// scenarioLengths returns the length of the scenario header, and the maximum
+// length of all steps.
 func (f *Pretty) scenarioLengths(pickle *messages.Pickle) (scenarioHeaderLength int, maxLength int) {
 	feature := f.Storage.MustGetFeature(pickle.Uri)
+	astRule := feature.FindRule(pickle.AstNodeIds[0])
 	astScenario := feature.FindScenario(pickle.AstNodeIds[0])
 	astBackground := feature.FindBackground(pickle.AstNodeIds[0])
 
@@ -151,10 +156,22 @@ func (f *Pretty) scenarioLengths(pickle *messages.Pickle) (scenarioHeaderLength 
 	if astBackground != nil {
 		maxLength = f.longestStep(astBackground.Steps, maxLength)
 	}
+	if astRule != nil {
+		for _, rc := range astRule.Children {
+			if rc.Scenario != nil {
+				scenarioHeaderLength = f.lengthPickle(astScenario.Keyword, astScenario.Name)
+				maxLength = f.longestStep(rc.Scenario.Steps, maxLength)
+			} else if rc.Background != nil {
+				maxLength = f.longestStep(rc.Background.Steps, maxLength)
+			}
+		}
+	}
 
 	return scenarioHeaderLength, maxLength
 }
 
+// printScenarioHeader prints scenario header (keyword/name) with feature line
+// reference. The scenario is prefixed with whitespace equal to spaceFilling.
 func (f *Pretty) printScenarioHeader(pickle *messages.Pickle, astScenario *messages.Scenario, spaceFilling int) {
 	feature := f.Storage.MustGetFeature(pickle.Uri)
 	text := s(f.indent) + keywordAndName(astScenario.Keyword, astScenario.Name)
@@ -162,12 +179,18 @@ func (f *Pretty) printScenarioHeader(pickle *messages.Pickle, astScenario *messa
 	fmt.Fprintln(f.out, "\n"+text)
 }
 
+// printUndefinedPickle prints pickles that are not defined yet.
 func (f *Pretty) printUndefinedPickle(pickle *messages.Pickle) {
 	feature := f.Storage.MustGetFeature(pickle.Uri)
+	astRule := feature.FindRule(pickle.AstNodeIds[0])
 	astScenario := feature.FindScenario(pickle.AstNodeIds[0])
 	astBackground := feature.FindBackground(pickle.AstNodeIds[0])
 
 	scenarioHeaderLength, maxLength := f.scenarioLengths(pickle)
+
+	if astRule != nil {
+		fmt.Fprintln(f.out, "\n"+s(f.indent)+keywordAndName(astRule.Keyword, astRule.Name))
+	}
 
 	if astBackground != nil {
 		fmt.Fprintln(f.out, "\n"+s(f.indent)+keywordAndName(astBackground.Keyword, astBackground.Name))
@@ -352,6 +375,7 @@ func (f *Pretty) printTableHeader(row *messages.TableRow, max []int) {
 
 func (f *Pretty) printStep(pickle *messages.Pickle, pickleStep *messages.PickleStep) {
 	feature := f.Storage.MustGetFeature(pickle.Uri)
+	astRule := feature.FindRule(pickle.AstNodeIds[0])
 	astBackground := feature.FindBackground(pickle.AstNodeIds[0])
 	astScenario := feature.FindScenario(pickle.AstNodeIds[0])
 	astStep := feature.FindStep(pickleStep.AstNodeIds[0])
@@ -378,6 +402,9 @@ func (f *Pretty) printStep(pickle *messages.Pickle, pickleStep *messages.PickleS
 	}
 
 	if astBackgroundStep && firstExecutedBackgroundStep {
+		if astRule != nil {
+			fmt.Fprintln(f.out, "\n"+s(f.indent)+keywordAndName(astRule.Keyword, astRule.Name))
+		}
 		fmt.Fprintln(f.out, "\n"+s(f.indent)+keywordAndName(astBackground.Keyword, astBackground.Name))
 	}
 
@@ -391,6 +418,28 @@ func (f *Pretty) printStep(pickle *messages.Pickle, pickleStep *messages.PickleS
 
 	firstExecutedScenarioStep := astScenario.Steps[0].Id == pickleStep.AstNodeIds[0]
 	if !astBackgroundStep && firstExecutedScenarioStep {
+		// The first scenario step is responsible for printing the rule unless
+		// it has already been printed by the background.
+		if astRule != nil {
+			var firstScenarioOfRule bool
+			var ruleHasBackground bool
+			for _, rc := range astRule.Children {
+				if sc := rc.Scenario; sc != nil {
+					firstScenarioOfRule = sc.Id == astScenario.Id
+					break
+				}
+			}
+			for _, rc := range astRule.Children {
+				if bc := rc.Background; bc != nil {
+					ruleHasBackground = true
+					break
+				}
+			}
+			if firstScenarioOfRule && !ruleHasBackground {
+				fmt.Fprintln(f.out, "\n"+s(f.indent)+keywordAndName(astRule.Keyword, astRule.Name))
+			}
+		}
+
 		f.printScenarioHeader(pickle, astScenario, maxLength-scenarioHeaderLength)
 	}
 
@@ -421,6 +470,7 @@ func (f *Pretty) printStep(pickle *messages.Pickle, pickleStep *messages.PickleS
 	}
 }
 
+// printDocString prints a formatted docString to f.out.
 func (f *Pretty) printDocString(docString *messages.DocString) {
 	var ct string
 
@@ -437,7 +487,7 @@ func (f *Pretty) printDocString(docString *messages.DocString) {
 	fmt.Fprintln(f.out, s(f.indent*3)+cyan(docString.Delimiter))
 }
 
-// print table with aligned table cells
+// printTable prints table with aligned table cells
 // @TODO: need to make example header cells bold
 func (f *Pretty) printTable(t *messages.PickleTable, c colors.ColorFunc) {
 	maxColLengths := maxColLengths(t, c)
@@ -454,7 +504,7 @@ func (f *Pretty) printTable(t *messages.PickleTable, c colors.ColorFunc) {
 	}
 }
 
-// longest gives a list of longest columns of all rows in Table
+// maxColLengths returns a list of longest columns of all rows in Table
 func maxColLengths(t *messages.PickleTable, clrs ...colors.ColorFunc) []int {
 	if t == nil {
 		return []int{}
@@ -480,6 +530,7 @@ func maxColLengths(t *messages.PickleTable, clrs ...colors.ColorFunc) []int {
 	return longest
 }
 
+// longestExampleRow returns a list of longest example rows
 func longestExampleRow(t *messages.Examples, clrs ...colors.ColorFunc) []int {
 	if t == nil {
 		return []int{}
@@ -519,6 +570,8 @@ func longestExampleRow(t *messages.Examples, clrs ...colors.ColorFunc) []int {
 	return longest
 }
 
+// longestStep returns the length of the longest step in given steps, or
+// pickleLength if that is greater.
 func (f *Pretty) longestStep(steps []*messages.Step, pickleLength int) int {
 	max := pickleLength
 
@@ -532,7 +585,7 @@ func (f *Pretty) longestStep(steps []*messages.Step, pickleLength int) int {
 	return max
 }
 
-// a line number representation in feature file
+// line returns a line number representation in feature file
 func line(path string, loc *messages.Location) string {
 	// Path can contain a line number already.
 	// This line number has to be trimmed to avoid duplication.
@@ -540,6 +593,8 @@ func line(path string, loc *messages.Location) string {
 	return " " + blackb(fmt.Sprintf("# %s:%d", path, loc.Line))
 }
 
+// lengthPickleStep returns the length of a pickle step. The length is
+// calculated based on indent, keyword, and associated text.
 func (f *Pretty) lengthPickleStep(keyword, text string) int {
 	return f.indent*2 + utf8.RuneCountInString(strings.TrimSpace(keyword)+" "+text)
 }
