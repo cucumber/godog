@@ -2,12 +2,16 @@
 
 VERS := $(shell grep 'const Version' -m 1 godog.go | awk -F\" '{print $$2}')
 
-test:
+EXPECTED_GO_VERSION = 1.17
+check-go-version:
+	@[[ "$(shell go version)" =~ $(EXPECTED_GO_VERSION) ]] || (echo Wrong go version! Please install $(EXPECTED_GO_VERSION) && exit 1)
+
+test: check-go-version
 	@echo "running all tests"
 	@go install ./...
 	@go fmt ./...
-	@golint github.com/cucumber/godog
-	@golint github.com/cucumber/godog/cmd/godog
+	@go run golang.org/x/lint/golint@latest github.com/cucumber/godog
+	@go run golang.org/x/lint/golint@latest github.com/cucumber/godog/cmd/godog
 	go vet ./...
 	go test -race
 	godog -f progress -c 4
