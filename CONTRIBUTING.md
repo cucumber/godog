@@ -11,11 +11,7 @@ You can chat with us in the [#committers-go](https://cucumberbdd.slack.com/archi
 
 ## Setup
 
-To get your development environment set up, you'll need to [install Go].
-
-Now install golint:
-
-    go install golang.org/x/lint/golint@latest
+To get your development environment set up, you'll need to [install Go]. We're currently using version 1.17 for development.
 
 Once that's done, try running the tests:
 
