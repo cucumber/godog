@@ -19,7 +19,7 @@ Now install golint:
 
 Once that's done, try running the tests:
 
-    make
+    make test
 
 If everything passes, you're ready to hack!
 
