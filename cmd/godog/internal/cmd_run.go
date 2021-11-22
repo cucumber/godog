@@ -57,16 +57,22 @@ func runCmdRunFunc(cmd *cobra.Command, args []string) {
 }
 
 func buildAndRunGodog(args []string) (_ int, err error) {
+	fmt.Println("Another Message")
 	bin, err := filepath.Abs(buildOutputDefault)
 	if err != nil {
 		return 1, err
 	}
+	fmt.Println("Another Message2")
 
 	if err = builder.Build(bin); err != nil {
+		fmt.Println("Project Structure is incorrect")
+
 		return 1, err
 	}
 
 	defer os.Remove(bin)
+
+	fmt.Println("Another Message3")
 
 	return runGodog(bin, args)
 }
