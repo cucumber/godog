@@ -12,7 +12,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Fixed
 
-- `check-go-version` in Makefile to run on WSL. ([]() - [mxygem])
+- `check-go-version` in Makefile to run on WSL. ([443](https://github.com/cucumber/godog/pull/436) - [mxygem])
 
 ## [v0.12.2]
 
