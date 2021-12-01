@@ -8,6 +8,12 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- After Scenario hook is called before After Step ([444](https://github.com/cucumber/godog/pull/444) - [vearutop])
+
 ## [v0.12.2]
 
 ### Fixed
