@@ -54,7 +54,9 @@ func (a *apiFeature) iSendrequestTo(method, endpoint string) (err error) {
 	switch endpoint {
 	case "/users":
 		a.users(a.resp, req)
-		a.db.Close()
+		if a.db != nil {//close db to rollback prev insert data
+			a.db.Close()
+		}
 	default:
 		err = fmt.Errorf("unknown endpoint: %s", endpoint)
 	}
