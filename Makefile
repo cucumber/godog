@@ -2,9 +2,11 @@
 
 VERS := $(shell grep 'const Version' -m 1 godog.go | awk -F\" '{print $$2}')
 
+FOUND_GO_VERSION := $(shell go version)
 EXPECTED_GO_VERSION = 1.17
+.PHONY: check-go-version
 check-go-version:
-	@[[ "$(shell go version)" =~ $(EXPECTED_GO_VERSION) ]] || (echo Wrong go version! Please install $(EXPECTED_GO_VERSION) && exit 1)
+	@$(if $(findstring ${EXPECTED_GO_VERSION}, ${FOUND_GO_VERSION}),(exit 0),(echo Wrong go version! Please install ${EXPECTED_GO_VERSION}; exit 1))
 
 test: check-go-version
 	@echo "running all tests"
