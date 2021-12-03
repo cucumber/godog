@@ -290,7 +290,7 @@ func (ctx *ScenarioContext) Step(expr, stepFunc interface{}) {
 		}
 	}
 
-	ctx.suite.stepDefs = append(ctx.suite.stepDefs, def)
+	ctx.suite.stepDefinitions = append(ctx.suite.stepDefinitions, def)
 }
 
 // Build creates a test package like go test command at given target path.

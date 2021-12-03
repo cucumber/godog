@@ -198,7 +198,7 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 		s := suite{}
 		sc := ScenarioContext{suite: &s}
 		runner.scenarioInitializer(&sc)
-		printStepDefinitions(s.stepDefs, output)
+		printStepDefinitions(s.stepDefinitions, output)
 		return exitOptionError
 	}
 
