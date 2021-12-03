@@ -36,10 +36,10 @@ type StepDefinition struct {
 var typeOfContext = reflect.TypeOf((*context.Context)(nil)).Elem()
 
 // Run a step with the matched arguments using reflect
-func (stepDef *StepDefinition) Run(ctx context.Context) (context.Context, interface{}) {
+func (s *StepDefinition) Run(ctx context.Context) (context.Context, interface{}) {
 	var values []reflect.Value
 
-	typ := stepDef.HandlerValue.Type()
+	typ := s.HandlerValue.Type()
 	numIn := typ.NumIn()
 	hasCtxIn := numIn > 0 && typ.In(0).Implements(typeOfContext)
 	ctxOffset := 0
@@ -50,15 +50,15 @@ func (stepDef *StepDefinition) Run(ctx context.Context) (context.Context, interf
 		numIn--
 	}
 
-	if len(stepDef.Args) < numIn {
-		return ctx, fmt.Errorf("%w: expected %d arguments, matched %d from step", ErrUnmatchedStepArgumentNumber, typ.NumIn(), len(stepDef.Args))
+	if len(s.Args) < numIn {
+		return ctx, fmt.Errorf("%w: expected %d arguments, matched %d from step", ErrUnmatchedStepArgumentNumber, typ.NumIn(), len(s.Args))
 	}
 
 	for i := 0; i < numIn; i++ {
 		param := typ.In(i + ctxOffset)
 		switch param.Kind() {
 		case reflect.Int:
-			s, err := stepDef.shouldBeString(i)
+			s, err := s.shouldBeString(i)
 			if err != nil {
 				return ctx, err
 			}
@@ -68,7 +68,7 @@ func (stepDef *StepDefinition) Run(ctx context.Context) (context.Context, interf
 			}
 			values = append(values, reflect.ValueOf(int(v)))
 		case reflect.Int64:
-			s, err := stepDef.shouldBeString(i)
+			s, err := s.shouldBeString(i)
 			if err != nil {
 				return ctx, err
 			}
@@ -78,7 +78,7 @@ func (stepDef *StepDefinition) Run(ctx context.Context) (context.Context, interf
 			}
 			values = append(values, reflect.ValueOf(v))
 		case reflect.Int32:
-			s, err := stepDef.shouldBeString(i)
+			s, err := s.shouldBeString(i)
 			if err != nil {
 				return ctx, err
 			}
@@ -88,7 +88,7 @@ func (stepDef *StepDefinition) Run(ctx context.Context) (context.Context, interf
 			}
 			values = append(values, reflect.ValueOf(int32(v)))
 		case reflect.Int16:
-			s, err := stepDef.shouldBeString(i)
+			s, err := s.shouldBeString(i)
 			if err != nil {
 				return ctx, err
 			}
@@ -98,7 +98,7 @@ func (stepDef *StepDefinition) Run(ctx context.Context) (context.Context, interf
 			}
 			values = append(values, reflect.ValueOf(int16(v)))
 		case reflect.Int8:
-			s, err := stepDef.shouldBeString(i)
+			s, err := s.shouldBeString(i)
 			if err != nil {
 				return ctx, err
 			}
@@ -108,13 +108,13 @@ func (stepDef *StepDefinition) Run(ctx context.Context) (context.Context, interf
 			}
 			values = append(values, reflect.ValueOf(int8(v)))
 		case reflect.String:
-			s, err := stepDef.shouldBeString(i)
+			s, err := s.shouldBeString(i)
 			if err != nil {
 				return ctx, err
 			}
 			values = append(values, reflect.ValueOf(s))
 		case reflect.Float64:
-			s, err := stepDef.shouldBeString(i)
+			s, err := s.shouldBeString(i)
 			if err != nil {
 				return ctx, err
 			}
@@ -124,7 +124,7 @@ func (stepDef *StepDefinition) Run(ctx context.Context) (context.Context, interf
 			}
 			values = append(values, reflect.ValueOf(v))
 		case reflect.Float32:
-			s, err := stepDef.shouldBeString(i)
+			s, err := s.shouldBeString(i)
 			if err != nil {
 				return ctx, err
 			}
@@ -134,7 +134,7 @@ func (stepDef *StepDefinition) Run(ctx context.Context) (context.Context, interf
 			}
 			values = append(values, reflect.ValueOf(float32(v)))
 		case reflect.Ptr:
-			arg := stepDef.Args[i]
+			arg := s.Args[i]
 			switch param.Elem().String() {
 			case "messages.PickleDocString":
 				if v, ok := arg.(*messages.PickleStepArgument); ok {
@@ -166,7 +166,7 @@ func (stepDef *StepDefinition) Run(ctx context.Context) (context.Context, interf
 		case reflect.Slice:
 			switch param {
 			case typeOfBytes:
-				s, err := stepDef.shouldBeString(i)
+				s, err := s.shouldBeString(i)
 				if err != nil {
 					return ctx, err
 				}
@@ -179,7 +179,7 @@ func (stepDef *StepDefinition) Run(ctx context.Context) (context.Context, interf
 		}
 	}
 
-	res := stepDef.HandlerValue.Call(values)
+	res := s.HandlerValue.Call(values)
 	if len(res) == 0 {
 		return ctx, nil
 	}
@@ -197,8 +197,8 @@ func (stepDef *StepDefinition) Run(ctx context.Context) (context.Context, interf
 	return res[0].Interface().(context.Context), res[1].Interface()
 }
 
-func (stepDef *StepDefinition) shouldBeString(idx int) (string, error) {
-	arg := stepDef.Args[idx]
+func (s *StepDefinition) shouldBeString(idx int) (string, error) {
+	arg := s.Args[idx]
 	switch arg := arg.(type) {
 	case string:
 		return arg, nil
@@ -215,10 +215,10 @@ func (stepDef *StepDefinition) shouldBeString(idx int) (string, error) {
 }
 
 // GetInternalStepDefinition ...
-func (stepDef *StepDefinition) GetInternalStepDefinition() *formatters.StepDefinition {
-	if stepDef == nil {
+func (s *StepDefinition) GetInternalStepDefinition() *formatters.StepDefinition {
+	if s == nil {
 		return nil
 	}
 
-	return &stepDef.StepDefinition
+	return &s.StepDefinition
 }
