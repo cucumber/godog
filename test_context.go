@@ -110,7 +110,7 @@ type StepContext struct {
 // before every scenario so it would be isolated from
 // any kind of state.
 func (ctx ScenarioContext) Before(h BeforeScenarioHook) {
-	ctx.suite.beforeScenarioHandlers = append(ctx.suite.beforeScenarioHandlers, h)
+	ctx.suite.beforeScenarioHooks = append(ctx.suite.beforeScenarioHooks, h)
 }
 
 // BeforeScenarioHook defines a hook before scenario.
@@ -119,7 +119,7 @@ type BeforeScenarioHook func(ctx context.Context, sc *Scenario) (context.Context
 // After registers an function or method
 // to be run after every scenario.
 func (ctx ScenarioContext) After(h AfterScenarioHook) {
-	ctx.suite.afterScenarioHandlers = append(ctx.suite.afterScenarioHandlers, h)
+	ctx.suite.afterScenarioHooks = append(ctx.suite.afterScenarioHooks, h)
 }
 
 // AfterScenarioHook defines a hook after scenario.
@@ -133,7 +133,7 @@ func (ctx *ScenarioContext) StepContext() StepContext {
 // Before registers a function or method
 // to be run before every step.
 func (ctx StepContext) Before(h BeforeStepHook) {
-	ctx.suite.beforeStepHandlers = append(ctx.suite.beforeStepHandlers, h)
+	ctx.suite.beforeStepHooks = append(ctx.suite.beforeStepHooks, h)
 }
 
 // BeforeStepHook defines a hook before step.
@@ -149,7 +149,7 @@ type BeforeStepHook func(ctx context.Context, st *Step) (context.Context, error)
 // In some cases, for example when running a headless
 // browser, to take a screenshot after failure.
 func (ctx StepContext) After(h AfterStepHook) {
-	ctx.suite.afterStepHandlers = append(ctx.suite.afterStepHandlers, h)
+	ctx.suite.afterStepHooks = append(ctx.suite.afterStepHooks, h)
 }
 
 // AfterStepHook defines a hook after step.
