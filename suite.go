@@ -57,11 +57,10 @@ type testSuite struct {
 	defaultContext context.Context
 	testingT       *testing.T
 
-	// suite event handlers
-	beforeScenarioHandlers []BeforeScenarioHook
-	beforeStepHandlers     []BeforeStepHook
-	afterStepHandlers      []AfterStepHook
-	afterScenarioHandlers  []AfterScenarioHook
+	beforeScenarioHooks []BeforeScenarioHook
+	beforeStepHooks     []BeforeStepHook
+	afterStepHooks      []AfterStepHook
+	afterScenarioHooks  []AfterScenarioHook
 }
 
 func (suite *testSuite) matchStep(step *messages.PickleStep) *models.StepDefinition {
@@ -95,7 +94,6 @@ func (suite *testSuite) runStep(ctx context.Context, pickle *Scenario, step *Ste
 			stepResult = models.NewStepResult(pickle.Id, step.Id, stepDefinition)
 		}
 
-		// Run after step handlers.
 		rctx, err = suite.runAfterStepHooks(ctx, step, stepResult.Status, err)
 
 		// Trigger after scenario on failing or last step to attach possible hook error to step.
@@ -127,12 +125,10 @@ func (suite *testSuite) runStep(ctx context.Context, pickle *Scenario, step *Ste
 		}
 	}()
 
-	// run before scenario handlers
 	if isFirst {
 		ctx, err = suite.runBeforeScenarioHooks(ctx, pickle)
 	}
 
-	// run before step handlers
 	ctx, err = suite.runBeforeStepHooks(ctx, step, err)
 
 	stepDefinition = suite.matchStep(step)
@@ -188,8 +184,8 @@ func (suite *testSuite) runStep(ctx context.Context, pickle *Scenario, step *Ste
 func (suite *testSuite) runBeforeStepHooks(ctx context.Context, step *Step, err error) (context.Context, error) {
 	hooksFailed := false
 
-	for _, handler := range suite.beforeStepHandlers {
-		hctx, herr := handler(ctx, step)
+	for _, hook := range suite.beforeStepHooks {
+		hctx, herr := hook(ctx, step)
 		if herr != nil {
 			hooksFailed = true
 
@@ -213,8 +209,8 @@ func (suite *testSuite) runBeforeStepHooks(ctx context.Context, step *Step, err 
 }
 
 func (suite *testSuite) runAfterStepHooks(ctx context.Context, step *Step, status StepResultStatus, err error) (context.Context, error) {
-	for _, handler := range suite.afterStepHandlers {
-		hctx, herr := handler(ctx, step, status, err)
+	for _, hook := range suite.afterStepHooks {
+		hctx, herr := hook(ctx, step, status, err)
 
 		// Adding hook error to resulting error without breaking hooks loop.
 		if herr != nil {
@@ -236,9 +232,8 @@ func (suite *testSuite) runAfterStepHooks(ctx context.Context, step *Step, statu
 func (suite *testSuite) runBeforeScenarioHooks(ctx context.Context, pickle *messages.Pickle) (context.Context, error) {
 	var err error
 
-	// run before scenario handlers
-	for _, handler := range suite.beforeScenarioHandlers {
-		hctx, herr := handler(ctx, pickle)
+	for _, hooks := range suite.beforeScenarioHooks {
+		hctx, herr := hooks(ctx, pickle)
 		if herr != nil {
 			if err == nil {
 				err = herr
@@ -265,9 +260,8 @@ func (suite *testSuite) runAfterScenarioHooks(ctx context.Context, pickle *messa
 	hooksFailed := false
 	isStepErr := true
 
-	// run after scenario handlers
-	for _, handler := range suite.afterScenarioHandlers {
-		hctx, herr := handler(ctx, pickle, err)
+	for _, hook := range suite.afterScenarioHooks {
+		hctx, herr := hook(ctx, pickle, err)
 
 		// Adding hook error to resulting error without breaking hooks loop.
 		if herr != nil {
