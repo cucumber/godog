@@ -12,6 +12,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Fixed
 
+- After Scenario hook is called before After Step ([444](https://github.com/cucumber/godog/pull/444) - [vearutop])
 - `check-go-version` in Makefile to run on WSL. ([443](https://github.com/cucumber/godog/pull/443) - [mxygem])
 
 ## [v0.12.2]
