@@ -102,7 +102,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 					return
 				}
 
-				suite := &testSuite{
+				suite := &suite{
 					fmt:            r.fmt,
 					randomSeed:     r.randomSeed,
 					strict:         r.strict,
@@ -195,7 +195,7 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 	}
 
 	if opt.ShowStepDefinitions {
-		s := testSuite{}
+		s := suite{}
 		sc := ScenarioContext{suite: &s}
 		runner.scenarioInitializer(&sc)
 		printStepDefinitions(s.stepDefs, output)

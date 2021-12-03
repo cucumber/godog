@@ -187,7 +187,7 @@ type firedEvent struct {
 type godogFeaturesScenario struct {
 	paths            []string
 	features         []*models.Feature
-	testedSuite      *testSuite
+	testedSuite      *suite
 	testSuiteContext TestSuiteContext
 	events           []*firedEvent
 	out              bytes.Buffer
@@ -200,7 +200,7 @@ func (tc *godogFeaturesScenario) ResetBeforeEachScenario(ctx context.Context, sc
 	tc.paths = []string{}
 
 	tc.features = []*models.Feature{}
-	tc.testedSuite = &testSuite{}
+	tc.testedSuite = &suite{}
 	tc.testSuiteContext = TestSuiteContext{}
 
 	// reset all fired events

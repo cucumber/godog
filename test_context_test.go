@@ -10,7 +10,7 @@ import (
 
 func TestScenarioContext_Step(t *testing.T) {
 	Convey("When adding steps to ScenarioContext ", t, func() {
-		ctx := ScenarioContext{suite: &testSuite{}}
+		ctx := ScenarioContext{suite: &suite{}}
 
 		Convey("It should accept steps defined with regexp.Regexp", func() {
 			re := regexp.MustCompile(`(?:it is a test)?.{10}x*`)

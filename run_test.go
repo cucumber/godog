@@ -30,7 +30,7 @@ func okStep() error {
 func TestPrintsStepDefinitions(t *testing.T) {
 	var buf bytes.Buffer
 	w := colors.Uncolored(&buf)
-	s := testSuite{}
+	s := suite{}
 	ctx := ScenarioContext{suite: &s}
 
 	steps := []string{
@@ -59,7 +59,7 @@ func TestPrintsStepDefinitions(t *testing.T) {
 func TestPrintsNoStepDefinitionsIfNoneFound(t *testing.T) {
 	var buf bytes.Buffer
 	w := colors.Uncolored(&buf)
-	s := &testSuite{}
+	s := &suite{}
 
 	printStepDefinitions(s.stepDefs, w)
 
