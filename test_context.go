@@ -95,12 +95,12 @@ func (ctx *TestSuiteContext) AfterSuite(fn func()) {
 // executions are catching panic error since it may
 // be a context specific error.
 type ScenarioContext struct {
-	suite *suite
+	suite *testSuite
 }
 
 // StepContext allows registering step hooks.
 type StepContext struct {
-	suite *suite
+	suite *testSuite
 }
 
 // Before registers a a function or method
@@ -290,7 +290,7 @@ func (ctx *ScenarioContext) Step(expr, stepFunc interface{}) {
 		}
 	}
 
-	ctx.suite.steps = append(ctx.suite.steps, def)
+	ctx.suite.stepDefs = append(ctx.suite.stepDefs, def)
 }
 
 // Build creates a test package like go test command at given target path.

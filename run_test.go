@@ -30,7 +30,7 @@ func okStep() error {
 func TestPrintsStepDefinitions(t *testing.T) {
 	var buf bytes.Buffer
 	w := colors.Uncolored(&buf)
-	s := suite{}
+	s := testSuite{}
 	ctx := ScenarioContext{suite: &s}
 
 	steps := []string{
@@ -42,7 +42,7 @@ func TestPrintsStepDefinitions(t *testing.T) {
 		ctx.Step(step, okStep)
 	}
 
-	printStepDefinitions(s.steps, w)
+	printStepDefinitions(s.stepDefs, w)
 
 	out := buf.String()
 	ref := `okStep`
@@ -59,9 +59,9 @@ func TestPrintsStepDefinitions(t *testing.T) {
 func TestPrintsNoStepDefinitionsIfNoneFound(t *testing.T) {
 	var buf bytes.Buffer
 	w := colors.Uncolored(&buf)
-	s := &suite{}
+	s := &testSuite{}
 
-	printStepDefinitions(s.steps, w)
+	printStepDefinitions(s.stepDefs, w)
 
 	out := strings.TrimSpace(buf.String())
 	assert.Equal(t, "there were no contexts registered, could not find any step definition..", out)

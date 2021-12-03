@@ -36,10 +36,10 @@ type StepDefinition struct {
 var typeOfContext = reflect.TypeOf((*context.Context)(nil)).Elem()
 
 // Run a step with the matched arguments using reflect
-func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}) {
+func (stepDef *StepDefinition) Run(ctx context.Context) (context.Context, interface{}) {
 	var values []reflect.Value
 
-	typ := sd.HandlerValue.Type()
+	typ := stepDef.HandlerValue.Type()
 	numIn := typ.NumIn()
 	hasCtxIn := numIn > 0 && typ.In(0).Implements(typeOfContext)
 	ctxOffset := 0
@@ -50,15 +50,15 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 		numIn--
 	}
 
-	if len(sd.Args) < numIn {
-		return ctx, fmt.Errorf("%w: expected %d arguments, matched %d from step", ErrUnmatchedStepArgumentNumber, typ.NumIn(), len(sd.Args))
+	if len(stepDef.Args) < numIn {
+		return ctx, fmt.Errorf("%w: expected %d arguments, matched %d from step", ErrUnmatchedStepArgumentNumber, typ.NumIn(), len(stepDef.Args))
 	}
 
 	for i := 0; i < numIn; i++ {
 		param := typ.In(i + ctxOffset)
 		switch param.Kind() {
 		case reflect.Int:
-			s, err := sd.shouldBeString(i)
+			s, err := stepDef.shouldBeString(i)
 			if err != nil {
 				return ctx, err
 			}
@@ -68,7 +68,7 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 			}
 			values = append(values, reflect.ValueOf(int(v)))
 		case reflect.Int64:
-			s, err := sd.shouldBeString(i)
+			s, err := stepDef.shouldBeString(i)
 			if err != nil {
 				return ctx, err
 			}
@@ -78,7 +78,7 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 			}
 			values = append(values, reflect.ValueOf(v))
 		case reflect.Int32:
-			s, err := sd.shouldBeString(i)
+			s, err := stepDef.shouldBeString(i)
 			if err != nil {
 				return ctx, err
 			}
@@ -88,7 +88,7 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 			}
 			values = append(values, reflect.ValueOf(int32(v)))
 		case reflect.Int16:
-			s, err := sd.shouldBeString(i)
+			s, err := stepDef.shouldBeString(i)
 			if err != nil {
 				return ctx, err
 			}
@@ -98,7 +98,7 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 			}
 			values = append(values, reflect.ValueOf(int16(v)))
 		case reflect.Int8:
-			s, err := sd.shouldBeString(i)
+			s, err := stepDef.shouldBeString(i)
 			if err != nil {
 				return ctx, err
 			}
@@ -108,13 +108,13 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 			}
 			values = append(values, reflect.ValueOf(int8(v)))
 		case reflect.String:
-			s, err := sd.shouldBeString(i)
+			s, err := stepDef.shouldBeString(i)
 			if err != nil {
 				return ctx, err
 			}
 			values = append(values, reflect.ValueOf(s))
 		case reflect.Float64:
-			s, err := sd.shouldBeString(i)
+			s, err := stepDef.shouldBeString(i)
 			if err != nil {
 				return ctx, err
 			}
@@ -124,7 +124,7 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 			}
 			values = append(values, reflect.ValueOf(v))
 		case reflect.Float32:
-			s, err := sd.shouldBeString(i)
+			s, err := stepDef.shouldBeString(i)
 			if err != nil {
 				return ctx, err
 			}
@@ -134,7 +134,7 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 			}
 			values = append(values, reflect.ValueOf(float32(v)))
 		case reflect.Ptr:
-			arg := sd.Args[i]
+			arg := stepDef.Args[i]
 			switch param.Elem().String() {
 			case "messages.PickleDocString":
 				if v, ok := arg.(*messages.PickleStepArgument); ok {
@@ -166,7 +166,7 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 		case reflect.Slice:
 			switch param {
 			case typeOfBytes:
-				s, err := sd.shouldBeString(i)
+				s, err := stepDef.shouldBeString(i)
 				if err != nil {
 					return ctx, err
 				}
@@ -179,7 +179,7 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 		}
 	}
 
-	res := sd.HandlerValue.Call(values)
+	res := stepDef.HandlerValue.Call(values)
 	if len(res) == 0 {
 		return ctx, nil
 	}
