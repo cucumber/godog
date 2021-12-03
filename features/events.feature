@@ -72,9 +72,9 @@ Feature: suite events
 
         Scenario: two
           Then passing step
-          And failing step
           And adding step state to context
           And having correct context
+          And failing step
 
         Scenario Outline: three
           Then passing step
