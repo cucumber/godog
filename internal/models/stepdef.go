@@ -197,8 +197,8 @@ func (stepDef *StepDefinition) Run(ctx context.Context) (context.Context, interf
 	return res[0].Interface().(context.Context), res[1].Interface()
 }
 
-func (sd *StepDefinition) shouldBeString(idx int) (string, error) {
-	arg := sd.Args[idx]
+func (stepDef *StepDefinition) shouldBeString(idx int) (string, error) {
+	arg := stepDef.Args[idx]
 	switch arg := arg.(type) {
 	case string:
 		return arg, nil
@@ -215,10 +215,10 @@ func (sd *StepDefinition) shouldBeString(idx int) (string, error) {
 }
 
 // GetInternalStepDefinition ...
-func (sd *StepDefinition) GetInternalStepDefinition() *formatters.StepDefinition {
-	if sd == nil {
+func (stepDef *StepDefinition) GetInternalStepDefinition() *formatters.StepDefinition {
+	if stepDef == nil {
 		return nil
 	}
 
-	return &sd.StepDefinition
+	return &stepDef.StepDefinition
 }
