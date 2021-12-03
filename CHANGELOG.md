@@ -13,6 +13,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ### Fixed
 
 - After Scenario hook is called before After Step ([444](https://github.com/cucumber/godog/pull/444) - [vearutop])
+- `check-go-version` in Makefile to run on WSL. ([443](https://github.com/cucumber/godog/pull/443) - [mxygem])
 
 ## [v0.12.2]
 
@@ -152,8 +153,8 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Changed
 
-- Run godog features in CircleCI in strict mode ([jaysonesmith])
-- Removed TestMain call in `suite_test.go` for CI. ([jaysonesmith])
+- Run godog features in CircleCI in strict mode ([mxygem])
+- Removed TestMain call in `suite_test.go` for CI. ([mxygem])
 - Migrated to [gherkin-go - v11.0.0](https://github.com/cucumber/gherkin-go/releases/tag/v11.0.0). ([240](https://github.com/cucumber/godog/pull/240) - [lonnblad])
 
 ### Deprecated
@@ -164,7 +165,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 - Fixed the time attributes in the JUnit formatter. ([232](https://github.com/cucumber/godog/pull/232) - [lonnblad])
 - Re enable custom formatters. ([238](https://github.com/cucumber/godog/pull/238) - [ericmcbride])
-- Added back suite_test.go ([jaysonesmith])
+- Added back suite_test.go ([mxygem])
 - Normalise module paths for use on Windows ([242](https://github.com/cucumber/godog/pull/242) - [gjtaylor])
 - Fixed panic in indenting function `s` ([247](https://github.com/cucumber/godog/pull/247) - [titouanfreville])
 - Fixed wrong version in API example ([263](https://github.com/cucumber/godog/pull/263) - [denis-trofimov])
@@ -187,18 +188,18 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ### Fixed
 
 - Find/Replaced references to DATA-DOG/godog -> cucumber/godog for docs. ([209](https://github.com/cucumber/godog/pull/209) - [smikulcik])
-- Fixed missing links in changelog to be correctly included! ([jaysonesmith])
+- Fixed missing links in changelog to be correctly included! ([mxygem])
 
 ## [0.8.0]
 
 ### Added
 
-- Added initial CircleCI config. ([jaysonesmith])
+- Added initial CircleCI config. ([mxygem])
 - Added concurrency support for JUnit formatting ([lonnblad])
 
 ### Changed
 
-- Changed code references to DATA-DOG/godog to cucumber/godog to help get things building correctly. ([jaysonesmith])
+- Changed code references to DATA-DOG/godog to cucumber/godog to help get things building correctly. ([mxygem])
 
 ### Deprecated
 
@@ -220,7 +221,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 <!-- Contributors -->
 
 [axw]: https://github.com/axw
-[jaysonesmith]: https://github.com/jaysonesmith
+[mxygem]: https://github.com/mxygem
 [lonnblad]: https://github.com/lonnblad
 [smikulcik]: https://github.com/smikulcik
 [ericmcbride]: https://github.com/ericmcbride
