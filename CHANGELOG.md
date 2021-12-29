@@ -10,6 +10,10 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ## [Unreleased]
 
+### Changed
+
+- suggest to use `go install` instead of the deprecated `go get` to install the `godog` binary ([449](https://github.com/cucumber/godog/pull/449) - [dmitris](https://github.com/dmitris))
+
 ### Fixed
 
 - After Scenario hook is called before After Step ([444](https://github.com/cucumber/godog/pull/444) - [vearutop])
