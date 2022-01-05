@@ -10,6 +10,12 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ## [Unreleased]
 
+### Added
+
+- Automated binary releases with GitHub Actions ([437](https://github.com/cucumber/godog/pull/437) - [vearutop])
+- Automated binary versioning with `go install` ([437](https://github.com/cucumber/godog/pull/437) - [vearutop])
+- Module with local replace in examples ([437](https://github.com/cucumber/godog/pull/437) - [vearutop])
+
 ### Changed
 
 - suggest to use `go install` instead of the deprecated `go get` to install the `godog` binary ([449](https://github.com/cucumber/godog/pull/449) - [dmitris](https://github.com/dmitris))
