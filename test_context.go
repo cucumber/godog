@@ -3,10 +3,9 @@ package godog
 import (
 	"context"
 	"fmt"
+	"github.com/cucumber/messages-go/v16"
 	"reflect"
 	"regexp"
-
-	"github.com/cucumber/messages-go/v16"
 
 	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/builder"
@@ -66,6 +65,8 @@ type Table = messages.PickleTable
 type TestSuiteContext struct {
 	beforeSuiteHandlers []func()
 	afterSuiteHandlers  []func()
+
+	suite *suite
 }
 
 // BeforeSuite registers a function or method
@@ -81,6 +82,17 @@ func (ctx *TestSuiteContext) BeforeSuite(fn func()) {
 // to be run once after suite runner
 func (ctx *TestSuiteContext) AfterSuite(fn func()) {
 	ctx.afterSuiteHandlers = append(ctx.afterSuiteHandlers, fn)
+}
+
+// ScenarioContext allows registering scenario hooks.
+func (ctx *TestSuiteContext) ScenarioContext() *ScenarioContext {
+	if ctx.suite == nil {
+		ctx.suite = &suite{}
+	}
+
+	return &ScenarioContext{
+		suite: ctx.suite,
+	}
 }
 
 // ScenarioContext allows various contexts

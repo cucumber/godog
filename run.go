@@ -57,7 +57,16 @@ func (r *runner) concurrent(rate int) (failed bool) {
 		fmt.SetStorage(r.storage)
 	}
 
-	testSuiteContext := TestSuiteContext{}
+	testSuiteContext := TestSuiteContext{
+		suite: &suite{
+			fmt:            r.fmt,
+			randomSeed:     r.randomSeed,
+			strict:         r.strict,
+			storage:        r.storage,
+			defaultContext: r.defaultContext,
+			testingT:       r.testingT,
+		},
+	}
 	if r.testSuiteInitializer != nil {
 		r.testSuiteInitializer(&testSuiteContext)
 	}
@@ -102,17 +111,11 @@ func (r *runner) concurrent(rate int) (failed bool) {
 					return
 				}
 
-				suite := &suite{
-					fmt:            r.fmt,
-					randomSeed:     r.randomSeed,
-					strict:         r.strict,
-					storage:        r.storage,
-					defaultContext: r.defaultContext,
-					testingT:       r.testingT,
-				}
+				// Copy base suite.
+				suite := *testSuiteContext.suite
 
 				if r.scenarioInitializer != nil {
-					sc := ScenarioContext{suite: suite}
+					sc := ScenarioContext{suite: &suite}
 					r.scenarioInitializer(&sc)
 				}
 
