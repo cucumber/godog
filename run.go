@@ -102,7 +102,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 				r.fmt.Feature(ft.GherkinDocument, ft.Uri, ft.Content)
 			}
 
-			go func(fail *bool, pickle *messages.Pickle) {
+			runPickle := func(fail *bool, pickle *messages.Pickle) {
 				defer func() {
 					<-queue // free a space in queue
 				}()
@@ -125,7 +125,15 @@ func (r *runner) concurrent(rate int) (failed bool) {
 					*fail = true
 					copyLock.Unlock()
 				}
-			}(&failed, &pickle)
+			}
+
+			if rate == 1 {
+				// Running within the same goroutine for concurrency 1
+				// to preserve original stacks and simplify debugging.
+				runPickle(&failed, &pickle)
+			} else {
+				go runPickle(&failed, &pickle)
+			}
 		}
 	}
 

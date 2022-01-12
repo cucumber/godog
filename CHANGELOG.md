@@ -14,6 +14,10 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 - Allow suite-level configuration of steps and hooks ([453](https://github.com/cucumber/godog/pull/453) - [vearutop])
 
+## Changed
+
+- Run scenarios in the same goroutine if concurrency is disabled (([453](https://github.com/cucumber/godog/pull/453) - [vearutop]))
+
 
 ## [v0.12.3]
 
