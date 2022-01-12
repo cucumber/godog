@@ -86,10 +86,6 @@ func (ctx *TestSuiteContext) AfterSuite(fn func()) {
 
 // ScenarioContext allows registering scenario hooks.
 func (ctx *TestSuiteContext) ScenarioContext() *ScenarioContext {
-	if ctx.suite == nil {
-		ctx.suite = &suite{}
-	}
-
 	return &ScenarioContext{
 		suite: ctx.suite,
 	}
