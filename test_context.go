@@ -6,11 +6,10 @@ import (
 	"reflect"
 	"regexp"
 
-	"github.com/cucumber/messages-go/v16"
-
 	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/builder"
 	"github.com/cucumber/godog/internal/models"
+	"github.com/cucumber/messages-go/v16"
 )
 
 // GherkinDocument represents gherkin document.
@@ -66,6 +65,8 @@ type Table = messages.PickleTable
 type TestSuiteContext struct {
 	beforeSuiteHandlers []func()
 	afterSuiteHandlers  []func()
+
+	suite *suite
 }
 
 // BeforeSuite registers a function or method
@@ -81,6 +82,13 @@ func (ctx *TestSuiteContext) BeforeSuite(fn func()) {
 // to be run once after suite runner
 func (ctx *TestSuiteContext) AfterSuite(fn func()) {
 	ctx.afterSuiteHandlers = append(ctx.afterSuiteHandlers, fn)
+}
+
+// ScenarioContext allows registering scenario hooks.
+func (ctx *TestSuiteContext) ScenarioContext() *ScenarioContext {
+	return &ScenarioContext{
+		suite: ctx.suite,
+	}
 }
 
 // ScenarioContext allows various contexts
@@ -103,11 +111,11 @@ type StepContext struct {
 	suite *suite
 }
 
-// Before registers a a function or method
+// Before registers a function or method
 // to be run before every scenario.
 //
 // It is a good practice to restore the default state
-// before every scenario so it would be isolated from
+// before every scenario, so it would be isolated from
 // any kind of state.
 func (ctx ScenarioContext) Before(h BeforeScenarioHook) {
 	ctx.suite.beforeScenarioHandlers = append(ctx.suite.beforeScenarioHandlers, h)
@@ -139,7 +147,7 @@ func (ctx StepContext) Before(h BeforeStepHook) {
 // BeforeStepHook defines a hook before step.
 type BeforeStepHook func(ctx context.Context, st *Step) (context.Context, error)
 
-// After registers an function or method
+// After registers a function or method
 // to be run after every step.
 //
 // It may be convenient to return a different kind of error
@@ -171,7 +179,7 @@ func (ctx *ScenarioContext) BeforeScenario(fn func(sc *Scenario)) {
 	})
 }
 
-// AfterScenario registers an function or method
+// AfterScenario registers a function or method
 // to be run after every scenario.
 //
 // Deprecated: use After.
@@ -195,7 +203,7 @@ func (ctx *ScenarioContext) BeforeStep(fn func(st *Step)) {
 	})
 }
 
-// AfterStep registers an function or method
+// AfterStep registers a function or method
 // to be run after every step.
 //
 // It may be convenient to return a different kind of error
