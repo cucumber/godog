@@ -8,6 +8,13 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- Allow suite-level configuration of steps and hooks ([453](https://github.com/cucumber/godog/pull/453) - [vearutop])
+
+
 ## [v0.12.3]
 
 ### Added
