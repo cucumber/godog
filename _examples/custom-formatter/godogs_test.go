@@ -31,7 +31,10 @@ func TestMain(m *testing.M) {
 		Options:              &opts,
 	}.Run()
 
-	os.Exit(status)
+	// This example test is expected to fail to showcase custom formatting, suppressing status.
+	if status != 1 {
+		os.Exit(1)
+	}
 }
 
 func thereAreGodogs(available int) error {

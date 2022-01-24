@@ -1,0 +1,44 @@
+# This script uploads application binaries as GitHub release assets.
+name: release-assets
+on:
+  release:
+    types:
+      - created
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  build:
+    name: Upload Release Assets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17.x
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Build artifacts
+        run: |
+          make artifacts
+      - name: Upload linux amd64 binary
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./_artifacts/godog-${{ github.event.release.tag_name }}-linux-amd64.tar.gz
+          asset_name: godog-${{ github.event.release.tag_name }}-linux-amd64.tar.gz
+          asset_content_type: application/tar+gzip
+      - name: Upload linux arm64 binary
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./_artifacts/godog-${{ github.event.release.tag_name }}-linux-arm64.tar.gz
+          asset_name: godog-${{ github.event.release.tag_name }}-linux-arm64.tar.gz
+          asset_content_type: application/tar+gzip
+      - name: Upload darwin amd64 binary
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./_artifacts/godog-${{ github.event.release.tag_name }}-darwin-amd64.tar.gz
+          asset_name: godog-${{ github.event.release.tag_name }}-darwin-amd64.tar.gz
+          asset_content_type: application/tar+gzip
