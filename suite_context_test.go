@@ -423,12 +423,12 @@ func (tc *godogFeaturesScenario) iAmListeningToSuiteEvents() error {
 	scenarioContext.Before(func(ctx context.Context, pickle *Scenario) (context.Context, error) {
 		tc.events = append(tc.events, &firedEvent{"BeforeScenario", []interface{}{pickle}})
 
-		return context.WithValue(ctx, ctxKey("BeforeScenario"), true), nil
+		return context.WithValue(ctx, ctxKey("BeforeScenario"), pickle.Name), nil
 	})
 
 	scenarioContext.Before(func(ctx context.Context, sc *Scenario) (context.Context, error) {
 		if sc.Name == "failing before and after scenario" || sc.Name == "failing before scenario" {
-			return context.WithValue(ctx, ctxKey("AfterStep"), true), errors.New("failed in before scenario hook")
+			return context.WithValue(ctx, ctxKey("AfterStep"), sc.Name), errors.New("failed in before scenario hook")
 		}
 
 		return ctx, nil
@@ -453,7 +453,7 @@ func (tc *godogFeaturesScenario) iAmListeningToSuiteEvents() error {
 			return ctx, errors.New("missing AfterStep in context")
 		}
 
-		return context.WithValue(ctx, ctxKey("AfterScenario"), true), nil
+		return context.WithValue(ctx, ctxKey("AfterScenario"), pickle.Name), nil
 	})
 
 	scenarioContext.StepContext().Before(func(ctx context.Context, step *Step) (context.Context, error) {
@@ -463,7 +463,7 @@ func (tc *godogFeaturesScenario) iAmListeningToSuiteEvents() error {
 			return ctx, errors.New("missing BeforeScenario in context")
 		}
 
-		return context.WithValue(ctx, ctxKey("BeforeStep"), true), nil
+		return context.WithValue(ctx, ctxKey("BeforeStep"), step.Text), nil
 	})
 
 	scenarioContext.StepContext().After(func(ctx context.Context, step *Step, status StepResultStatus, err error) (context.Context, error) {
@@ -471,6 +471,10 @@ func (tc *godogFeaturesScenario) iAmListeningToSuiteEvents() error {
 
 		if ctx.Value(ctxKey("BeforeScenario")) == nil {
 			return ctx, errors.New("missing BeforeScenario in context")
+		}
+
+		if ctx.Value(ctxKey("AfterScenario")) != nil && status != models.Skipped {
+			panic("unexpected premature AfterScenario during AfterStep: " + ctx.Value(ctxKey("AfterScenario")).(string))
 		}
 
 		if ctx.Value(ctxKey("BeforeStep")) == nil {
@@ -485,7 +489,7 @@ func (tc *godogFeaturesScenario) iAmListeningToSuiteEvents() error {
 			return ctx, errors.New("missing Step in context")
 		}
 
-		return context.WithValue(ctx, ctxKey("AfterStep"), true), nil
+		return context.WithValue(ctx, ctxKey("AfterStep"), step.Text), nil
 	})
 
 	return nil
@@ -699,10 +703,7 @@ func (tc *godogFeaturesScenario) theRenderOutputWillBe(docstring *DocString) err
 	actualTrimmed := actual
 	actual = trimAllLines(actual)
 
-	expectedRows := strings.Split(expected, "\n")
-	actualRows := strings.Split(actual, "\n")
-
-	return assertExpectedAndActual(assert.ElementsMatch, expectedRows, actualRows, actualTrimmed)
+	return assertExpectedAndActual(assert.Equal, expected, actual, actualTrimmed)
 }
 
 func (tc *godogFeaturesScenario) theRenderXMLWillBe(docstring *DocString) error {
