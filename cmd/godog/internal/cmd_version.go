@@ -12,10 +12,8 @@ import (
 // CreateVersionCmd creates the version subcommand.
 func CreateVersionCmd() cobra.Command {
 	versionCmd := cobra.Command{
-		Use:   "version",
-		Short: "Show current version",
-		// Run:                   versionCmdRunFunc,
-		// DisableFlagsInUseLine: true,
+		Use:     "version",
+		Short:   "Show current version",
 		Version: godog.Version,
 	}
 

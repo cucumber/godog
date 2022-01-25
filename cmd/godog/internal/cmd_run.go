@@ -91,7 +91,7 @@ func runGodog(bin string, args []string) (err error) {
 
 	st, ok := exiterr.Sys().(syscall.WaitStatus)
 	if !ok {
-		return fmt.Errorf("failed to convert error to syscall wait status. original error: %v", exiterr)
+		return fmt.Errorf("failed to convert error to syscall wait status. original error: %w", exiterr)
 	}
 
 	// This works on both Unix and Windows. Although package
