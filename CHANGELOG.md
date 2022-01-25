@@ -8,6 +8,12 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- Changed underlying cobra command setup to return errors instead of calling `os.Exit` directly to enable simpler testing. ([454](https://github.com/cucumber/godog/pull/454) - [mxygem])
+
 ## [v0.12.4]
 
 ### Added
