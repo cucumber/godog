@@ -4,16 +4,21 @@
 package internal_test
 
 import (
-	"fmt"
+	"bytes"
+	"io/ioutil"
 	"testing"
 
 	"github.com/cucumber/godog/cmd/godog/internal"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_CmdRun(t *testing.T) {
 	cmd := internal.CreateRunCmd()
+	b := bytes.NewBufferString("")
+	cmd.SetOut(b)
 	err := cmd.Execute()
-	if err != nil {
-		fmt.Printf("Erorrrr!!! %v", err)
-	}
+	assert.Nil(t, err)
+	out, err := ioutil.ReadAll(b)
+	assert.Nil(t, err)
+	assert.Equal(t, "Blahhhhh", string(out))
 }
