@@ -45,10 +45,11 @@ When automated testing is this much fun, teams can easily protect themselves fro
 
 ## Install
 ```
-go get github.com/cucumber/godog/cmd/godog@v0.12.0
+go install github.com/cucumber/godog/cmd/godog@v0.12.0
 ```
 Adding `@v0.12.0` will install v0.12.0 specifically instead of master.
 
+With `go` version prior to 1.17, use `go get github.com/cucumber/godog/cmd/godog@v0.12.0`.
 Running `within the $GOPATH`, you would also need to set `GO111MODULE=on`, like this:
 ```
 GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.12.0
@@ -243,7 +244,7 @@ godogs
 - godogs_test.go
 ```
 
-#### Step 6 - Add some logic to the step defintions
+#### Step 6 - Add some logic to the step definitions
 
 Now lets implement our step definitions to test our feature requirements:
 

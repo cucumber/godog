@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/cucumber/godog/cmd/godog/internal"
 )
 
@@ -11,5 +14,9 @@ func main() {
 	versionCmd := internal.CreateVersionCmd()
 
 	rootCmd.AddCommand(&buildCmd, &runCmd, &versionCmd)
-	rootCmd.Execute()
+
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }

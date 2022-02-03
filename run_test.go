@@ -2,6 +2,7 @@ package godog
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -77,9 +78,22 @@ func Test_FailsOrPassesBasedOnStrictModeWhenHasPendingSteps(t *testing.T) {
 	ft := models.Feature{GherkinDocument: gd}
 	ft.Pickles = gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
 
+	var beforeScenarioFired, afterScenarioFired int
+
 	r := runner{
 		fmt:      formatters.ProgressFormatterFunc("progress", ioutil.Discard),
 		features: []*models.Feature{&ft},
+		testSuiteInitializer: func(ctx *TestSuiteContext) {
+			ctx.ScenarioContext().Before(func(ctx context.Context, sc *Scenario) (context.Context, error) {
+				beforeScenarioFired++
+				return ctx, nil
+			})
+
+			ctx.ScenarioContext().After(func(ctx context.Context, sc *Scenario, err error) (context.Context, error) {
+				afterScenarioFired++
+				return ctx, nil
+			})
+		},
 		scenarioInitializer: func(ctx *ScenarioContext) {
 			ctx.Step(`^one$`, func() error { return nil })
 			ctx.Step(`^two$`, func() error { return ErrPending })
@@ -94,10 +108,14 @@ func Test_FailsOrPassesBasedOnStrictModeWhenHasPendingSteps(t *testing.T) {
 
 	failed := r.concurrent(1)
 	require.False(t, failed)
+	assert.Equal(t, 1, beforeScenarioFired)
+	assert.Equal(t, 1, afterScenarioFired)
 
 	r.strict = true
 	failed = r.concurrent(1)
 	require.True(t, failed)
+	assert.Equal(t, 2, beforeScenarioFired)
+	assert.Equal(t, 2, afterScenarioFired)
 }
 
 func Test_FailsOrPassesBasedOnStrictModeWhenHasUndefinedSteps(t *testing.T) {

@@ -1,9 +1,12 @@
 package internal
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
+	"github.com/cucumber/godog/colors"
 	"github.com/cucumber/godog/internal/flags"
 )
 
@@ -18,26 +21,31 @@ func CreateRootCmd() cobra.Command {
 Command should be run from the directory of tested package
 and contain buildable go source.`,
 		Args: cobra.ArbitraryArgs,
-
 		// Deprecated: Use godog build, godog run or godog version.
 		// This is to support the legacy direct usage of the root command.
-		Run: func(cmd *cobra.Command, args []string) {
-			if version {
-				versionCmdRunFunc(cmd, args)
-			}
-
-			if len(output) > 0 {
-				buildOutput = output
-				buildCmdRunFunc(cmd, args)
-			}
-
-			runCmdRunFunc(cmd, args)
-		},
+		RunE: runRootCmd,
 	}
 
 	bindRootCmdFlags(rootCmd.Flags())
 
 	return rootCmd
+}
+
+func runRootCmd(cmd *cobra.Command, args []string) error {
+	if version {
+		versionCmdRunFunc(cmd, args)
+		return nil
+	}
+
+	if len(output) > 0 {
+		buildOutput = output
+		if err := buildCmdRunFunc(cmd, args); err != nil {
+			return err
+		}
+	}
+
+	fmt.Println(colors.Yellow("Use of godog without a sub-command is deprecated. Please use godog build, godog run or godog version."))
+	return runCmdRunFunc(cmd, args)
 }
 
 func bindRootCmdFlags(flagSet *pflag.FlagSet) {

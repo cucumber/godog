@@ -10,6 +10,33 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ## [Unreleased]
 
+### Changed
+
+- Changed underlying cobra command setup to return errors instead of calling `os.Exit` directly to enable simpler testing. ([454](https://github.com/cucumber/godog/pull/454) - [mxygem])
+
+## [v0.12.4]
+
+### Added
+
+- Allow suite-level configuration of steps and hooks ([453](https://github.com/cucumber/godog/pull/453) - [vearutop])
+
+## Changed
+
+- Run scenarios in the same goroutine if concurrency is disabled (([453](https://github.com/cucumber/godog/pull/453) - [vearutop]))
+
+
+## [v0.12.3]
+
+### Added
+
+- Automated binary releases with GitHub Actions ([437](https://github.com/cucumber/godog/pull/437) - [vearutop])
+- Automated binary versioning with `go install` ([437](https://github.com/cucumber/godog/pull/437) - [vearutop])
+- Module with local replace in examples ([437](https://github.com/cucumber/godog/pull/437) - [vearutop])
+
+### Changed
+
+- suggest to use `go install` instead of the deprecated `go get` to install the `godog` binary ([449](https://github.com/cucumber/godog/pull/449) - [dmitris](https://github.com/dmitris))
+
 ### Fixed
 
 - After Scenario hook is called before After Step ([444](https://github.com/cucumber/godog/pull/444) - [vearutop])
@@ -209,6 +236,8 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 <!-- Releases -->
 
+[v0.12.4]: https://github.com/cucumber/godog/compare/v0.12.3...v0.12.4
+[v0.12.3]: https://github.com/cucumber/godog/compare/v0.12.2...v0.12.3
 [v0.12.2]: https://github.com/cucumber/godog/compare/v0.12.1...v0.12.2
 [v0.12.1]: https://github.com/cucumber/godog/compare/v0.12.0...v0.12.1
 [v0.12.0]: https://github.com/cucumber/godog/compare/v0.11.0...v0.12.0
