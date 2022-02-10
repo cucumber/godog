@@ -1,4 +1,5 @@
 //go:build tools
+// +build tools
 
 // Based on @rsc's recommendation for best practices for tool dependencies:
 // https://github.com/golang/go/issues/25922#issuecomment-413898264
