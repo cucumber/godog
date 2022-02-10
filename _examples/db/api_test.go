@@ -54,7 +54,7 @@ func (a *apiFeature) iSendrequestTo(method, endpoint string) (err error) {
 	switch endpoint {
 	case "/users":
 		a.users(a.resp, req)
-		if a.db != nil {//close db to rollback this time insert data, if do not close insert data will not rollback 
+		if a.db != nil { //close db to rollback this time insert data, if do not close insert data will not rollback
 			a.db.Close()
 		}
 	default:
