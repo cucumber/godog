@@ -28,11 +28,10 @@ jobs:
             ${{ runner.os }}-go-cache
       - name: Run gofmt
         run: gofmt -d -e . 2>&1 | tee outfile && test -z "$(cat outfile)" && rm outfile
-      - name: Run golint
+      - name: Run staticcheck
         run: |
-          go install golang.org/x/lint/golint@latest
-          golint -set_exit_status ./...
-          cd _examples && golint -set_exit_status ./... && cd ..
+          go install honnef.co/go/tools/cmd/staticcheck
+          staticcheck ./...
       - name: Run go vet
         run: |
           go vet ./...
