@@ -29,6 +29,7 @@ jobs:
       - name: Run gofmt
         run: gofmt -d -e . 2>&1 | tee outfile && test -z "$(cat outfile)" && rm outfile
       - name: Run staticcheck
+        if: matrix.go-version == '1.17.x'
         run: |
           go run honnef.co/go/tools/cmd/staticcheck github.com/cucumber/godog
           go run honnef.co/go/tools/cmd/staticcheck github.com/cucumber/godog/cmd/godog
