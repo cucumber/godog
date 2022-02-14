@@ -15,7 +15,7 @@ test: check-go-version
 	@go run honnef.co/go/tools/cmd/staticcheck@v0.2.2 github.com/cucumber/godog
 	@go run honnef.co/go/tools/cmd/staticcheck@v0.2.2 github.com/cucumber/godog/cmd/godog
 	go vet ./...
-	go test -race
+	go test -race ./...
 	godog -f progress -c 4
 
 gherkin:
