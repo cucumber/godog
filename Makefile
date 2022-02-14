@@ -15,7 +15,7 @@ test: check-go-version
 	@go run golang.org/x/lint/golint@latest github.com/cucumber/godog
 	@go run golang.org/x/lint/golint@latest github.com/cucumber/godog/cmd/godog
 	go vet ./...
-	go test -race
+	go test -race ./...
 	godog -f progress -c 4
 
 gherkin:
