@@ -42,8 +42,8 @@ func TestScenarioContext_Step(t *testing.T) {
 			})
 
 			Convey("has more than 2 return values", func() {
-				So(func() { ctx.Step(".*", nokLimitCase) }, ShouldPanicWith, fmt.Sprintf("expected handler to return either zero, one or two values, but it has: 3"))
-				So(func() { ctx.Step(".*", nokMore) }, ShouldPanicWith, fmt.Sprintf("expected handler to return either zero, one or two values, but it has: 5"))
+				So(func() { ctx.Step(".*", nokLimitCase) }, ShouldPanicWith, "expected handler to return either zero, one or two values, but it has: 3")
+				So(func() { ctx.Step(".*", nokMore) }, ShouldPanicWith, "expected handler to return either zero, one or two values, but it has: 5")
 			})
 
 			Convey("return type is not an error or string slice or void", func() {

@@ -22,3 +22,7 @@ If everything passes, you're ready to hack!
 [install go]: https://golang.org/doc/install
 [community Slack]: https://cucumber.io/community#slack
 [raise an issue]: https://github.com/cucumber/godog/issues/new/choose
+
+## Changing dependencies
+
+If dependencies have changed, you will also need to update the _examples module. `go mod tidy` should be sufficient.

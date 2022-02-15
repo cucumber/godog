@@ -632,8 +632,7 @@ type progressOutput struct {
 	bottomRows      []string
 }
 
-func passingStepDef() error        { return nil }
-func passingStepDefWithoutReturn() {}
+func passingStepDef() error { return nil }
 
 func oddEvenStepDef(odd, even int) error { return oddOrEven(odd, even) }
 
