@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -73,8 +74,10 @@ func (a *apiFeature) theResponseShouldMatchJSON(body *godog.DocString) (err erro
 func InitializeScenario(ctx *godog.ScenarioContext) {
 	api := &apiFeature{}
 
-	ctx.BeforeScenario(api.resetResponse)
-
+	ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
+		api.resetResponse(sc)
+		return ctx, nil
+	})
 	ctx.Step(`^I send "(GET|POST|PUT|DELETE)" request to "([^"]*)"$`, api.iSendrequestTo)
 	ctx.Step(`^the response code should be (\d+)$`, api.theResponseCodeShouldBe)
 	ctx.Step(`^the response should match json:$`, api.theResponseShouldMatchJSON)
