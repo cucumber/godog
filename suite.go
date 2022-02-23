@@ -418,16 +418,6 @@ func (s *suite) shouldFail(err error) bool {
 	return true
 }
 
-func isEmptyFeature(pickles []*messages.Pickle) bool {
-	for _, pickle := range pickles {
-		if len(pickle.Steps) > 0 {
-			return false
-		}
-	}
-
-	return true
-}
-
 func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 	ctx := s.defaultContext
 	if ctx == nil {

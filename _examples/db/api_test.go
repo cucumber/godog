@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -125,7 +126,10 @@ func (a *apiFeature) thereAreUsers(users *godog.Table) error {
 func InitializeScenario(ctx *godog.ScenarioContext) {
 	api := &apiFeature{}
 
-	ctx.BeforeScenario(api.resetResponse)
+	ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
+		api.resetResponse(sc)
+		return ctx, nil
+	})
 
 	ctx.Step(`^I send "(GET|POST|PUT|DELETE)" request to "([^"]*)"$`, api.iSendrequestTo)
 	ctx.Step(`^the response code should be (\d+)$`, api.theResponseCodeShouldBe)
