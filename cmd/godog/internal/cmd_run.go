@@ -60,7 +60,7 @@ func buildAndRunGodog(args []string) (err error) {
 	if err != nil {
 		return err
 	}
-	fmt.Println("Another Message2")
+	fmt.Printf("building in %v", bin)
 
 	if err = builder.Build(bin); err != nil {
 		fmt.Println("Project Structure is incorrect")
