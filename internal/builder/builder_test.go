@@ -2,6 +2,7 @@ package builder_test
 
 import (
 	"bytes"
+	"fmt"
 	"go/build"
 	"io/ioutil"
 	"os"
@@ -25,6 +26,7 @@ func Test_GodogBuild(t *testing.T) {
 	t.Run("WithinGopath", testWithinGopath)
 	t.Run("WithVendoredGodogWithoutModule", testWithVendoredGodogWithoutModule)
 	t.Run("WithVendoredGodogAndMod", testWithVendoredGodogAndMod)
+	t.Run("WithMissingTestFile", testWithMissingTestFile)
 
 	t.Run("WithModule", func(t *testing.T) {
 		t.Run("OutsideGopathAndHavingOnlyFeature", testOutsideGopathAndHavingOnlyFeature)
@@ -44,6 +46,14 @@ var builderFeatureFile = `Feature: eat godogs
     When I eat 5
     Then there should be 7 remaining
 `
+
+var emptyBuilderTestFile = `package main
+
+import "github.com/cucumber/godog"
+
+func InitializeScenario(ctx *godog.ScenarioContext) {
+
+}`
 
 var builderTestFile = `package godogs
 
@@ -290,6 +300,34 @@ func testWithVendoredGodogWithoutModule(t *testing.T) {
 
 	builderTC.testCmdEnv = append(envVarsWithoutGopath(), "GOPATH="+gopath)
 	builderTC.run(t)
+}
+
+func testWithMissingTestFile(t *testing.T) {
+	dir := filepath.Join(os.TempDir(), t.Name(), "my-app")
+	files := map[string]string{
+		"main.go": emptyBuilderTestFile,
+		"go.mod":  builderModFile,
+	}
+	err := buildTestPackage(dir, files)
+	defer os.RemoveAll(dir)
+	require.Nil(t, err)
+	fmt.Printf("\nTests working in %s\n\n", dir)
+
+	prevDir, err := os.Getwd()
+	require.Nil(t, err)
+	err = os.Chdir(dir)
+	require.Nil(t, err)
+	defer os.Chdir(prevDir)
+
+	testBin, err := filepath.Abs(filepath.Join(dir, "godog.test"))
+	require.Nil(t, err)
+
+	if build.Default.GOOS == "windows" {
+		testBin += ".exe"
+	}
+
+	err = builder.Build(testBin)
+	require.Contains(t, err.Error(), "Incorrect project structure")
 }
 
 type builderTestCase struct {
