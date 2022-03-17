@@ -205,6 +205,10 @@ func Build(bin string) error {
 		"-complete",
 	}
 
+	if err := filterImportCfg(compilerCfg); err != nil {
+		return err
+	}
+
 	args = append(args, "-pack", testmain)
 	cmd := exec.Command(compiler, args...)
 	cmd.Env = os.Environ()
@@ -229,6 +233,27 @@ func Build(bin string) error {
 	reason: %s
 	command: %s`
 		return fmt.Errorf(msg, string(out), linker+" '"+strings.Join(args, "' '")+"'")
+	}
+
+	return nil
+}
+
+// filterImportCfg strips unsupported lines from imports configuration.
+func filterImportCfg(path string) error {
+	orig, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("failed to read %s: %w", path, err)
+	}
+
+	res := ""
+	for _, l := range strings.Split(string(orig), "\n") {
+		if !strings.HasPrefix(l, "modinfo") {
+			res += l + "\n"
+		}
+	}
+	err = ioutil.WriteFile(path, []byte(res), 0600)
+	if err != nil {
+		return fmt.Errorf("failed to write %s: %w", path, err)
 	}
 
 	return nil
