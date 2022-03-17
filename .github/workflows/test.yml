@@ -8,7 +8,7 @@ jobs:
   test:
     strategy:
       matrix:
-        go-version: [ 1.16.x, 1.17.x ]
+        go-version: [ 1.17.x, 1.18.x ]
     runs-on: ubuntu-latest
     steps:
       - name: Install Go
@@ -29,7 +29,7 @@ jobs:
       - name: Run gofmt
         run: gofmt -d -e . 2>&1 | tee outfile && test -z "$(cat outfile)" && rm outfile
       - name: Run staticcheck
-        if: matrix.go-version == '1.17.x'
+        if: matrix.go-version == '1.18.x'
         run: |
           bin/staticcheck_linux_amd64_2021.1.2 github.com/cucumber/godog
           bin/staticcheck_linux_amd64_2021.1.2 github.com/cucumber/godog/cmd/godog
@@ -49,7 +49,7 @@ jobs:
           go install ./cmd/godog
           godog -f progress --strict
       - name: Report on code coverage
-        if: matrix.go-version == '1.17.x'
+        if: matrix.go-version == '1.18.x'
         uses: codecov/codecov-action@v1
         with:
           file: ./coverage.txt
