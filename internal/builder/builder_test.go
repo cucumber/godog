@@ -25,6 +25,7 @@ func Test_GodogBuild(t *testing.T) {
 	t.Run("WithinGopath", testWithinGopath)
 	t.Run("WithVendoredGodogWithoutModule", testWithVendoredGodogWithoutModule)
 	t.Run("WithVendoredGodogAndMod", testWithVendoredGodogAndMod)
+	t.Run("WithIncorrectProjectStructure", testWithIncorrectProjectStructure)
 
 	t.Run("WithModule", func(t *testing.T) {
 		t.Run("OutsideGopathAndHavingOnlyFeature", testOutsideGopathAndHavingOnlyFeature)
@@ -135,6 +136,13 @@ func main() {
 }
 `
 
+var emptyBuilderTestFile = `package godogs
+
+import "github.com/cucumber/godog"
+ 
+func InitializeScenario(ctx *godog.ScenarioContext) {}
+`
+
 var builderModFile = `module godogs`
 
 func buildTestPackage(dir string, files map[string]string) error {
@@ -235,6 +243,38 @@ func testWithoutTestSourceNotInGoPath(t *testing.T) {
 	}
 
 	builderTC.run(t)
+}
+
+func testWithIncorrectProjectStructure(t *testing.T) {
+	dir := filepath.Join(os.TempDir(), t.Name(), "godogs")
+	files := map[string]string{
+		"godogs.go": emptyBuilderTestFile,
+		"go.mod":    builderModFile,
+	}
+
+	err := buildTestPackage(dir, files)
+	defer os.RemoveAll(dir)
+	require.Nil(t, err)
+
+	prevDir, err := os.Getwd()
+	require.Nil(t, err)
+	err = os.Chdir(dir)
+	require.Nil(t, err)
+	defer os.Chdir(prevDir)
+
+	testBin, err := filepath.Abs(filepath.Join(dir, "godog.test"))
+	require.Nil(t, err)
+
+	if build.Default.GOOS == "windows" {
+		testBin += ".exe"
+	}
+
+	// call the builder - we should get an error
+	err = builder.Build(testBin)
+	// check that we even got an error at all
+	require.NotNil(t, err)
+	// now check the details of the error message
+	require.Contains(t, err.Error(), "Incorrect project structure")
 }
 
 func testWithinGopath(t *testing.T) {
