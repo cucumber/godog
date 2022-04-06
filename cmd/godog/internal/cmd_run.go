@@ -41,7 +41,6 @@ buildable go source.`,
 }
 
 func runCmdRunFunc(cmd *cobra.Command, args []string) error {
-	fmt.Fprintf(cmd.OutOrStdout(), "Hello")
 	osArgs := os.Args[1:]
 
 	if len(osArgs) > 0 && osArgs[0] == "run" {
@@ -60,17 +59,12 @@ func buildAndRunGodog(args []string) (err error) {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("building in %v", bin)
 
 	if err = builder.Build(bin); err != nil {
-		fmt.Println("Project Structure is incorrect")
-
 		return err
 	}
 
 	defer os.Remove(bin)
-
-	fmt.Println("Another Message3")
 
 	return runGodog(bin, args)
 }
