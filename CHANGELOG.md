@@ -10,10 +10,17 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ## [Unreleased]
 
+
+## [v0.12.5]
+
 ### Changed
 
 - Changed underlying cobra command setup to return errors instead of calling `os.Exit` directly to enable simpler testing. ([454](https://github.com/cucumber/godog/pull/454) - [mxygem])
 - Remove use of deprecated methods from `_examples`. ([460](https://github.com/cucumber/godog/pull/460) - [ricardogarfe])
+
+### Fixed
+
+- Support for go1.18 in `godog` cli mode ([466](https://github.com/cucumber/godog/pull/466) - [vearutop])
 
 ## [v0.12.4]
 
@@ -237,6 +244,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 <!-- Releases -->
 
+[v0.12.5]: https://github.com/cucumber/godog/compare/v0.12.4...v0.12.5
 [v0.12.4]: https://github.com/cucumber/godog/compare/v0.12.3...v0.12.4
 [v0.12.3]: https://github.com/cucumber/godog/compare/v0.12.2...v0.12.3
 [v0.12.2]: https://github.com/cucumber/godog/compare/v0.12.1...v0.12.2
