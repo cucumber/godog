@@ -151,6 +151,10 @@ func Build(bin string) error {
 		break
 	}
 
+	if strings.Contains(string(testOutput), "[no test files]") {
+		return fmt.Errorf("incorrect project structure: no test files found")
+	}
+
 	// may not locate it in output
 	if workdir == testdir {
 		return fmt.Errorf("expected WORK dir path to be present in output: %s", string(testOutput))
@@ -182,6 +186,7 @@ func Build(bin string) error {
 	// we do not depend on CGO so a lot of checks are not necessary
 	linkerCfg := filepath.Join(testdir, "importcfg.link")
 	compilerCfg := linkerCfg
+
 	if vendored != nil {
 		data, err := ioutil.ReadFile(linkerCfg)
 		if err != nil {
