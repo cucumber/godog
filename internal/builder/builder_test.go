@@ -274,7 +274,7 @@ func testWithIncorrectProjectStructure(t *testing.T) {
 	// check that we even got an error at all
 	require.NotNil(t, err)
 	// now check the details of the error message
-	require.Contains(t, err.Error(), "incorrect project structure")
+	require.EqualError(t, err, "incorrect project structure: no test files found")
 }
 
 func testWithinGopath(t *testing.T) {
