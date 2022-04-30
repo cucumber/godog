@@ -20,8 +20,6 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ### Added
 - Allow suite-level configuration of steps and hooks ([453](https://github.com/cucumber/godog/pull/453) - [vearutop](https://github.com/vearutop))
 
-## Changed
-
 ## [v0.12.3]
 ### Added
 - Automated binary releases with GitHub Actions ([437](https://github.com/cucumber/godog/pull/437) - [vearutop](https://github.com/vearutop))
@@ -37,7 +35,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ## [v0.12.2]
 ### Fixed
-- Error in `go mod tidy` with `GO111MODULE=off` ([436]((https://github.com/cucumber/godog/pull/436) - [vearutop](https://github.com/vearutop))
+- Error in `go mod tidy` with `GO111MODULE=off` ([436](https://github.com/cucumber/godog/pull/436) - [vearutop](https://github.com/vearutop))
 
 ## [v0.12.1]
 ### Fixed
@@ -55,7 +53,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Changed
 - Upgraded gherkin-go to v19 and messages-go to v16 ([402](https://github.com/cucumber/godog/pull/402) - [mbow](https://github.com/mbow))
-- Generate simpler snippets that use *godog.DocString and *godog.Table ([379](https://github.com/cucumber/godog/pull/379)) - [chirino](https://github.com/chirino))
+- Generate simpler snippets that use *godog.DocString and *godog.Table ([379](https://github.com/cucumber/godog/pull/379) - [chirino](https://github.com/chirino))
 
 ### Deprecated
 - `ScenarioContext.BeforeScenario`, use `ScenarioContext.Before` ([409](https://github.com/cucumber/godog/pull/409)) - [vearutop](https://github.com/vearutop))
@@ -65,10 +63,8 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Fixed
 - Incorrect step definition output for Data Tables ([411](https://github.com/cucumber/godog/pull/411) - [karfrank](https://github.com/karfrank))
-- `ScenarioContext.AfterStep` not invoked after a failed case (([409](https://github.com/cucumber/godog/pull/409)) - [vearutop](https://github.com/vearutop)))
-- Can't execute multiple specific scenarios in the same feature file (([414](https://github.com/cucumber/godog/pull/414)) - [vearutop](https://github.com/vearutop)))
-
-### Removed
+- `ScenarioContext.AfterStep` not invoked after a failed case ([409](https://github.com/cucumber/godog/pull/409) - [vearutop](https://github.com/vearutop)))
+- Can't execute multiple specific scenarios in the same feature file ([414](https://github.com/cucumber/godog/pull/414) - [vearutop](https://github.com/vearutop)))
 
 ## [v0.11.0]
 ### Added
@@ -86,8 +82,6 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 - Moved the parser code to a new internal pkg ([329](https://github.com/cucumber/godog/pull/329) - [lonnblad](https://github.com/lonnblad))
 - Moved StepDefinition to the formatters pkg ([332](https://github.com/cucumber/godog/pull/332) - [lonnblad](https://github.com/lonnblad))
 - Removed go1.12 and added go1.15 to CI config ([356](https://github.com/cucumber/godog/pull/356) - [lonnblad](https://github.com/lonnblad))
-
-### Deprecated
 
 ### Fixed
 - Improved the help text of the formatter flag in the run command ([347](https://github.com/cucumber/godog/pull/347) - [lonnblad](https://github.com/lonnblad))
@@ -147,14 +141,10 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 - Removed the deprecated feature hooks ([312](https://github.com/cucumber/godog/pull/312) - [lonnblad](https://github.com/lonnblad))
 
 ## [0.9.0]
-### Added
-
 ### Changed
 - Run godog features in CircleCI in strict mode ([mxygem](https://github.com/mxygem))
 - Removed TestMain call in `suite_test.go` for CI. ([mxygem](https://github.com/mxygem))
 - Migrated to [gherkin-go - v11.0.0](https://github.com/cucumber/gherkin-go/releases/tag/v11.0.0). ([240](https://github.com/cucumber/godog/pull/240) - [lonnblad](https://github.com/lonnblad))
-
-### Deprecated
 
 ### Fixed
 - Fixed the time attributes in the JUnit formatter. ([232](https://github.com/cucumber/godog/pull/232) - [lonnblad](https://github.com/lonnblad))
@@ -164,8 +154,6 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 - Fixed panic in indenting function `s` ([247](https://github.com/cucumber/godog/pull/247) - [titouanfreville](https://github.com/titouanfreville))
 - Fixed wrong version in API example ([263](https://github.com/cucumber/godog/pull/263) - [denis-trofimov](https://github.com/denis-trofimov))
 
-### Removed
-
 ## [0.8.1]
 ### Added
 - Link in Readme to the Slack community. ([210](https://github.com/cucumber/godog/pull/210) - [smikulcik](https://github.com/smikulcik))
@@ -174,13 +162,9 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ### Changed
 - Renamed the `examples` directory to `_examples`, removing dependencies from the Go module ([218](https://github.com/cucumber/godog/pull/218) - [axw](https://github.com/axw))
 
-### Deprecated
-
 ### Fixed
 - Find/Replaced references to DATA-DOG/godog -> cucumber/godog for docs. ([209](https://github.com/cucumber/godog/pull/209) - [smikulcik](https://github.com/smikulcik))
 - Fixed missing links in changelog to be correctly included! ([mxygem](https://github.com/mxygem))
-
-### Removed
 
 ## [0.8.0]
 ### Added
@@ -189,12 +173,6 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Changed
 - Changed code references to DATA-DOG/godog to cucumber/godog to help get things building correctly. ([mxygem](https://github.com/mxygem))
-
-### Deprecated
-
-### Fixed
-
-### Removed
 
 [v0.12.5]: https://github.com/cucumber/godog/compare/v0.12.4...v0.12.5
 [v0.12.4]: https://github.com/cucumber/godog/compare/v0.12.3...v0.12.4
