@@ -32,7 +32,8 @@ buildable go source.`,
     feature (*.feature)
     scenario at specific line (*.feature:10)
   If no feature arguments are supplied, godog will use "features/" by default.`,
-		RunE: runCmdRunFunc,
+		RunE:         runCmdRunFunc,
+		SilenceUsage: true,
 	}
 
 	flags.BindRunCmdFlags("", runCmd.Flags(), &opts)
@@ -41,6 +42,7 @@ buildable go source.`,
 }
 
 func runCmdRunFunc(cmd *cobra.Command, args []string) error {
+
 	osArgs := os.Args[1:]
 
 	if len(osArgs) > 0 && osArgs[0] == "run" {
