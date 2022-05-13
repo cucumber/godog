@@ -4,6 +4,8 @@ import (
 	"context"
 	"io"
 	"testing"
+
+	"github.com/cucumber/godog/internal/models"
 )
 
 // Options are suite run options
@@ -64,4 +66,6 @@ type Options struct {
 
 	// TestingT runs scenarios as subtests.
 	TestingT *testing.T
+
+	Features []*models.Feature
 }

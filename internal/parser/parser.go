@@ -53,6 +53,22 @@ func parseFeatureFile(path string, newIDFunc func() string) (*models.Feature, er
 	return &f, nil
 }
 
+func parseBytes(path string, feature []byte, newIDFunc func() string) (*models.Feature, error) {
+	reader := bytes.NewReader(feature)
+
+	var buf bytes.Buffer
+	gherkinDocument, err := gherkin.ParseGherkinDocument(io.TeeReader(reader, &buf), newIDFunc)
+	if err != nil {
+		return nil, fmt.Errorf("%s - %v", path, err)
+	}
+
+	gherkinDocument.Uri = path
+	pickles := gherkin.Pickles(*gherkinDocument, path, newIDFunc)
+
+	f := models.Feature{GherkinDocument: gherkinDocument, Pickles: pickles, Content: buf.Bytes()}
+	return &f, nil
+}
+
 func parseFeatureDir(dir string, newIDFunc func() string) ([]*models.Feature, error) {
 	var features []*models.Feature
 	return features, filepath.Walk(dir, func(p string, f os.FileInfo, err error) error {
@@ -149,6 +165,39 @@ func ParseFeatures(filter string, paths []string) ([]*models.Feature, error) {
 
 			order++
 		}
+	}
+
+	var features = make([]*models.Feature, len(uniqueFeatureURI))
+	for uri, feature := range uniqueFeatureURI {
+		idx := featureIdxs[uri]
+		features[idx] = feature
+	}
+
+	features = filterFeatures(filter, features)
+
+	return features, nil
+}
+
+func ParseFromBytes(filter string, featuresInputs map[string][]byte) ([]*models.Feature, error) {
+	var order int
+
+	featureIdxs := make(map[string]int)
+	uniqueFeatureURI := make(map[string]*models.Feature)
+	newIDFunc := (&messages.Incrementing{}).NewId
+	for path, feature := range featuresInputs {
+		ft, err := parseBytes(path, feature, newIDFunc)
+		if err != nil {
+			return nil, err
+		}
+
+		if _, duplicate := uniqueFeatureURI[ft.Uri]; duplicate {
+			continue
+		}
+
+		uniqueFeatureURI[ft.Uri] = ft
+		featureIdxs[ft.Uri] = order
+
+		order++
 	}
 
 	var features = make([]*models.Feature, len(uniqueFeatureURI))
