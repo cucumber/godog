@@ -14,6 +14,7 @@ func CreateVersionCmd() cobra.Command {
 	versionCmd := cobra.Command{
 		Use:     "version",
 		Short:   "Show current version",
+		Run:     versionCmdRunFunc,
 		Version: godog.Version,
 	}
 
