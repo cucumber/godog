@@ -305,6 +305,10 @@ func InitializeScenario(sc *godog.ScenarioContext) {
 
 ```
 
+In this example we are using `context.Context` to pass the state between the steps. 
+Every scenario starts with an empty context and then steps and hooks can add relevant information to it.
+Instrumented context is chained through the steps and hooks and is safe to use when multiple scenarios are running concurrently.
+
 When you run godog again with `go test -v godogs_test.go` or with a CLI `godog run`.
 
 You should see a passing run:
