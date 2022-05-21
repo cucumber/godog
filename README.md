@@ -15,10 +15,6 @@ Please read the full README, you may find it very useful. And do not forget to p
 
 Package godog is the official Cucumber BDD framework for Golang, it merges specification and test documentation into one cohesive whole, using Gherkin formatted scenarios in the format of Given, When, Then.
 
-**Godog** does not intervene with the standard **go test** command behavior. You can leverage both frameworks to functionally test your application while maintaining all test related source code in **_test.go** files.
-
-**Godog** acts similar compared to **go test** command, by using go compiler and linker tool in order to produce test executable. Godog contexts need to be exported the same way as **Test** functions for go tests. Note, that if you use **godog** command tool, it will use `go` executable to determine compiler and linker.
-
 The project was inspired by [behat][behat] and [cucumber][cucumber].
 
 ## Why Godog/Cucumber
@@ -43,18 +39,6 @@ When automated testing is this much fun, teams can easily protect themselves fro
 ### Read more
 - [Behaviour-Driven Development](https://cucumber.io/docs/bdd/)
 - [Gherkin Reference](https://cucumber.io/docs/gherkin/reference/)
-
-## Install
-```
-go install github.com/cucumber/godog/cmd/godog@v0.12.0
-```
-Adding `@v0.12.0` will install v0.12.0 specifically instead of master.
-
-With `go` version prior to 1.17, use `go get github.com/cucumber/godog/cmd/godog@v0.12.0`.
-Running `within the $GOPATH`, you would also need to set `GO111MODULE=on`, like this:
-```
-GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.12.0
-```
 
 ## Contributions
 
@@ -92,13 +76,13 @@ Initiate the go module - `go mod init godogs`
 
 #### Step 2 - Install godog
 
-Install the godog binary - `go get github.com/cucumber/godog/cmd/godog`
+Install the `godog` binary - `go install github.com/cucumber/godog/cmd/godog@latest`.
 
 #### Step 3 - Create gherkin feature
 
 Imagine we have a **godog cart** to serve godogs for lunch.
 
-First of all, we describe our feature in plain text - `vim features/godogs.feature`
+First of all, we describe our feature in plain text - `vim features/godogs.feature`.
 
 ``` gherkin
 Feature: eat godogs
@@ -116,7 +100,7 @@ Feature: eat godogs
 
 **NOTE:** same as **go test** godog respects package level isolation. All your step definitions should be in your tested package root directory. In this case: **godogs**.
 
-If we run godog inside the module: - `godog`
+If we run godog inside the module: - `godog run`
 
 You should see that the steps are undefined:
 ```
@@ -190,7 +174,7 @@ godogs
 - godogs_test.go
 ```
 
-Run godog again - `godog`
+Run godog again - `godog run`
 
 You should now see that the scenario is pending with one step pending and two steps skipped:
 ```
@@ -255,100 +239,110 @@ Replace the contents of `godogs_test.go` with the code below - `vim godogs_test.
 package main
 
 import (
-	"context"
-	"fmt"
+  "context"
+  "errors"
+  "fmt"
+  "testing"
 
-	"github.com/cucumber/godog"
+  "github.com/cucumber/godog"
 )
 
-func thereAreGodogs(available int) error {
-	Godogs = available
-	return nil
+// godogsCtxKey is the key used to store the available godogs in the context.Context.
+type godogsCtxKey struct{}
+
+func thereAreGodogs(ctx context.Context, available int) (context.Context, error) {
+  return context.WithValue(ctx, godogsCtxKey{}, available), nil
 }
 
-func iEat(num int) error {
-	if Godogs < num {
-		return fmt.Errorf("you cannot eat %d godogs, there are %d available", num, Godogs)
-	}
-	Godogs -= num
-	return nil
+func iEat(ctx context.Context, num int) (context.Context, error) {
+  available, ok := ctx.Value(godogsCtxKey{}).(int)
+  if !ok {
+    return ctx, errors.New("there are no godogs available")
+  }
+
+  if available < num {
+    return ctx, fmt.Errorf("you cannot eat %d godogs, there are %d available", num, available)
+  }
+
+  available -= num
+
+  return context.WithValue(ctx, godogsCtxKey{}, available), nil
 }
 
-func thereShouldBeRemaining(remaining int) error {
-	if Godogs != remaining {
-		return fmt.Errorf("expected %d godogs to be remaining, but there is %d", remaining, Godogs)
-	}
-	return nil
+func thereShouldBeRemaining(ctx context.Context, remaining int) error {
+  available, ok := ctx.Value(godogsCtxKey{}).(int)
+  if !ok {
+    return errors.New("there are no godogs available")
+  }
+
+  if available != remaining {
+    return fmt.Errorf("expected %d godogs to be remaining, but there is %d", remaining, available)
+  }
+
+  return nil
 }
 
-func InitializeTestSuite(sc *godog.TestSuiteContext) {
-	sc.BeforeSuite(func() { Godogs = 0 })
+func TestFeatures(t *testing.T) {
+  suite := godog.TestSuite{
+    ScenarioInitializer: InitializeScenario,
+    Options: &godog.Options{
+      Format:   "pretty",
+      Paths:    []string{"features"},
+      TestingT: t, // Testing instance that will run subtests.
+    },
+  }
+
+  if suite.Run() != 0 {
+    t.Fatal("non-zero status returned, failed to run feature tests")
+  }
 }
 
 func InitializeScenario(sc *godog.ScenarioContext) {
-	sc.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
-		Godogs = 0 // clean the state before every scenario
-
-		return ctx, nil
-	})
-
-	sc.Step(`^there are (\d+) godogs$`, thereAreGodogs)
-	sc.Step(`^I eat (\d+)$`, iEat)
-	sc.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
+  sc.Step(`^there are (\d+) godogs$`, thereAreGodogs)
+  sc.Step(`^I eat (\d+)$`, iEat)
+  sc.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
 }
+
 ```
 
-You can also pass the state between steps and hooks of a scenario using `context.Context`. 
-Step definitions can receive and return `context.Context`.
+In this example we are using `context.Context` to pass the state between the steps. 
+Every scenario starts with an empty context and then steps and hooks can add relevant information to it.
+Instrumented context is chained through the steps and hooks and is safe to use when multiple scenarios are running concurrently.
 
-```go
-type cntCtxKey struct{} // Key for a particular context value type.
-
-s.Step("^I have a random number of godogs$", func(ctx context.Context) context.Context {
-	// Creating a random number of godog and storing it in context for future reference.
-	cnt := rand.Int()
-	Godogs = cnt
-	return context.WithValue(ctx, cntCtxKey{}, cnt)
-})
-
-s.Step("I eat all available godogs", func(ctx context.Context) error {
-	// Getting previously stored number of godogs from context.
-	cnt := ctx.Value(cntCtxKey{}).(uint32)
-	if Godogs < cnt {
-		return errors.New("can't eat more than I have")
-	}
-	Godogs -= cnt
-	return nil
-})
-```
-
-When you run godog again - `godog`
+When you run godog again with `go test -v godogs_test.go` or with a CLI `godog run`.
 
 You should see a passing run:
-```gherkin
+```
+=== RUN   TestFeatures
 Feature: eat godogs
   In order to be happy
   As a hungry gopher
   I need to be able to eat godogs
+=== RUN   TestFeatures/Eat_5_out_of_12
 
   Scenario: Eat 5 out of 12          # features/godogs.feature:6
-    Given there are 12 godogs        # godogs_test.go:10 -> thereAreGodogs
-    When I eat 5                     # godogs_test.go:14 -> iEat
-    Then there should be 7 remaining # godogs_test.go:22 -> thereShouldBeRemaining
-```
-```
+    Given there are 12 godogs        # godogs_test.go:14 -> command-line-arguments.thereAreGodogs
+    When I eat 5                     # godogs_test.go:18 -> command-line-arguments.iEat
+    Then there should be 7 remaining # godogs_test.go:33 -> command-line-arguments.thereShouldBeRemaining
+
 1 scenarios (1 passed)
 3 steps (3 passed)
-258.302µs
+275.333µs
+--- PASS: TestFeatures (0.00s)
+    --- PASS: TestFeatures/Eat_5_out_of_12 (0.00s)
+PASS
+ok      command-line-arguments  0.130s
 ```
 
-We have hooked to `ScenarioContext` **Before** event in order to reset the application state before each scenario. 
+You may hook to `ScenarioContext` **Before** event in order to reset or pre-seed the application state before each scenario. 
 You may hook into more events, like `sc.StepContext()` **After** to print all state in case of an error. 
 Or **BeforeSuite** to prepare a database.
 
 By now, you should have figured out, how to use **godog**. Another advice is to make steps orthogonal, small and simple to read for a user. Whether the user is a dumb website user or an API developer, who may understand a little more technical context - it should target that user.
 
 When steps are orthogonal and small, you can combine them just like you do with Unix tools. Look how to simplify or remove ones, which can be composed.
+
+`TestFeatures` acts as a regular Go test, so you can leverage your IDE facilities to run and debug it.
 
 ## Code of Conduct
 
@@ -581,17 +575,39 @@ func (a *asserter) Errorf(format string, args ...interface{}) {
 }
 ```
 
+## CLI Mode
+
+Another way to use `godog` is to run it in CLI mode.
+
+In this mode `godog` CLI will use `go` under the hood to compile and run your test suite.
+
+**Godog** does not intervene with the standard **go test** command behavior. You can leverage both frameworks to functionally test your application while maintaining all test related source code in **_test.go** files.
+
+**Godog** acts similar compared to **go test** command, by using go compiler and linker tool in order to produce test executable. Godog contexts need to be exported the same way as **Test** functions for go tests. Note, that if you use **godog** command tool, it will use `go` executable to determine compiler and linker.
+
+### Install
+```
+go install github.com/cucumber/godog/cmd/godog@latest
+```
+Adding `@v0.12.0` will install v0.12.0 specifically instead of master.
+
+With `go` version prior to 1.17, use `go get github.com/cucumber/godog/cmd/godog@v0.12.0`.
+Running `within the $GOPATH`, you would also need to set `GO111MODULE=on`, like this:
+```
+GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.12.0
+```
+
 ### Configure common options for godog CLI
 
 There are no global options or configuration files. Alias your common or project based commands: `alias godog-wip="godog --format=progress --tags=@wip"`
 
-### Concurrency
+## Concurrency
 
-When concurrency is configured in options, godog will execute the scenarios concurrently, which is support by all supplied formatters.
+When concurrency is configured in options, godog will execute the scenarios concurrently, which is supported by all supplied formatters.
 
 In order to support concurrency well, you should reset the state and isolate each scenario. They should not share any state. It is suggested to run the suite concurrently in order to make sure there is no state corruption or race conditions in the application.
 
-It is also useful to randomize the order of scenario execution, which you can now do with **--random** command option.
+It is also useful to randomize the order of scenario execution, which you can now do with `--random` command option or `godog.Options.Randomize` setting.
 
 ### Building your own custom formatter
 A simple example can be [found here](/_examples/custom-formatter).
