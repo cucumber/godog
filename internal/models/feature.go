@@ -88,6 +88,19 @@ func (f Feature) FindExample(exampleAstID string) (*messages.Examples, *messages
 				}
 			}
 		}
+		if ru := child.Rule; ru != nil {
+			for _, rc := range ru.Children {
+				if sc := rc.Scenario; sc != nil {
+					for _, example := range sc.Examples {
+						for _, row := range example.TableBody {
+							if row.Id == exampleAstID {
+								return example, row
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 
 	return nil, nil
