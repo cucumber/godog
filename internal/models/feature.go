@@ -13,11 +13,34 @@ type Feature struct {
 	Content []byte
 }
 
-// FindScenario ...
+// FindRule returns the rule to which the given scenario belongs
+func (f Feature) FindRule(astScenarioID string) *messages.Rule {
+	for _, child := range f.GherkinDocument.Feature.Children {
+		if ru := child.Rule; ru != nil {
+			if rc := child.Rule; rc != nil {
+				for _, rcc := range rc.Children {
+					if sc := rcc.Scenario; sc != nil && sc.Id == astScenarioID {
+						return ru
+					}
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// FindScenario returns the scenario in the feature or in a rule in the feature
 func (f Feature) FindScenario(astScenarioID string) *messages.Scenario {
 	for _, child := range f.GherkinDocument.Feature.Children {
 		if sc := child.Scenario; sc != nil && sc.Id == astScenarioID {
 			return sc
+		}
+		if rc := child.Rule; rc != nil {
+			for _, rcc := range rc.Children {
+				if sc := rcc.Scenario; sc != nil && sc.Id == astScenarioID {
+					return sc
+				}
+			}
 		}
 	}
 
@@ -35,6 +58,18 @@ func (f Feature) FindBackground(astScenarioID string) *messages.Background {
 
 		if sc := child.Scenario; sc != nil && sc.Id == astScenarioID {
 			return bg
+		}
+
+		if ru := child.Rule; ru != nil {
+			for _, rc := range ru.Children {
+				if tmp := rc.Background; tmp != nil {
+					bg = tmp
+				}
+
+				if sc := rc.Scenario; sc != nil && sc.Id == astScenarioID {
+					return bg
+				}
+			}
 		}
 	}
 
@@ -61,6 +96,27 @@ func (f Feature) FindExample(exampleAstID string) (*messages.Examples, *messages
 // FindStep ...
 func (f Feature) FindStep(astStepID string) *messages.Step {
 	for _, child := range f.GherkinDocument.Feature.Children {
+
+		if ru := child.Rule; ru != nil {
+			for _, ch := range ru.Children {
+				if sc := ch.Scenario; sc != nil {
+					for _, step := range sc.Steps {
+						if step.Id == astStepID {
+							return step
+						}
+					}
+				}
+
+				if bg := ch.Background; bg != nil {
+					for _, step := range bg.Steps {
+						if step.Id == astStepID {
+							return step
+						}
+					}
+				}
+			}
+		}
+
 		if sc := child.Scenario; sc != nil {
 			for _, step := range sc.Steps {
 				if step.Id == astStepID {
