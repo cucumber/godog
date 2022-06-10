@@ -451,7 +451,7 @@ Feature: pretty formatter
     """
 
   Scenario: Support of Feature Plus Rule
-      Given a feature "features/simple.feature" file:
+    Given a feature "features/simple.feature" file:
     """
         Feature: simple feature with a rule
             simple feature description
@@ -475,8 +475,8 @@ Feature: pretty formatter
       0s
     """
 
-Scenario: Support of Feature Plus Rule with Background
-      Given a feature "features/simple.feature" file:
+  Scenario: Support of Feature Plus Rule with Background
+    Given a feature "features/simple.feature" file:
     """
         Feature: simple feature with a rule with Background
             simple feature description
