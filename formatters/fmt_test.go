@@ -42,6 +42,7 @@ func Test_AvailableFormatters(t *testing.T) {
 		"cucumber": "Produces cucumber JSON format output.",
 		"events":   "Produces JSON event stream, based on spec: 0.1.0.",
 		"junit":    "Prints junit compatible xml to stdout",
+		"message":  "Outputs protobuf messages",
 		"pretty":   "Prints every feature with runtime statuses.",
 		"progress": "Prints a character per step.",
 	}

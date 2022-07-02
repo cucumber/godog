@@ -56,6 +56,17 @@ artifacts:
 	$(call _build,linux,amd64)
 	$(call _build,linux,arm64)
 
+update-cck:
+ifndef CCK_VERSION
+	@echo -e "\033[0;31mCCK_VERSION is not defined. Can't update CCK :-(\033[0m"
+	exit 1
+endif
+	git clone --depth 1 --branch v$$CCK_VERSION https://github.com/cucumber/compatibility-kit.git _cck
+	rm -rf _compatibility/*
+	cp -r _cck/devkit/samples _compatibility
+	rm -rf _cck
+.PHONY: update-cck
+
 define _build
 	mkdir $(ARTIFACT_DIR)/godog-$(VERS)-$1-$2
 	env GOOS=$1 GOARCH=$2 go build -ldflags "-X github.com/cucumber/godog.Version=$(VERS)" -o $(ARTIFACT_DIR)/godog-$(VERS)-$1-$2/godog ./cmd/godog

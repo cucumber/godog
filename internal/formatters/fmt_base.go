@@ -59,8 +59,8 @@ func (f *Base) TestRunStarted() {}
 // Feature receives gherkin document.
 func (f *Base) Feature(*messages.GherkinDocument, string, []byte) {}
 
-// Pickle receives scenario.
-func (f *Base) Pickle(*messages.Pickle) {}
+// TestCaseStarted receives scenario.
+func (f *Base) TestCaseStarted(*messages.Pickle) {}
 
 // Defined receives step definition.
 func (f *Base) Defined(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition) {

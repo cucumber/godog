@@ -71,7 +71,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 		r.testSuiteInitializer(&testSuiteContext)
 	}
 
-	testRunStarted := models.TestRunStarted{StartedAt: utils.TimeNowFunc()}
+	testRunStarted := models.TestRunStarted{StartedAt: utils.TimeNowFunc()} // TODO: Can we inject TimeNowFunc?
 	r.storage.MustInsertTestRunStarted(testRunStarted)
 	r.fmt.TestRunStarted()
 
@@ -98,11 +98,14 @@ func (r *runner) concurrent(rate int) (failed bool) {
 
 			queue <- i // reserve space in queue
 
+			// why is this here for each pickle? Is it because we don't want to call this for empty feature?
+			// should this be testRunStarted instead?
 			if i == 0 {
 				r.fmt.Feature(ft.GherkinDocument, ft.Uri, ft.Content)
 			}
 
 			runPickle := func(fail *bool, pickle *messages.Pickle) {
+				// should this be where we do testCase?
 				defer func() {
 					<-queue // free a space in queue
 				}()
@@ -226,6 +229,8 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 
 	runner.fmt = multiFmt.FormatterFunc(suiteName, output)
 
+	// runner.fmt.Meta()??
+	// runner.fmt.Source()??
 	var err error
 	if runner.features, err = parser.ParseFeatures(opt.Tags, opt.Paths); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -235,9 +240,11 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 	runner.storage = storage.NewStorage()
 	for _, feat := range runner.features {
 		runner.storage.MustInsertFeature(feat)
+		// runner.fmt.Feature()??
 
 		for _, pickle := range feat.Pickles {
 			runner.storage.MustInsertPickle(pickle)
+			// runner.fmt.TestCaseStarted() ??
 		}
 	}
 

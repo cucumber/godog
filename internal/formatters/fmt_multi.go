@@ -49,10 +49,10 @@ func (r repeater) Feature(document *messages.GherkinDocument, s string, bytes []
 	}
 }
 
-// Pickle triggers Pickle for all added formatters.
-func (r repeater) Pickle(pickle *messages.Pickle) {
+// TestCaseStarted triggers TestCaseStarted for all added formatters.
+func (r repeater) TestCaseStarted(pickle *messages.Pickle) {
 	for _, f := range r {
-		f.Pickle(pickle)
+		f.TestCaseStarted(pickle)
 	}
 }
 

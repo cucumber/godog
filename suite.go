@@ -137,7 +137,7 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, prevS
 
 	match = s.matchStep(step)
 	s.storage.MustInsertStepDefintionMatch(step.AstNodeIds[0], match)
-	s.fmt.Defined(pickle, step, match.GetInternalStepDefinition())
+	s.fmt.Defined(pickle, step, match.GetInternalStepDefinition()) // should this be here?
 
 	if err != nil {
 		sr = models.NewStepResult(pickle.Id, step.Id, match)
@@ -419,6 +419,7 @@ func (s *suite) shouldFail(err error) bool {
 }
 
 func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
+	// should this be where we do testCaseStarted? and then testCaseEnded?
 	ctx := s.defaultContext
 	if ctx == nil {
 		ctx = context.Background()
@@ -428,7 +429,7 @@ func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 		pr := models.PickleResult{PickleID: pickle.Id, StartedAt: utils.TimeNowFunc()}
 		s.storage.MustInsertPickleResult(pr)
 
-		s.fmt.Pickle(pickle)
+		s.fmt.TestCaseStarted(pickle)
 		return ErrUndefined
 	}
 
@@ -438,7 +439,7 @@ func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 	pr := models.PickleResult{PickleID: pickle.Id, StartedAt: utils.TimeNowFunc()}
 	s.storage.MustInsertPickleResult(pr)
 
-	s.fmt.Pickle(pickle)
+	s.fmt.TestCaseStarted(pickle)
 
 	// scenario
 	if s.testingT != nil {

@@ -61,9 +61,12 @@ func AvailableFormatters() map[string]string {
 // formatters needs to be registered with a
 // godog.Format function call
 type Formatter interface {
+
+	// TestRun()
+
 	TestRunStarted()
 	Feature(*messages.GherkinDocument, string, []byte)
-	Pickle(*messages.Pickle)
+	TestCaseStarted(*messages.Pickle)
 	Defined(*messages.Pickle, *messages.PickleStep, *StepDefinition)
 	Failed(*messages.Pickle, *messages.PickleStep, *StepDefinition, error)
 	Passed(*messages.Pickle, *messages.PickleStep, *StepDefinition)

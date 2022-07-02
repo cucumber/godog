@@ -62,8 +62,8 @@ func (f *Pretty) Feature(gd *messages.GherkinDocument, p string, c []byte) {
 }
 
 // Pickle takes a gherkin node for formatting.
-func (f *Pretty) Pickle(pickle *messages.Pickle) {
-	f.Base.Pickle(pickle)
+func (f *Pretty) TestCaseStarted(pickle *messages.Pickle) {
+	f.Base.TestCaseStarted(pickle)
 
 	f.Lock.Lock()
 	defer f.Lock.Unlock()

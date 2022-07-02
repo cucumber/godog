@@ -37,8 +37,8 @@ func (f *Events) event(ev interface{}) {
 }
 
 // Pickle receives scenario.
-func (f *Events) Pickle(pickle *messages.Pickle) {
-	f.Base.Pickle(pickle)
+func (f *Events) TestCaseStarted(pickle *messages.Pickle) {
+	f.Base.TestCaseStarted(pickle)
 
 	f.Lock.Lock()
 	defer f.Lock.Unlock()
@@ -307,6 +307,7 @@ func (f *Events) scenarioLocation(pickle *messages.Pickle) string {
 	return fmt.Sprintf("%s:%d", pickle.Uri, line)
 }
 
+// TODO: Move to separate file
 func isLastStep(pickle *messages.Pickle, step *messages.PickleStep) bool {
 	return pickle.Steps[len(pickle.Steps)-1].Id == step.Id
 }

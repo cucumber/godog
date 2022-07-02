@@ -16,6 +16,7 @@ func Test_FindFmt(t *testing.T) {
 		"custom":   true, // is available for test purposes only
 		"events":   true,
 		"junit":    true,
+		"message":  true,
 		"pretty":   true,
 		"progress": true,
 		"unknown":  false,
@@ -44,6 +45,7 @@ func Test_AvailableFormatters(t *testing.T) {
 		"custom":   "custom format description", // is available for test purposes only
 		"events":   "Produces JSON event stream, based on spec: 0.1.0.",
 		"junit":    "Prints junit compatible xml to stdout",
+		"message":  "Outputs protobuf messages",
 		"pretty":   "Prints every feature with runtime statuses.",
 		"progress": "Prints a character per step.",
 	}
