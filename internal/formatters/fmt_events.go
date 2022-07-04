@@ -37,8 +37,8 @@ func (f *Events) event(ev interface{}) {
 }
 
 // Pickle receives scenario.
-func (f *Events) TestCaseStarted(pickle *messages.Pickle) {
-	f.Base.TestCaseStarted(pickle)
+func (f *Events) TestCase(pickle *messages.Pickle) {
+	f.Base.TestCase(pickle)
 
 	f.Lock.Lock()
 	defer f.Lock.Unlock()

@@ -53,14 +53,23 @@ func (f *Base) SetStorage(st *storage.Storage) {
 	f.Storage = st
 }
 
+// Metadata is triggered prior to parsing
+func (f *Base) MetaData(*formatters.MetaData) {}
+
+// Source is triggered prior to parsing
+func (f *Base) Source(*formatters.Source) {}
+
 // TestRunStarted is triggered on test start.
 func (f *Base) TestRunStarted() {}
 
 // Feature receives gherkin document.
 func (f *Base) Feature(*messages.GherkinDocument, string, []byte) {}
 
-// TestCaseStarted receives scenario.
-func (f *Base) TestCaseStarted(*messages.Pickle) {}
+// TestCase receives scenario.
+func (f *Base) TestCase(*messages.Pickle) {}
+
+// TestCaseStarted tracks attempt number and timestamp for a test case.
+func (f *Base) TestCaseStarted(*messages.TestCaseStarted) {}
 
 // Defined receives step definition.
 func (f *Base) Defined(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition) {

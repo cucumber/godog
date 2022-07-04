@@ -53,6 +53,14 @@ func AvailableFormatters() map[string]string {
 	return fmts
 }
 
+type MetaData struct{}
+
+type Source struct {
+	Data      string
+	MediaType string
+	Uri       string
+}
+
 // Formatter is an interface for feature runner
 // output summary presentation.
 //
@@ -62,12 +70,21 @@ func AvailableFormatters() map[string]string {
 // godog.Format function call
 type Formatter interface {
 
+	// parsing phase messages
+	MetaData(*MetaData)
+	Source(*Source)
+	// Pickle()
 	// TestRun()
+	// hooks - execution?
 
-	TestRunStarted()
-	Feature(*messages.GherkinDocument, string, []byte)
-	TestCaseStarted(*messages.Pickle)
+	// step matching phase messages
 	Defined(*messages.Pickle, *messages.PickleStep, *StepDefinition)
+
+	// execution phase messages
+	TestRunStarted()
+	Feature(*messages.GherkinDocument, string, []byte) // this one is not part of Messages, legacy
+	TestCase(*messages.Pickle)
+	TestCaseStarted(*messages.TestCaseStarted)
 	Failed(*messages.Pickle, *messages.PickleStep, *StepDefinition, error)
 	Passed(*messages.Pickle, *messages.PickleStep, *StepDefinition)
 	Skipped(*messages.Pickle, *messages.PickleStep, *StepDefinition)

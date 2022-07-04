@@ -35,6 +35,12 @@ func (r repeater) SetStorage(s *storage.Storage) {
 	}
 }
 
+// Metadata is triggered prior to parsing
+func (r repeater) MetaData(*formatters.MetaData) {}
+
+// Source is triggered prior to parsing
+func (r repeater) Source(*formatters.Source) {}
+
 // TestRunStarted triggers TestRunStarted for all added formatters.
 func (r repeater) TestRunStarted() {
 	for _, f := range r {
@@ -50,10 +56,14 @@ func (r repeater) Feature(document *messages.GherkinDocument, s string, bytes []
 }
 
 // TestCaseStarted triggers TestCaseStarted for all added formatters.
-func (r repeater) TestCaseStarted(pickle *messages.Pickle) {
+func (r repeater) TestCase(pickle *messages.Pickle) {
 	for _, f := range r {
-		f.TestCaseStarted(pickle)
+		f.TestCase(pickle)
 	}
+}
+
+func (r repeater) TestCaseStarted(*messages.TestCaseStarted) {
+
 }
 
 // Defined triggers Defined for all added formatters.

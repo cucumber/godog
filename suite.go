@@ -429,7 +429,7 @@ func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 		pr := models.PickleResult{PickleID: pickle.Id, StartedAt: utils.TimeNowFunc()}
 		s.storage.MustInsertPickleResult(pr)
 
-		s.fmt.TestCaseStarted(pickle)
+		s.fmt.TestCase(pickle)
 		return ErrUndefined
 	}
 
@@ -439,7 +439,7 @@ func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 	pr := models.PickleResult{PickleID: pickle.Id, StartedAt: utils.TimeNowFunc()}
 	s.storage.MustInsertPickleResult(pr)
 
-	s.fmt.TestCaseStarted(pickle)
+	s.fmt.TestCase(pickle)
 
 	// scenario
 	if s.testingT != nil {
