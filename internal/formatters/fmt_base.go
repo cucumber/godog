@@ -60,7 +60,7 @@ func (f *Base) MetaData(*formatters.MetaData) {}
 func (f *Base) Source(*formatters.Source) {}
 
 // TestRunStarted is triggered on test start.
-func (f *Base) TestRunStarted() {}
+func (f *Base) TestRunStarted(*messages.TestRunStarted) {}
 
 // Feature receives gherkin document.
 func (f *Base) Feature(*messages.GherkinDocument, string, []byte) {}

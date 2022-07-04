@@ -42,9 +42,9 @@ func (r repeater) MetaData(*formatters.MetaData) {}
 func (r repeater) Source(*formatters.Source) {}
 
 // TestRunStarted triggers TestRunStarted for all added formatters.
-func (r repeater) TestRunStarted() {
+func (r repeater) TestRunStarted(t *messages.TestRunStarted) {
 	for _, f := range r {
-		f.TestRunStarted()
+		f.TestRunStarted(t)
 	}
 }
 

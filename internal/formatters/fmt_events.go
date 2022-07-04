@@ -71,8 +71,8 @@ func (f *Events) TestCase(pickle *messages.Pickle) {
 }
 
 // TestRunStarted is triggered on test start.
-func (f *Events) TestRunStarted() {
-	f.Base.TestRunStarted()
+func (f *Events) TestRunStarted(t *messages.TestRunStarted) {
+	f.Base.TestRunStarted(t)
 
 	f.Lock.Lock()
 	defer f.Lock.Unlock()

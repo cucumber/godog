@@ -33,8 +33,8 @@ type Pretty struct {
 }
 
 // TestRunStarted is triggered on test start.
-func (f *Pretty) TestRunStarted() {
-	f.Base.TestRunStarted()
+func (f *Pretty) TestRunStarted(t *messages.TestRunStarted) {
+	f.Base.TestRunStarted(t)
 
 	f.Lock.Lock()
 	defer f.Lock.Unlock()

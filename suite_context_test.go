@@ -253,7 +253,8 @@ func (tc *godogFeaturesScenario) iRunFeatureSuiteWithTagsAndFormatter(filter str
 
 	testRunStarted := models.TestRunStarted{StartedAt: utils.TimeNowFunc()}
 	tc.testedSuite.storage.MustInsertTestRunStarted(testRunStarted)
-	tc.testedSuite.fmt.TestRunStarted()
+	t := messages.GoTimeToTimestamp(testRunStarted.StartedAt)
+	tc.testedSuite.fmt.TestRunStarted(&messages.TestRunStarted{Timestamp: &t})
 
 	for _, f := range tc.testSuiteContext.beforeSuiteHandlers {
 		f()

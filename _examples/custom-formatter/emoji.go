@@ -6,6 +6,7 @@ import (
 	"math"
 
 	"github.com/cucumber/godog"
+	"github.com/cucumber/messages-go/v16"
 )
 
 const (
@@ -37,7 +38,7 @@ type emojiFmt struct {
 	out io.Writer
 }
 
-func (f *emojiFmt) TestRunStarted() {}
+func (f *emojiFmt) TestRunStarted(t *messages.TestRunStarted) {}
 
 func (f *emojiFmt) Passed(scenario *godog.Scenario, step *godog.Step, match *godog.StepDefinition) {
 	f.ProgressFmt.Base.Passed(scenario, step, match)

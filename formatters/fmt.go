@@ -81,7 +81,7 @@ type Formatter interface {
 	Defined(*messages.Pickle, *messages.PickleStep, *StepDefinition)
 
 	// execution phase messages
-	TestRunStarted()
+	TestRunStarted(*messages.TestRunStarted)
 	Feature(*messages.GherkinDocument, string, []byte) // this one is not part of Messages, legacy
 	TestCase(*messages.Pickle)
 	TestCaseStarted(*messages.TestCaseStarted)
