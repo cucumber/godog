@@ -91,6 +91,7 @@ Now we can implemented steps, since we know what behavior we expect:
 package main
 
 import (
+	"context"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -159,7 +160,10 @@ func (a *apiFeature) theResponseShouldMatchJSON(body *godog.DocString) error {
 func InitializeScenario(s *godog.ScenarioContext) {
 	api := &apiFeature{}
 
-	s.BeforeScenario(api.resetResponse)
+	ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
+		api.resetResponse(sc)
+		return ctx, nil
+	})
 
 	s.Step(`^I send "(GET|POST|PUT|DELETE)" request to "([^"]*)"$`, api.iSendrequestTo)
 	s.Step(`^the response code should be (\d+)$`, api.theResponseCodeShouldBe)

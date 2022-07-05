@@ -1,0 +1,29 @@
+<bold-white>Feature:</bold-white> rules with examples with backgrounds
+
+  <bold-white>Background:</bold-white> for first rule
+    <green>Given</green> <green>passing step</green>      <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
+    <green>And</green> <green>passing step</green>        <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
+
+  <bold-white>Example:</bold-white> rule 1 example 1 <bold-black># formatter-tests/features/rules_with_examples_with_backgrounds.feature:9</bold-black>
+    <green>When</green> <green>passing step</green>       <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
+    <green>Then</green> <green>passing step</green>       <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
+
+  <bold-white>Example:</bold-white> rule 1 example 2 <bold-black># formatter-tests/features/rules_with_examples_with_backgrounds.feature:13</bold-black>
+    <green>When</green> <green>passing step</green>       <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
+    <green>Then</green> <green>passing step</green>       <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
+
+  <bold-white>Background:</bold-white> for second rule
+    <green>Given</green> <green>passing step</green>      <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
+    <green>And</green> <green>passing step</green>        <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
+
+  <bold-white>Example:</bold-white> rule 1 example 1 <bold-black># formatter-tests/features/rules_with_examples_with_backgrounds.feature:24</bold-black>
+    <green>When</green> <green>passing step</green>       <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
+    <green>Then</green> <green>passing step</green>       <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
+
+  <bold-white>Example:</bold-white> rule 2 example 2 <bold-black># formatter-tests/features/rules_with_examples_with_backgrounds.feature:28</bold-black>
+    <green>When</green> <green>passing step</green>       <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
+    <green>Then</green> <green>passing step</green>       <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
+
+4 scenarios (<green>4 passed</green>)
+16 steps (<green>16 passed</green>)
+0s

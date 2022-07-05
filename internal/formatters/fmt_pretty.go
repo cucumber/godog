@@ -12,6 +12,7 @@ import (
 
 	"github.com/cucumber/godog/colors"
 	"github.com/cucumber/godog/formatters"
+	"github.com/cucumber/godog/internal/models"
 )
 
 func init() {
@@ -350,15 +351,38 @@ func (f *Pretty) printTableHeader(row *messages.TableRow, max []int) {
 	f.printTableRow(row, max, cyan)
 }
 
+func isFirstScenarioInRule(rule *messages.Rule, scenario *messages.Scenario) bool {
+	if rule == nil || scenario == nil {
+		return false
+	}
+	var firstScenario *messages.Scenario
+	for _, c := range rule.Children {
+		if c.Scenario != nil {
+			firstScenario = c.Scenario
+			break
+		}
+	}
+	return firstScenario != nil && firstScenario.Id == scenario.Id
+}
+
+func isFirstPickleAndNoRule(feature *models.Feature, pickle *messages.Pickle, rule *messages.Rule) bool {
+	if rule != nil {
+		return false
+	}
+	return feature.Pickles[0].Id == pickle.Id
+}
+
 func (f *Pretty) printStep(pickle *messages.Pickle, pickleStep *messages.PickleStep) {
 	feature := f.Storage.MustGetFeature(pickle.Uri)
 	astBackground := feature.FindBackground(pickle.AstNodeIds[0])
 	astScenario := feature.FindScenario(pickle.AstNodeIds[0])
+	astRule := feature.FindRule(pickle.AstNodeIds[0])
 	astStep := feature.FindStep(pickleStep.AstNodeIds[0])
 
 	var astBackgroundStep bool
 	var firstExecutedBackgroundStep bool
 	var backgroundSteps int
+
 	if astBackground != nil {
 		backgroundSteps = len(astBackground.Steps)
 
@@ -371,7 +395,7 @@ func (f *Pretty) printStep(pickle *messages.Pickle, pickleStep *messages.PickleS
 		}
 	}
 
-	firstPickle := feature.Pickles[0].Id == pickle.Id
+	firstPickle := isFirstPickleAndNoRule(feature, pickle, astRule) || isFirstScenarioInRule(astRule, astScenario)
 
 	if astBackgroundStep && !firstPickle {
 		return

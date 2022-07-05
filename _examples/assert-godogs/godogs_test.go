@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -63,8 +64,9 @@ func thereShouldBeNoneRemaining() error {
 }
 
 func InitializeScenario(ctx *godog.ScenarioContext) {
-	ctx.BeforeScenario(func(*godog.Scenario) {
+	ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 		Godogs = 0 // clean the state before every scenario
+		return ctx, nil
 	})
 
 	ctx.Step(`^there are (\d+) godogs$`, thereAreGodogs)

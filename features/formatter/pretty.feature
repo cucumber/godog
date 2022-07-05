@@ -449,3 +449,102 @@ Feature: pretty formatter
     16 steps (16 passed)
     0s
     """
+
+  Scenario: Support of Feature Plus Rule
+    Given a feature "features/simple.feature" file:
+    """
+        Feature: simple feature with a rule
+            simple feature description
+         Rule: simple rule
+             simple rule description
+         Example: simple scenario
+            simple scenario description
+          Given passing step
+    """
+    When I run feature suite with formatter "pretty"
+    Then the rendered output will be as follows:
+    """
+      Feature: simple feature with a rule
+        simple feature description
+
+        Example: simple scenario # features/simple.feature:5
+          Given passing step     # suite_context.go:0 -> SuiteContext.func2
+
+      1 scenarios (1 passed)
+      1 steps (1 passed)
+      0s
+    """
+
+  Scenario: Support of Feature Plus Rule with Background
+    Given a feature "features/simple.feature" file:
+    """
+        Feature: simple feature with a rule with Background
+            simple feature description
+         Rule: simple rule
+             simple rule description
+         Background:
+             Given passing step
+         Example: simple scenario
+            simple scenario description
+          Given passing step
+    """
+    When I run feature suite with formatter "pretty"
+    Then the rendered output will be as follows:
+    """
+      Feature: simple feature with a rule with Background
+        simple feature description
+
+        Background:
+          Given passing step     # suite_context.go:0 -> SuiteContext.func2
+
+        Example: simple scenario # features/simple.feature:7
+          Given passing step     # suite_context.go:0 -> SuiteContext.func2
+
+      1 scenarios (1 passed)
+      2 steps (2 passed)
+      0s
+    """
+
+  Scenario: Support of Feature Plus Rule with Scenario Outline
+    Given a feature "features/simple.feature" file:
+    """
+        Feature: simple feature with a rule with Scenario Outline
+            simple feature description
+         Rule: simple rule
+             simple rule description
+         Scenario Outline: simple scenario
+             simple scenario description
+
+              Given <status> step
+
+          Examples: simple examples
+          | status |
+          | passing |
+          | failing |
+    """
+    When I run feature suite with formatter "pretty"
+    Then the rendered output will be as follows:
+    """
+      Feature: simple feature with a rule with Scenario Outline
+        simple feature description
+
+        Scenario Outline: simple scenario # features/simple.feature:5
+          Given <status> step             # suite_context.go:0 -> SuiteContext.func2
+
+          Examples: simple examples
+            | status  |
+            | passing |
+            | failing |
+              intentional failure
+
+      --- Failed steps:
+
+        Scenario Outline: simple scenario # features/simple.feature:5
+          Given failing step # features/simple.feature:8
+          Error: intentional failure
+
+
+      2 scenarios (1 passed, 1 failed)
+      2 steps (1 passed, 1 failed)
+      0s
+    """

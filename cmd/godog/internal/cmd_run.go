@@ -32,7 +32,8 @@ buildable go source.`,
     feature (*.feature)
     scenario at specific line (*.feature:10)
   If no feature arguments are supplied, godog will use "features/" by default.`,
-		Run: runCmdRunFunc,
+		RunE:         runCmdRunFunc,
+		SilenceUsage: true,
 	}
 
 	flags.BindRunCmdFlags("", runCmd.Flags(), &opts)
@@ -40,30 +41,28 @@ buildable go source.`,
 	return runCmd
 }
 
-func runCmdRunFunc(cmd *cobra.Command, args []string) {
+func runCmdRunFunc(cmd *cobra.Command, args []string) error {
 	osArgs := os.Args[1:]
 
 	if len(osArgs) > 0 && osArgs[0] == "run" {
 		osArgs = osArgs[1:]
 	}
 
-	status, err := buildAndRunGodog(osArgs)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+	if err := buildAndRunGodog(osArgs); err != nil {
+		return err
 	}
 
-	os.Exit(status)
+	return nil
 }
 
-func buildAndRunGodog(args []string) (_ int, err error) {
+func buildAndRunGodog(args []string) (err error) {
 	bin, err := filepath.Abs(buildOutputDefault)
 	if err != nil {
-		return 1, err
+		return err
 	}
 
 	if err = builder.Build(bin); err != nil {
-		return 1, err
+		return err
 	}
 
 	defer os.Remove(bin)
@@ -71,7 +70,7 @@ func buildAndRunGodog(args []string) (_ int, err error) {
 	return runGodog(bin, args)
 }
 
-func runGodog(bin string, args []string) (_ int, err error) {
+func runGodog(bin string, args []string) (err error) {
 	cmd := exec.Command(bin, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -79,25 +78,30 @@ func runGodog(bin string, args []string) (_ int, err error) {
 	cmd.Env = os.Environ()
 
 	if err = cmd.Start(); err != nil {
-		return 0, err
+		return err
 	}
 
 	if err = cmd.Wait(); err == nil {
-		return 0, nil
+		return nil
 	}
 
 	exiterr, ok := err.(*exec.ExitError)
 	if !ok {
-		return 0, err
+		return err
+	}
+
+	st, ok := exiterr.Sys().(syscall.WaitStatus)
+	if !ok {
+		return fmt.Errorf("failed to convert error to syscall wait status. original error: %w", exiterr)
 	}
 
 	// This works on both Unix and Windows. Although package
 	// syscall is generally platform dependent, WaitStatus is
 	// defined for both Unix and Windows and in both cases has
 	// an ExitStatus() method with the same signature.
-	if st, ok := exiterr.Sys().(syscall.WaitStatus); ok {
-		return st.ExitStatus(), nil
+	if st.ExitStatus() > 0 {
+		return err
 	}
 
-	return 1, nil
+	return nil
 }
