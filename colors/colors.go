@@ -42,27 +42,27 @@ func Green(s interface{}) string {
 	return colorize(s, green)
 }
 
-// Red will accept an interface and return a colorized green string.
+// Red will accept an interface and return a colorized red string.
 func Red(s interface{}) string {
 	return colorize(s, red)
 }
 
-// Cyan will accept an interface and return a colorized green string.
+// Cyan will accept an interface and return a colorized cyan string.
 func Cyan(s interface{}) string {
 	return colorize(s, cyan)
 }
 
-// Black will accept an interface and return a colorized green string.
+// Black will accept an interface and return a colorized black string.
 func Black(s interface{}) string {
 	return colorize(s, black)
 }
 
-// Yellow will accept an interface and return a colorized green string.
+// Yellow will accept an interface and return a colorized yellow string.
 func Yellow(s interface{}) string {
 	return colorize(s, yellow)
 }
 
-// White will accept an interface and return a colorized green string.
+// White will accept an interface and return a colorized white string.
 func White(s interface{}) string {
 	return colorize(s, white)
 }
