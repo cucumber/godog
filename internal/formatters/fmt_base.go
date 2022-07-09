@@ -59,10 +59,19 @@ func (f *Base) MetaData(*formatters.MetaData) {}
 // Source is triggered prior to parsing
 func (f *Base) Source(*formatters.Source) {}
 
+// GherkinDocument is triggered after parsing, but prior to execution
+func (f *Base) GherkinDocument(*messages.GherkinDocument, string, []byte) {}
+
+// Defined receives step definition.
+func (f *Base) Defined(*formatters.StepDefinition) {}
+
+// Pickle receives pickle.
+func (f *Base) Pickle(*messages.Pickle) {}
+
 // TestRunStarted is triggered on test start.
 func (f *Base) TestRunStarted(*messages.TestRunStarted) {}
 
-// Feature receives gherkin document.
+// Feature receives gherkin document. (Legacy)
 func (f *Base) Feature(*messages.GherkinDocument, string, []byte) {}
 
 // TestCase receives scenario.
@@ -71,9 +80,8 @@ func (f *Base) TestCase(*messages.Pickle) {}
 // TestCaseStarted tracks attempt number and timestamp for a test case.
 func (f *Base) TestCaseStarted(*messages.TestCaseStarted) {}
 
-// Defined receives step definition.
-func (f *Base) Defined(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition) {
-}
+// TestStepStarted invoked at the beginning of execution of an individual step
+func (f *Base) TestStepStarted(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition) {}
 
 // Passed captures passed step.
 func (f *Base) Passed(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition) {}

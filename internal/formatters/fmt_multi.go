@@ -36,10 +36,30 @@ func (r repeater) SetStorage(s *storage.Storage) {
 }
 
 // Metadata is triggered prior to parsing
-func (r repeater) MetaData(*formatters.MetaData) {}
+func (r repeater) MetaData(m *formatters.MetaData) {
+	for _, f := range r {
+		f.MetaData(m)
+	}
+}
 
 // Source is triggered prior to parsing
-func (r repeater) Source(*formatters.Source) {}
+func (r repeater) Source(s *formatters.Source) {
+	for _, f := range r {
+		f.Source(s)
+	}
+}
+
+func (r repeater) GherkinDocument(doc *messages.GherkinDocument, p string, c []byte) {
+	for _, f := range r {
+		f.GherkinDocument(doc, p, c)
+	}
+}
+
+func (r repeater) Pickle(p *messages.Pickle) {
+	for _, f := range r {
+		f.Pickle(p)
+	}
+}
 
 // TestRunStarted triggers TestRunStarted for all added formatters.
 func (r repeater) TestRunStarted(t *messages.TestRunStarted) {
@@ -67,9 +87,16 @@ func (r repeater) TestCaseStarted(*messages.TestCaseStarted) {
 }
 
 // Defined triggers Defined for all added formatters.
-func (r repeater) Defined(pickle *messages.Pickle, step *messages.PickleStep, definition *formatters.StepDefinition) {
+func (r repeater) Defined(definition *formatters.StepDefinition) {
 	for _, f := range r {
-		f.Defined(pickle, step, definition)
+		f.Defined(definition)
+	}
+}
+
+// Defined triggers DefTestStepStartedined for all added formatters.
+func (r repeater) TestStepStarted(pickle *messages.Pickle, step *messages.PickleStep, definition *formatters.StepDefinition) {
+	for _, f := range r {
+		f.TestStepStarted(pickle, step, definition)
 	}
 }
 

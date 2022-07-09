@@ -194,8 +194,8 @@ func (f *Events) step(pickle *messages.Pickle, pickleStep *messages.PickleStep) 
 }
 
 // Defined receives step definition.
-func (f *Events) Defined(pickle *messages.Pickle, pickleStep *messages.PickleStep, def *formatters.StepDefinition) {
-	f.Base.Defined(pickle, pickleStep, def)
+func (f *Events) TestStepStarted(pickle *messages.Pickle, pickleStep *messages.PickleStep, def *formatters.StepDefinition) {
+	f.Base.TestStepStarted(pickle, pickleStep, def)
 
 	f.Lock.Lock()
 	defer f.Lock.Unlock()

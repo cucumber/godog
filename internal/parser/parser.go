@@ -38,6 +38,8 @@ func parseFeatureFile(path string, newIDFunc func() string) (*models.Feature, er
 		return nil, err
 	}
 
+	fmt.Printf("\n\t-->%s\n", path)
+
 	defer reader.Close()
 
 	var buf bytes.Buffer
@@ -53,6 +55,9 @@ func parseFeatureFile(path string, newIDFunc func() string) (*models.Feature, er
 	return &f, nil
 }
 
+// TODO? Add new argument that is a func to delegate the source message?
+// would need that in parseFeatureFile, parsePath, and ParseFeatures, too
+// Or - we walk and read twice?
 func parseFeatureDir(dir string, newIDFunc func() string) ([]*models.Feature, error) {
 	var features []*models.Feature
 	return features, filepath.Walk(dir, func(p string, f os.FileInfo, err error) error {

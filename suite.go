@@ -137,7 +137,7 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, prevS
 
 	match = s.matchStep(step)
 	s.storage.MustInsertStepDefintionMatch(step.AstNodeIds[0], match)
-	s.fmt.Defined(pickle, step, match.GetInternalStepDefinition()) // should this be here?
+	s.fmt.TestStepStarted(pickle, step, match.GetInternalStepDefinition())
 
 	if err != nil {
 		sr = models.NewStepResult(pickle.Id, step.Id, match)

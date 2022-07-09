@@ -73,18 +73,20 @@ type Formatter interface {
 	// parsing phase messages
 	MetaData(*MetaData)
 	Source(*Source)
-	// Pickle()
+	GherkinDocument(*messages.GherkinDocument, string, []byte)
+	Pickle(p *messages.Pickle)
 	// TestRun()
 	// hooks - execution?
 
 	// step matching phase messages
-	Defined(*messages.Pickle, *messages.PickleStep, *StepDefinition)
+	Defined(*StepDefinition)
 
 	// execution phase messages
 	TestRunStarted(*messages.TestRunStarted)
 	Feature(*messages.GherkinDocument, string, []byte) // this one is not part of Messages, legacy
 	TestCase(*messages.Pickle)
 	TestCaseStarted(*messages.TestCaseStarted)
+	TestStepStarted(*messages.Pickle, *messages.PickleStep, *StepDefinition)
 	Failed(*messages.Pickle, *messages.PickleStep, *StepDefinition, error)
 	Passed(*messages.Pickle, *messages.PickleStep, *StepDefinition)
 	Skipped(*messages.Pickle, *messages.PickleStep, *StepDefinition)

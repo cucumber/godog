@@ -71,9 +71,28 @@ func (r *runner) concurrent(rate int) (failed bool) {
 		r.testSuiteInitializer(&testSuiteContext)
 	}
 
-	testRunStarted := models.TestRunStarted{StartedAt: utils.TimeNowFunc()} // TODO: Can we inject TimeNowFunc?
+	// maybe work this into suite? - also, is this all available steps, or just those used?
+	stepDefinitions := map[string]*formatters.StepDefinition{}
+	for _, feat := range r.features {
+		for _, pickle := range feat.Pickles {
+			// Copy base suite - we're just going to use this copy to get all the step definitions
+			suite := *testSuiteContext.suite
+			sc := ScenarioContext{suite: &suite}
+			if r.scenarioInitializer != nil {
+				r.scenarioInitializer(&sc) // <-- We don't have steps to match against until here!
+			}
+			stepDefinitions = appendNewStepDefinitions(stepDefinitions, sc.suite, pickle)
+		}
+	}
+	for _, stepDefinition := range stepDefinitions {
+		r.fmt.Defined(stepDefinition)
+	}
+
+	startTime := utils.TimeNowFunc()                              // TODO: Can we inject TimeNowFunc?
+	testRunStarted := models.TestRunStarted{StartedAt: startTime} // suite steps not yet available?
 	r.storage.MustInsertTestRunStarted(testRunStarted)
-	r.fmt.TestRunStarted()
+	t := messages.GoTimeToTimestamp(startTime)
+	r.fmt.TestRunStarted(&messages.TestRunStarted{Timestamp: &t})
 
 	// run before suite handlers
 	for _, f := range testSuiteContext.beforeSuiteHandlers {
@@ -119,7 +138,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 
 				if r.scenarioInitializer != nil {
 					sc := ScenarioContext{suite: &suite}
-					r.scenarioInitializer(&sc)
+					r.scenarioInitializer(&sc) // <-- We don't have steps to match against until here!
 				}
 
 				err := suite.runPickle(pickle)
@@ -229,8 +248,9 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 
 	runner.fmt = multiFmt.FormatterFunc(suiteName, output)
 
-	// runner.fmt.Meta()??
-	// runner.fmt.Source()??
+	meta := &formatters.MetaData{}
+	runner.fmt.MetaData(meta)
+
 	var err error
 	if runner.features, err = parser.ParseFeatures(opt.Tags, opt.Paths); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -238,15 +258,20 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 	}
 
 	runner.storage = storage.NewStorage()
+	// stepDefinitions := []*formatters.StepDefinition{}
 	for _, feat := range runner.features {
 		runner.storage.MustInsertFeature(feat)
-		// runner.fmt.Feature()??
+		runner.fmt.GherkinDocument(feat.GherkinDocument, feat.Uri, feat.Content)
 
 		for _, pickle := range feat.Pickles {
 			runner.storage.MustInsertPickle(pickle)
-			// runner.fmt.TestCaseStarted() ??
+			runner.fmt.Pickle(pickle)
 		}
 	}
+	// for _, stepDefinition := range stepDefinitions {
+	// 	// TODO:
+	// 	runner.fmt.Defined(stepDefinition)
+	// }
 
 	// user may have specified -1 option to create random seed
 	runner.randomSeed = opt.Randomize
@@ -274,6 +299,21 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 		return exitFailure
 	}
 	return exitSuccess
+}
+
+func appendNewStepDefinitions(definitions map[string]*formatters.StepDefinition, suite *suite, pickle *messages.Pickle) map[string]*formatters.StepDefinition {
+	for _, step := range pickle.Steps {
+		match := suite.matchStep(step)
+		if match != nil {
+			key := match.Expr.String()
+			definitions[key] = &formatters.StepDefinition{
+				Expr:    match.Expr,
+				Handler: match.Handler,
+			}
+			break
+		}
+	}
+	return definitions
 }
 
 func runsFromPackage(fp string) string {
