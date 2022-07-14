@@ -342,7 +342,7 @@ func (ts TestSuite) RetrieveFeatures() ([]*models.Feature, error) {
 	return parser.ParseFeatures(opt.Tags, opt.Paths)
 }
 
-// should be a map of string[]byte where the string is the path name of the feature file 
+// should be a map of string[]byte where the string is the path name of the feature file
 // and the []byte is the bytes read from the file
 func (ts TestSuite) RetrieveFeaturesFromBytes(featuresInputs map[string][]byte) ([]*models.Feature, error) {
 	opt := ts.Options
