@@ -11,6 +11,9 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ### Changed
 - README example is updated with `context.Context` and `go test` usage. ([477](https://github.com/cucumber/godog/pull/477) - [vearutop](https://github.com/vearutop)) 
 
+### Fixed
+- Fixed a bug which would cause a panic when using the pretty formatter with a feature that contained a rule. ([480](https://github.com/cucumber/godog/pull/480) - [dumpsterfireproject](https://github.com/dumpsterfireproject))
+
 ## [v0.12.5]
 ### Changed
 - Changed underlying cobra command setup to return errors instead of calling `os.Exit` directly to enable simpler testing. ([454](https://github.com/cucumber/godog/pull/454) - [mxygem](https://github.com/mxygem))
