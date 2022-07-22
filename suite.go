@@ -346,10 +346,12 @@ func (s *suite) maybeSubSteps(ctx context.Context, result interface{}) (context.
 		return ctx, fmt.Errorf("unexpected error, should have been []string: %T - %+v", result, result)
 	}
 
+	var err error
+
 	for _, text := range steps {
 		if def := s.matchStepText(text); def == nil {
 			return ctx, ErrUndefined
-		} else if ctx, err := s.maybeSubSteps(def.Run(ctx)); err != nil {
+		} else if ctx, err = s.maybeSubSteps(def.Run(ctx)); err != nil {
 			return ctx, fmt.Errorf("%s: %+v", text, err)
 		}
 	}

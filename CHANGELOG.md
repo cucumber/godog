@@ -12,6 +12,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 - README example is updated with `context.Context` and `go test` usage. ([477](https://github.com/cucumber/godog/pull/477) - [vearutop](https://github.com/vearutop)) 
 
 ### Fixed
+- Fixed a bug which would ignore the context returned from a substep.([488](https://github.com/cucumber/godog/pull/488) - [wichert](https://github.com/wichert))
 - Fixed a bug which would cause a panic when using the pretty formatter with a feature that contained a rule. ([480](https://github.com/cucumber/godog/pull/480) - [dumpsterfireproject](https://github.com/dumpsterfireproject))
 
 ## [v0.12.5]
