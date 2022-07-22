@@ -132,6 +132,15 @@ func InitializeScenario(ctx *ScenarioContext) {
 		return context.WithValue(ctx, ctxKey("StepState"), true)
 	})
 
+	ctx.Step(`^I return a context from a step$`, tc.iReturnAContextFromAStep)
+	ctx.Step(`^I should see the context in the next step$`, tc.iShouldSeeTheContextInTheNextStep)
+	ctx.Step(`^I can see contexts passed in multisteps$`, func() Steps {
+		return Steps{
+			"I return a context from a step",
+			"I should see the context in the next step",
+		}
+	})
+
 	ctx.StepContext().Before(tc.inject)
 }
 
@@ -336,6 +345,23 @@ func (tc *godogFeaturesScenario) theUndefinedStepSnippetsShouldBe(body *DocStrin
 		return fmt.Errorf("snippets do not match actual: %s", f.Snippets())
 	}
 
+	return nil
+}
+
+type multiContextKey struct{}
+
+func (tc *godogFeaturesScenario) iReturnAContextFromAStep(ctx context.Context) (context.Context, error) {
+	return context.WithValue(ctx, multiContextKey{}, "value"), nil
+}
+
+func (tc *godogFeaturesScenario) iShouldSeeTheContextInTheNextStep(ctx context.Context) error {
+	value, ok := ctx.Value(multiContextKey{}).(string)
+	if !ok {
+		return errors.New("context does not contain our key")
+	}
+	if value != "value" {
+		return errors.New("context has the wrong value for our key")
+	}
 	return nil
 }
 
