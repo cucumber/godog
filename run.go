@@ -227,13 +227,14 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 	runner.fmt = multiFmt.FormatterFunc(suiteName, output)
 
 	var err error
-	if len(opt.Features) <= 0 {
-		if runner.features, err = parser.ParseFeatures(opt.Tags, opt.Paths); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			return exitOptionError
-		}
+	if len(opt.Paths) > 0 {
+		runner.features, err = parser.ParseFeatures(opt.Tags, opt.Paths)
 	} else {
-		runner.features = opt.Features
+		runner.features, err = parser.ParseFromBytes(opt.Tags, opt.FeatureContents)
+	}
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return exitOptionError
 	}
 
 	runner.storage = storage.NewStorage()
@@ -340,22 +341,6 @@ func (ts TestSuite) RetrieveFeatures() ([]*models.Feature, error) {
 	}
 
 	return parser.ParseFeatures(opt.Tags, opt.Paths)
-}
-
-// should be a map of string[]byte where the string is the path name of the feature file
-// and the []byte is the bytes read from the file
-func (ts TestSuite) RetrieveFeaturesFromBytes(featuresInputs map[string][]byte) ([]*models.Feature, error) {
-	opt := ts.Options
-
-	if opt == nil {
-		var err error
-		opt, err = getDefaultOptions()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return parser.ParseFromBytes(opt.Tags, featuresInputs)
 }
 
 func getDefaultOptions() (*Options, error) {
