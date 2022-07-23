@@ -227,10 +227,10 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 	runner.fmt = multiFmt.FormatterFunc(suiteName, output)
 
 	var err error
-	if len(opt.Paths) > 0 {
-		runner.features, err = parser.ParseFeatures(opt.Tags, opt.Paths)
-	} else {
+	if len(opt.FeatureContents) > 0 {
 		runner.features, err = parser.ParseFromBytes(opt.Tags, opt.FeatureContents)
+	} else {
+		runner.features, err = parser.ParseFeatures(opt.Tags, opt.Paths)
 	}
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)

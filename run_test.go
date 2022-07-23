@@ -263,6 +263,46 @@ func Test_ByDefaultRunsFeaturesPath(t *testing.T) {
 	assert.Equal(t, exitSuccess, status)
 }
 
+func Test_RunsWithFeatureContentsOption(t *testing.T) {
+	items, err := ioutil.ReadDir("./features")
+	require.NoError(t, err)
+
+	featureContents := make(map[string][]byte)
+	for _, item := range items {
+		if !item.IsDir() && strings.Contains(item.Name(), ".feature"){
+			contents, err := os.ReadFile("./features/"+item.Name())
+			require.NoError(t, err)
+			featureContents[item.Name()] = contents
+		}
+	}
+
+	opts := Options{
+		Format: "progress",
+		Output: ioutil.Discard,
+		Strict: true,
+		FeatureContents: featureContents,
+	}
+
+	status := TestSuite{
+		Name:                "fails",
+		ScenarioInitializer: func(_ *ScenarioContext) {},
+		Options:             &opts,
+	}.Run()
+
+	// should fail in strict mode due to undefined steps
+	assert.Equal(t, exitFailure, status)
+
+	opts.Strict = false
+	status = TestSuite{
+		Name:                "succeeds",
+		ScenarioInitializer: func(_ *ScenarioContext) {},
+		Options:             &opts,
+	}.Run()
+
+	// should succeed in non strict mode due to undefined steps
+	assert.Equal(t, exitSuccess, status)
+}
+
 func bufErrorPipe(t *testing.T) (io.ReadCloser, func()) {
 	stderr := os.Stderr
 	r, w, err := os.Pipe()
