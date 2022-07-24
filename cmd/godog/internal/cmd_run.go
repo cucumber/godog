@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/cucumber/godog/colors"
 	"github.com/cucumber/godog/internal/builder"
 	"github.com/cucumber/godog/internal/flags"
 )
@@ -42,6 +43,9 @@ buildable go source.`,
 }
 
 func runCmdRunFunc(cmd *cobra.Command, args []string) error {
+	fmt.Println(colors.Yellow("Use of godog CLI is deprecated, please use *testing.T instead."))
+	fmt.Println(colors.Yellow("See https://github.com/cucumber/godog/discussions/478 for details."))
+
 	osArgs := os.Args[1:]
 
 	if len(osArgs) > 0 && osArgs[0] == "run" {

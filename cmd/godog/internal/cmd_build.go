@@ -5,7 +5,9 @@ import (
 	"go/build"
 	"path/filepath"
 
+	"github.com/cucumber/godog/colors"
 	"github.com/cucumber/godog/internal/builder"
+
 	"github.com/spf13/cobra"
 )
 
@@ -37,6 +39,9 @@ The test runner can be executed with the same flags as when using godog run.`,
 }
 
 func buildCmdRunFunc(cmd *cobra.Command, args []string) error {
+	fmt.Println(colors.Yellow("Use of godog CLI is deprecated, please use *testing.T instead."))
+	fmt.Println(colors.Yellow("See https://github.com/cucumber/godog/discussions/478 for details."))
+
 	bin, err := filepath.Abs(buildOutput)
 	if err != nil {
 		return fmt.Errorf("could not locate absolute path for: %q. reason: %v", buildOutput, err)
