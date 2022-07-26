@@ -37,6 +37,27 @@ func Test_FeatureFilePathParser(t *testing.T) {
 	}
 }
 
+func Test_ParseFromBytes_FromMultipleFeatures_DuplicateNames(t *testing.T) {
+	eatGodogContents := `
+Feature: eat godogs
+  In order to be happy
+  As a hungry gopher
+  I need to be able to eat godogs
+
+  Scenario: Eat 5 out of 12
+    Given there are 12 godogs
+    When I eat 5
+    Then there should be 7 remaining`
+	input := []parser.FeatureContent{
+		{Name: "MyCoolDuplicatedFeature", Contents: []byte(eatGodogContents)},
+		{Name: "MyCoolDuplicatedFeature", Contents: []byte(eatGodogContents)},
+	}
+
+	featureFromBytes, err := parser.ParseFromBytes("", input)
+	require.NoError(t, err)
+	require.Len(t, featureFromBytes, 1)
+}
+
 func Test_ParseFromBytes_FromMultipleFeatures(t *testing.T) {
 	featureFileName := "godogs.feature"
 	eatGodogContents := `
