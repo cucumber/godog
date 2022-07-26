@@ -267,19 +267,22 @@ func Test_RunsWithFeatureContentsOption(t *testing.T) {
 	items, err := ioutil.ReadDir("./features")
 	require.NoError(t, err)
 
-	featureContents := make(map[string][]byte)
+	var featureContents []Feature
 	for _, item := range items {
-		if !item.IsDir() && strings.Contains(item.Name(), ".feature"){
-			contents, err := os.ReadFile("./features/"+item.Name())
+		if !item.IsDir() && strings.Contains(item.Name(), ".feature") {
+			contents, err := os.ReadFile("./features/" + item.Name())
 			require.NoError(t, err)
-			featureContents[item.Name()] = contents
+			featureContents = append(featureContents, Feature{
+				Name:     item.Name(),
+				Contents: contents,
+			})
 		}
 	}
 
 	opts := Options{
-		Format: "progress",
-		Output: ioutil.Discard,
-		Strict: true,
+		Format:          "progress",
+		Output:          ioutil.Discard,
+		Strict:          true,
 		FeatureContents: featureContents,
 	}
 

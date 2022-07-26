@@ -63,8 +63,8 @@ Feature: eat godogs
 	require.NoError(t, err)
 	require.Len(t, featureFromFile, 1)
 
-	input := map[string][]byte{
-		filepath.Join(baseDir, featureFileName): []byte(eatGodogContents),
+	input := []parser.FeatureContent{
+		{Name: filepath.Join(baseDir, featureFileName), Contents: []byte(eatGodogContents)},
 	}
 
 	featureFromBytes, err := parser.ParseFromBytes("", input)

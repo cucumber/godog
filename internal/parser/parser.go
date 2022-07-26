@@ -13,6 +13,7 @@ import (
 	"github.com/cucumber/gherkin-go/v19"
 	"github.com/cucumber/messages-go/v16"
 
+	"github.com/cucumber/godog/internal/flags"
 	"github.com/cucumber/godog/internal/models"
 	"github.com/cucumber/godog/internal/tags"
 )
@@ -178,14 +179,16 @@ func ParseFeatures(filter string, paths []string) ([]*models.Feature, error) {
 	return features, nil
 }
 
-func ParseFromBytes(filter string, featuresInputs map[string][]byte) ([]*models.Feature, error) {
+type FeatureContent = flags.Feature
+
+func ParseFromBytes(filter string, featuresInputs []FeatureContent) ([]*models.Feature, error) {
 	var order int
 
 	featureIdxs := make(map[string]int)
 	uniqueFeatureURI := make(map[string]*models.Feature)
 	newIDFunc := (&messages.Incrementing{}).NewId
-	for path, feature := range featuresInputs {
-		ft, err := parseBytes(path, feature, newIDFunc)
+	for _, f := range featuresInputs {
+		ft, err := parseBytes(f.Name, f.Contents, newIDFunc)
 		if err != nil {
 			return nil, err
 		}
