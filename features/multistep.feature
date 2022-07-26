@@ -138,3 +138,26 @@ Feature: run features with nested steps
       """
       I should have 1 scenario registered
       """
+
+  Scenario: context passed between steps
+    Given a feature "normal.feature" file:
+      """
+      Feature: normal feature
+
+        Scenario: run passing multistep
+          Given I return a context from a step
+          Then I should see the context in the next step
+      """
+    When I run feature suite
+    Then the suite should have passed
+
+  Scenario: context passed between steps
+    Given a feature "normal.feature" file:
+      """
+      Feature: normal feature
+
+      Scenario: run passing multistep
+        Given I can see contexts passed in multisteps
+      """
+    When I run feature suite
+    Then the suite should have passed
