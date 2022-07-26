@@ -8,6 +8,7 @@ import (
 
 	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/builder"
+	"github.com/cucumber/godog/internal/flags"
 	"github.com/cucumber/godog/internal/models"
 	"github.com/cucumber/messages-go/v16"
 )
@@ -316,3 +317,5 @@ func (ctx *ScenarioContext) Step(expr, stepFunc interface{}) {
 func Build(bin string) error {
 	return builder.Build(bin)
 }
+
+type Feature = flags.Feature

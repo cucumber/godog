@@ -263,6 +263,92 @@ func Test_ByDefaultRunsFeaturesPath(t *testing.T) {
 	assert.Equal(t, exitSuccess, status)
 }
 
+func Test_RunsWithFeatureContentsOption(t *testing.T) {
+	items, err := ioutil.ReadDir("./features")
+	require.NoError(t, err)
+
+	var featureContents []Feature
+	for _, item := range items {
+		if !item.IsDir() && strings.Contains(item.Name(), ".feature") {
+			contents, err := os.ReadFile("./features/" + item.Name())
+			require.NoError(t, err)
+			featureContents = append(featureContents, Feature{
+				Name:     item.Name(),
+				Contents: contents,
+			})
+		}
+	}
+
+	opts := Options{
+		Format:          "progress",
+		Output:          ioutil.Discard,
+		Strict:          true,
+		FeatureContents: featureContents,
+	}
+
+	status := TestSuite{
+		Name:                "fails",
+		ScenarioInitializer: func(_ *ScenarioContext) {},
+		Options:             &opts,
+	}.Run()
+
+	// should fail in strict mode due to undefined steps
+	assert.Equal(t, exitFailure, status)
+
+	opts.Strict = false
+	status = TestSuite{
+		Name:                "succeeds",
+		ScenarioInitializer: func(_ *ScenarioContext) {},
+		Options:             &opts,
+	}.Run()
+
+	// should succeed in non strict mode due to undefined steps
+	assert.Equal(t, exitSuccess, status)
+}
+
+func Test_RunsWithFeatureContentsAndPathsOptions(t *testing.T) {
+	featureContents := []Feature{
+		{
+			Name: "MySuperCoolFeature",
+			Contents: []byte(`
+Feature: run features from bytes
+  Scenario: should run a normal feature
+    Given a feature "normal.feature" file:
+      """
+      Feature: normal feature
+
+        Scenario: parse a scenario
+          Given a feature path "features/load.feature:6"
+          When I parse features
+          Then I should have 1 scenario registered
+      """
+    When I run feature suite
+    Then the suite should have passed
+    And the following steps should be passed:
+      """
+      a feature path "features/load.feature:6"
+      I parse features
+      I should have 1 scenario registered
+      """`),
+		},
+	}
+
+	opts := Options{
+		Format:          "progress",
+		Output:          ioutil.Discard,
+		Paths:           []string{"./features"},
+		FeatureContents: featureContents,
+	}
+
+	status := TestSuite{
+		Name:                "succeeds",
+		ScenarioInitializer: func(_ *ScenarioContext) {},
+		Options:             &opts,
+	}.Run()
+
+	assert.Equal(t, exitSuccess, status)
+}
+
 func bufErrorPipe(t *testing.T) (io.ReadCloser, func()) {
 	stderr := os.Stderr
 	r, w, err := os.Pipe()

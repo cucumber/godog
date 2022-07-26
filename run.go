@@ -213,7 +213,7 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 		return exitOptionError
 	}
 
-	if len(opt.Paths) == 0 {
+	if len(opt.Paths) == 0 && len(opt.FeatureContents) == 0 {
 		inf, err := os.Stat("features")
 		if err == nil && inf.IsDir() {
 			opt.Paths = []string{"features"}
@@ -226,10 +226,22 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 
 	runner.fmt = multiFmt.FormatterFunc(suiteName, output)
 
-	var err error
-	if runner.features, err = parser.ParseFeatures(opt.Tags, opt.Paths); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return exitOptionError
+	if len(opt.FeatureContents) > 0 {
+		features, err := parser.ParseFromBytes(opt.Tags, opt.FeatureContents)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return exitOptionError
+		}
+		runner.features = append(runner.features, features...)
+	}
+
+	if len(opt.Paths) > 0 {
+		features, err := parser.ParseFeatures(opt.Tags, opt.Paths)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return exitOptionError
+		}
+		runner.features = append(runner.features, features...)
 	}
 
 	runner.storage = storage.NewStorage()

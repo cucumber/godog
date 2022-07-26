@@ -13,6 +13,7 @@ import (
 	"github.com/cucumber/gherkin-go/v19"
 	"github.com/cucumber/messages-go/v16"
 
+	"github.com/cucumber/godog/internal/flags"
 	"github.com/cucumber/godog/internal/models"
 	"github.com/cucumber/godog/internal/tags"
 )
@@ -39,6 +40,22 @@ func parseFeatureFile(path string, newIDFunc func() string) (*models.Feature, er
 	}
 
 	defer reader.Close()
+
+	var buf bytes.Buffer
+	gherkinDocument, err := gherkin.ParseGherkinDocument(io.TeeReader(reader, &buf), newIDFunc)
+	if err != nil {
+		return nil, fmt.Errorf("%s - %v", path, err)
+	}
+
+	gherkinDocument.Uri = path
+	pickles := gherkin.Pickles(*gherkinDocument, path, newIDFunc)
+
+	f := models.Feature{GherkinDocument: gherkinDocument, Pickles: pickles, Content: buf.Bytes()}
+	return &f, nil
+}
+
+func parseBytes(path string, feature []byte, newIDFunc func() string) (*models.Feature, error) {
+	reader := bytes.NewReader(feature)
 
 	var buf bytes.Buffer
 	gherkinDocument, err := gherkin.ParseGherkinDocument(io.TeeReader(reader, &buf), newIDFunc)
@@ -149,6 +166,41 @@ func ParseFeatures(filter string, paths []string) ([]*models.Feature, error) {
 
 			order++
 		}
+	}
+
+	var features = make([]*models.Feature, len(uniqueFeatureURI))
+	for uri, feature := range uniqueFeatureURI {
+		idx := featureIdxs[uri]
+		features[idx] = feature
+	}
+
+	features = filterFeatures(filter, features)
+
+	return features, nil
+}
+
+type FeatureContent = flags.Feature
+
+func ParseFromBytes(filter string, featuresInputs []FeatureContent) ([]*models.Feature, error) {
+	var order int
+
+	featureIdxs := make(map[string]int)
+	uniqueFeatureURI := make(map[string]*models.Feature)
+	newIDFunc := (&messages.Incrementing{}).NewId
+	for _, f := range featuresInputs {
+		ft, err := parseBytes(f.Name, f.Contents, newIDFunc)
+		if err != nil {
+			return nil, err
+		}
+
+		if _, duplicate := uniqueFeatureURI[ft.Uri]; duplicate {
+			continue
+		}
+
+		uniqueFeatureURI[ft.Uri] = ft
+		featureIdxs[ft.Uri] = order
+
+		order++
 	}
 
 	var features = make([]*models.Feature, len(uniqueFeatureURI))
