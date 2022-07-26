@@ -306,6 +306,49 @@ func Test_RunsWithFeatureContentsOption(t *testing.T) {
 	assert.Equal(t, exitSuccess, status)
 }
 
+func Test_RunsWithFeatureContentsAndPathsOptions(t *testing.T) {
+	featureContents := []Feature{
+		{
+			Name: "MySuperCoolFeature",
+			Contents: []byte(`
+Feature: run features from bytes
+  Scenario: should run a normal feature
+    Given a feature "normal.feature" file:
+      """
+      Feature: normal feature
+
+        Scenario: parse a scenario
+          Given a feature path "features/load.feature:6"
+          When I parse features
+          Then I should have 1 scenario registered
+      """
+    When I run feature suite
+    Then the suite should have passed
+    And the following steps should be passed:
+      """
+      a feature path "features/load.feature:6"
+      I parse features
+      I should have 1 scenario registered
+      """`),
+		},
+	}
+
+	opts := Options{
+		Format:          "progress",
+		Output:          ioutil.Discard,
+		Paths:           []string{"./features"},
+		FeatureContents: featureContents,
+	}
+
+	status := TestSuite{
+		Name:                "succeeds",
+		ScenarioInitializer: func(_ *ScenarioContext) {},
+		Options:             &opts,
+	}.Run()
+
+	assert.Equal(t, exitSuccess, status)
+}
+
 func bufErrorPipe(t *testing.T) (io.ReadCloser, func()) {
 	stderr := os.Stderr
 	r, w, err := os.Pipe()
