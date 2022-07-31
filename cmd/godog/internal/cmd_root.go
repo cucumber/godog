@@ -44,7 +44,8 @@ func runRootCmd(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	fmt.Println(colors.Yellow("Use of godog without a sub-command is deprecated. Please use godog build, godog run or godog version."))
+	fmt.Println(colors.Yellow("Use of godog CLI is deprecated, please use *testing.T instead."))
+	fmt.Println(colors.Yellow("See https://github.com/cucumber/godog/discussions/478 for details."))
 	return runCmdRunFunc(cmd, args)
 }
 
