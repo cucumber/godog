@@ -141,6 +141,12 @@ func InitializeScenario(ctx *ScenarioContext) {
 		}
 	})
 
+	ctx.Step(`I store value "([^"]*)"$`, tc.iStoreValue)
+	ctx.Step(`^the stored value is "([^"]*)"$`, tc.theStoredValueIs)
+	ctx.Step(`^I run multisteps that set a value$`, func() Steps {
+		return Steps{`I store value "{{X}}"`}
+	})
+
 	ctx.StepContext().Before(tc.inject)
 }
 
@@ -361,6 +367,23 @@ func (tc *godogFeaturesScenario) iShouldSeeTheContextInTheNextStep(ctx context.C
 	}
 	if value != "value" {
 		return errors.New("context has the wrong value for our key")
+	}
+	return nil
+}
+
+type valueContextKey struct{}
+
+func (tc *godogFeaturesScenario) iStoreValue(ctx context.Context, value string) context.Context {
+	return context.WithValue(ctx, valueContextKey{}, value)
+}
+
+func (tc *godogFeaturesScenario) theStoredValueIs(ctx context.Context, want string) error {
+	got, ok := ctx.Value(valueContextKey{}).(string)
+	if !ok {
+		return errors.New("context does not contain our key")
+	}
+	if got != want {
+		return fmt.Errorf("context has the wrong value for our key: got %s, want %s", got, want)
 	}
 	return nil
 }
