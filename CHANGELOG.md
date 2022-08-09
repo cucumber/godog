@@ -14,6 +14,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ### Fixed
 - Fixed a bug which would ignore the context returned from a substep.([488](https://github.com/cucumber/godog/pull/488) - [wichert](https://github.com/wichert))
 - Fixed a bug which would cause a panic when using the pretty formatter with a feature that contained a rule. ([480](https://github.com/cucumber/godog/pull/480) - [dumpsterfireproject](https://github.com/dumpsterfireproject))
+- Multiple invocations of AfterScenario hooks in case of undefined steps. ([494](https://github.com/cucumber/godog/pull/494) - [vearutop](https://github.com/vearutop))
 
 ### Deprecated
 - `godog` CLI tool prints deprecation warning. ([489](https://github.com/cucumber/godog/pull/489) - [vearutop](https://github.com/vearutop))
