@@ -1,0 +1,48 @@
+# Gorelease comments public API changes to pull request.
+name: gorelease
+on:
+  pull_request:
+
+# Cancel the workflow in progress in newer build is about to start.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  GO_VERSION: 1.19.x
+jobs:
+  gorelease:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Go stable
+        if: env.GO_VERSION != 'tip'
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Gorelease cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/go/bin/gorelease
+          key: ${{ runner.os }}-gorelease-generic
+      - name: Gorelease
+        id: gorelease
+        run: |
+          test -e ~/go/bin/gorelease || go install golang.org/x/exp/cmd/gorelease@latest
+          OUTPUT=$(gorelease 2>&1 || exit 0)
+          echo "${OUTPUT}"
+          OUTPUT="${OUTPUT//$'\n'/%0A}"
+          echo "::set-output name=report::$OUTPUT"
+      - name: Comment Report
+        continue-on-error: true
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: gorelease
+          message: |
+            ### Go API Changes
+
+            <pre>
+            ${{ steps.gorelease.outputs.report }}
+            </pre>
