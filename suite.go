@@ -99,7 +99,7 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, prevS
 		rctx, err = s.runAfterStepHooks(ctx, step, sr.Status, err)
 
 		// Trigger after scenario on failing or last step to attach possible hook error to step.
-		if sr.Status != StepSkipped && ((err == nil && isLast) || err != nil) {
+		if isLast || (sr.Status != StepSkipped && sr.Status != StepUndefined && err != nil) {
 			rctx, err = s.runAfterScenarioHooks(rctx, pickle, err)
 		}
 
