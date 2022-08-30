@@ -69,6 +69,8 @@ type Options struct {
 	// where the contents of each feature is stored as a byte slice
 	// in a map entry
 	FeatureContents []Feature
+
+	ShowHelp bool
 }
 
 type Feature struct {

@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -18,7 +19,8 @@ var descFeaturesArgument = "Optional feature(s) to run. Can be:\n" +
 	s(4) + "- dir " + colors.Yellow("(features/)") + "\n" +
 	s(4) + "- feature " + colors.Yellow("(*.feature)") + "\n" +
 	s(4) + "- scenario at specific line " + colors.Yellow("(*.feature:10)") + "\n" +
-	"If no feature paths are listed, suite tries " + colors.Yellow("features") + " path by default.\n"
+	"If no feature paths are listed, suite tries " + colors.Yellow("features") + " path by default.\n" +
+	"Multiple comma-separated values can be provided.\n"
 
 var descConcurrencyOption = "Run the test suite with concurrency level:\n" +
 	s(4) + "- " + colors.Yellow(`= 1`) + ": supports all types of formats.\n" +
@@ -48,15 +50,30 @@ func FlagSet(opt *Options) *flag.FlagSet {
 
 // BindFlags binds godog flags to given flag set prefixed
 // by given prefix, without overriding usage
-//
-// Deprecated: Use BindCommandLineFlags(prefix, &opts)
-// instead of BindFlags(prefix, flag.CommandLine, &opts)
 func BindFlags(prefix string, set *flag.FlagSet, opt *Options) {
+	set.Usage = usage(set, set.Output())
+
 	descFormatOption := "How to format tests output. Built-in formats:\n"
-	// @TODO: sort by name
-	for name, desc := range AvailableFormatters() {
-		descFormatOption += s(4) + "- " + colors.Yellow(name) + ": " + desc + "\n"
+
+	type fm struct {
+		name string
+		desc string
 	}
+	var fms []fm
+	for name, desc := range AvailableFormatters() {
+		fms = append(fms, fm{
+			name: name,
+			desc: desc,
+		})
+	}
+	sort.Slice(fms, func(i, j int) bool {
+		return fms[i].name < fms[j].name
+	})
+
+	for _, fm := range fms {
+		descFormatOption += s(4) + "- " + colors.Yellow(fm.name) + ": " + fm.desc + "\n"
+	}
+
 	descFormatOption = strings.TrimSpace(descFormatOption)
 
 	// override flag defaults if any corresponding properties were supplied on the incoming `opt`
@@ -107,6 +124,14 @@ func BindFlags(prefix string, set *flag.FlagSet, opt *Options) {
 	set.BoolVar(&opt.Strict, prefix+"strict", defStrict, "Fail suite when there are pending or undefined steps.")
 	set.BoolVar(&opt.NoColors, prefix+"no-colors", defNoColors, "Disable ansi colors.")
 	set.Var(&randomSeed{&opt.Randomize}, prefix+"random", descRandomOption)
+	set.BoolVar(&opt.ShowHelp, "godog.help", false, "Show usage help.")
+	set.Func(prefix+"paths", descFeaturesArgument, func(paths string) error {
+		if paths != "" {
+			opt.Paths = strings.Split(paths, ",")
+		}
+
+		return nil
+	})
 }
 
 type flagged struct {
@@ -183,15 +208,7 @@ func usage(set *flag.FlagSet, w io.Writer) func() {
 
 		// --- GENERAL ---
 		fmt.Fprintln(w, colors.Yellow("Usage:"))
-		fmt.Fprintf(w, s(2)+"godog [options] [<features>]\n\n")
-		// description
-		fmt.Fprintln(w, "Builds a test package and runs given feature files.")
-		fmt.Fprintf(w, "Command should be run from the directory of tested package and contain buildable go source.\n\n")
-
-		// --- ARGUMENTS ---
-		fmt.Fprintln(w, colors.Yellow("Arguments:"))
-		// --> features
-		fmt.Fprintln(w, opt("features", descFeaturesArgument))
+		fmt.Fprintf(w, s(2)+"go test [options]\n\n")
 
 		// --- OPTIONS ---
 		fmt.Fprintln(w, colors.Yellow("Options:"))
