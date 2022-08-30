@@ -70,6 +70,7 @@ type Options struct {
 	// in a map entry
 	FeatureContents []Feature
 
+	// ShowHelp enables suite to show CLI flags usage help and exit.
 	ShowHelp bool
 }
 
