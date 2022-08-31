@@ -69,6 +69,9 @@ type Options struct {
 	// where the contents of each feature is stored as a byte slice
 	// in a map entry
 	FeatureContents []Feature
+
+	// ShowHelp enables suite to show CLI flags usage help and exit.
+	ShowHelp bool
 }
 
 type Feature struct {

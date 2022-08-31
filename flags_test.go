@@ -121,7 +121,9 @@ func TestBindFlagsShouldRespectOptDefaults(t *testing.T) {
 		Randomize:           int64(7),
 	}
 
-	BindFlags("optDefaults.", flag.CommandLine, &opts)
+	flagSet := flag.FlagSet{}
+
+	BindFlags("optDefaults.", &flagSet, &opts)
 
 	if opts.Format != "progress" {
 		t.Fatalf("expected Format: progress, but it was: %s", opts.Format)
