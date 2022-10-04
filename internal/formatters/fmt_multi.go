@@ -3,9 +3,9 @@ package formatters
 import (
 	"io"
 
+	"github.com/cucumber/common/messages/go/v19"
 	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/storage"
-	"github.com/cucumber/messages-go/v16"
 )
 
 // MultiFormatter passes test progress to multiple formatters.

@@ -18,7 +18,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cucumber/messages-go/v16"
+	"github.com/cucumber/common/messages/go/v19"
 
 	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/models"

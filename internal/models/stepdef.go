@@ -7,8 +7,7 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/cucumber/messages-go/v16"
-
+	"github.com/cucumber/common/messages/go/v19"
 	"github.com/cucumber/godog/formatters"
 )
 
@@ -32,15 +31,6 @@ type StepDefinition struct {
 	Nested    bool
 	Undefined []string
 }
-
-type Keyword int64
-
-const (
-	Given Keyword = iota
-	When
-	Then
-	None
-)
 
 var typeOfContext = reflect.TypeOf((*context.Context)(nil)).Elem()
 
