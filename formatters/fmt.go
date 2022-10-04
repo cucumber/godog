@@ -4,6 +4,7 @@ import (
 	"io"
 	"regexp"
 
+	"github.com/cucumber/godog/internal/models"
 	"github.com/cucumber/messages-go/v16"
 )
 
@@ -88,4 +89,5 @@ type FormatterFunc func(string, io.Writer) Formatter
 type StepDefinition struct {
 	Expr    *regexp.Regexp
 	Handler interface{}
+	Keyword models.Keyword
 }

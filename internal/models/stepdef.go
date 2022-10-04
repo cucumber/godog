@@ -33,6 +33,15 @@ type StepDefinition struct {
 	Undefined []string
 }
 
+type Keyword int64
+
+const (
+	Given Keyword = iota
+	When
+	Then
+	None
+)
+
 var typeOfContext = reflect.TypeOf((*context.Context)(nil)).Elem()
 
 // Run a step with the matched arguments using reflect
