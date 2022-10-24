@@ -73,6 +73,15 @@ func InitializeScenario(ctx *ScenarioContext) {
 	ctx.Step(`^(?:a )?passing step$`, func() error {
 		return nil
 	})
+	ctx.Given(`^(?:a )?given step$`, func() error {
+		return nil
+	})
+	ctx.When(`^(?:a )?when step$`, func() error {
+		return nil
+	})
+	ctx.Then(`^(?:a )?then step$`, func() error {
+		return nil
+	})
 
 	// Introduced to test formatter/cucumber.feature
 	ctx.Step(`^the rendered json will be as follows:$`, tc.theRenderJSONWillBe)

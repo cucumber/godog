@@ -332,11 +332,11 @@ Feature: pretty formatter
       Feature: inject long value
 
         Scenario: test scenario                        # features/inject.feature:3
-          Given Ignore I save some value X under key Y # suite_context.go:0 -> SuiteContext.func7
+          Given Ignore I save some value X under key Y # suite_context.go:0 -> SuiteContext.func10
           And I allow variable injection               # suite_context.go:0 -> *suiteContext
-          When Ignore I use value someverylonginjectionsoweacanbesureitsurpasstheinitiallongeststeplenghtanditwillhelptestsmethodsafety # suite_context.go:0 -> SuiteContext.func7
-          Then Ignore Godog rendering should not break # suite_context.go:0 -> SuiteContext.func7
-          And Ignore test                              # suite_context.go:0 -> SuiteContext.func7
+          When Ignore I use value someverylonginjectionsoweacanbesureitsurpasstheinitiallongeststeplenghtanditwillhelptestsmethodsafety # suite_context.go:0 -> SuiteContext.func10
+          Then Ignore Godog rendering should not break # suite_context.go:0 -> SuiteContext.func10
+          And Ignore test                              # suite_context.go:0 -> SuiteContext.func10
             | key | val |
             | 1   | 2   |
             | 3   | 4   |
@@ -547,4 +547,39 @@ Feature: pretty formatter
       2 scenarios (1 passed, 1 failed)
       2 steps (1 passed, 1 failed)
       0s
+    """
+
+  Scenario: Use 'given' keyword on a declared 'when' step
+    Given a feature "features/simple.feature" file:
+    """
+        Feature: simple feature with a rule
+            simple feature description
+         Rule: simple rule
+             simple rule description
+         Example: simple scenario
+            simple scenario description
+          Given a when step
+    """
+    When I run feature suite with formatter "pretty"
+    Then the rendered output will be as follows:
+    """
+      Feature: simple feature with a rule
+        simple feature description
+
+        Example: simple scenario # features/simple.feature:5
+          Given a when step
+
+      1 scenarios (1 undefined)
+      1 steps (1 undefined)
+      0s
+
+      You can implement step definitions for undefined steps with these snippets:
+
+      func aWhenStep() error {
+        return godog.ErrPending
+      }
+
+      func InitializeScenario(ctx *godog.ScenarioContext) {
+        ctx.Step(`^a when step$`, aWhenStep)
+      }
     """

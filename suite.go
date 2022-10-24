@@ -65,7 +65,7 @@ type suite struct {
 }
 
 func (s *suite) matchStep(step *messages.PickleStep) *models.StepDefinition {
-	def := s.matchStepText(step.Text)
+	def := s.matchStepTextAndType(step.Text, step.Type)
 	if def != nil && step.Argument != nil {
 		def.Args = append(def.Args, step.Argument)
 	}
@@ -147,7 +147,7 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, prevS
 		return ctx, err
 	}
 
-	if ctx, undef, err := s.maybeUndefined(ctx, step.Text, step.Argument); err != nil {
+	if ctx, undef, err := s.maybeUndefined(ctx, step.Text, step.Argument, step.Type); err != nil {
 		return ctx, err
 	} else if len(undef) > 0 {
 		if match != nil {
@@ -155,6 +155,7 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, prevS
 				StepDefinition: formatters.StepDefinition{
 					Expr:    match.Expr,
 					Handler: match.Handler,
+					Keyword: match.Keyword,
 				},
 				Args:         match.Args,
 				HandlerValue: match.HandlerValue,
@@ -297,8 +298,8 @@ func (s *suite) runAfterScenarioHooks(ctx context.Context, pickle *messages.Pick
 	return ctx, err
 }
 
-func (s *suite) maybeUndefined(ctx context.Context, text string, arg interface{}) (context.Context, []string, error) {
-	step := s.matchStepText(text)
+func (s *suite) maybeUndefined(ctx context.Context, text string, arg interface{}, stepType messages.PickleStepType) (context.Context, []string, error) {
+	step := s.matchStepTextAndType(text, stepType)
 	if nil == step {
 		return ctx, []string{text}, nil
 	}
@@ -323,7 +324,7 @@ func (s *suite) maybeUndefined(ctx context.Context, text string, arg interface{}
 		if len(lines[0]) > 0 && lines[0][len(lines[0])-1] == ':' {
 			return ctx, undefined, fmt.Errorf("nested steps cannot be multiline and have table or content body argument")
 		}
-		ctx, undef, err := s.maybeUndefined(ctx, next, nil)
+		ctx, undef, err := s.maybeUndefined(ctx, next, nil, messages.PickleStepType_UNKNOWN)
 		if err != nil {
 			return ctx, undefined, err
 		}
@@ -349,7 +350,7 @@ func (s *suite) maybeSubSteps(ctx context.Context, result interface{}) (context.
 	var err error
 
 	for _, text := range steps {
-		if def := s.matchStepText(text); def == nil {
+		if def := s.matchStepTextAndType(text, messages.PickleStepType_UNKNOWN); def == nil {
 			return ctx, ErrUndefined
 		} else if ctx, err = s.maybeSubSteps(def.Run(ctx)); err != nil {
 			return ctx, fmt.Errorf("%s: %+v", text, err)
@@ -358,9 +359,12 @@ func (s *suite) maybeSubSteps(ctx context.Context, result interface{}) (context.
 	return ctx, nil
 }
 
-func (s *suite) matchStepText(text string) *models.StepDefinition {
+func (s *suite) matchStepTextAndType(text string, stepType messages.PickleStepType) *models.StepDefinition {
 	for _, h := range s.steps {
 		if m := h.Expr.FindStringSubmatch(text); len(m) > 0 {
+			if !keywordMatches(h.Keyword, stepType) {
+				continue
+			}
 			var args []interface{}
 			for _, m := range m[1:] {
 				args = append(args, m)
@@ -372,6 +376,7 @@ func (s *suite) matchStepText(text string) *models.StepDefinition {
 				StepDefinition: formatters.StepDefinition{
 					Expr:    h.Expr,
 					Handler: h.Handler,
+					Keyword: h.Keyword,
 				},
 				Args:         args,
 				HandlerValue: h.HandlerValue,
@@ -380,6 +385,22 @@ func (s *suite) matchStepText(text string) *models.StepDefinition {
 		}
 	}
 	return nil
+}
+
+func keywordMatches(k formatters.Keyword, stepType messages.PickleStepType) bool {
+	if k == formatters.None {
+		return true
+	}
+	switch stepType {
+	case messages.PickleStepType_CONTEXT:
+		return k == formatters.Given
+	case messages.PickleStepType_ACTION:
+		return k == formatters.When
+	case messages.PickleStepType_OUTCOME:
+		return k == formatters.Then
+	default:
+		return true
+	}
 }
 
 func (s *suite) runSteps(ctx context.Context, pickle *Scenario, steps []*Step) (context.Context, error) {
