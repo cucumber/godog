@@ -164,6 +164,15 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 }
 ```
 
+Alternatively, you can also specify the keyword (Given, When, Then...) when creating the step definitions:
+``` go
+func InitializeScenario(ctx *godog.ScenarioContext) {
+        ctx.Given(`^I eat (\d+)$`, iEat)
+        ctx.When(`^there are (\d+) godogs$`, thereAreGodogs)
+        ctx.Then(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
+}
+```
+
 Our module should now look like this:
 ```
 godogs
