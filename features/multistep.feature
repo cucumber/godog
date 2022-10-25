@@ -161,3 +161,40 @@ Feature: run features with nested steps
       """
     When I run feature suite
     Then the suite should have passed
+
+  Scenario: should run passing multistep using keyword function successfully
+    Given a feature "normal.feature" file:
+      """
+      Feature: normal feature
+
+        Scenario: run passing multistep
+          Given passing step
+          Then passing multistep using 'then' function
+      """
+    When I run feature suite
+    Then the suite should have passed
+    And the following steps should be passed:
+      """
+      passing step
+      passing multistep using 'then' function
+      """
+
+  Scenario: should identify undefined multistep using keyword function
+    Given a feature "normal.feature" file:
+      """
+      Feature: normal feature
+
+        Scenario: run passing multistep
+          Given passing step
+          Then undefined multistep using 'then' function
+      """
+    When I run feature suite
+    Then the suite should have passed
+    And the following steps should be passed:
+      """
+      passing step
+      """
+    And the following step should be undefined:
+      """
+      undefined multistep using 'then' function
+      """

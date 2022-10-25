@@ -100,7 +100,15 @@ func InitializeScenario(ctx *ScenarioContext) {
 		return Steps{"passing step", "undefined step", "passing step"}
 	})
 
+	ctx.Then(`^(?:a |an )?undefined multistep using 'then' function$`, func() Steps {
+		return Steps{"passing step", "undefined step", "passing step"}
+	})
+
 	ctx.Step(`^(?:a )?passing multistep$`, func() Steps {
+		return Steps{"passing step", "passing step", "passing step"}
+	})
+
+	ctx.Then(`^(?:a )?passing multistep using 'then' function$`, func() Steps {
 		return Steps{"passing step", "passing step", "passing step"}
 	})
 

@@ -332,11 +332,11 @@ Feature: pretty formatter
       Feature: inject long value
 
         Scenario: test scenario                        # features/inject.feature:3
-          Given Ignore I save some value X under key Y # suite_context.go:0 -> SuiteContext.func10
+          Given Ignore I save some value X under key Y # suite_context.go:0 -> SuiteContext.func12
           And I allow variable injection               # suite_context.go:0 -> *suiteContext
-          When Ignore I use value someverylonginjectionsoweacanbesureitsurpasstheinitiallongeststeplenghtanditwillhelptestsmethodsafety # suite_context.go:0 -> SuiteContext.func10
-          Then Ignore Godog rendering should not break # suite_context.go:0 -> SuiteContext.func10
-          And Ignore test                              # suite_context.go:0 -> SuiteContext.func10
+          When Ignore I use value someverylonginjectionsoweacanbesureitsurpasstheinitiallongeststeplenghtanditwillhelptestsmethodsafety # suite_context.go:0 -> SuiteContext.func12
+          Then Ignore Godog rendering should not break # suite_context.go:0 -> SuiteContext.func12
+          And Ignore test                              # suite_context.go:0 -> SuiteContext.func12
             | key | val |
             | 1   | 2   |
             | 3   | 4   |
@@ -582,4 +582,105 @@ Feature: pretty formatter
       func InitializeScenario(ctx *godog.ScenarioContext) {
         ctx.Step(`^a when step$`, aWhenStep)
       }
+    """
+
+  Scenario: Use 'when' keyword on a declared 'then' step
+    Given a feature "features/simple.feature" file:
+    """
+        Feature: simple feature with a rule
+            simple feature description
+         Rule: simple rule
+             simple rule description
+         Example: simple scenario
+            simple scenario description
+          When a then step
+    """
+    When I run feature suite with formatter "pretty"
+    Then the rendered output will be as follows:
+    """
+      Feature: simple feature with a rule
+        simple feature description
+
+        Example: simple scenario # features/simple.feature:5
+          When a then step
+
+      1 scenarios (1 undefined)
+      1 steps (1 undefined)
+      0s
+
+      You can implement step definitions for undefined steps with these snippets:
+
+      func aThenStep() error {
+        return godog.ErrPending
+      }
+
+      func InitializeScenario(ctx *godog.ScenarioContext) {
+        ctx.Step(`^a then step$`, aThenStep)
+      }
+    """
+
+  Scenario: Use 'then' keyword on a declared 'given' step
+    Given a feature "features/simple.feature" file:
+    """
+        Feature: simple feature with a rule
+            simple feature description
+         Rule: simple rule
+             simple rule description
+         Example: simple scenario
+            simple scenario description
+          Then a given step
+    """
+    When I run feature suite with formatter "pretty"
+    Then the rendered output will be as follows:
+    """
+      Feature: simple feature with a rule
+        simple feature description
+
+        Example: simple scenario # features/simple.feature:5
+          Then a given step
+
+      1 scenarios (1 undefined)
+      1 steps (1 undefined)
+      0s
+
+      You can implement step definitions for undefined steps with these snippets:
+
+      func aGivenStep() error {
+        return godog.ErrPending
+      }
+
+      func InitializeScenario(ctx *godog.ScenarioContext) {
+        ctx.Step(`^a given step$`, aGivenStep)
+      }
+    """
+
+  Scenario: Match keyword functions correctly
+    Given a feature "features/simple.feature" file:
+    """
+        Feature: simple feature with a rule
+            simple feature description
+         Rule: simple rule
+             simple rule description
+         Example: simple scenario
+            simple scenario description
+          Given a given step
+          When a when step
+          Then a then step
+          And a then step
+    """
+    When I run feature suite with formatter "pretty"
+    Then the rendered output will be as follows:
+    """
+      Feature: simple feature with a rule
+        simple feature description
+
+	    Example: simple scenario # features/simple.feature:5
+	      Given a given step     # suite_context_test.go:0 -> InitializeScenario.func3
+	      When a when step       # suite_context_test.go:0 -> InitializeScenario.func4
+	      Then a then step       # suite_context_test.go:0 -> InitializeScenario.func5
+	      And a then step        # suite_context_test.go:0 -> InitializeScenario.func5
+
+      1 scenarios (1 passed)
+      4 steps (4 passed)
+      0s
     """
