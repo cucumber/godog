@@ -8,6 +8,9 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ## Unreleased
 
+### Added
+- Added keyword functions. ([509](https://github.com/cucumber/godog/pull/509) - [otrava7](https://github.com/otrava7))
+
 ### Changed
 - README example is updated with `context.Context` and `go test` usage. ([477](https://github.com/cucumber/godog/pull/477) - [vearutop](https://github.com/vearutop))
 - Removed deprecation of `godog.BindFlags` ([498](https://github.com/cucumber/godog/pull/498) - [vearutop](https://github.com/vearutop))
