@@ -13,8 +13,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cucumber/gherkin-go/v19"
-	"github.com/cucumber/messages-go/v16"
+	"github.com/cucumber/gherkin/go/v26"
+	"github.com/cucumber/messages/go/v21"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
