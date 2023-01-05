@@ -8,14 +8,21 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ## Unreleased
 
+## [v0.12.6]
 ### Changed
 - README example is updated with `context.Context` and `go test` usage. ([477](https://github.com/cucumber/godog/pull/477) - [vearutop](https://github.com/vearutop))
-- Removed deprecation of `godog.BindFlags` ([498](https://github.com/cucumber/godog/pull/498) - [vearutop](https://github.com/vearutop))
+- Removed deprecation of `godog.BindFlags`. ([498](https://github.com/cucumber/godog/pull/498) - [vearutop](https://github.com/vearutop))
+- Pretty Print when using rules. ([480](https://github.com/cucumber/godog/pull/480) - [dumpsterfireproject](https://github.com/dumpsterfireproject))
 
 ### Fixed
 - Fixed a bug which would ignore the context returned from a substep.([488](https://github.com/cucumber/godog/pull/488) - [wichert](https://github.com/wichert))
 - Fixed a bug which would cause a panic when using the pretty formatter with a feature that contained a rule. ([480](https://github.com/cucumber/godog/pull/480) - [dumpsterfireproject](https://github.com/dumpsterfireproject))
 - Multiple invocations of AfterScenario hooks in case of undefined steps. ([494](https://github.com/cucumber/godog/pull/494) - [vearutop](https://github.com/vearutop))
+- Add a check for missing test files and raise a more helpful error. ([468](https://github.com/cucumber/godog/pull/468) - [ALCooper12](https://github.com/ALCooper12))
+- Fix version subcommand. Do not print usage if run subcommand fails. ([475](https://github.com/cucumber/godog/pull/475) - [coopernurse](https://github.com/coopernurse))
+
+### Added
+- Add new option for created features with parsing from byte slices. ([476](https://github.com/cucumber/godog/pull/476) - [akaswenwilk](https://github.com/akaswenwilk))
 
 ### Deprecated
 - `godog` CLI tool prints deprecation warning. ([489](https://github.com/cucumber/godog/pull/489) - [vearutop](https://github.com/vearutop))
@@ -186,6 +193,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ### Changed
 - Changed code references to DATA-DOG/godog to cucumber/godog to help get things building correctly. ([mxygem](https://github.com/mxygem))
 
+[v0.12.6]: https://github.com/cucumber/godog/compare/v0.12.5...v0.12.6
 [v0.12.5]: https://github.com/cucumber/godog/compare/v0.12.4...v0.12.5
 [v0.12.4]: https://github.com/cucumber/godog/compare/v0.12.3...v0.12.4
 [v0.12.3]: https://github.com/cucumber/godog/compare/v0.12.2...v0.12.3
