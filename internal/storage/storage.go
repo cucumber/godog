@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/cucumber/common/messages/go/v19"
+	"github.com/cucumber/messages/go/v21"
 	"github.com/hashicorp/go-memdb"
 
 	"github.com/cucumber/godog/internal/models"

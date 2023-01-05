@@ -6,11 +6,11 @@ import (
 	"reflect"
 	"regexp"
 
-	"github.com/cucumber/common/messages/go/v19"
 	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/builder"
 	"github.com/cucumber/godog/internal/flags"
 	"github.com/cucumber/godog/internal/models"
+	"github.com/cucumber/messages/go/v21"
 )
 
 // GherkinDocument represents gherkin document.

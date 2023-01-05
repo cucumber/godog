@@ -3,7 +3,7 @@ package tags_test
 import (
 	"testing"
 
-	"github.com/cucumber/common/messages/go/v19"
+	"github.com/cucumber/messages/go/v21"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/cucumber/godog/internal/tags"

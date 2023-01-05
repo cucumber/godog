@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"strings"
 
-	gherkin "github.com/cucumber/common/gherkin/go/v24"
-	"github.com/cucumber/common/messages/go/v19"
+	"github.com/cucumber/gherkin/go/v26"
+	"github.com/cucumber/messages/go/v21"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/cucumber/godog/colors"

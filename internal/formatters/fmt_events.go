@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/cucumber/common/messages/go/v19"
+	"github.com/cucumber/messages/go/v21"
 
 	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/utils"
