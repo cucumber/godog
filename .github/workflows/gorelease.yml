@@ -22,7 +22,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Gorelease cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/go/bin/gorelease
