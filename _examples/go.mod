@@ -13,7 +13,7 @@ require (
 )
 
 require (
-	github.com/cucumber/gherkin/go/v26 v26.0.2 // indirect
+	github.com/cucumber/gherkin/go/v26 v26.0.3 // indirect
 	github.com/cucumber/messages/go/v21 v21.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gofrs/uuid v4.2.0+incompatible // indirect

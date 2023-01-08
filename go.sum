@@ -1,6 +1,4 @@
 github.com/cpuguy83/go-md2man/v2 v2.0.1/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
-github.com/cucumber/gherkin/go/v26 v26.0.2 h1:DjNKtTIv5VG0F1XaJ2xYNk+ck8pJWRNFzyajkc/Y4l4=
-github.com/cucumber/gherkin/go/v26 v26.0.2/go.mod h1:Xf+SrSuFbivEDZvmHjTShord3zlEkqsj7QB4sxl1SuU=
 github.com/cucumber/gherkin/go/v26 v26.0.3 h1:ExcdadOazxzN11RYQZfaWcODMp7ZbRYLwqMbqWF8QEw=
 github.com/cucumber/gherkin/go/v26 v26.0.3/go.mod h1:Xf+SrSuFbivEDZvmHjTShord3zlEkqsj7QB4sxl1SuU=
 github.com/cucumber/messages/go/v21 v21.0.1 h1:wzA0LxwjlWQYZd32VTlAVDTkW6inOFmSM+RuOwHZiMI=
