@@ -3,7 +3,7 @@ module github.com/cucumber/godog
 go 1.16
 
 require (
-	github.com/cucumber/gherkin/go/v26 v26.0.2
+	github.com/cucumber/gherkin/go/v26 v26.0.3
 	github.com/hashicorp/go-memdb v1.3.2
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/spf13/cobra v1.4.0
