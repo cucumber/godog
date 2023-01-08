@@ -7,7 +7,7 @@ replace github.com/cucumber/godog => ../
 require (
 	github.com/DATA-DOG/go-txdb v0.1.5
 	github.com/cucumber/godog v0.12.6
-	github.com/go-sql-driver/mysql v1.6.0
+	github.com/go-sql-driver/mysql v1.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.1
 )
