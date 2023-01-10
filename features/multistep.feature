@@ -161,3 +161,16 @@ Feature: run features with nested steps
       """
     When I run feature suite
     Then the suite should have passed
+
+  Scenario: BeforeStep used for multisteps
+    Given a feature "normal.feature" file:
+      """
+      Feature: normal feature
+
+        Scenario: invoke BeforeStep in multistep
+          Given I allow variable injection 
+          And I run multisteps that set a value
+          Then the stored value is "someverylonginjectionsoweacanbesureitsurpasstheinitiallongeststeplenghtanditwillhelptestsmethodsafety"
+      """
+    When I run feature suite
+    Then the suite should have passed
