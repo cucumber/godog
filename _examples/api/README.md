@@ -4,8 +4,8 @@ The following example demonstrates steps how we describe and test our API using 
 
 ### Step 1
 
-Describe our feature. Imagine we need a REST API with **json** format. Lets from the point, that
-we need to have a **/version** endpoint, which responds with a version number. We also need to manage
+Describe our feature. Imagine we need a REST API with `json` format. Lets from the point, that
+we need to have a `/version` endpoint, which responds with a version number. We also need to manage
 error responses.
 
 ``` gherkin
@@ -31,24 +31,24 @@ Feature: get version
     And the response should match json:
       """
       {
-        "version": "v0.5.3"
+        "version": "v0.0.0-dev"
       }
       """
 ```
 
-Save it as **version.feature**.
+Save it as `features/version.feature`.
 Now we have described a success case and an error when the request method is not allowed.
 
 ### Step 2
 
-Run **godog version.feature**. You should see the following result, which says that all of our
+Execute `godog run`. You should see the following result, which says that all of our
 steps are yet undefined and provide us with the snippets to implement them.
 
 ![Screenshot](https://raw.github.com/cucumber/godog/master/_examples/api/screenshots/undefined.png)
 
 ### Step 3
 
-Lets copy the snippets to **api_test.go** and modify it for our use case. Since we know that we will
+Lets copy the snippets to `api_test.go` and modify it for our use case. Since we know that we will
 need to store state within steps (a response), we should introduce a structure with some variables.
 
 ``` go
@@ -74,6 +74,21 @@ func (a *apiFeature) theResponseShouldMatchJSON(body *godog.DocString) error {
 	return godog.ErrPending
 }
 
+func TestFeatures(t *testing.T) {
+  suite := godog.TestSuite{
+    ScenarioInitializer: InitializeScenario,
+    Options: &godog.Options{
+      Format:   "pretty",
+      Paths:    []string{"features"},
+      TestingT: t, // Testing instance that will run subtests.
+    },
+  }
+
+  if suite.Run() != 0 {
+    t.Fatal("non-zero status returned, failed to run feature tests")
+  }
+}
+
 func InitializeScenario(s *godog.ScenarioContext) {
 	api := &apiFeature{}
 	s.Step(`^I send "([^"]*)" request to "([^"]*)"$`, api.iSendrequestTo)
@@ -84,7 +99,7 @@ func InitializeScenario(s *godog.ScenarioContext) {
 
 ### Step 4
 
-Now we can implemented steps, since we know what behavior we expect:
+Now we can implement steps, since we know what behavior we expect:
 
 ``` go
 // file: api_test.go
@@ -92,11 +107,12 @@ package main
 
 import (
 	"context"
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
+	"testing"
 
 	"github.com/cucumber/godog"
 )
@@ -105,7 +121,7 @@ type apiFeature struct {
 	resp *httptest.ResponseRecorder
 }
 
-func (a *apiFeature) resetResponse(interface{}) {
+func (a *apiFeature) resetResponse(*godog.Scenario) {
 	a.resp = httptest.NewRecorder()
 }
 
@@ -141,40 +157,59 @@ func (a *apiFeature) theResponseCodeShouldBe(code int) error {
 	return nil
 }
 
-func (a *apiFeature) theResponseShouldMatchJSON(body *godog.DocString) error {
-	var expected, actual []byte
-	var data interface{}
-	if err = json.Unmarshal([]byte(body.Content), &data); err != nil {
+func (a *apiFeature) theResponseShouldMatchJSON(body *godog.DocString) (err error) {
+	var expected, actual interface{}
+
+	// re-encode expected response
+	if err = json.Unmarshal([]byte(body.Content), &expected); err != nil {
 		return
 	}
-	if expected, err = json.Marshal(data); err != nil {
+
+	// re-encode actual response too
+	if err = json.Unmarshal(a.resp.Body.Bytes(), &actual); err != nil {
 		return
 	}
-	actual = a.resp.Body.Bytes()
-	if !bytes.Equal(actual, expected) {
-		err = fmt.Errorf("expected json, does not match actual: %s", string(actual))
+
+	// the matching may be adapted per different requirements.
+	if !reflect.DeepEqual(expected, actual) {
+		return fmt.Errorf("expected JSON does not match actual, %v vs. %v", expected, actual)
 	}
-	return
+	return nil
 }
 
-func InitializeScenario(s *godog.ScenarioContext) {
+func TestFeatures(t *testing.T) {
+	suite := godog.TestSuite{
+		ScenarioInitializer: InitializeScenario,
+		Options: &godog.Options{
+			Format:   "pretty",
+			Paths:    []string{"features"},
+			TestingT: t, // Testing instance that will run subtests.
+		},
+	}
+
+	if suite.Run() != 0 {
+		t.Fatal("non-zero status returned, failed to run feature tests")
+	}
+}
+
+func InitializeScenario(ctx *godog.ScenarioContext) {
 	api := &apiFeature{}
 
 	ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 		api.resetResponse(sc)
 		return ctx, nil
 	})
-
-	s.Step(`^I send "(GET|POST|PUT|DELETE)" request to "([^"]*)"$`, api.iSendrequestTo)
-	s.Step(`^the response code should be (\d+)$`, api.theResponseCodeShouldBe)
-	s.Step(`^the response should match json:$`, api.theResponseShouldMatchJSON)
+	ctx.Step(`^I send "(GET|POST|PUT|DELETE)" request to "([^"]*)"$`, api.iSendrequestTo)
+	ctx.Step(`^the response code should be (\d+)$`, api.theResponseCodeShouldBe)
+	ctx.Step(`^the response should match json:$`, api.theResponseShouldMatchJSON)
 }
 ```
 
-**NOTE:** the `getVersion` handler call on **/version** endpoint. We actually need to implement it now.
+**NOTE:** the `getVersion` handler is called on `/version` endpoint.
+Executing `godog run` or `go test -v` will provide `undefined: getVersion` error, so we actually need to implement it now.
 If we made some mistakes in step implementations, we will know about it when we run the tests.
 
-Though, we could also improve our **JSON** comparison function to range through the interfaces and
+Though, we could also improve our `JSON` comparison function to range through the interfaces and
 match their types and values.
 
 In case if some router is used, you may search the handler based on the endpoint. Current example
@@ -182,7 +217,7 @@ uses a standard http package.
 
 ### Step 5
 
-Finally, lets implement the **api** server:
+Finally, lets implement the `API` server:
 
 ``` go
 // file: api.go
@@ -191,17 +226,17 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/cucumber/godog"
 )
 
 func getVersion(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
+	if r.Method != http.MethodGet {
 		fail(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
 	data := struct {
 		Version string `json:"version"`
 	}{Version: godog.Version}
@@ -209,42 +244,34 @@ func getVersion(w http.ResponseWriter, r *http.Request) {
 	ok(w, data)
 }
 
-func main() {
-	http.HandleFunc("/version", getVersion)
-	http.ListenAndServe(":8080", nil)
-}
-
 // fail writes a json response with error msg and status header
 func fail(w http.ResponseWriter, msg string, status int) {
-	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
 
 	data := struct {
 		Error string `json:"error"`
 	}{Error: msg}
-
 	resp, _ := json.Marshal(data)
-	w.WriteHeader(status)
 
-	fmt.Fprintf(w, string(resp))
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(resp)
 }
 
 // ok writes data to response with 200 status
 func ok(w http.ResponseWriter, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-
-	if s, ok := data.(string); ok {
-		fmt.Fprintf(w, s)
-		return
-	}
-
 	resp, err := json.Marshal(data)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fail(w, "oops something evil has happened", 500)
+		fail(w, "Oops something evil has happened", http.StatusInternalServerError)
 		return
 	}
 
-	fmt.Fprintf(w, string(resp))
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(resp)
+}
+
+func main() {
+	http.HandleFunc("/version", getVersion)
+	http.ListenAndServe(":8080", nil)
 }
 ```
 
@@ -253,7 +280,7 @@ used to respond with the correct constant version number.
 
 ### Step 6
 
-Run our tests to see whether everything is happening as we have expected: `godog version.feature`
+Run our tests to see whether everything is happening as we have expected: `go test -v`
 
 ![Screenshot](https://raw.github.com/cucumber/godog/master/_examples/api/screenshots/passed.png)
 

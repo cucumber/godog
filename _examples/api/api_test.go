@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"testing"
 
 	"github.com/cucumber/godog"
 )
@@ -69,6 +70,21 @@ func (a *apiFeature) theResponseShouldMatchJSON(body *godog.DocString) (err erro
 		return fmt.Errorf("expected JSON does not match actual, %v vs. %v", expected, actual)
 	}
 	return nil
+}
+
+func TestFeatures(t *testing.T) {
+	suite := godog.TestSuite{
+		ScenarioInitializer: InitializeScenario,
+		Options: &godog.Options{
+			Format:   "pretty",
+			Paths:    []string{"features"},
+			TestingT: t, // Testing instance that will run subtests.
+		},
+	}
+
+	if suite.Run() != 0 {
+		t.Fatal("non-zero status returned, failed to run feature tests")
+	}
 }
 
 func InitializeScenario(ctx *godog.ScenarioContext) {
