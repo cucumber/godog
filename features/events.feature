@@ -121,17 +121,17 @@ Feature: suite events
       Feature: scenario hook errors
 
         Scenario: failing before and after scenario # normal.feature:3
-          Then adding step state to context         # suite_context_test.go:0 -> InitializeScenario.func12
+          Then adding step state to context         # suite_context_test.go:0 -> InitializeScenario.func17
           after scenario hook failed: failed in after scenario hook, step error: before scenario hook failed: failed in before scenario hook
           And passing step                          # suite_context_test.go:0 -> InitializeScenario.func2
 
         Scenario: failing before scenario   # normal.feature:7
-          Then adding step state to context # suite_context_test.go:0 -> InitializeScenario.func12
+          Then adding step state to context # suite_context_test.go:0 -> InitializeScenario.func17
           before scenario hook failed: failed in before scenario hook
           And passing step                  # suite_context_test.go:0 -> InitializeScenario.func2
 
         Scenario: failing after scenario    # normal.feature:11
-          Then adding step state to context # suite_context_test.go:0 -> InitializeScenario.func12
+          Then adding step state to context # suite_context_test.go:0 -> InitializeScenario.func17
           And passing step                  # suite_context_test.go:0 -> InitializeScenario.func2
           after scenario hook failed: failed in after scenario hook
 

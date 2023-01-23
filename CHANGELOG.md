@@ -7,6 +7,8 @@ This project adheres to [Semantic Versioning](http://semver.org).
 This document is formatted according to the principles of [Keep A CHANGELOG](http://keepachangelog.com).
 
 ## Unreleased
+### Added
+- Added keyword functions. ([509](https://github.com/cucumber/godog/pull/509) - [otrava7](https://github.com/otrava7))
 
 ## [v0.12.6]
 ### Changed

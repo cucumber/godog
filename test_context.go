@@ -26,12 +26,12 @@ type Step = messages.PickleStep
 // instead of returning an error in step func
 // it is possible to return combined steps:
 //
-//   func multistep(name string) godog.Steps {
-//     return godog.Steps{
-//       fmt.Sprintf(`an user named "%s"`, name),
-//       fmt.Sprintf(`user "%s" is authenticated`, name),
-//     }
-//   }
+//	func multistep(name string) godog.Steps {
+//	  return godog.Steps{
+//	    fmt.Sprintf(`an user named "%s"`, name),
+//	    fmt.Sprintf(`user "%s" is authenticated`, name),
+//	  }
+//	}
 //
 // These steps will be matched and executed in
 // sequential order. The first one which fails
@@ -251,6 +251,34 @@ func (ctx *ScenarioContext) AfterStep(fn func(st *Step, err error)) {
 // ErrUndefined error will be returned when
 // running steps.
 func (ctx *ScenarioContext) Step(expr, stepFunc interface{}) {
+	ctx.stepWithKeyword(expr, stepFunc, formatters.None)
+}
+
+// Given functions identically to Step, but the *StepDefinition
+// will only be matched if the step starts with "Given". "And"
+// and "But" keywords copy the keyword of the last step for the
+// purpose of matching.
+func (ctx *ScenarioContext) Given(expr, stepFunc interface{}) {
+	ctx.stepWithKeyword(expr, stepFunc, formatters.Given)
+}
+
+// When functions identically to Step, but the *StepDefinition
+// will only be matched if the step starts with "When". "And"
+// and "But" keywords copy the keyword of the last step for the
+// purpose of matching.
+func (ctx *ScenarioContext) When(expr, stepFunc interface{}) {
+	ctx.stepWithKeyword(expr, stepFunc, formatters.When)
+}
+
+// Then functions identically to Step, but the *StepDefinition
+// will only be matched if the step starts with "Then". "And"
+// and "But" keywords copy the keyword of the last step for the
+// purpose of matching.
+func (ctx *ScenarioContext) Then(expr, stepFunc interface{}) {
+	ctx.stepWithKeyword(expr, stepFunc, formatters.Then)
+}
+
+func (ctx *ScenarioContext) stepWithKeyword(expr interface{}, stepFunc interface{}, keyword formatters.Keyword) {
 	var regex *regexp.Regexp
 
 	switch t := expr.(type) {
@@ -278,6 +306,7 @@ func (ctx *ScenarioContext) Step(expr, stepFunc interface{}) {
 		StepDefinition: formatters.StepDefinition{
 			Handler: stepFunc,
 			Expr:    regex,
+			Keyword: keyword,
 		},
 		HandlerValue: v,
 	}

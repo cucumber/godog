@@ -88,4 +88,14 @@ type FormatterFunc func(string, io.Writer) Formatter
 type StepDefinition struct {
 	Expr    *regexp.Regexp
 	Handler interface{}
+	Keyword Keyword
 }
+
+type Keyword int64
+
+const (
+	Given Keyword = iota
+	When
+	Then
+	None
+)
