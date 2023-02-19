@@ -100,6 +100,7 @@ func Test_FailsOrPassesBasedOnStrictModeWhenHasPendingSteps(t *testing.T) {
 			ctx.Step(`^one$`, func() error { return nil })
 			ctx.Step(`^two$`, func() error { return ErrPending })
 		},
+		testingT: t,
 	}
 
 	r.storage = storage.NewStorage()
@@ -109,10 +110,13 @@ func Test_FailsOrPassesBasedOnStrictModeWhenHasPendingSteps(t *testing.T) {
 	}
 
 	failed := r.concurrent(1)
+	require.False(t, r.testingT.Failed())
 	require.False(t, failed)
 	assert.Equal(t, 1, beforeScenarioFired)
 	assert.Equal(t, 1, afterScenarioFired)
 
+	// avoid t is Failed because this testcase Failed
+	r.testingT = nil
 	r.strict = true
 	failed = r.concurrent(1)
 	require.True(t, failed)
