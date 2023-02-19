@@ -468,7 +468,7 @@ func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 		// Running scenario as a subtest.
 		s.testingT.Run(pickle.Name, func(t *testing.T) {
 			ctx, err = s.runSteps(ctx, pickle, pickle.Steps)
-			if err != nil {
+			if s.shouldFail(err) {
 				t.Error(err)
 			}
 		})
