@@ -158,8 +158,8 @@ func thereShouldBeRemaining(arg1 int) error {
 }
 
 func InitializeScenario(ctx *godog.ScenarioContext) {
-        ctx.Step(`^I eat (\d+)$`, iEat)
         ctx.Step(`^there are (\d+) godogs$`, thereAreGodogs)
+        ctx.Step(`^I eat (\d+)$`, iEat)
         ctx.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
 }
 ```
@@ -167,8 +167,8 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 Alternatively, you can also specify the keyword (Given, When, Then...) when creating the step definitions:
 ``` go
 func InitializeScenario(ctx *godog.ScenarioContext) {
-        ctx.Given(`^I eat (\d+)$`, iEat)
-        ctx.When(`^there are (\d+) godogs$`, thereAreGodogs)
+        ctx.Given(`^there are (\d+) godogs$`, thereAreGodogs)
+        ctx.When(`^I eat (\d+)$`, iEat)
         ctx.Then(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
 }
 ```
