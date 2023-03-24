@@ -68,21 +68,17 @@ The following example can be [found here](/_examples/godogs).
 
 #### Step 1 - Setup a go module
 
-Given we create a new go module **godogs** in your normal go workspace. - `mkdir godogs`
+Create a new go module named **godogs** in your go workspace by running `mkdir godogs`
 
-From now on, this is our work directory - `cd godogs`
+From now on, use **godogs** as your working directory by running `cd godogs`
 
-Initiate the go module - `go mod init godogs`
+Initiate the go module inside the **godogs** directory by running `go mod init godogs`
 
-#### Step 2 - Install godog
-
-Install the `godog` binary - `go install github.com/cucumber/godog/cmd/godog@latest`.
-
-#### Step 3 - Create gherkin feature
+#### Step 2 - Create gherkin feature
 
 Imagine we have a **godog cart** to serve godogs for lunch.
 
-First of all, we describe our feature in plain text - `vim features/godogs.feature`.
+First of all, we describe our feature in plain text:
 
 ``` gherkin
 Feature: eat godogs
@@ -96,50 +92,13 @@ Feature: eat godogs
     Then there should be 7 remaining
 ```
 
-#### Step 4 - Create godog step definitions
+Run `vim features/godogs.feature` and add the text above into the vim editor and save the file.
 
-**NOTE:** same as **go test** godog respects package level isolation. All your step definitions should be in your tested package root directory. In this case: **godogs**.
+#### Step 3 - Create godog step definitions
 
-If we run godog inside the module: - `godog run`
+**NOTE:** Same as **go test**, godog respects package level isolation. All your step definitions should be in your tested package root directory. In this case: **godogs**.
 
-You should see that the steps are undefined:
-```
-Feature: eat godogs
-  In order to be happy
-  As a hungry gopher
-  I need to be able to eat godogs
-
-  Scenario: Eat 5 out of 12          # features/godogs.feature:6
-    Given there are 12 godogs
-    When I eat 5
-    Then there should be 7 remaining
-
-1 scenarios (1 undefined)
-3 steps (3 undefined)
-220.129µs
-
-You can implement step definitions for undefined steps with these snippets:
-
-func iEat(arg1 int) error {
-        return godog.ErrPending
-}
-
-func thereAreGodogs(arg1 int) error {
-        return godog.ErrPending
-}
-
-func thereShouldBeRemaining(arg1 int) error {
-        return godog.ErrPending
-}
-
-func InitializeScenario(ctx *godog.ScenarioContext) {
-        ctx.Step(`^I eat (\d+)$`, iEat)
-        ctx.Step(`^there are (\d+) godogs$`, thereAreGodogs)
-        ctx.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
-}
-```
-
-Create and copy the step definitions into a new file - `vim godogs_test.go`
+Create and copy the step definitions below into a new file by running `vim godogs_test.go`:
 ``` go
 package main
 
@@ -183,41 +142,21 @@ godogs
 - godogs_test.go
 ```
 
-Run godog again - `godog run`
-
-You should now see that the scenario is pending with one step pending and two steps skipped:
+Run `go test` in the **godogs** directory to run the steps you have defined. You should now see that the scenario runs 
+with a warning stating there are no tests to run. 
 ```
-Feature: eat godogs
-  In order to be happy
-  As a hungry gopher
-  I need to be able to eat godogs
-
-  Scenario: Eat 5 out of 12          # features/godogs.feature:6
-    Given there are 12 godogs        # godogs_test.go:10 -> thereAreGodogs
-      TODO: write pending definition
-    When I eat 5                     # godogs_test.go:6 -> iEat
-    Then there should be 7 remaining # godogs_test.go:14 -> thereShouldBeRemaining
-
-1 scenarios (1 pending)
-3 steps (1 pending, 2 skipped)
-282.123µs
+testing: warning: no tests to run
+PASS
+ok      godogs  0.225s
 ```
 
-You may change **return godog.ErrPending** to **return nil** in the three step definitions and the scenario will pass successfully.
+By adding some logic to these steps, you will be able to thoroughly test the feature you just defined.
 
-Also, you may omit error return if your step does not fail.
+#### Step 4 - Create the main program to test
 
-```go
-func iEat(arg1 int) {
-	// Eat arg1.
-}
-```
+Let's keep it simple by only requiring an amount of **godogs** for now.
 
-#### Step 5 - Create the main program to test
-
-We only need a number of **godogs** for now. Lets keep it simple.
-
-Create and copy the code into a new file - `vim godogs.go`
+Create and copy the code below into a new file by running `vim godogs.go`
 ```go
 package main
 
@@ -238,11 +177,11 @@ godogs
 - godogs_test.go
 ```
 
-#### Step 6 - Add some logic to the step definitions
+#### Step 5 - Add some logic to the step definitions
 
-Now lets implement our step definitions to test our feature requirements:
+Now lets implement our step definitions to test our feature requirements.
 
-Replace the contents of `godogs_test.go` with the code below - `vim godogs_test.go`
+Replace the contents of `godogs_test.go` with the code below by running `vim godogs_test.go`.
 
 ```go
 package main
@@ -311,16 +250,13 @@ func InitializeScenario(sc *godog.ScenarioContext) {
   sc.Step(`^I eat (\d+)$`, iEat)
   sc.Step(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
 }
-
 ```
 
-In this example we are using `context.Context` to pass the state between the steps. 
+In this example, we are using `context.Context` to pass the state between the steps. 
 Every scenario starts with an empty context and then steps and hooks can add relevant information to it.
 Instrumented context is chained through the steps and hooks and is safe to use when multiple scenarios are running concurrently.
 
-When you run godog again with `go test -v godogs_test.go` or with a CLI `godog run`.
-
-You should see a passing run:
+When you run godog again with `go test -v godogs_test.go`, you should see a passing run:
 ```
 === RUN   TestFeatures
 Feature: eat godogs
@@ -330,24 +266,25 @@ Feature: eat godogs
 === RUN   TestFeatures/Eat_5_out_of_12
 
   Scenario: Eat 5 out of 12          # features/godogs.feature:6
-    Given there are 12 godogs        # godogs_test.go:14 -> command-line-arguments.thereAreGodogs
-    When I eat 5                     # godogs_test.go:18 -> command-line-arguments.iEat
-    Then there should be 7 remaining # godogs_test.go:33 -> command-line-arguments.thereShouldBeRemaining
+    Given there are 12 godogs        # godog_test.go:15 -> command-line-arguments.thereAreGodogs
+    When I eat 5                     # godog_test.go:19 -> command-line-arguments.iEat
+    Then there should be 7 remaining # godog_test.go:34 -> command-line-arguments.thereShouldBeRemaining
 
 1 scenarios (1 passed)
 3 steps (3 passed)
-275.333µs
+279.917µs
 --- PASS: TestFeatures (0.00s)
     --- PASS: TestFeatures/Eat_5_out_of_12 (0.00s)
 PASS
-ok      command-line-arguments  0.130s
+ok      command-line-arguments  0.164s
 ```
 
 You may hook to `ScenarioContext` **Before** event in order to reset or pre-seed the application state before each scenario. 
 You may hook into more events, like `sc.StepContext()` **After** to print all state in case of an error. 
 Or **BeforeSuite** to prepare a database.
 
-By now, you should have figured out, how to use **godog**. Another advice is to make steps orthogonal, small and simple to read for a user. Whether the user is a dumb website user or an API developer, who may understand a little more technical context - it should target that user.
+By now, you should have figured out, how to use **godog**. Another piece of advice is to make steps orthogonal, small and simple to read for a user. 
+Whether the user is a dumb website user or an API developer, who may understand a little more technical context - it should target that user.
 
 When steps are orthogonal and small, you can combine them just like you do with Unix tools. Look how to simplify or remove ones, which can be composed.
 
@@ -585,6 +522,8 @@ func (a *asserter) Errorf(format string, args ...interface{}) {
 ```
 
 ## CLI Mode
+
+**NOTE:** The [`godog` CLI has been deprecated](https://github.com/cucumber/godog/discussions/478). It is recommended to use `go test` instead.  
 
 Another way to use `godog` is to run it in CLI mode.
 
