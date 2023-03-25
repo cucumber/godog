@@ -73,7 +73,7 @@ type Options struct {
 
 	// FeatureEmbed allows passing in an `fs.FS` to read feature, such as an `embed.FS`, or a
 	// directory other than `./`
-	FeatureFS fs.FS
+	FS fs.FS
 
 	// ShowHelp enables suite to show CLI flags usage help and exit.
 	ShowHelp bool
