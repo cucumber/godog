@@ -1,7 +1,7 @@
 package parser_test
 
 import (
-	"os"
+	"io/fs"
 	"path/filepath"
 	"testing"
 	"testing/fstest"
@@ -71,14 +71,15 @@ Feature: eat godogs
     When I eat 5
     Then there should be 7 remaining`
 
-	baseDir := filepath.Join(os.TempDir(), t.Name(), "godogs")
-	fs := fstest.MapFS{
-		filepath.Join(baseDir, "a", featureFileName): {
+	baseDir := "base"
+	fsys := fstest.MapFS{
+		filepath.Join(baseDir, featureFileName): {
 			Data: []byte(eatGodogContents),
+			Mode: fs.FileMode(0644),
 		},
 	}
 
-	featureFromFile, err := parser.ParseFeatures(fs, "", []string{baseDir})
+	featureFromFile, err := parser.ParseFeatures(fsys, "", []string{baseDir})
 	require.NoError(t, err)
 	require.Len(t, featureFromFile, 1)
 
@@ -105,18 +106,20 @@ func Test_ParseFeatures_FromMultiplePaths(t *testing.T) {
     When I eat 5
 		Then there should be 7 remaining`
 
-	baseDir := filepath.Join(os.TempDir(), t.Name(), "godogs")
+	baseDir := "base"
 
-	fs := fstest.MapFS{
+	fsys := fstest.MapFS{
 		filepath.Join(baseDir, "a", featureFileName): {
 			Data: []byte(featureFileContents),
+			Mode: fs.FileMode(0644),
 		},
 		filepath.Join(baseDir, "b", featureFileName): {
 			Data: []byte(featureFileContents),
+			Mode: fs.FileMode(0644),
 		},
 	}
 
-	features, err := parser.ParseFeatures(fs, "", []string{baseDir + "/a", baseDir + "/b"})
+	features, err := parser.ParseFeatures(fsys, "", []string{baseDir + "/a", baseDir + "/b"})
 	assert.Nil(t, err)
 	assert.Len(t, features, 2)
 
