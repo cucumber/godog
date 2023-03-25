@@ -110,7 +110,7 @@ func parsePath(fsys fs.FS, path string, newIDFunc func() string) ([]*models.Feat
 		return file.Stat()
 	}()
 	if err != nil {
-		return features, fmt.Errorf("oh no: %w", err)
+		return features, err
 	}
 
 	if fi.IsDir() {
