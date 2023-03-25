@@ -1,10 +1,10 @@
 package parser_test
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
+	"testing/fstest"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -72,15 +72,13 @@ Feature: eat godogs
     Then there should be 7 remaining`
 
 	baseDir := filepath.Join(os.TempDir(), t.Name(), "godogs")
-	errA := os.MkdirAll(baseDir+"/a", 0755)
-	defer os.RemoveAll(baseDir)
+	fs := fstest.MapFS{
+		filepath.Join(baseDir, "a", featureFileName): {
+			Data: []byte(eatGodogContents),
+		},
+	}
 
-	require.Nil(t, errA)
-
-	err := ioutil.WriteFile(filepath.Join(baseDir, featureFileName), []byte(eatGodogContents), 0644)
-	require.Nil(t, err)
-
-	featureFromFile, err := parser.ParseFeatures(os.DirFS("./"), "", []string{baseDir})
+	featureFromFile, err := parser.ParseFeatures(fs, "", []string{baseDir})
 	require.NoError(t, err)
 	require.Len(t, featureFromFile, 1)
 
@@ -108,19 +106,17 @@ func Test_ParseFeatures_FromMultiplePaths(t *testing.T) {
 		Then there should be 7 remaining`
 
 	baseDir := filepath.Join(os.TempDir(), t.Name(), "godogs")
-	errA := os.MkdirAll(baseDir+"/a", 0755)
-	errB := os.MkdirAll(baseDir+"/b", 0755)
-	defer os.RemoveAll(baseDir)
 
-	require.Nil(t, errA)
-	require.Nil(t, errB)
+	fs := fstest.MapFS{
+		filepath.Join(baseDir, "a", featureFileName): {
+			Data: []byte(featureFileContents),
+		},
+		filepath.Join(baseDir, "b", featureFileName): {
+			Data: []byte(featureFileContents),
+		},
+	}
 
-	err := ioutil.WriteFile(filepath.Join(baseDir+"/a", featureFileName), []byte(featureFileContents), 0644)
-	require.Nil(t, err)
-	err = ioutil.WriteFile(filepath.Join(baseDir+"/b", featureFileName), []byte(featureFileContents), 0644)
-	require.Nil(t, err)
-
-	features, err := parser.ParseFeatures(os.DirFS("./"), "", []string{baseDir + "/a", baseDir + "/b"})
+	features, err := parser.ParseFeatures(fs, "", []string{baseDir + "/a", baseDir + "/b"})
 	assert.Nil(t, err)
 	assert.Len(t, features, 2)
 
