@@ -358,7 +358,7 @@ func (ts TestSuite) RetrieveFeatures() ([]*models.Feature, error) {
 		}
 	}
 
-	return parser.ParseFeatures(opt.Tags, opt.Paths)
+	return parser.ParseFeatures(os.DirFS("./"), opt.Tags, opt.Paths)
 }
 
 func getDefaultOptions() (*Options, error) {
