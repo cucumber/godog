@@ -80,7 +80,7 @@ Feature: eat godogs
 	err := ioutil.WriteFile(filepath.Join(baseDir, featureFileName), []byte(eatGodogContents), 0644)
 	require.Nil(t, err)
 
-	featureFromFile, err := parser.ParseFeatures("", []string{baseDir})
+	featureFromFile, err := parser.ParseFeatures(os.DirFS("./"), "", []string{baseDir})
 	require.NoError(t, err)
 	require.Len(t, featureFromFile, 1)
 
@@ -120,7 +120,7 @@ func Test_ParseFeatures_FromMultiplePaths(t *testing.T) {
 	err = ioutil.WriteFile(filepath.Join(baseDir+"/b", featureFileName), []byte(featureFileContents), 0644)
 	require.Nil(t, err)
 
-	features, err := parser.ParseFeatures("", []string{baseDir + "/a", baseDir + "/b"})
+	features, err := parser.ParseFeatures(os.DirFS("./"), "", []string{baseDir + "/a", baseDir + "/b"})
 	assert.Nil(t, err)
 	assert.Len(t, features, 2)
 

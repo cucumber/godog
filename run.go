@@ -15,7 +15,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/cucumber/messages/go/v21"
+	messages "github.com/cucumber/messages/go/v21"
 
 	"github.com/cucumber/godog/colors"
 	"github.com/cucumber/godog/formatters"
@@ -226,6 +226,9 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 	}
 
 	runner.fmt = multiFmt.FormatterFunc(suiteName, output)
+	if opt.FeatureFS == nil {
+		opt.FeatureFS = os.DirFS("./")
+	}
 
 	if len(opt.FeatureContents) > 0 {
 		features, err := parser.ParseFromBytes(opt.Tags, opt.FeatureContents)
@@ -237,7 +240,7 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 	}
 
 	if len(opt.Paths) > 0 {
-		features, err := parser.ParseFeatures(opt.Tags, opt.Paths)
+		features, err := parser.ParseFeatures(opt.FeatureFS, opt.Tags, opt.Paths)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return exitOptionError
