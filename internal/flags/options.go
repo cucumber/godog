@@ -71,7 +71,7 @@ type Options struct {
 	// in a map entry
 	FeatureContents []Feature
 
-	// FeatureEmbed allows passing in an `fs.FS` to read feature, such as an `embed.FS`, or a
+	// FS allows passing in an `fs.FS` to read features from, such as an `embed.FS`, or a
 	// directory other than `./`
 	FS fs.FS
 
