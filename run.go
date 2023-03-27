@@ -370,7 +370,7 @@ func getDefaultOptions() (*Options, error) {
 	}
 
 	opt.Paths = flagSet.Args()
-	opt.FS = storage.FS{FS: os.DirFS("./")}
+	opt.FS = storage.FS{}
 
 	return opt, nil
 }

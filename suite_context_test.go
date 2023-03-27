@@ -7,7 +7,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -559,7 +558,7 @@ func (tc *godogFeaturesScenario) featurePath(path string) {
 }
 
 func (tc *godogFeaturesScenario) parseFeatures() error {
-	fts, err := parser.ParseFeatures(os.DirFS("./"), "", tc.paths)
+	fts, err := parser.ParseFeatures(storage.FS{}, "", tc.paths)
 	if err != nil {
 		return err
 	}
