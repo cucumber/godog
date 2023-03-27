@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"go/build"
 	"io"
+	"io/fs"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -350,7 +351,15 @@ func (ts TestSuite) RetrieveFeatures() ([]*models.Feature, error) {
 	}
 
 	if len(opt.Paths) == 0 {
-		inf, err := os.Stat("features")
+		inf, err := func() (fs.FileInfo, error) {
+			file, err := opt.FS.Open("features")
+			if err != nil {
+				return nil, err
+			}
+			defer file.Close()
+
+			return file.Stat()
+		}()
 		if err == nil && inf.IsDir() {
 			opt.Paths = []string{"features"}
 		}
