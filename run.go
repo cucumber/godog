@@ -226,9 +226,7 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 	}
 
 	runner.fmt = multiFmt.FormatterFunc(suiteName, output)
-	if opt.FS == nil {
-		opt.FS = os.DirFS("./")
-	}
+	opt.FS = storage.FS{FS: opt.FS}
 
 	if len(opt.FeatureContents) > 0 {
 		features, err := parser.ParseFromBytes(opt.Tags, opt.FeatureContents)
@@ -372,7 +370,7 @@ func getDefaultOptions() (*Options, error) {
 	}
 
 	opt.Paths = flagSet.Args()
-	opt.FS = os.DirFS("./")
+	opt.FS = storage.FS{FS: os.DirFS("./")}
 
 	return opt, nil
 }

@@ -72,7 +72,7 @@ type Options struct {
 	FeatureContents []Feature
 
 	// FS allows passing in an `fs.FS` to read features from, such as an `embed.FS`
-	// or os.DirFS(string). Defaults to os.DirFS("./").
+	// or os.DirFS(string).
 	FS fs.FS
 
 	// ShowHelp enables suite to show CLI flags usage help and exit.
