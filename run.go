@@ -216,7 +216,15 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 	}
 
 	if len(opt.Paths) == 0 && len(opt.FeatureContents) == 0 {
-		inf, err := os.Stat("features")
+		inf, err := func() (fs.FileInfo, error) {
+			file, err := opt.FS.Open("features")
+			if err != nil {
+				return nil, err
+			}
+			defer file.Close()
+
+			return file.Stat()
+		}()
 		if err == nil && inf.IsDir() {
 			opt.Paths = []string{"features"}
 		}
@@ -326,6 +334,9 @@ func (ts TestSuite) Run() int {
 		if err != nil {
 			return exitOptionError
 		}
+	}
+	if ts.Options.FS == nil {
+		ts.Options.FS = storage.FS{}
 	}
 	if ts.Options.ShowHelp {
 		flag.CommandLine.Usage()
