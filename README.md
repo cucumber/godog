@@ -521,6 +521,30 @@ func (a *asserter) Errorf(format string, args ...interface{}) {
 }
 ```
 
+### Embeds
+
+If you're looking to compile your test binary in advance of running, you can compile the feature files into the binary via `go:embed`:
+
+```go
+
+//go:embed features/*
+var features embed.FS
+
+var opts = godog.Options{
+	Paths: []string{"features"},
+	FS:    features,
+}
+```
+
+Now, the test binary can be compiled with all feature files embedded, and can be ran independently from the feature files:
+
+```sh
+> go test -c ./test/integration/integration_test.go
+> mv integration.test /some/random/dir
+> cd /some/random/dir
+> ./integration.test
+```
+
 ## CLI Mode
 
 **NOTE:** The [`godog` CLI has been deprecated](https://github.com/cucumber/godog/discussions/478). It is recommended to use `go test` instead.  
