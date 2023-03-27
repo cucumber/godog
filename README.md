@@ -545,6 +545,8 @@ Now, the test binary can be compiled with all feature files embedded, and can be
 > ./integration.test
 ```
 
+**NOTE:** `godog.Options.FS` is as `fs.FS`, so custom filesystem loaders can be used.
+
 ## CLI Mode
 
 **NOTE:** The [`godog` CLI has been deprecated](https://github.com/cucumber/godog/discussions/478). It is recommended to use `go test` instead.  
