@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -12,9 +13,10 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"testing/fstest"
 
-	"github.com/cucumber/gherkin/go/v26"
-	"github.com/cucumber/messages/go/v21"
+	gherkin "github.com/cucumber/gherkin/go/v26"
+	messages "github.com/cucumber/messages/go/v21"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -750,4 +752,40 @@ func parseSeed(str string) (seed int64) {
 	}
 
 	return
+}
+
+func Test_TestSuite_RetreiveFeatures(t *testing.T) {
+	tests := map[string]struct {
+		fsys fs.FS
+
+		expFeatures int
+	}{
+		"standard features": {
+			fsys: fstest.MapFS{
+				"features/test.feature": {
+					Data: []byte(`Feature: test retrieve features
+  To test the feature
+  I must use this feature
+
+  Scenario: Test function RetrieveFeatures
+    Given I create a TestSuite
+	When I call TestSuite.RetrieveFeatures
+	Then I should have one feature`),
+				},
+			},
+			expFeatures: 1,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			features, err := TestSuite{
+				Name:    "succeed",
+				Options: &Options{FS: test.fsys},
+			}.RetrieveFeatures()
+
+			assert.NoError(t, err)
+			assert.Equal(t, test.expFeatures, len(features))
+		})
+	}
 }

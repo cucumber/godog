@@ -8,6 +8,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ## Unreleased
 ### Added
+- Support for reading feature files from an `fs.FS` ([550](https://github.com/cucumber/godog/pull/550) - [tigh-latte](https://github.com/tigh-latte))
 - Added keyword functions. ([509](https://github.com/cucumber/godog/pull/509) - [otrava7](https://github.com/otrava7))
 - prefer go test to use of godog cli in README ([548](https://github.com/cucumber/godog/pull/548) - [danielhelfand](https://github.com/danielhelfand)
 

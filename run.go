@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"go/build"
 	"io"
+	"io/fs"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -15,7 +16,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/cucumber/messages/go/v21"
+	messages "github.com/cucumber/messages/go/v21"
 
 	"github.com/cucumber/godog/colors"
 	"github.com/cucumber/godog/formatters"
@@ -215,7 +216,15 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 	}
 
 	if len(opt.Paths) == 0 && len(opt.FeatureContents) == 0 {
-		inf, err := os.Stat("features")
+		inf, err := func() (fs.FileInfo, error) {
+			file, err := opt.FS.Open("features")
+			if err != nil {
+				return nil, err
+			}
+			defer file.Close()
+
+			return file.Stat()
+		}()
 		if err == nil && inf.IsDir() {
 			opt.Paths = []string{"features"}
 		}
@@ -226,6 +235,7 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 	}
 
 	runner.fmt = multiFmt.FormatterFunc(suiteName, output)
+	opt.FS = storage.FS{FS: opt.FS}
 
 	if len(opt.FeatureContents) > 0 {
 		features, err := parser.ParseFromBytes(opt.Tags, opt.FeatureContents)
@@ -237,7 +247,7 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 	}
 
 	if len(opt.Paths) > 0 {
-		features, err := parser.ParseFeatures(opt.Tags, opt.Paths)
+		features, err := parser.ParseFeatures(opt.FS, opt.Tags, opt.Paths)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return exitOptionError
@@ -325,6 +335,9 @@ func (ts TestSuite) Run() int {
 			return exitOptionError
 		}
 	}
+	if ts.Options.FS == nil {
+		ts.Options.FS = storage.FS{}
+	}
 	if ts.Options.ShowHelp {
 		flag.CommandLine.Usage()
 
@@ -349,13 +362,21 @@ func (ts TestSuite) RetrieveFeatures() ([]*models.Feature, error) {
 	}
 
 	if len(opt.Paths) == 0 {
-		inf, err := os.Stat("features")
+		inf, err := func() (fs.FileInfo, error) {
+			file, err := opt.FS.Open("features")
+			if err != nil {
+				return nil, err
+			}
+			defer file.Close()
+
+			return file.Stat()
+		}()
 		if err == nil && inf.IsDir() {
 			opt.Paths = []string{"features"}
 		}
 	}
 
-	return parser.ParseFeatures(opt.Tags, opt.Paths)
+	return parser.ParseFeatures(opt.FS, opt.Tags, opt.Paths)
 }
 
 func getDefaultOptions() (*Options, error) {
@@ -369,6 +390,7 @@ func getDefaultOptions() (*Options, error) {
 	}
 
 	opt.Paths = flagSet.Args()
+	opt.FS = storage.FS{}
 
 	return opt, nil
 }

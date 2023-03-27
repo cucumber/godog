@@ -4,14 +4,14 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 
-	"github.com/cucumber/gherkin/go/v26"
-	"github.com/cucumber/messages/go/v21"
+	gherkin "github.com/cucumber/gherkin/go/v26"
+	messages "github.com/cucumber/messages/go/v21"
 
 	"github.com/cucumber/godog/internal/flags"
 	"github.com/cucumber/godog/internal/models"
@@ -33,8 +33,8 @@ func ExtractFeaturePathLine(p string) (string, int) {
 	return retPath, line
 }
 
-func parseFeatureFile(path string, newIDFunc func() string) (*models.Feature, error) {
-	reader, err := os.Open(path)
+func parseFeatureFile(fsys fs.FS, path string, newIDFunc func() string) (*models.Feature, error) {
+	reader, err := fsys.Open(path)
 	if err != nil {
 		return nil, err
 	}
@@ -70,9 +70,9 @@ func parseBytes(path string, feature []byte, newIDFunc func() string) (*models.F
 	return &f, nil
 }
 
-func parseFeatureDir(dir string, newIDFunc func() string) ([]*models.Feature, error) {
+func parseFeatureDir(fsys fs.FS, dir string, newIDFunc func() string) ([]*models.Feature, error) {
 	var features []*models.Feature
-	return features, filepath.Walk(dir, func(p string, f os.FileInfo, err error) error {
+	return features, fs.WalkDir(fsys, dir, func(p string, f fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -85,7 +85,7 @@ func parseFeatureDir(dir string, newIDFunc func() string) ([]*models.Feature, er
 			return nil
 		}
 
-		feat, err := parseFeatureFile(p, newIDFunc)
+		feat, err := parseFeatureFile(fsys, p, newIDFunc)
 		if err != nil {
 			return err
 		}
@@ -95,21 +95,29 @@ func parseFeatureDir(dir string, newIDFunc func() string) ([]*models.Feature, er
 	})
 }
 
-func parsePath(path string, newIDFunc func() string) ([]*models.Feature, error) {
+func parsePath(fsys fs.FS, path string, newIDFunc func() string) ([]*models.Feature, error) {
 	var features []*models.Feature
 
 	path, line := ExtractFeaturePathLine(path)
 
-	fi, err := os.Stat(path)
+	fi, err := func() (fs.FileInfo, error) {
+		file, err := fsys.Open(path)
+		if err != nil {
+			return nil, err
+		}
+		defer file.Close()
+
+		return file.Stat()
+	}()
 	if err != nil {
 		return features, err
 	}
 
 	if fi.IsDir() {
-		return parseFeatureDir(path, newIDFunc)
+		return parseFeatureDir(fsys, path, newIDFunc)
 	}
 
-	ft, err := parseFeatureFile(path, newIDFunc)
+	ft, err := parseFeatureFile(fsys, path, newIDFunc)
 	if err != nil {
 		return features, err
 	}
@@ -138,14 +146,14 @@ func parsePath(path string, newIDFunc func() string) ([]*models.Feature, error) 
 }
 
 // ParseFeatures ...
-func ParseFeatures(filter string, paths []string) ([]*models.Feature, error) {
+func ParseFeatures(fsys fs.FS, filter string, paths []string) ([]*models.Feature, error) {
 	var order int
 
 	featureIdxs := make(map[string]int)
 	uniqueFeatureURI := make(map[string]*models.Feature)
 	newIDFunc := (&messages.Incrementing{}).NewId
 	for _, path := range paths {
-		feats, err := parsePath(path, newIDFunc)
+		feats, err := parsePath(fsys, path, newIDFunc)
 
 		switch {
 		case os.IsNotExist(err):

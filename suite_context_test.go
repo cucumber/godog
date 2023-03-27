@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cucumber/gherkin/go/v26"
-	"github.com/cucumber/messages/go/v21"
+	gherkin "github.com/cucumber/gherkin/go/v26"
+	messages "github.com/cucumber/messages/go/v21"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/cucumber/godog/colors"
@@ -558,7 +558,7 @@ func (tc *godogFeaturesScenario) featurePath(path string) {
 }
 
 func (tc *godogFeaturesScenario) parseFeatures() error {
-	fts, err := parser.ParseFeatures("", tc.paths)
+	fts, err := parser.ParseFeatures(storage.FS{}, "", tc.paths)
 	if err != nil {
 		return err
 	}

@@ -1,10 +1,11 @@
 package parser_test
 
 import (
-	"io/ioutil"
-	"os"
+	"errors"
+	"io/fs"
 	"path/filepath"
 	"testing"
+	"testing/fstest"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -71,16 +72,15 @@ Feature: eat godogs
     When I eat 5
     Then there should be 7 remaining`
 
-	baseDir := filepath.Join(os.TempDir(), t.Name(), "godogs")
-	errA := os.MkdirAll(baseDir+"/a", 0755)
-	defer os.RemoveAll(baseDir)
+	baseDir := "base"
+	fsys := fstest.MapFS{
+		filepath.Join(baseDir, featureFileName): {
+			Data: []byte(eatGodogContents),
+			Mode: fs.FileMode(0644),
+		},
+	}
 
-	require.Nil(t, errA)
-
-	err := ioutil.WriteFile(filepath.Join(baseDir, featureFileName), []byte(eatGodogContents), 0644)
-	require.Nil(t, err)
-
-	featureFromFile, err := parser.ParseFeatures("", []string{baseDir})
+	featureFromFile, err := parser.ParseFeatures(fsys, "", []string{baseDir})
 	require.NoError(t, err)
 	require.Len(t, featureFromFile, 1)
 
@@ -96,8 +96,9 @@ Feature: eat godogs
 }
 
 func Test_ParseFeatures_FromMultiplePaths(t *testing.T) {
-	const featureFileName = "godogs.feature"
-	const featureFileContents = `Feature: eat godogs
+	const (
+		defaultFeatureFile     = "godogs.feature"
+		defaultFeatureContents = `Feature: eat godogs
   In order to be happy
   As a hungry gopher
   I need to be able to eat godogs
@@ -106,32 +107,74 @@ func Test_ParseFeatures_FromMultiplePaths(t *testing.T) {
     Given there are 12 godogs
     When I eat 5
 		Then there should be 7 remaining`
+	)
 
-	baseDir := filepath.Join(os.TempDir(), t.Name(), "godogs")
-	errA := os.MkdirAll(baseDir+"/a", 0755)
-	errB := os.MkdirAll(baseDir+"/b", 0755)
-	defer os.RemoveAll(baseDir)
+	tests := map[string]struct {
+		fsys  fs.FS
+		paths []string
 
-	require.Nil(t, errA)
-	require.Nil(t, errB)
+		expFeatures int
+		expError    error
+	}{
+		"feature directories can be parsed": {
+			paths: []string{"base/a", "base/b"},
+			fsys: fstest.MapFS{
+				filepath.Join("base/a", defaultFeatureFile): {
+					Data: []byte(defaultFeatureContents),
+				},
+				filepath.Join("base/b", defaultFeatureFile): {
+					Data: []byte(defaultFeatureContents),
+				},
+			},
+			expFeatures: 2,
+		},
+		"path not found errors": {
+			fsys:     fstest.MapFS{},
+			paths:    []string{"base/a", "base/b"},
+			expError: errors.New(`feature path "base/a" is not available`),
+		},
+		"feature files can be parsed": {
+			paths: []string{
+				filepath.Join("base/a/", defaultFeatureFile),
+				filepath.Join("base/b/", defaultFeatureFile),
+			},
+			fsys: fstest.MapFS{
+				filepath.Join("base/a", defaultFeatureFile): {
+					Data: []byte(defaultFeatureContents),
+				},
+				filepath.Join("base/b", defaultFeatureFile): {
+					Data: []byte(defaultFeatureContents),
+				},
+			},
+			expFeatures: 2,
+		},
+	}
 
-	err := ioutil.WriteFile(filepath.Join(baseDir+"/a", featureFileName), []byte(featureFileContents), 0644)
-	require.Nil(t, err)
-	err = ioutil.WriteFile(filepath.Join(baseDir+"/b", featureFileName), []byte(featureFileContents), 0644)
-	require.Nil(t, err)
+	for name, test := range tests {
+		test := test
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 
-	features, err := parser.ParseFeatures("", []string{baseDir + "/a", baseDir + "/b"})
-	assert.Nil(t, err)
-	assert.Len(t, features, 2)
-
-	pickleIDs := map[string]bool{}
-	for _, f := range features {
-		for _, p := range f.Pickles {
-			if pickleIDs[p.Id] {
-				assert.Failf(t, "found duplicate pickle ID", "Pickle ID %s was already used", p.Id)
+			features, err := parser.ParseFeatures(test.fsys, "", test.paths)
+			if test.expError != nil {
+				require.Error(t, err)
+				require.EqualError(t, err, test.expError.Error())
+				return
 			}
 
-			pickleIDs[p.Id] = true
-		}
+			assert.Nil(t, err)
+			assert.Len(t, features, test.expFeatures)
+
+			pickleIDs := map[string]bool{}
+			for _, f := range features {
+				for _, p := range f.Pickles {
+					if pickleIDs[p.Id] {
+						assert.Failf(t, "found duplicate pickle ID", "Pickle ID %s was already used", p.Id)
+					}
+
+					pickleIDs[p.Id] = true
+				}
+			}
+		})
 	}
 }
