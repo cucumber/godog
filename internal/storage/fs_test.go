@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"testing/fstest"
 
@@ -72,7 +73,7 @@ func TestStorage_Open_OS(t *testing.T) {
 			expData: []byte("hello worlds"),
 		},
 		"nil fs falls back on os": {
-			expError: errors.New("open /tmp/TestStorage_Open_OS/nil_fs_falls_back_on_os/godogs/testfile: no such file or directory"),
+			expError: errors.New("open %baseDir%/testfile: no such file or directory"),
 		},
 	}
 
@@ -95,7 +96,7 @@ func TestStorage_Open_OS(t *testing.T) {
 			f, err := (storage.FS{}).Open(filepath.Join(baseDir, "testfile"))
 			if test.expError != nil {
 				assert.Error(t, err)
-				assert.EqualError(t, err, test.expError.Error())
+				assert.EqualError(t, err, strings.ReplaceAll(test.expError.Error(), "%baseDir%", baseDir))
 				return
 			}
 

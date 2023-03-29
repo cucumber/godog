@@ -24,8 +24,9 @@ func testWithVendoredGodogAndMod(t *testing.T) {
 		"go.mod":         builderModFile,
 	}
 
-	builderTC.goModCmds = make([]*exec.Cmd, 1)
-	builderTC.goModCmds[0] = exec.Command("go", "mod", "vendor")
+	builderTC.goModCmds = make([]*exec.Cmd, 2)
+	builderTC.goModCmds[0] = exec.Command("go", "mod", "tidy")
+	builderTC.goModCmds[1] = exec.Command("go", "mod", "vendor")
 	builderTC.testCmdEnv = append(envVarsWithoutGopath(), "GOPATH="+gopath)
 
 	builderTC.run(t)
