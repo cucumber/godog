@@ -14,6 +14,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ## [v0.12.6]
 ### Changed
+- Each scenario is run with a cancellable `context.Context` which is cancelled at the end of the scenario. ([514](https://github.com/cucumber/godog/pull/514) - [draganm](https://github.com/draganm))
 - README example is updated with `context.Context` and `go test` usage. ([477](https://github.com/cucumber/godog/pull/477) - [vearutop](https://github.com/vearutop))
 - Removed deprecation of `godog.BindFlags`. ([498](https://github.com/cucumber/godog/pull/498) - [vearutop](https://github.com/vearutop))
 - Pretty Print when using rules. ([480](https://github.com/cucumber/godog/pull/480) - [dumpsterfireproject](https://github.com/dumpsterfireproject))
