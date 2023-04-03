@@ -14,6 +14,7 @@ For example, imagine you're about to create the famous UNIX ls command.
 Before you begin, you describe how the feature should work, see the example below..
 
 Example:
+
 	Feature: ls
 	  In order to see the directory structure
 	  As a UNIX user
