@@ -447,9 +447,7 @@ func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 		ctx = context.Background()
 	}
 
-	var cancel context.CancelFunc
-
-	ctx, cancel = context.WithCancel(ctx)
+	ctx, cancel := context.WithCancel(ctx)
 
 	defer cancel()
 
