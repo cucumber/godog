@@ -11,10 +11,13 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"testing"
+	"time"
 
 	gherkin "github.com/cucumber/gherkin/go/v26"
 	messages "github.com/cucumber/messages/go/v21"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/cucumber/godog/colors"
 	"github.com/cucumber/godog/internal/formatters"
@@ -793,4 +796,44 @@ func trimAllLines(s string) string {
 		lines = append(lines, strings.TrimSpace(ln))
 	}
 	return strings.Join(lines, "\n")
+}
+
+func TestScenarioContext_After_cancelled(t *testing.T) {
+	ctxDone := make(chan struct{})
+	suite := TestSuite{
+		ScenarioInitializer: func(scenarioContext *ScenarioContext) {
+			scenarioContext.When(`^foo$`, func() { return })
+			scenarioContext.After(func(ctx context.Context, sc *Scenario, err error) (context.Context, error) {
+				go func() {
+					<-ctx.Done()
+					close(ctxDone)
+				}()
+
+				return ctx, nil
+			})
+		},
+		Options: &Options{
+			Format:   "pretty",
+			TestingT: t,
+			FeatureContents: []Feature{
+				{
+					Name: "Scenario Context Cancellation",
+					Contents: []byte(`
+Feature: dummy
+  Scenario: Context should be cancelled by the end of scenario
+    When foo
+`),
+				},
+			},
+		},
+	}
+
+	require.Equal(t, 0, suite.Run(), "non-zero status returned, failed to run feature tests")
+
+	select {
+	case <-ctxDone:
+		return
+	case <-time.After(5 * time.Second):
+		assert.Fail(t, "failed to wait for context cancellation")
+	}
 }
