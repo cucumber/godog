@@ -303,7 +303,7 @@ func (s *Storage) mustFirst(table, index string, args ...interface{}) interface{
 	if err != nil {
 		panic(err)
 	} else if v == nil {
-		err = fmt.Errorf("Couldn't find index: %q in table: %q with args: %+v", index, table, args)
+		err = fmt.Errorf("couldn't find index: %q in table: %q with args: %+v", index, table, args)
 		panic(err)
 	}
 

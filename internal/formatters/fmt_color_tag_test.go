@@ -51,34 +51,6 @@ const (
 	ansiForegroundCyan    = "36"
 	ansiForegroundWhite   = "37"
 	ansiForegroundDefault = "39"
-
-	ansiBackgroundBlack   = "40"
-	ansiBackgroundRed     = "41"
-	ansiBackgroundGreen   = "42"
-	ansiBackgroundYellow  = "43"
-	ansiBackgroundBlue    = "44"
-	ansiBackgroundMagenta = "45"
-	ansiBackgroundCyan    = "46"
-	ansiBackgroundWhite   = "47"
-	ansiBackgroundDefault = "49"
-
-	ansiLightForegroundGray    = "90"
-	ansiLightForegroundRed     = "91"
-	ansiLightForegroundGreen   = "92"
-	ansiLightForegroundYellow  = "93"
-	ansiLightForegroundBlue    = "94"
-	ansiLightForegroundMagenta = "95"
-	ansiLightForegroundCyan    = "96"
-	ansiLightForegroundWhite   = "97"
-
-	ansiLightBackgroundGray    = "100"
-	ansiLightBackgroundRed     = "101"
-	ansiLightBackgroundGreen   = "102"
-	ansiLightBackgroundYellow  = "103"
-	ansiLightBackgroundBlue    = "104"
-	ansiLightBackgroundMagenta = "105"
-	ansiLightBackgroundCyan    = "106"
-	ansiLightBackgroundWhite   = "107"
 )
 
 var colorMap = map[string]string{
@@ -91,10 +63,6 @@ var colorMap = map[string]string{
 	ansiForegroundCyan:    "cyan",
 	ansiForegroundWhite:   "white",
 	ansiForegroundDefault: "",
-}
-
-func (cw *tagColorWriter) flushBuffer() (int, error) {
-	return cw.flushTo(cw.w)
 }
 
 func (cw *tagColorWriter) resetBuffer() (int, error) {
@@ -147,7 +115,6 @@ func (cw *tagColorWriter) Write(p []byte) (int, error) {
 			switch ch {
 			case firstCsiChar:
 				cw.paramStartBuf.WriteByte(ch)
-				break
 			case secondeCsiChar:
 				cw.paramStartBuf.WriteByte(ch)
 				cw.state = secondCsiCode

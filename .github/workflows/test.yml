@@ -29,13 +29,13 @@ jobs:
       - name: Run gofmt
         run: gofmt -d -e . 2>&1 | tee outfile && test -z "$(cat outfile)" && rm outfile
       - name: Run staticcheck
-        if: matrix.go-version == '1.17.x'
-        run: |
-          bin/staticcheck_linux_amd64_2021.1.2 github.com/cucumber/godog
-          bin/staticcheck_linux_amd64_2021.1.2 github.com/cucumber/godog/cmd/godog
-          # Disable for now because of failing checks
-          # TODO: Add back in when fixes are made
-          # bin/staticcheck_linux_amd64_2021.1.2 ./...
+        if: matrix.go-version == '1.20.x'
+        uses: dominikh/staticcheck-action@v1.2.0
+        with:
+          version: "2022.1.1"
+          install-go: false
+          cache-key: ${{ matrix.go }}
+
       - name: Run go vet
         run: |
           go vet ./...

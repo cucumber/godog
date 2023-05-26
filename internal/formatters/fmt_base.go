@@ -164,13 +164,13 @@ func (f *Base) Summary() {
 	if totalSc == 0 {
 		fmt.Fprintln(f.out, "No scenarios")
 	} else {
-		fmt.Fprintln(f.out, fmt.Sprintf("%d scenarios (%s)", totalSc, strings.Join(scenarios, ", ")))
+		fmt.Fprintf(f.out, "%d scenarios (%s)\n", totalSc, strings.Join(scenarios, ", "))
 	}
 
 	if totalSt == 0 {
 		fmt.Fprintln(f.out, "No steps")
 	} else {
-		fmt.Fprintln(f.out, fmt.Sprintf("%d steps (%s)", totalSt, strings.Join(steps, ", ")))
+		fmt.Fprintf(f.out, "%d steps (%s)\n", totalSt, strings.Join(steps, ", "))
 	}
 
 	elapsedString := elapsed.String()
