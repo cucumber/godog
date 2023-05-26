@@ -802,7 +802,7 @@ func TestScenarioContext_After_cancelled(t *testing.T) {
 	ctxDone := make(chan struct{})
 	suite := TestSuite{
 		ScenarioInitializer: func(scenarioContext *ScenarioContext) {
-			scenarioContext.When(`^foo$`, func() { return })
+			scenarioContext.When(`^foo$`, func() {})
 			scenarioContext.After(func(ctx context.Context, sc *Scenario, err error) (context.Context, error) {
 				go func() {
 					<-ctx.Done()
