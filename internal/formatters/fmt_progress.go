@@ -7,9 +7,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cucumber/messages/go/v21"
-
 	"github.com/cucumber/godog/formatters"
+	messages "github.com/cucumber/messages/go/v21"
 )
 
 func init() {

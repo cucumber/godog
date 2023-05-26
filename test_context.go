@@ -10,7 +10,7 @@ import (
 	"github.com/cucumber/godog/internal/builder"
 	"github.com/cucumber/godog/internal/flags"
 	"github.com/cucumber/godog/internal/models"
-	"github.com/cucumber/messages/go/v21"
+	messages "github.com/cucumber/messages/go/v21"
 )
 
 // GherkinDocument represents gherkin document.

@@ -3,10 +3,10 @@ package tags_test
 import (
 	"testing"
 
-	"github.com/cucumber/messages/go/v21"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/cucumber/godog/internal/tags"
+	messages "github.com/cucumber/messages/go/v21"
 )
 
 type tag = messages.PickleTag

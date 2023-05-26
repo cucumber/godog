@@ -4,7 +4,7 @@ import (
 	"io"
 	"regexp"
 
-	"github.com/cucumber/messages/go/v21"
+	messages "github.com/cucumber/messages/go/v21"
 )
 
 type registeredFormatter struct {

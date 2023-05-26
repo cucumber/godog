@@ -2,11 +2,12 @@ package godog
 
 import (
 	"bytes"
-	"github.com/cucumber/messages/go/v21"
 	"strings"
 	"testing"
 
-	"github.com/cucumber/gherkin/go/v26"
+	messages "github.com/cucumber/messages/go/v21"
+
+	gherkin "github.com/cucumber/gherkin/go/v26"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
