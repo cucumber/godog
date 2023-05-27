@@ -135,7 +135,7 @@ type AfterScenarioHook func(ctx context.Context, sc *Scenario, err error) (conte
 
 // StepContext exposes StepContext of a scenario.
 func (ctx ScenarioContext) StepContext() StepContext {
-	return StepContext{suite: ctx.suite}
+	return StepContext(ctx)
 }
 
 // Before registers a function or method
