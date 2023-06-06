@@ -15,9 +15,8 @@ type MultiFormatter struct {
 }
 
 type formatter struct {
-	fmt   formatters.FormatterFunc
-	out   io.Writer
-	close bool
+	fmt formatters.FormatterFunc
+	out io.Writer
 }
 
 type repeater []formatters.Formatter

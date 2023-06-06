@@ -11,10 +11,10 @@ import (
 )
 
 // some snippet formatting regexps
-var snippetExprCleanup = regexp.MustCompile("([\\/\\[\\]\\(\\)\\\\^\\$\\.\\|\\?\\*\\+\\'])")
-var snippetExprQuoted = regexp.MustCompile("(\\W|^)\"(?:[^\"]*)\"(\\W|$)")
-var snippetMethodName = regexp.MustCompile("[^a-zA-Z\\_\\ ]")
-var snippetNumbers = regexp.MustCompile("(\\d+)")
+var snippetExprCleanup = regexp.MustCompile(`([\/\[\]\(\)\\^\$\.\|\?\*\+\'])`)
+var snippetExprQuoted = regexp.MustCompile(`(\W|^)"(?:[^"]*)"(\W|$)`)
+var snippetMethodName = regexp.MustCompile(`[^a-zA-Z\_\ ]`)
+var snippetNumbers = regexp.MustCompile(`(\d+)`)
 
 var snippetHelperFuncs = template.FuncMap{
 	"backticked": func(s string) string {

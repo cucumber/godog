@@ -16,13 +16,15 @@ import (
 	messages "github.com/cucumber/messages/go/v21"
 )
 
+type ctxKey string
+
 func TestShouldSupportContext(t *testing.T) {
-	ctx := context.WithValue(context.Background(), "original", 123)
+	ctx := context.WithValue(context.Background(), ctxKey("original"), 123)
 
 	fn := func(ctx context.Context, a int64, b int32, c int16, d int8) context.Context {
-		assert.Equal(t, 123, ctx.Value("original"))
+		assert.Equal(t, 123, ctx.Value(ctxKey("original")))
 
-		return context.WithValue(ctx, "updated", 321)
+		return context.WithValue(ctx, ctxKey("updated"), 321)
 	}
 
 	def := &models.StepDefinition{
@@ -35,17 +37,18 @@ func TestShouldSupportContext(t *testing.T) {
 	def.Args = []interface{}{"1", "1", "1", "1"}
 	ctx, err := def.Run(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, 123, ctx.Value("original"))
-	assert.Equal(t, 321, ctx.Value("updated"))
+	assert.Equal(t, 123, ctx.Value(ctxKey("original")))
+	assert.Equal(t, 321, ctx.Value(ctxKey("updated")))
 }
 
 func TestShouldSupportContextAndError(t *testing.T) {
-	ctx := context.WithValue(context.Background(), "original", 123)
+
+	ctx := context.WithValue(context.Background(), ctxKey("original"), 123)
 
 	fn := func(ctx context.Context, a int64, b int32, c int16, d int8) (context.Context, error) {
-		assert.Equal(t, 123, ctx.Value("original"))
+		assert.Equal(t, 123, ctx.Value(ctxKey("original")))
 
-		return context.WithValue(ctx, "updated", 321), nil
+		return context.WithValue(ctx, ctxKey("updated"), 321), nil
 	}
 
 	def := &models.StepDefinition{
@@ -58,8 +61,8 @@ func TestShouldSupportContextAndError(t *testing.T) {
 	def.Args = []interface{}{"1", "1", "1", "1"}
 	ctx, err := def.Run(ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, 123, ctx.Value("original"))
-	assert.Equal(t, 321, ctx.Value("updated"))
+	assert.Equal(t, 123, ctx.Value(ctxKey("original")))
+	assert.Equal(t, 321, ctx.Value(ctxKey("updated")))
 }
 
 func TestShouldSupportEmptyHandlerReturn(t *testing.T) {
@@ -374,7 +377,7 @@ func TestStepDefinition_Run_StringConversionToFunctionType(t *testing.T) {
 // }
 
 type testStruct struct {
-	a string
+	_ string
 }
 
 func TestShouldSupportDocStringToStringConversion(t *testing.T) {
