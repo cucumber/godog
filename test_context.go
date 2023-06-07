@@ -125,7 +125,7 @@ func (ctx ScenarioContext) Before(h BeforeScenarioHook) {
 // BeforeScenarioHook defines a hook before scenario.
 type BeforeScenarioHook func(ctx context.Context, sc *Scenario) (context.Context, error)
 
-// After registers an function or method
+// After registers a function or method
 // to be run after every scenario.
 func (ctx ScenarioContext) After(h AfterScenarioHook) {
 	ctx.suite.afterScenarioHandlers = append(ctx.suite.afterScenarioHandlers, h)
@@ -135,8 +135,8 @@ func (ctx ScenarioContext) After(h AfterScenarioHook) {
 type AfterScenarioHook func(ctx context.Context, sc *Scenario, err error) (context.Context, error)
 
 // StepContext exposes StepContext of a scenario.
-func (ctx *ScenarioContext) StepContext() StepContext {
-	return StepContext{suite: ctx.suite}
+func (ctx ScenarioContext) StepContext() StepContext {
+	return StepContext(ctx)
 }
 
 // Before registers a function or method
@@ -168,11 +168,11 @@ type AfterStepHook func(ctx context.Context, st *Step, status StepResultStatus, 
 // to be run before every scenario.
 //
 // It is a good practice to restore the default state
-// before every scenario so it would be isolated from
+// before every scenario, so it would be isolated from
 // any kind of state.
 //
 // Deprecated: use Before.
-func (ctx *ScenarioContext) BeforeScenario(fn func(sc *Scenario)) {
+func (ctx ScenarioContext) BeforeScenario(fn func(sc *Scenario)) {
 	ctx.Before(func(ctx context.Context, sc *Scenario) (context.Context, error) {
 		fn(sc)
 
@@ -184,7 +184,7 @@ func (ctx *ScenarioContext) BeforeScenario(fn func(sc *Scenario)) {
 // to be run after every scenario.
 //
 // Deprecated: use After.
-func (ctx *ScenarioContext) AfterScenario(fn func(sc *Scenario, err error)) {
+func (ctx ScenarioContext) AfterScenario(fn func(sc *Scenario, err error)) {
 	ctx.After(func(ctx context.Context, sc *Scenario, err error) (context.Context, error) {
 		fn(sc, err)
 
@@ -196,7 +196,7 @@ func (ctx *ScenarioContext) AfterScenario(fn func(sc *Scenario, err error)) {
 // to be run before every step.
 //
 // Deprecated: use ScenarioContext.StepContext() and StepContext.Before.
-func (ctx *ScenarioContext) BeforeStep(fn func(st *Step)) {
+func (ctx ScenarioContext) BeforeStep(fn func(st *Step)) {
 	ctx.StepContext().Before(func(ctx context.Context, st *Step) (context.Context, error) {
 		fn(st)
 
@@ -215,7 +215,7 @@ func (ctx *ScenarioContext) BeforeStep(fn func(st *Step)) {
 // browser, to take a screenshot after failure.
 //
 // Deprecated: use ScenarioContext.StepContext() and StepContext.After.
-func (ctx *ScenarioContext) AfterStep(fn func(st *Step, err error)) {
+func (ctx ScenarioContext) AfterStep(fn func(st *Step, err error)) {
 	ctx.StepContext().After(func(ctx context.Context, st *Step, status StepResultStatus, err error) (context.Context, error) {
 		fn(st, err)
 
@@ -250,7 +250,7 @@ func (ctx *ScenarioContext) AfterStep(fn func(st *Step, err error)) {
 // If none of the *StepDefinition is matched, then
 // ErrUndefined error will be returned when
 // running steps.
-func (ctx *ScenarioContext) Step(expr, stepFunc interface{}) {
+func (ctx ScenarioContext) Step(expr, stepFunc interface{}) {
 	ctx.stepWithKeyword(expr, stepFunc, formatters.None)
 }
 
@@ -258,7 +258,7 @@ func (ctx *ScenarioContext) Step(expr, stepFunc interface{}) {
 // will only be matched if the step starts with "Given". "And"
 // and "But" keywords copy the keyword of the last step for the
 // purpose of matching.
-func (ctx *ScenarioContext) Given(expr, stepFunc interface{}) {
+func (ctx ScenarioContext) Given(expr, stepFunc interface{}) {
 	ctx.stepWithKeyword(expr, stepFunc, formatters.Given)
 }
 
@@ -266,7 +266,7 @@ func (ctx *ScenarioContext) Given(expr, stepFunc interface{}) {
 // will only be matched if the step starts with "When". "And"
 // and "But" keywords copy the keyword of the last step for the
 // purpose of matching.
-func (ctx *ScenarioContext) When(expr, stepFunc interface{}) {
+func (ctx ScenarioContext) When(expr, stepFunc interface{}) {
 	ctx.stepWithKeyword(expr, stepFunc, formatters.When)
 }
 
@@ -274,11 +274,11 @@ func (ctx *ScenarioContext) When(expr, stepFunc interface{}) {
 // will only be matched if the step starts with "Then". "And"
 // and "But" keywords copy the keyword of the last step for the
 // purpose of matching.
-func (ctx *ScenarioContext) Then(expr, stepFunc interface{}) {
+func (ctx ScenarioContext) Then(expr, stepFunc interface{}) {
 	ctx.stepWithKeyword(expr, stepFunc, formatters.Then)
 }
 
-func (ctx *ScenarioContext) stepWithKeyword(expr interface{}, stepFunc interface{}, keyword formatters.Keyword) {
+func (ctx ScenarioContext) stepWithKeyword(expr interface{}, stepFunc interface{}, keyword formatters.Keyword) {
 	var regex *regexp.Regexp
 
 	switch t := expr.(type) {
@@ -338,7 +338,7 @@ func (ctx *ScenarioContext) stepWithKeyword(expr interface{}, stepFunc interface
 // If there are go test files, it first builds a test
 // package with standard go test command.
 //
-// Finally it generates godog suite executable which
+// Finally, it generates godog suite executable which
 // registers exported godog contexts from the test files
 // of tested package.
 //
