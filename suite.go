@@ -473,7 +473,7 @@ func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 		s.testingT.Run(pickle.Name, func(t *testing.T) {
 			ctx, err = s.runSteps(ctx, pickle, pickle.Steps)
 			if s.shouldFail(err) {
-				t.Error(err)
+				t.Errorf("%+v", err)
 			}
 		})
 	} else {
