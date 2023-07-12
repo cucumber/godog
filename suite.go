@@ -2,6 +2,7 @@ package godog
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -26,6 +27,9 @@ var ErrUndefined = fmt.Errorf("step is undefined")
 // ErrPending should be returned by step definition if
 // step implementation is pending
 var ErrPending = fmt.Errorf("step implementation is pending")
+
+// ErrSkip should be returned by step definition or a hook if scenario and further steps are to be skipped.
+var ErrSkip = fmt.Errorf("skipped")
 
 // StepResultStatus describes step result.
 type StepResultStatus = models.StepResultStatus
@@ -72,34 +76,53 @@ func (s *suite) matchStep(step *messages.PickleStep) *models.StepDefinition {
 	return def
 }
 
-func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, prevStepErr error, isFirst, isLast bool) (rctx context.Context, err error) {
+func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scenarioErr error, isFirst, isLast bool) (rctx context.Context, err error) {
 	var (
 		match *models.StepDefinition
-		sr    = models.PickleStepResult{Status: models.Undefined}
+		sr    = models.NewStepResult(pickle.Id, step.Id, match)
 	)
 
 	rctx = ctx
+	sr.Status = StepUndefined
 
 	// user multistep definitions may panic
 	defer func() {
 		if e := recover(); e != nil {
-			err = &traceError{
-				msg:   fmt.Sprintf("%v", e),
-				stack: callStack(),
+			if err != nil {
+				err = &traceError{
+					msg:   fmt.Sprintf("%s: %v", err.Error(), e),
+					stack: callStack(),
+				}
+			} else {
+				err = &traceError{
+					msg:   fmt.Sprintf("%v", e),
+					stack: callStack(),
+				}
 			}
 		}
 
-		earlyReturn := prevStepErr != nil || err == ErrUndefined
+		earlyReturn := scenarioErr != nil || err == ErrUndefined
 
-		if !earlyReturn {
-			sr = models.NewStepResult(pickle.Id, step.Id, match)
+		switch {
+		case errors.Is(err, ErrPending):
+			sr.Status = StepPending
+		case errors.Is(err, ErrSkip) || (err == nil && scenarioErr != nil):
+			sr.Status = StepSkipped
+		case errors.Is(err, ErrUndefined):
+			sr.Status = StepUndefined
+		case err != nil:
+			sr.Status = StepFailed
+		case err == nil && scenarioErr == nil:
+			sr.Status = StepPassed
 		}
 
 		// Run after step handlers.
 		rctx, err = s.runAfterStepHooks(ctx, step, sr.Status, err)
 
+		shouldFail := s.shouldFail(err)
+
 		// Trigger after scenario on failing or last step to attach possible hook error to step.
-		if isLast || (sr.Status != StepSkipped && sr.Status != StepUndefined && err != nil) {
+		if !s.shouldFail(scenarioErr) && (isLast || shouldFail) {
 			rctx, err = s.runAfterScenarioHooks(rctx, pickle, err)
 		}
 
@@ -137,6 +160,7 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, prevS
 
 	match = s.matchStep(step)
 	s.storage.MustInsertStepDefintionMatch(step.AstNodeIds[0], match)
+	sr.Def = match
 	s.fmt.Defined(pickle, step, match.GetInternalStepDefinition())
 
 	if err != nil {
@@ -162,6 +186,7 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, prevS
 				Nested:       match.Nested,
 				Undefined:    undef,
 			}
+			sr.Def = match
 		}
 
 		sr = models.NewStepResult(pickle.Id, step.Id, match)
@@ -172,7 +197,7 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, prevS
 		return ctx, ErrUndefined
 	}
 
-	if prevStepErr != nil {
+	if scenarioErr != nil {
 		sr = models.NewStepResult(pickle.Id, step.Id, match)
 		sr.Status = models.Skipped
 		s.storage.MustInsertPickleStepResult(sr)
@@ -344,7 +369,7 @@ func (s *suite) maybeSubSteps(ctx context.Context, result interface{}) (context.
 
 	steps, ok := result.(Steps)
 	if !ok {
-		return ctx, fmt.Errorf("unexpected error, should have been []string: %T - %+v", result, result)
+		return ctx, fmt.Errorf("unexpected error, should have been godog.Steps: %T - %+v", result, result)
 	}
 
 	var err error
@@ -352,10 +377,45 @@ func (s *suite) maybeSubSteps(ctx context.Context, result interface{}) (context.
 	for _, text := range steps {
 		if def := s.matchStepTextAndType(text, messages.PickleStepType_UNKNOWN); def == nil {
 			return ctx, ErrUndefined
-		} else if ctx, err = s.maybeSubSteps(def.Run(ctx)); err != nil {
-			return ctx, fmt.Errorf("%s: %+v", text, err)
+		} else {
+			ctx, err = s.runSubStep(ctx, text, def)
+			if err != nil {
+				return ctx, err
+			}
 		}
 	}
+	return ctx, nil
+}
+
+func (s *suite) runSubStep(ctx context.Context, text string, def *models.StepDefinition) (_ context.Context, err error) {
+	st := &Step{}
+	st.Text = text
+	st.Type = messages.PickleStepType_ACTION
+
+	defer func() {
+		status := StepPassed
+
+		switch {
+		case errors.Is(err, ErrUndefined):
+			status = StepUndefined
+		case errors.Is(err, ErrPending):
+			status = StepPending
+		case err != nil:
+			status = StepFailed
+		}
+
+		ctx, err = s.runAfterStepHooks(ctx, st, status, err)
+	}()
+
+	ctx, err = s.runBeforeStepHooks(ctx, st, nil)
+	if err != nil {
+		return ctx, fmt.Errorf("%s: %+v", text, err)
+	}
+
+	if ctx, err = s.maybeSubSteps(def.Run(ctx)); err != nil {
+		return ctx, fmt.Errorf("%s: %+v", text, err)
+	}
+
 	return ctx, nil
 }
 
@@ -405,32 +465,23 @@ func keywordMatches(k formatters.Keyword, stepType messages.PickleStepType) bool
 
 func (s *suite) runSteps(ctx context.Context, pickle *Scenario, steps []*Step) (context.Context, error) {
 	var (
-		stepErr, err error
+		stepErr, scenarioErr error
 	)
 
 	for i, step := range steps {
 		isLast := i == len(steps)-1
 		isFirst := i == 0
-		ctx, stepErr = s.runStep(ctx, pickle, step, err, isFirst, isLast)
-		switch stepErr {
-		case ErrUndefined:
-			// do not overwrite failed error
-			if err == ErrUndefined || err == nil {
-				err = stepErr
-			}
-		case ErrPending:
-			err = stepErr
-		case nil:
-		default:
-			err = stepErr
+		ctx, stepErr = s.runStep(ctx, pickle, step, scenarioErr, isFirst, isLast)
+		if scenarioErr == nil || s.shouldFail(stepErr) {
+			scenarioErr = stepErr
 		}
 	}
 
-	return ctx, err
+	return ctx, scenarioErr
 }
 
 func (s *suite) shouldFail(err error) bool {
-	if err == nil {
+	if err == nil || err == ErrSkip {
 		return false
 	}
 
