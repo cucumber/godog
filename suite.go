@@ -522,6 +522,7 @@ func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 	if s.testingT != nil {
 		// Running scenario as a subtest.
 		s.testingT.Run(pickle.Name, func(t *testing.T) {
+			ctx = setContextLogger(ctx, t)
 			ctx, err = s.runSteps(ctx, pickle, pickle.Steps)
 			if s.shouldFail(err) {
 				t.Errorf("%+v", err)
@@ -535,4 +536,23 @@ func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 	// so that error from handler can be added to step.
 
 	return err
+}
+
+type TestLogger interface {
+	Log(args ...interface{})
+	Logf(format string, args ...interface{})
+}
+
+type logCtxVal struct{}
+
+func setContextLogger(ctx context.Context, t TestLogger) context.Context {
+	return context.WithValue(ctx, logCtxVal{}, t)
+}
+
+func GetTestLogger(ctx context.Context) TestLogger {
+	t, ok := ctx.Value(logCtxVal{}).(TestLogger)
+	if !ok {
+		return nil
+	}
+	return t
 }
