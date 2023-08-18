@@ -106,6 +106,11 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 
 		earlyReturn := scenarioErr != nil || errors.Is(err, ErrUndefined)
 
+		// Check for any calls to Fail on dogT
+		if err == nil {
+			err = getDogTestingT(ctx).isFailed()
+		}
+
 		switch {
 		case errors.Is(err, ErrPending):
 			status = StepPending
@@ -523,32 +528,18 @@ func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 		s.testingT.Run(pickle.Name, func(t *testing.T) {
 			dt.t = t
 			ctx, err = s.runSteps(ctx, pickle, pickle.Steps)
-			if err == nil {
-				err = dt.check()
-			}
 			if s.shouldFail(err) {
 				t.Errorf("%+v", err)
 			}
 		})
 	} else {
 		ctx, err = s.runSteps(ctx, pickle, pickle.Steps)
-		if err == nil {
-			err = dt.check()
-		}
 	}
 
 	// After scenario handlers are called in context of last evaluated step
 	// so that error from handler can be added to step.
 
 	return err
-}
-
-type TestingT interface {
-	Log(args ...interface{})
-	Logf(format string, args ...interface{})
-	Errorf(format string, args ...interface{})
-	Fail()
-	FailNow()
 }
 
 // Logf will log test output. If called in the context of a test and testing.T has been registered,
