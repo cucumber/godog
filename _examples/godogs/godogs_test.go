@@ -1,4 +1,4 @@
-package godogs
+package godogs_test
 
 // This example shows how to set up test suite runner with Go subtests and godog command line parameters.
 // Sample commands:
@@ -15,6 +15,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/cucumber/godog/_examples/godogs"
 	"os"
 	"testing"
 
@@ -22,7 +23,10 @@ import (
 	"github.com/cucumber/godog/colors"
 )
 
-var opts = godog.Options{Output: colors.Colored(os.Stdout)}
+var opts = godog.Options{
+	Output:      colors.Colored(os.Stdout),
+	Concurrency: 4,
+}
 
 func init() {
 	godog.BindFlags("godog.", flag.CommandLine, &opts)
@@ -48,38 +52,54 @@ func TestFeatures(t *testing.T) {
 	}
 }
 
-func thereAreGodogs(available int) error {
-	Godogs = available
-	return nil
+type godogsCtxKey struct{}
+
+func godogsToContext(ctx context.Context, g godogs.Godogs) context.Context {
+	return context.WithValue(ctx, godogsCtxKey{}, &g)
 }
 
-func iEat(num int) error {
-	if Godogs < num {
-		return fmt.Errorf("you cannot eat %d godogs, there are %d available", num, Godogs)
+func godogsFromContext(ctx context.Context) *godogs.Godogs {
+	g, _ := ctx.Value(godogsCtxKey{}).(*godogs.Godogs)
+
+	return g
+}
+
+// Concurrent execution of scenarios may lead to race conditions on shared resources.
+// Use context to maintain data separation and avoid data races.
+
+// Step definition can optionally receive context as a first argument.
+
+func thereAreGodogs(ctx context.Context, available int) {
+	godogsFromContext(ctx).Add(available)
+}
+
+// Step definition can return error, context, context and error, or nothing.
+
+func iEat(ctx context.Context, num int) error {
+	return godogsFromContext(ctx).Eat(num)
+}
+
+func thereShouldBeRemaining(ctx context.Context, remaining int) error {
+	available := godogsFromContext(ctx).Available()
+	if available != remaining {
+		return fmt.Errorf("expected %d godogs to be remaining, but there is %d", remaining, available)
 	}
-	Godogs -= num
+
 	return nil
 }
 
-func thereShouldBeRemaining(remaining int) error {
-	if Godogs != remaining {
-		return fmt.Errorf("expected %d godogs to be remaining, but there is %d", remaining, Godogs)
-	}
-	return nil
-}
-
-func thereShouldBeNoneRemaining() error {
-	return thereShouldBeRemaining(0)
+func thereShouldBeNoneRemaining(ctx context.Context) error {
+	return thereShouldBeRemaining(ctx, 0)
 }
 
 func InitializeTestSuite(ctx *godog.TestSuiteContext) {
-	ctx.BeforeSuite(func() { Godogs = 0 })
+	ctx.BeforeSuite(func() { fmt.Println("Get the party started!") })
 }
 
 func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
-		Godogs = 0 // clean the state before every scenario
-		return ctx, nil
+		// Add initial godogs to context.
+		return godogsToContext(ctx, 0), nil
 	})
 
 	ctx.Step(`^there are (\d+) godogs$`, thereAreGodogs)
