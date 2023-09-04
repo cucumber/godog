@@ -20,7 +20,7 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Gorelease cache
         uses: actions/cache@v3
         with:
