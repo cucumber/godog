@@ -106,7 +106,6 @@ func (f *Base) Summary() {
 
 			switch sr.Status {
 			case passed:
-				prStatus = passed
 				passedSt++
 			case failed:
 				prStatus = failed
@@ -114,10 +113,8 @@ func (f *Base) Summary() {
 			case skipped:
 				skippedSt++
 			case undefined:
-				prStatus = undefined
 				undefinedSt++
 			case pending:
-				prStatus = pending
 				pendingSt++
 			}
 		}
