@@ -113,8 +113,10 @@ func (f *Base) Summary() {
 			case skipped:
 				skippedSt++
 			case undefined:
+				prStatus = undefined
 				undefinedSt++
 			case pending:
+				prStatus = pending
 				pendingSt++
 			}
 		}
