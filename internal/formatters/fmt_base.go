@@ -106,7 +106,6 @@ func (f *Base) Summary() {
 
 			switch sr.Status {
 			case passed:
-				prStatus = passed
 				passedSt++
 			case failed:
 				prStatus = failed
