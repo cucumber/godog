@@ -101,12 +101,12 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 			}
 		}
 
-		earlyReturn := scenarioErr != nil || err == ErrUndefined
+		earlyReturn := scenarioErr != nil || errors.Is(err, ErrUndefined)
 
 		switch {
 		case errors.Is(err, ErrPending):
 			sr.Status = StepPending
-		case errors.Is(err, ErrSkip) || (err == nil && scenarioErr != nil):
+		case errors.Is(err, ErrSkip), err == nil && scenarioErr != nil:
 			sr.Status = StepSkipped
 		case errors.Is(err, ErrUndefined):
 			sr.Status = StepUndefined
@@ -130,17 +130,22 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 			return
 		}
 
-		switch err {
-		case nil:
+		switch {
+		case err == nil:
 			sr.Status = models.Passed
 			s.storage.MustInsertPickleStepResult(sr)
 
 			s.fmt.Passed(pickle, step, match.GetInternalStepDefinition())
-		case ErrPending:
+		case errors.Is(err, ErrPending):
 			sr.Status = models.Pending
 			s.storage.MustInsertPickleStepResult(sr)
 
 			s.fmt.Pending(pickle, step, match.GetInternalStepDefinition())
+		case errors.Is(err, ErrSkip):
+			sr.Status = models.Skipped
+			s.storage.MustInsertPickleStepResult(sr)
+
+			s.fmt.Skipped(pickle, step, match.GetInternalStepDefinition())
 		default:
 			sr.Status = models.Failed
 			sr.Err = err
@@ -481,11 +486,11 @@ func (s *suite) runSteps(ctx context.Context, pickle *Scenario, steps []*Step) (
 }
 
 func (s *suite) shouldFail(err error) bool {
-	if err == nil || err == ErrSkip {
+	if err == nil || errors.Is(err, ErrSkip) {
 		return false
 	}
 
-	if err == ErrUndefined || err == ErrPending {
+	if errors.Is(err, ErrUndefined) || errors.Is(err, ErrPending) {
 		return s.strict
 	}
 
