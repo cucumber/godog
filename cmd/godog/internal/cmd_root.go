@@ -1,12 +1,9 @@
 package internal
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/cucumber/godog/colors"
 	"github.com/cucumber/godog/internal/flags"
 )
 
@@ -44,8 +41,6 @@ func runRootCmd(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	fmt.Println(colors.Yellow("Use of godog CLI is deprecated, please use *testing.T instead."))
-	fmt.Println(colors.Yellow("See https://github.com/cucumber/godog/discussions/478 for details."))
 	return runCmdRunFunc(cmd, args)
 }
 
