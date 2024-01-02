@@ -35,6 +35,7 @@ var undefinedSnippetsTpl = template.Must(template.New("snippets").Funcs(snippetH
 type undefinedSnippet struct {
 	Method   string
 	Expr     string
+	Type     string
 	argument *messages.PickleStepArgument
 }
 
@@ -44,7 +45,9 @@ func (s undefinedSnippet) Args() (ret string) {
 		pos       int
 		breakLoop bool
 	)
+	/*
 
+	 */
 	for !breakLoop {
 		part := s.Expr[pos:]
 		ipos := strings.Index(part, "(\\d+)")

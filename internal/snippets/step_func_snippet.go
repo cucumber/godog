@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/cucumber/godog/internal/models"
 	"github.com/cucumber/godog/internal/storage"
+	messages "github.com/cucumber/messages/go/v21"
 	"sort"
 	"strings"
 	"unicode"
@@ -32,7 +33,22 @@ func StepFunction(s *storage.Storage) string {
 			steps = u.Def.Undefined
 			arg = nil
 		}
+
+		// Not sure if range is needed... don't understand it yet.
 		for _, step := range steps {
+			var stepType string
+
+			switch pickleStep.Type {
+			case messages.PickleStepType_ACTION:
+				stepType = "When"
+			case messages.PickleStepType_CONTEXT:
+				stepType = "Given"
+			case messages.PickleStepType_OUTCOME:
+				stepType = "Then"
+			default:
+				stepType = "Step"
+			}
+
 			expr := snippetExprCleanup.ReplaceAllString(step, "\\$1")
 			expr = snippetNumbers.ReplaceAllString(expr, "(\\d+)")
 			expr = snippetExprQuoted.ReplaceAllString(expr, "$1\"([^\"]*)\"$2")
@@ -65,7 +81,7 @@ func StepFunction(s *storage.Storage) string {
 				}
 			}
 			if !found {
-				snips = append(snips, undefinedSnippet{Method: name, Expr: expr, argument: arg})
+				snips = append(snips, undefinedSnippet{Method: name, Type: stepType, Expr: expr, argument: arg})
 			}
 		}
 	}
