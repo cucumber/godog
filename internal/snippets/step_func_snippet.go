@@ -8,14 +8,24 @@ import (
 	messages "github.com/cucumber/messages/go/v21"
 	"sort"
 	"strings"
+	"text/template"
 	"unicode"
 )
 
 func init() {
-	register("step_func", StepFunction)
+	register("step_func", StepFunc)
+	register("gwt_func", GwtFunc)
 }
 
-func StepFunction(s *storage.Storage) string {
+func StepFunc(s *storage.Storage) string {
+	return BaseFunc(s, undefinedStepFuncSnippetsTpl)
+}
+
+func GwtFunc(s *storage.Storage) string {
+	return BaseFunc(s, undefinedGwtFuncSnippetsTpl)
+}
+
+func BaseFunc(s *storage.Storage, tpl *template.Template) string {
 	undefinedStepResults := s.MustGetPickleStepResultsByStatus(models.Undefined)
 	if len(undefinedStepResults) == 0 {
 		return ""
@@ -89,7 +99,7 @@ func StepFunction(s *storage.Storage) string {
 	sort.Sort(snippetSortByMethod(snips))
 
 	var buf bytes.Buffer
-	if err := undefinedSnippetsTpl.Execute(&buf, snips); err != nil {
+	if err := tpl.Execute(&buf, snips); err != nil {
 		panic(err)
 	}
 	// there may be trailing spaces

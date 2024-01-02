@@ -50,6 +50,7 @@ func InitializeScenario(ctx *ScenarioContext) {
 	ctx.Step(`^I run feature suite with formatter "([^"]*)"$`, tc.iRunFeatureSuiteWithFormatter)
 	ctx.Step(`^(?:I )(allow|disable) variable injection`, tc.iSetVariableInjectionTo)
 	ctx.Step(`^(?:a )?feature "([^"]*)"(?: file)?:$`, tc.aFeatureFile)
+	ctx.Step(`^snippet function is: "([^"]*)"$`, tc.snippetFunctionIs)
 	ctx.Step(`^the suite should have (passed|failed)$`, tc.theSuiteShouldHave)
 
 	ctx.Step(`^I should have ([\d]+) features? files?:$`, tc.iShouldHaveNumFeatureFiles)
@@ -218,6 +219,7 @@ type godogFeaturesScenario struct {
 	paths            []string
 	features         []*models.Feature
 	testedSuite      *suite
+	snippetFunc      string
 	testSuiteContext TestSuiteContext
 	events           []*firedEvent
 	out              bytes.Buffer
@@ -238,6 +240,10 @@ func (tc *godogFeaturesScenario) ResetBeforeEachScenario(ctx context.Context, sc
 	tc.allowInjection = false
 
 	return ctx, nil
+}
+
+func (tc *godogFeaturesScenario) snippetFunctionIs(snippetFunc string) {
+	tc.snippetFunc = snippetFunc
 }
 
 func (tc *godogFeaturesScenario) iSetVariableInjectionTo(to string) error {
@@ -311,7 +317,7 @@ func (tc *godogFeaturesScenario) iRunFeatureSuiteWithTagsAndFormatter(filter str
 		f()
 	}
 
-	tc.testedSuite.fmt.Summary(snippets.StepFunction)
+	tc.testedSuite.fmt.Summary(snippets.Find(tc.snippetFunc))
 
 	return nil
 }
@@ -359,11 +365,11 @@ func (tc *godogFeaturesScenario) theUndefinedStepSnippetsShouldBe(body *DocStrin
 		return fmt.Errorf("this step requires *formatters.Base, but there is: %T", tc.testedSuite.fmt)
 	}
 
-	actual := tc.cleanupSnippet(f.Snippets(snippets.StepFunction))
+	actual := tc.cleanupSnippet(f.Snippets(snippets.Find(tc.snippetFunc)))
 	expected := tc.cleanupSnippet(body.Content)
 
 	if actual != expected {
-		return fmt.Errorf("snippets do not match actual: %s", f.Snippets(snippets.StepFunction))
+		return fmt.Errorf("snippets do not match actual: %s", f.Snippets(snippets.Find(tc.snippetFunc)))
 	}
 
 	return nil

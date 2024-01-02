@@ -23,5 +23,5 @@ func Find(name string) Func {
 	if ok {
 		return f
 	}
-	return StepFunction
+	return StepFunc
 }

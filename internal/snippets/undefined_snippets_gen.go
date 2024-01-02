@@ -22,13 +22,23 @@ var snippetHelperFuncs = template.FuncMap{
 	},
 }
 
-var undefinedSnippetsTpl = template.Must(template.New("snippets").Funcs(snippetHelperFuncs).Parse(`
+var undefinedStepFuncSnippetsTpl = template.Must(template.New("snippets").Funcs(snippetHelperFuncs).Parse(`
 {{ range . }}func {{ .Method }}({{ .Args }}) error {
 	return godog.ErrPending
 }
 
 {{end}}func InitializeScenario(ctx *godog.ScenarioContext) { {{ range . }}
 	ctx.Step({{ backticked .Expr }}, {{ .Method }}){{end}}
+}
+`))
+
+var undefinedGwtFuncSnippetsTpl = template.Must(template.New("snippets").Funcs(snippetHelperFuncs).Parse(`
+{{ range . }}func {{ .Method }}({{ .Args }}) error {
+	return godog.ErrPending
+}
+
+{{end}}func InitializeScenario(ctx *godog.ScenarioContext) { {{ range . }}
+	ctx.{{ .Type }}({{ backticked .Expr }}, {{ .Method }}){{end}}
 }
 `))
 
