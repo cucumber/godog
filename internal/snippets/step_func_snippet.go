@@ -10,7 +10,11 @@ import (
 	"unicode"
 )
 
-func StepSnippets(s *storage.Storage) string {
+func init() {
+	register("step_func", StepFunction)
+}
+
+func StepFunction(s *storage.Storage) string {
 	undefinedStepResults := s.MustGetPickleStepResultsByStatus(models.Undefined)
 	if len(undefinedStepResults) == 0 {
 		return ""

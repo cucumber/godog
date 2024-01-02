@@ -311,7 +311,7 @@ func (tc *godogFeaturesScenario) iRunFeatureSuiteWithTagsAndFormatter(filter str
 		f()
 	}
 
-	tc.testedSuite.fmt.Summary(snippets.StepSnippets)
+	tc.testedSuite.fmt.Summary(snippets.StepFunction)
 
 	return nil
 }
@@ -359,11 +359,11 @@ func (tc *godogFeaturesScenario) theUndefinedStepSnippetsShouldBe(body *DocStrin
 		return fmt.Errorf("this step requires *formatters.Base, but there is: %T", tc.testedSuite.fmt)
 	}
 
-	actual := tc.cleanupSnippet(f.Snippets(snippets.StepSnippets))
+	actual := tc.cleanupSnippet(f.Snippets(snippets.StepFunction))
 	expected := tc.cleanupSnippet(body.Content)
 
 	if actual != expected {
-		return fmt.Errorf("snippets do not match actual: %s", f.Snippets(snippets.StepSnippets))
+		return fmt.Errorf("snippets do not match actual: %s", f.Snippets(snippets.StepFunction))
 	}
 
 	return nil

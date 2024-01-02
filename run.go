@@ -153,7 +153,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 	}
 
 	// print summary
-	r.fmt.Summary(snippets.StepSnippets)
+	r.fmt.Summary(snippets.StepFunction)
 	return
 }
 
