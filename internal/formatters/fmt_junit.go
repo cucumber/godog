@@ -3,6 +3,7 @@ package formatters
 import (
 	"encoding/xml"
 	"fmt"
+	"github.com/cucumber/godog/internal/snippets"
 	"io"
 	"os"
 	"sort"
@@ -28,7 +29,7 @@ type JUnit struct {
 }
 
 // Summary renders summary information.
-func (f *JUnit) Summary() {
+func (f *JUnit) Summary(sf snippets.Func) {
 	suite := f.buildJUNITPackageSuite()
 
 	_, err := io.WriteString(f.out, xml.Header)

@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/cucumber/godog"
-	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/models"
 	messages "github.com/cucumber/messages/go/v21"
 )
@@ -28,7 +27,7 @@ func TestShouldSupportContext(t *testing.T) {
 	}
 
 	def := &models.StepDefinition{
-		StepDefinition: formatters.StepDefinition{
+		StepDefinitionBase: models.StepDefinitionBase{
 			Handler: fn,
 		},
 		HandlerValue: reflect.ValueOf(fn),
@@ -52,7 +51,7 @@ func TestShouldSupportContextAndError(t *testing.T) {
 	}
 
 	def := &models.StepDefinition{
-		StepDefinition: formatters.StepDefinition{
+		StepDefinitionBase: models.StepDefinitionBase{
 			Handler: fn,
 		},
 		HandlerValue: reflect.ValueOf(fn),
@@ -69,7 +68,7 @@ func TestShouldSupportEmptyHandlerReturn(t *testing.T) {
 	fn := func(a int64, b int32, c int16, d int8) {}
 
 	def := &models.StepDefinition{
-		StepDefinition: formatters.StepDefinition{
+		StepDefinitionBase: models.StepDefinitionBase{
 			Handler: fn,
 		},
 		HandlerValue: reflect.ValueOf(fn),
@@ -90,7 +89,7 @@ func TestShouldSupportIntTypes(t *testing.T) {
 	fn := func(a int64, b int32, c int16, d int8) error { return nil }
 
 	def := &models.StepDefinition{
-		StepDefinition: formatters.StepDefinition{
+		StepDefinitionBase: models.StepDefinitionBase{
 			Handler: fn,
 		},
 		HandlerValue: reflect.ValueOf(fn),
@@ -111,7 +110,7 @@ func TestShouldSupportFloatTypes(t *testing.T) {
 	fn := func(a float64, b float32) error { return nil }
 
 	def := &models.StepDefinition{
-		StepDefinition: formatters.StepDefinition{
+		StepDefinitionBase: models.StepDefinitionBase{
 			Handler: fn,
 		},
 		HandlerValue: reflect.ValueOf(fn),
@@ -134,21 +133,21 @@ func TestShouldNotSupportOtherPointerTypesThanGherkin(t *testing.T) {
 	fn3 := func(a *messages.PickleTable) error { return nil }
 
 	def1 := &models.StepDefinition{
-		StepDefinition: formatters.StepDefinition{
+		StepDefinitionBase: models.StepDefinitionBase{
 			Handler: fn1,
 		},
 		HandlerValue: reflect.ValueOf(fn1),
 		Args:         []interface{}{(*int)(nil)},
 	}
 	def2 := &models.StepDefinition{
-		StepDefinition: formatters.StepDefinition{
+		StepDefinitionBase: models.StepDefinitionBase{
 			Handler: fn2,
 		},
 		HandlerValue: reflect.ValueOf(fn2),
 		Args:         []interface{}{&messages.PickleDocString{}},
 	}
 	def3 := &models.StepDefinition{
-		StepDefinition: formatters.StepDefinition{
+		StepDefinitionBase: models.StepDefinitionBase{
 			Handler: fn3,
 		},
 		HandlerValue: reflect.ValueOf(fn3),
@@ -173,14 +172,14 @@ func TestShouldSupportOnlyByteSlice(t *testing.T) {
 	fn2 := func(a []string) error { return nil }
 
 	def1 := &models.StepDefinition{
-		StepDefinition: formatters.StepDefinition{
+		StepDefinitionBase: models.StepDefinitionBase{
 			Handler: fn1,
 		},
 		HandlerValue: reflect.ValueOf(fn1),
 		Args:         []interface{}{"str"},
 	}
 	def2 := &models.StepDefinition{
-		StepDefinition: formatters.StepDefinition{
+		StepDefinitionBase: models.StepDefinitionBase{
 			Handler: fn2,
 		},
 		HandlerValue: reflect.ValueOf(fn2),
@@ -199,7 +198,7 @@ func TestShouldSupportOnlyByteSlice(t *testing.T) {
 func TestUnexpectedArguments(t *testing.T) {
 	fn := func(a, b int) error { return nil }
 	def := &models.StepDefinition{
-		StepDefinition: formatters.StepDefinition{
+		StepDefinitionBase: models.StepDefinitionBase{
 			Handler: fn,
 		},
 		HandlerValue: reflect.ValueOf(fn),
@@ -225,7 +224,7 @@ func TestUnexpectedArguments(t *testing.T) {
 func TestStepDefinition_Run_StepShouldBeString(t *testing.T) {
 	test := func(t *testing.T, fn interface{}) {
 		def := &models.StepDefinition{
-			StepDefinition: formatters.StepDefinition{
+			StepDefinitionBase: models.StepDefinitionBase{
 				Handler: fn,
 			},
 			HandlerValue: reflect.ValueOf(fn),
@@ -267,7 +266,7 @@ func TestStepDefinition_Run_StepShouldBeString(t *testing.T) {
 func TestStepDefinition_Run_InvalidHandlerParamConversion(t *testing.T) {
 	test := func(t *testing.T, fn interface{}) {
 		def := &models.StepDefinition{
-			StepDefinition: formatters.StepDefinition{
+			StepDefinitionBase: models.StepDefinitionBase{
 				Handler: fn,
 			},
 			HandlerValue: reflect.ValueOf(fn),
@@ -324,7 +323,7 @@ func TestStepDefinition_Run_InvalidHandlerParamConversion(t *testing.T) {
 func TestStepDefinition_Run_StringConversionToFunctionType(t *testing.T) {
 	test := func(t *testing.T, fn interface{}, args []interface{}) {
 		def := &models.StepDefinition{
-			StepDefinition: formatters.StepDefinition{
+			StepDefinitionBase: models.StepDefinitionBase{
 				Handler: fn,
 			},
 			HandlerValue: reflect.ValueOf(fn),
@@ -369,7 +368,7 @@ func TestStepDefinition_Run_StringConversionToFunctionType(t *testing.T) {
 
 // @TODO maybe we should support duration
 // fn2 := func(err time.Duration) error { return nil }
-// def = &models.StepDefinition{Handler: fn2, HandlerValue: reflect.ValueOf(fn2)}
+// def = &models.StepDefinitionBase{Handler: fn2, HandlerValue: reflect.ValueOf(fn2)}
 
 // def.Args = []interface{}{"1"}
 // if _, err := def.Run(context.Background()); err == nil {
@@ -389,7 +388,7 @@ func TestShouldSupportDocStringToStringConversion(t *testing.T) {
 	}
 
 	def := &models.StepDefinition{
-		StepDefinition: formatters.StepDefinition{
+		StepDefinitionBase: models.StepDefinitionBase{
 			Handler: fn,
 		},
 		HandlerValue: reflect.ValueOf(fn),

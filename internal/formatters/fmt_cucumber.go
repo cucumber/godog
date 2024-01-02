@@ -14,6 +14,7 @@ package formatters
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/cucumber/godog/internal/snippets"
 	"io"
 	"sort"
 	"strings"
@@ -38,7 +39,7 @@ type Cuke struct {
 }
 
 // Summary renders test result as Cucumber JSON.
-func (f *Cuke) Summary() {
+func (f *Cuke) Summary(sf snippets.Func) {
 	features := f.Storage.MustGetFeatures()
 
 	res := f.buildCukeFeatures(features)

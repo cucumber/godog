@@ -2,6 +2,7 @@ package formatters
 
 import (
 	"fmt"
+	"github.com/cucumber/godog/internal/snippets"
 	"io"
 	"regexp"
 	"sort"
@@ -75,7 +76,7 @@ func (f *Pretty) Pickle(pickle *messages.Pickle) {
 }
 
 // Passed captures passed step.
-func (f *Pretty) Passed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
+func (f *Pretty) Passed(pickle *messages.Pickle, step *messages.PickleStep, match *models.StepDefinitionBase) {
 	f.Base.Passed(pickle, step, match)
 
 	f.Lock.Lock()
@@ -85,7 +86,7 @@ func (f *Pretty) Passed(pickle *messages.Pickle, step *messages.PickleStep, matc
 }
 
 // Skipped captures skipped step.
-func (f *Pretty) Skipped(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
+func (f *Pretty) Skipped(pickle *messages.Pickle, step *messages.PickleStep, match *models.StepDefinitionBase) {
 	f.Base.Skipped(pickle, step, match)
 
 	f.Lock.Lock()
@@ -95,7 +96,7 @@ func (f *Pretty) Skipped(pickle *messages.Pickle, step *messages.PickleStep, mat
 }
 
 // Undefined captures undefined step.
-func (f *Pretty) Undefined(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
+func (f *Pretty) Undefined(pickle *messages.Pickle, step *messages.PickleStep, match *models.StepDefinitionBase) {
 	f.Base.Undefined(pickle, step, match)
 
 	f.Lock.Lock()
@@ -105,7 +106,7 @@ func (f *Pretty) Undefined(pickle *messages.Pickle, step *messages.PickleStep, m
 }
 
 // Failed captures failed step.
-func (f *Pretty) Failed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition, err error) {
+func (f *Pretty) Failed(pickle *messages.Pickle, step *messages.PickleStep, match *models.StepDefinitionBase, err error) {
 	f.Base.Failed(pickle, step, match, err)
 
 	f.Lock.Lock()
@@ -115,7 +116,7 @@ func (f *Pretty) Failed(pickle *messages.Pickle, step *messages.PickleStep, matc
 }
 
 // Pending captures pending step.
-func (f *Pretty) Pending(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
+func (f *Pretty) Pending(pickle *messages.Pickle, step *messages.PickleStep, match *models.StepDefinitionBase) {
 	f.Base.Pending(pickle, step, match)
 
 	f.Lock.Lock()
@@ -206,7 +207,7 @@ func (f *Pretty) printUndefinedPickle(pickle *messages.Pickle) {
 }
 
 // Summary renders summary information.
-func (f *Pretty) Summary() {
+func (f *Pretty) Summary(sf snippets.Func) {
 	failedStepResults := f.Storage.MustGetPickleStepResultsByStatus(failed)
 	if len(failedStepResults) > 0 {
 		fmt.Fprintln(f.out, "\n--- "+red("Failed steps:")+"\n")
@@ -230,7 +231,7 @@ func (f *Pretty) Summary() {
 		}
 	}
 
-	f.Base.Summary()
+	f.Base.Summary(sf)
 }
 
 func (f *Pretty) printOutlineExample(pickle *messages.Pickle, backgroundSteps int) {

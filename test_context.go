@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"regexp"
 
-	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/builder"
 	"github.com/cucumber/godog/internal/flags"
 	"github.com/cucumber/godog/internal/models"
@@ -46,7 +45,7 @@ type Steps []string
 // This structure is passed to the formatter
 // when step is matched and is either failed
 // or successful
-type StepDefinition = formatters.StepDefinition
+type StepDefinition = models.StepDefinitionBase
 
 // DocString represents the DocString argument made to a step definition
 type DocString = messages.PickleDocString
@@ -251,7 +250,7 @@ func (ctx ScenarioContext) AfterStep(fn func(st *Step, err error)) {
 // ErrUndefined error will be returned when
 // running steps.
 func (ctx ScenarioContext) Step(expr, stepFunc interface{}) {
-	ctx.stepWithKeyword(expr, stepFunc, formatters.None)
+	ctx.stepWithKeyword(expr, stepFunc, models.None)
 }
 
 // Given functions identically to Step, but the *StepDefinition
@@ -259,7 +258,7 @@ func (ctx ScenarioContext) Step(expr, stepFunc interface{}) {
 // and "But" keywords copy the keyword of the last step for the
 // purpose of matching.
 func (ctx ScenarioContext) Given(expr, stepFunc interface{}) {
-	ctx.stepWithKeyword(expr, stepFunc, formatters.Given)
+	ctx.stepWithKeyword(expr, stepFunc, models.Given)
 }
 
 // When functions identically to Step, but the *StepDefinition
@@ -267,7 +266,7 @@ func (ctx ScenarioContext) Given(expr, stepFunc interface{}) {
 // and "But" keywords copy the keyword of the last step for the
 // purpose of matching.
 func (ctx ScenarioContext) When(expr, stepFunc interface{}) {
-	ctx.stepWithKeyword(expr, stepFunc, formatters.When)
+	ctx.stepWithKeyword(expr, stepFunc, models.When)
 }
 
 // Then functions identically to Step, but the *StepDefinition
@@ -275,10 +274,10 @@ func (ctx ScenarioContext) When(expr, stepFunc interface{}) {
 // and "But" keywords copy the keyword of the last step for the
 // purpose of matching.
 func (ctx ScenarioContext) Then(expr, stepFunc interface{}) {
-	ctx.stepWithKeyword(expr, stepFunc, formatters.Then)
+	ctx.stepWithKeyword(expr, stepFunc, models.Then)
 }
 
-func (ctx ScenarioContext) stepWithKeyword(expr interface{}, stepFunc interface{}, keyword formatters.Keyword) {
+func (ctx ScenarioContext) stepWithKeyword(expr interface{}, stepFunc interface{}, keyword models.Keyword) {
 	var regex *regexp.Regexp
 
 	switch t := expr.(type) {
@@ -303,7 +302,7 @@ func (ctx ScenarioContext) stepWithKeyword(expr interface{}, stepFunc interface{
 	}
 
 	def := &models.StepDefinition{
-		StepDefinition: formatters.StepDefinition{
+		StepDefinitionBase: models.StepDefinitionBase{
 			Handler: stepFunc,
 			Expr:    regex,
 			Keyword: keyword,

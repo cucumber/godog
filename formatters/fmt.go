@@ -1,10 +1,10 @@
 package formatters
 
 import (
-	"io"
-	"regexp"
-
+	"github.com/cucumber/godog/internal/models"
+	"github.com/cucumber/godog/internal/snippets"
 	messages "github.com/cucumber/messages/go/v21"
+	"io"
 )
 
 type registeredFormatter struct {
@@ -64,38 +64,15 @@ type Formatter interface {
 	TestRunStarted()
 	Feature(*messages.GherkinDocument, string, []byte)
 	Pickle(*messages.Pickle)
-	Defined(*messages.Pickle, *messages.PickleStep, *StepDefinition)
-	Failed(*messages.Pickle, *messages.PickleStep, *StepDefinition, error)
-	Passed(*messages.Pickle, *messages.PickleStep, *StepDefinition)
-	Skipped(*messages.Pickle, *messages.PickleStep, *StepDefinition)
-	Undefined(*messages.Pickle, *messages.PickleStep, *StepDefinition)
-	Pending(*messages.Pickle, *messages.PickleStep, *StepDefinition)
-	Summary()
+	Defined(*messages.Pickle, *messages.PickleStep, *models.StepDefinitionBase)
+	Failed(*messages.Pickle, *messages.PickleStep, *models.StepDefinitionBase, error)
+	Passed(*messages.Pickle, *messages.PickleStep, *models.StepDefinitionBase)
+	Skipped(*messages.Pickle, *messages.PickleStep, *models.StepDefinitionBase)
+	Undefined(*messages.Pickle, *messages.PickleStep, *models.StepDefinitionBase)
+	Pending(*messages.Pickle, *messages.PickleStep, *models.StepDefinitionBase)
+	Summary(snippets.Func)
 }
 
 // FormatterFunc builds a formatter with given
 // suite name and io.Writer to record output
 type FormatterFunc func(string, io.Writer) Formatter
-
-// StepDefinition is a registered step definition
-// contains a StepHandler and regexp which
-// is used to match a step. Args which
-// were matched by last executed step
-//
-// This structure is passed to the formatter
-// when step is matched and is either failed
-// or successful
-type StepDefinition struct {
-	Expr    *regexp.Regexp
-	Handler interface{}
-	Keyword Keyword
-}
-
-type Keyword int64
-
-const (
-	Given Keyword = iota
-	When
-	Then
-	None
-)

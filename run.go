@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/cucumber/godog/internal/snippets"
 	"go/build"
 	"io"
 	"io/fs"
@@ -152,7 +153,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 	}
 
 	// print summary
-	r.fmt.Summary()
+	r.fmt.Summary(snippets.StepSnippets)
 	return
 }
 

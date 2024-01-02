@@ -10,7 +10,6 @@ import (
 
 	messages "github.com/cucumber/messages/go/v21"
 
-	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/models"
 	"github.com/cucumber/godog/internal/storage"
 	"github.com/cucumber/godog/internal/utils"
@@ -181,7 +180,7 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 	} else if len(undef) > 0 {
 		if match != nil {
 			match = &models.StepDefinition{
-				StepDefinition: formatters.StepDefinition{
+				StepDefinitionBase: models.StepDefinitionBase{
 					Expr:    match.Expr,
 					Handler: match.Handler,
 					Keyword: match.Keyword,
@@ -438,7 +437,7 @@ func (s *suite) matchStepTextAndType(text string, stepType messages.PickleStepTy
 			// since we need to assign arguments
 			// better to copy the step definition
 			return &models.StepDefinition{
-				StepDefinition: formatters.StepDefinition{
+				StepDefinitionBase: models.StepDefinitionBase{
 					Expr:    h.Expr,
 					Handler: h.Handler,
 					Keyword: h.Keyword,
@@ -452,17 +451,17 @@ func (s *suite) matchStepTextAndType(text string, stepType messages.PickleStepTy
 	return nil
 }
 
-func keywordMatches(k formatters.Keyword, stepType messages.PickleStepType) bool {
-	if k == formatters.None {
+func keywordMatches(k models.Keyword, stepType messages.PickleStepType) bool {
+	if k == models.None {
 		return true
 	}
 	switch stepType {
 	case messages.PickleStepType_CONTEXT:
-		return k == formatters.Given
+		return k == models.Given
 	case messages.PickleStepType_ACTION:
-		return k == formatters.When
+		return k == models.When
 	case messages.PickleStepType_OUTCOME:
-		return k == formatters.Then
+		return k == models.Then
 	default:
 		return true
 	}

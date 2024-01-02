@@ -1,4 +1,4 @@
-package formatters
+package snippets
 
 import (
 	"fmt"
