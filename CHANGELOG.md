@@ -8,6 +8,16 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ## Unreleased
 
+### Added
+
+- Option SnippetFunc to select a snippet func for generating code for missing steps ([596](https://github.com/cucumber/godog/pull/596) - [crosscode-nl](https://github.com/crosscode-nl))
+- Added SnippetFunc "gwt_func" to generate Given/When/Then step snippets ([596](https://github.com/cucumber/godog/pull/596) - [crosscode-nl](https://github.com/crosscode-nl))
+- Added SnippetFunc "step_func" to generate Step snippets - this is the original and the default functionality ([596](https://github.com/cucumber/godog/pull/596) - [crosscode-nl](https://github.com/crosscode-nl))
+
+### Changed
+
+- BREAKING CHANGE, changed formatters.FormatterFunc to take a snippetFunc string parameter ([596](https://github.com/cucumber/godog/pull/596) - [crosscode-nl](https://github.com/crosscode-nl))
+
 ## [v0.13.0]
 ### Added
 - Support for reading feature files from an `fs.FS` ([550](https://github.com/cucumber/godog/pull/550) - [tigh-latte](https://github.com/tigh-latte))
