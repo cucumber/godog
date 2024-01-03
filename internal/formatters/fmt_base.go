@@ -2,17 +2,18 @@ package formatters
 
 import (
 	"fmt"
-	"github.com/cucumber/godog/internal/snippets"
-	messages "github.com/cucumber/messages/go/v21"
 	"io"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
 
+	messages "github.com/cucumber/messages/go/v21"
+
 	"github.com/cucumber/godog/colors"
 	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/models"
+	"github.com/cucumber/godog/internal/snippets"
 	"github.com/cucumber/godog/internal/storage"
 	"github.com/cucumber/godog/internal/utils"
 )

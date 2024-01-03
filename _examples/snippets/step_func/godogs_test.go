@@ -14,11 +14,11 @@ package step_func_test
 import (
 	"context"
 	"flag"
-	"github.com/cucumber/godog/_examples/godogs"
 	"os"
 	"testing"
 
 	"github.com/cucumber/godog"
+	"github.com/cucumber/godog/_examples/godogs"
 	"github.com/cucumber/godog/colors"
 )
 

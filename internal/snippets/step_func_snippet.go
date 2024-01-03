@@ -3,30 +3,36 @@ package snippets
 import (
 	"bytes"
 	"fmt"
-	"github.com/cucumber/godog/internal/models"
-	"github.com/cucumber/godog/internal/storage"
-	messages "github.com/cucumber/messages/go/v21"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	"sort"
 	"strings"
 	"text/template"
 	"unicode"
+
+	messages "github.com/cucumber/messages/go/v21"
+
+	"github.com/cucumber/godog/internal/models"
+	"github.com/cucumber/godog/internal/storage"
 )
 
+// init registers the snippet functions
 func init() {
 	register("step_func", StepFunc)
 	register("gwt_func", GwtFunc)
 }
 
+// StepFunc renders a snippet using Step keywords with empty functions
 func StepFunc(s *storage.Storage) string {
 	return BaseFunc(s, undefinedStepFuncSnippetsTpl)
 }
 
+// GwtFunc renders a snippet using Given/When/Then keywords
 func GwtFunc(s *storage.Storage) string {
 	return BaseFunc(s, undefinedGwtFuncSnippetsTpl)
 }
 
+// BaseFunc renders a snippet with the provided template
 func BaseFunc(s *storage.Storage, tpl *template.Template) string {
 	undefinedStepResults := s.MustGetPickleStepResultsByStatus(models.Undefined)
 	if len(undefinedStepResults) == 0 {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/cucumber/godog/formatters"
 	"reflect"
 	"strings"
 	"testing"
@@ -12,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/cucumber/godog"
+	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/models"
 	messages "github.com/cucumber/messages/go/v21"
 )
