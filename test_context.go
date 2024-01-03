@@ -3,10 +3,10 @@ package godog
 import (
 	"context"
 	"fmt"
-	"github.com/cucumber/godog/formatters"
 	"reflect"
 	"regexp"
 
+	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/builder"
 	"github.com/cucumber/godog/internal/flags"
 	"github.com/cucumber/godog/internal/models"

@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/cucumber/godog/formatters"
 	"reflect"
 	"strings"
 	"testing"
 
 	messages "github.com/cucumber/messages/go/v21"
 
+	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/models"
 	"github.com/cucumber/godog/internal/storage"
 	"github.com/cucumber/godog/internal/utils"
