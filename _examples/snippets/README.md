@@ -148,3 +148,66 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 
 --- PASS: TestFeatures (0.00s)
 ```
+
+The third option demonstrates selecting a snippet function using command line arguments.
+
+```shell
+go test ./step_func -test.v -godog.snippet-func gwt_func 
+```
+
+The output should be:
+
+```
+=== RUN   TestFeatures
+Feature: eat godogs
+  In order to be happy
+  As a hungry gopher
+  I need to be able to eat godogs
+=== RUN   TestFeatures/Eat_12_out_of_12
+
+  Scenario: Eat 12 out of 12            # features/godogs.feature:11
+    Given there are 12 godogs
+=== RUN   TestFeatures/Eat_5_out_of_12
+
+  Scenario: Eat 5 out of 12          # features/godogs.feature:6
+    Given there are 12 godogs
+    When I eat 12
+    Then there should be none remaining
+    When I eat 5
+    Then there should be 7 remaining
+
+2 scenarios (2 undefined)
+6 steps (6 undefined)
+427.166µs
+
+You can implement step definitions for undefined steps with these snippets:
+
+func iEat(arg1 int) error {
+        return godog.ErrPending
+}
+
+func thereAreGodogs(arg1 int) error {
+        return godog.ErrPending
+}
+
+func thereShouldBeNoneRemaining() error {
+        return godog.ErrPending
+}
+
+func thereShouldBeRemaining(arg1 int) error {
+        return godog.ErrPending
+}
+
+func InitializeScenario(ctx *godog.ScenarioContext) {
+        ctx.When(`^I eat (\d+)$`, iEat)
+        ctx.Given(`^there are (\d+) godogs$`, thereAreGodogs)
+        ctx.Then(`^there should be none remaining$`, thereShouldBeNoneRemaining)
+        ctx.Then(`^there should be (\d+) remaining$`, thereShouldBeRemaining)
+}
+
+--- PASS: TestFeatures (0.00s)
+    --- PASS: TestFeatures/Eat_12_out_of_12 (0.00s)
+    --- PASS: TestFeatures/Eat_5_out_of_12 (0.00s)
+PASS
+ok      github.com/cucumber/godog/_examples/snippets/step_func  0.222s
+```

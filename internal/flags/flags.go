@@ -1,6 +1,8 @@
 package flags
 
 import (
+	"github.com/cucumber/godog/colors"
+	"github.com/cucumber/godog/internal/snippets"
 	"github.com/spf13/pflag"
 )
 
@@ -14,6 +16,16 @@ func BindRunCmdFlags(prefix string, flagSet *pflag.FlagSet, opts *Options) {
 		opts.Format = "pretty"
 	}
 
+	if opts.SnippetFunc == "" {
+		opts.SnippetFunc = "step_func"
+	}
+
+	var descSnippetFuncOption = "Snippet function to use can be:\n"
+	for _, snippetFunc := range snippets.List() {
+		descSnippetFuncOption += "\t- " + colors.Yellow(snippetFunc) + "\n"
+	}
+	descSnippetFuncOption += "If no snippet function is provided " + colors.Yellow("step_func") + " is used.\n"
+
 	flagSet.BoolVar(&opts.NoColors, prefix+"no-colors", opts.NoColors, "disable ansi colors")
 	flagSet.IntVarP(&opts.Concurrency, prefix+"concurrency", "c", opts.Concurrency, "run the test suite with concurrency")
 	flagSet.StringVarP(&opts.Tags, prefix+"tags", "t", opts.Tags, `filter scenarios by tags, expression can be:
@@ -21,6 +33,7 @@ func BindRunCmdFlags(prefix string, flagSet *pflag.FlagSet, opts *Options) {
   "~@wip"          exclude all scenarios with wip tag
   "@wip && ~@new"  run wip scenarios, but exclude new
   "@wip,@undone"   run wip or undone scenarios`)
+	flagSet.StringVar(&opts.SnippetFunc, prefix+"snippet-func", opts.SnippetFunc, descSnippetFuncOption)
 	flagSet.StringVarP(&opts.Format, prefix+"format", "f", opts.Format, `will write a report according to the selected formatter
 
 usage:

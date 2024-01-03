@@ -3,6 +3,7 @@ package godog
 import (
 	"flag"
 	"fmt"
+	"github.com/cucumber/godog/internal/snippets"
 	"io"
 	"sort"
 	"strconv"
@@ -51,6 +52,12 @@ func FlagSet(opt *Options) *flag.FlagSet {
 // BindFlags binds godog flags to given flag set prefixed
 // by given prefix, without overriding usage
 func BindFlags(prefix string, set *flag.FlagSet, opt *Options) {
+	var descSnippetFuncOption = "Snippet function to use can be:\n"
+	for _, snippetFunc := range snippets.List() {
+		descSnippetFuncOption += s(4) + "- " + colors.Yellow(snippetFunc) + "\n"
+	}
+	descSnippetFuncOption += "If no snippet function is provided " + colors.Yellow("step_func") + " is used."
+
 	set.Usage = usage(set, set.Output())
 
 	descFormatOption := "How to format tests output. Built-in formats:\n"
@@ -87,6 +94,11 @@ func BindFlags(prefix string, set *flag.FlagSet, opt *Options) {
 		defTagsOption = opt.Tags
 	}
 
+	defSnippetFuncOption := ""
+	if opt.SnippetFunc != "" {
+		defSnippetFuncOption = opt.SnippetFunc
+	}
+
 	defConcurrencyOption := 1
 	if opt.Concurrency != 0 {
 		defConcurrencyOption = opt.Concurrency
@@ -114,6 +126,7 @@ func BindFlags(prefix string, set *flag.FlagSet, opt *Options) {
 
 	set.StringVar(&opt.Format, prefix+"format", defFormatOption, descFormatOption)
 	set.StringVar(&opt.Format, prefix+"f", defFormatOption, descFormatOption)
+	set.StringVar(&opt.SnippetFunc, prefix+"snippet-func", defSnippetFuncOption, descSnippetFuncOption)
 	set.StringVar(&opt.Tags, prefix+"tags", defTagsOption, descTagsOption)
 	set.StringVar(&opt.Tags, prefix+"t", defTagsOption, descTagsOption)
 	set.IntVar(&opt.Concurrency, prefix+"concurrency", defConcurrencyOption, descConcurrencyOption)
