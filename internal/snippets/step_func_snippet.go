@@ -6,6 +6,8 @@ import (
 	"github.com/cucumber/godog/internal/models"
 	"github.com/cucumber/godog/internal/storage"
 	messages "github.com/cucumber/messages/go/v21"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"sort"
 	"strings"
 	"text/template"
@@ -71,7 +73,7 @@ func BaseFunc(s *storage.Storage, tpl *template.Template) string {
 			for i, w := range strings.Split(name, " ") {
 				switch {
 				case i != 0:
-					w = strings.Title(w)
+					w = cases.Title(language.English).String(w)
 				case len(w) > 0:
 					w = string(unicode.ToLower(rune(w[0]))) + w[1:]
 				}

@@ -14,5 +14,6 @@ require (
 	github.com/cucumber/messages/go/v21 v21.0.1
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
+	golang.org/x/text v0.14.0
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )

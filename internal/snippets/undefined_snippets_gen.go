@@ -2,12 +2,11 @@ package snippets
 
 import (
 	"fmt"
+	messages "github.com/cucumber/messages/go/v21"
 	"reflect"
 	"regexp"
 	"strings"
 	"text/template"
-
-	messages "github.com/cucumber/messages/go/v21"
 )
 
 // some snippet formatting regexps
