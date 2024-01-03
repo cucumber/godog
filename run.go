@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/cucumber/godog/internal/snippets"
 	"go/build"
 	"io"
 	"io/fs"
@@ -153,7 +152,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 	}
 
 	// print summary
-	r.fmt.Summary(snippets.StepFunc)
+	r.fmt.Summary()
 	return
 }
 
@@ -235,7 +234,7 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 		opt.Concurrency = 1
 	}
 
-	runner.fmt = multiFmt.FormatterFunc(suiteName, output)
+	runner.fmt = multiFmt.FormatterFunc(suiteName, output, opt.SnippetFunc)
 	opt.FS = storage.FS{FS: opt.FS}
 
 	if len(opt.FeatureContents) > 0 {

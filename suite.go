@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/cucumber/godog/formatters"
 	"reflect"
 	"strings"
 	"testing"
@@ -180,7 +181,7 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 	} else if len(undef) > 0 {
 		if match != nil {
 			match = &models.StepDefinition{
-				StepDefinitionBase: models.StepDefinitionBase{
+				StepDefinition: formatters.StepDefinition{
 					Expr:    match.Expr,
 					Handler: match.Handler,
 					Keyword: match.Keyword,
@@ -437,7 +438,7 @@ func (s *suite) matchStepTextAndType(text string, stepType messages.PickleStepTy
 			// since we need to assign arguments
 			// better to copy the step definition
 			return &models.StepDefinition{
-				StepDefinitionBase: models.StepDefinitionBase{
+				StepDefinition: formatters.StepDefinition{
 					Expr:    h.Expr,
 					Handler: h.Handler,
 					Keyword: h.Keyword,
@@ -451,17 +452,17 @@ func (s *suite) matchStepTextAndType(text string, stepType messages.PickleStepTy
 	return nil
 }
 
-func keywordMatches(k models.Keyword, stepType messages.PickleStepType) bool {
-	if k == models.None {
+func keywordMatches(k formatters.Keyword, stepType messages.PickleStepType) bool {
+	if k == formatters.None {
 		return true
 	}
 	switch stepType {
 	case messages.PickleStepType_CONTEXT:
-		return k == models.Given
+		return k == formatters.Given
 	case messages.PickleStepType_ACTION:
-		return k == models.When
+		return k == formatters.When
 	case messages.PickleStepType_OUTCOME:
-		return k == models.Then
+		return k == formatters.Then
 	default:
 		return true
 	}

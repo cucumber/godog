@@ -7,7 +7,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/cucumber/godog/internal/snippets"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -219,8 +218,8 @@ type godogFeaturesScenario struct {
 	paths            []string
 	features         []*models.Feature
 	testedSuite      *suite
-	snippetFunc      string
 	testSuiteContext TestSuiteContext
+	snippetFunc      string
 	events           []*firedEvent
 	out              bytes.Buffer
 	allowInjection   bool
@@ -282,7 +281,7 @@ func (tc *godogFeaturesScenario) iRunFeatureSuiteWithTagsAndFormatter(filter str
 		}
 	}
 
-	tc.testedSuite.fmt = fmtFunc("godog", colors.Uncolored(&tc.out))
+	tc.testedSuite.fmt = fmtFunc("godog", colors.Uncolored(&tc.out), tc.snippetFunc)
 	if fmt, ok := tc.testedSuite.fmt.(storageFormatter); ok {
 		fmt.SetStorage(tc.testedSuite.storage)
 	}
@@ -317,7 +316,7 @@ func (tc *godogFeaturesScenario) iRunFeatureSuiteWithTagsAndFormatter(filter str
 		f()
 	}
 
-	tc.testedSuite.fmt.Summary(snippets.Find(tc.snippetFunc))
+	tc.testedSuite.fmt.Summary()
 
 	return nil
 }
@@ -365,11 +364,11 @@ func (tc *godogFeaturesScenario) theUndefinedStepSnippetsShouldBe(body *DocStrin
 		return fmt.Errorf("this step requires *formatters.Base, but there is: %T", tc.testedSuite.fmt)
 	}
 
-	actual := tc.cleanupSnippet(f.Snippets(snippets.Find(tc.snippetFunc)))
+	actual := tc.cleanupSnippet(f.Snippets())
 	expected := tc.cleanupSnippet(body.Content)
 
 	if actual != expected {
-		return fmt.Errorf("snippets do not match actual: %s", f.Snippets(snippets.Find(tc.snippetFunc)))
+		return fmt.Errorf("snippets do not match actual: %s", f.Snippets())
 	}
 
 	return nil

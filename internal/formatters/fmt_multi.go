@@ -1,8 +1,6 @@
 package formatters
 
 import (
-	"github.com/cucumber/godog/internal/models"
-	"github.com/cucumber/godog/internal/snippets"
 	"io"
 
 	"github.com/cucumber/godog/formatters"
@@ -58,51 +56,51 @@ func (r repeater) Pickle(pickle *messages.Pickle) {
 }
 
 // Defined triggers Defined for all added formatters.
-func (r repeater) Defined(pickle *messages.Pickle, step *messages.PickleStep, definition *models.StepDefinitionBase) {
+func (r repeater) Defined(pickle *messages.Pickle, step *messages.PickleStep, definition *formatters.StepDefinition) {
 	for _, f := range r {
 		f.Defined(pickle, step, definition)
 	}
 }
 
 // Failed triggers Failed for all added formatters.
-func (r repeater) Failed(pickle *messages.Pickle, step *messages.PickleStep, definition *models.StepDefinitionBase, err error) {
+func (r repeater) Failed(pickle *messages.Pickle, step *messages.PickleStep, definition *formatters.StepDefinition, err error) {
 	for _, f := range r {
 		f.Failed(pickle, step, definition, err)
 	}
 }
 
 // Passed triggers Passed for all added formatters.
-func (r repeater) Passed(pickle *messages.Pickle, step *messages.PickleStep, definition *models.StepDefinitionBase) {
+func (r repeater) Passed(pickle *messages.Pickle, step *messages.PickleStep, definition *formatters.StepDefinition) {
 	for _, f := range r {
 		f.Passed(pickle, step, definition)
 	}
 }
 
 // Skipped triggers Skipped for all added formatters.
-func (r repeater) Skipped(pickle *messages.Pickle, step *messages.PickleStep, definition *models.StepDefinitionBase) {
+func (r repeater) Skipped(pickle *messages.Pickle, step *messages.PickleStep, definition *formatters.StepDefinition) {
 	for _, f := range r {
 		f.Skipped(pickle, step, definition)
 	}
 }
 
 // Undefined triggers Undefined for all added formatters.
-func (r repeater) Undefined(pickle *messages.Pickle, step *messages.PickleStep, definition *models.StepDefinitionBase) {
+func (r repeater) Undefined(pickle *messages.Pickle, step *messages.PickleStep, definition *formatters.StepDefinition) {
 	for _, f := range r {
 		f.Undefined(pickle, step, definition)
 	}
 }
 
 // Pending triggers Pending for all added formatters.
-func (r repeater) Pending(pickle *messages.Pickle, step *messages.PickleStep, definition *models.StepDefinitionBase) {
+func (r repeater) Pending(pickle *messages.Pickle, step *messages.PickleStep, definition *formatters.StepDefinition) {
 	for _, f := range r {
 		f.Pending(pickle, step, definition)
 	}
 }
 
 // Summary triggers Summary for all added formatters.
-func (r repeater) Summary(sf snippets.Func) {
+func (r repeater) Summary() {
 	for _, f := range r {
-		f.Summary(sf)
+		f.Summary()
 	}
 }
 
@@ -120,14 +118,14 @@ func (m *MultiFormatter) Add(name string, out io.Writer) {
 }
 
 // FormatterFunc implements the FormatterFunc for the multi formatter.
-func (m *MultiFormatter) FormatterFunc(suite string, out io.Writer) formatters.Formatter {
+func (m *MultiFormatter) FormatterFunc(suite string, out io.Writer, snippetFunc string) formatters.Formatter {
 	for _, f := range m.formatters {
 		out := out
 		if f.out != nil {
 			out = f.out
 		}
 
-		m.repeater = append(m.repeater, f.fmt(suite, out))
+		m.repeater = append(m.repeater, f.fmt(suite, out, snippetFunc))
 	}
 
 	return m.repeater

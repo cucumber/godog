@@ -18,25 +18,27 @@ import (
 )
 
 // BaseFormatterFunc implements the FormatterFunc for the base formatter.
-func BaseFormatterFunc(suite string, out io.Writer) formatters.Formatter {
-	return NewBase(suite, out)
+func BaseFormatterFunc(suite string, out io.Writer, snippetFunc string) formatters.Formatter {
+	return NewBase(suite, out, snippetFunc)
 }
 
 // NewBase creates a new base formatter.
-func NewBase(suite string, out io.Writer) *Base {
+func NewBase(suite string, out io.Writer, snippetFunc string) *Base {
 	return &Base{
-		suiteName: suite,
-		indent:    2,
-		out:       out,
-		Lock:      new(sync.Mutex),
+		snippetFunc: snippets.Find(snippetFunc),
+		suiteName:   suite,
+		indent:      2,
+		out:         out,
+		Lock:        new(sync.Mutex),
 	}
 }
 
 // Base is a base formatter.
 type Base struct {
-	suiteName string
-	out       io.Writer
-	indent    int
+	suiteName   string
+	out         io.Writer
+	indent      int
+	snippetFunc snippets.Func
 
 	Storage *storage.Storage
 	Lock    *sync.Mutex
@@ -60,30 +62,30 @@ func (f *Base) Feature(*messages.GherkinDocument, string, []byte) {}
 func (f *Base) Pickle(*messages.Pickle) {}
 
 // Defined receives step definition.
-func (f *Base) Defined(*messages.Pickle, *messages.PickleStep, *models.StepDefinitionBase) {
+func (f *Base) Defined(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition) {
 }
 
 // Passed captures passed step.
-func (f *Base) Passed(*messages.Pickle, *messages.PickleStep, *models.StepDefinitionBase) {}
+func (f *Base) Passed(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition) {}
 
 // Skipped captures skipped step.
-func (f *Base) Skipped(*messages.Pickle, *messages.PickleStep, *models.StepDefinitionBase) {
+func (f *Base) Skipped(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition) {
 }
 
 // Undefined captures undefined step.
-func (f *Base) Undefined(*messages.Pickle, *messages.PickleStep, *models.StepDefinitionBase) {
+func (f *Base) Undefined(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition) {
 }
 
 // Failed captures failed step.
-func (f *Base) Failed(*messages.Pickle, *messages.PickleStep, *models.StepDefinitionBase, error) {
+func (f *Base) Failed(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition, error) {
 }
 
 // Pending captures pending step.
-func (f *Base) Pending(*messages.Pickle, *messages.PickleStep, *models.StepDefinitionBase) {
+func (f *Base) Pending(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition) {
 }
 
 // Summary renders summary information.
-func (f *Base) Summary(sf snippets.Func) {
+func (f *Base) Summary() {
 	var totalSc, passedSc, undefinedSc int
 	var totalSt, passedSt, failedSt, skippedSt, pendingSt, undefinedSt int
 
@@ -182,8 +184,7 @@ func (f *Base) Summary(sf snippets.Func) {
 		fmt.Fprintln(f.out, "")
 		fmt.Fprintln(f.out, "Randomized with seed:", colors.Yellow(seed))
 	}
-
-	if text := f.Snippets(sf); text != "" {
+	if text := f.Snippets(); text != "" {
 		fmt.Fprintln(f.out, "")
 		fmt.Fprintln(f.out, yellow("You can implement step definitions for undefined steps with these snippets:"))
 		fmt.Fprintln(f.out, yellow(text))
@@ -191,6 +192,6 @@ func (f *Base) Summary(sf snippets.Func) {
 }
 
 // Snippets returns code suggestions for undefined steps.
-func (f *Base) Snippets(sf snippets.Func) string {
-	return sf(f.Storage)
+func (f *Base) Snippets() string {
+	return f.snippetFunc(f.Storage)
 }

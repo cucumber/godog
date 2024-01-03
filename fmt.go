@@ -77,12 +77,12 @@ func printStepDefinitions(steps []*models.StepDefinition, w io.Writer) {
 
 // NewBaseFmt creates a new base formatter.
 func NewBaseFmt(suite string, out io.Writer) *BaseFmt {
-	return internal_fmt.NewBase(suite, out)
+	return internal_fmt.NewBase(suite, out, "")
 }
 
 // NewProgressFmt creates a new progress formatter.
 func NewProgressFmt(suite string, out io.Writer) *ProgressFmt {
-	return internal_fmt.NewProgress(suite, out)
+	return internal_fmt.NewProgress(suite, out, "")
 }
 
 // NewPrettyFmt creates a new pretty formatter.

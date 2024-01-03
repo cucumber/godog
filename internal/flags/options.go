@@ -77,6 +77,13 @@ type Options struct {
 
 	// ShowHelp enables suite to show CLI flags usage help and exit.
 	ShowHelp bool
+
+	// SnippetFunc selects the snippet function to use when generating snippets
+	// for undefined steps.
+	// possible values:
+	// * step_func
+	// * gwt_func
+	SnippetFunc string
 }
 
 type Feature struct {

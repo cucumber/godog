@@ -3,8 +3,6 @@ package formatters
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cucumber/godog/internal/models"
-	"github.com/cucumber/godog/internal/snippets"
 	"io"
 
 	"github.com/cucumber/godog/formatters"
@@ -20,8 +18,8 @@ func init() {
 }
 
 // EventsFormatterFunc implements the FormatterFunc for the events formatter
-func EventsFormatterFunc(suite string, out io.Writer) formatters.Formatter {
-	return &Events{Base: NewBase(suite, out)}
+func EventsFormatterFunc(suite string, out io.Writer, snippetFunc string) formatters.Formatter {
+	return &Events{Base: NewBase(suite, out, snippetFunc)}
 }
 
 // Events - Events formatter
@@ -110,7 +108,7 @@ func (f *Events) Feature(ft *messages.GherkinDocument, p string, c []byte) {
 }
 
 // Summary pushes summary information to JSON stream.
-func (f *Events) Summary(sf snippets.Func) {
+func (f *Events) Summary() {
 	// @TODO: determine status
 	status := passed
 
@@ -126,7 +124,7 @@ func (f *Events) Summary(sf snippets.Func) {
 		}
 	}
 
-	snips := f.Snippets(sf)
+	snips := f.Snippets()
 	if len(snips) > 0 {
 		snips = "You can implement step definitions for undefined steps with these snippets:\n" + snips
 	}
@@ -195,7 +193,7 @@ func (f *Events) step(pickle *messages.Pickle, pickleStep *messages.PickleStep) 
 }
 
 // Defined receives step definition.
-func (f *Events) Defined(pickle *messages.Pickle, pickleStep *messages.PickleStep, def *models.StepDefinitionBase) {
+func (f *Events) Defined(pickle *messages.Pickle, pickleStep *messages.PickleStep, def *formatters.StepDefinition) {
 	f.Base.Defined(pickle, pickleStep, def)
 
 	f.Lock.Lock()
@@ -246,7 +244,7 @@ func (f *Events) Defined(pickle *messages.Pickle, pickleStep *messages.PickleSte
 }
 
 // Passed captures passed step.
-func (f *Events) Passed(pickle *messages.Pickle, step *messages.PickleStep, match *models.StepDefinitionBase) {
+func (f *Events) Passed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Base.Passed(pickle, step, match)
 
 	f.Lock.Lock()
@@ -256,7 +254,7 @@ func (f *Events) Passed(pickle *messages.Pickle, step *messages.PickleStep, matc
 }
 
 // Skipped captures skipped step.
-func (f *Events) Skipped(pickle *messages.Pickle, step *messages.PickleStep, match *models.StepDefinitionBase) {
+func (f *Events) Skipped(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Base.Skipped(pickle, step, match)
 
 	f.Lock.Lock()
@@ -266,7 +264,7 @@ func (f *Events) Skipped(pickle *messages.Pickle, step *messages.PickleStep, mat
 }
 
 // Undefined captures undefined step.
-func (f *Events) Undefined(pickle *messages.Pickle, step *messages.PickleStep, match *models.StepDefinitionBase) {
+func (f *Events) Undefined(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Base.Undefined(pickle, step, match)
 
 	f.Lock.Lock()
@@ -276,7 +274,7 @@ func (f *Events) Undefined(pickle *messages.Pickle, step *messages.PickleStep, m
 }
 
 // Failed captures failed step.
-func (f *Events) Failed(pickle *messages.Pickle, step *messages.PickleStep, match *models.StepDefinitionBase, err error) {
+func (f *Events) Failed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition, err error) {
 	f.Base.Failed(pickle, step, match, err)
 
 	f.Lock.Lock()
@@ -286,7 +284,7 @@ func (f *Events) Failed(pickle *messages.Pickle, step *messages.PickleStep, matc
 }
 
 // Pending captures pending step.
-func (f *Events) Pending(pickle *messages.Pickle, step *messages.PickleStep, match *models.StepDefinitionBase) {
+func (f *Events) Pending(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Base.Pending(pickle, step, match)
 
 	f.Lock.Lock()

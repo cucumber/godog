@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"regexp"
 	"strconv"
 
 	messages "github.com/cucumber/messages/go/v21"
-	//	"github.com/cucumber/godog/formatters"
+
+	"github.com/cucumber/godog/formatters"
 )
 
 var typeOfBytes = reflect.TypeOf([]byte(nil))
@@ -21,32 +21,9 @@ var (
 	ErrUnsupportedArgumentType     = errors.New("unsupported argument type")
 )
 
-// StepDefinitionBase is a registered step definition
-// contains a StepHandler and regexp which
-// is used to match a step. Args which
-// were matched by last executed step
-//
-// This structure is passed to the formatter
-// when step is matched and is either failed
-// or successful
-type StepDefinitionBase struct {
-	Expr    *regexp.Regexp
-	Handler interface{}
-	Keyword Keyword
-}
-
-type Keyword int64
-
-const (
-	Given Keyword = iota
-	When
-	Then
-	None
-)
-
 // StepDefinition ...
 type StepDefinition struct {
-	StepDefinitionBase
+	formatters.StepDefinition
 
 	Args         []interface{}
 	HandlerValue reflect.Value
@@ -238,10 +215,10 @@ func (sd *StepDefinition) shouldBeString(idx int) (string, error) {
 }
 
 // GetInternalStepDefinition ...
-func (sd *StepDefinition) GetInternalStepDefinition() *StepDefinitionBase {
+func (sd *StepDefinition) GetInternalStepDefinition() *formatters.StepDefinition {
 	if sd == nil {
 		return nil
 	}
 
-	return &sd.StepDefinitionBase
+	return &sd.StepDefinition
 }

@@ -38,7 +38,7 @@ func Test_ProgressFormatterWhenStepPanics(t *testing.T) {
 	var buf bytes.Buffer
 	w := colors.Uncolored(&buf)
 	r := runner{
-		fmt:      formatters.ProgressFormatterFunc("progress", w),
+		fmt:      formatters.ProgressFormatterFunc("progress", w, ""),
 		features: []*models.Feature{&ft},
 		scenarioInitializer: func(ctx *ScenarioContext) {
 			ctx.Step(`^one$`, func() error { return nil })
@@ -72,7 +72,7 @@ func Test_ProgressFormatterWithPanicInMultistep(t *testing.T) {
 	var buf bytes.Buffer
 	w := colors.Uncolored(&buf)
 	r := runner{
-		fmt:      formatters.ProgressFormatterFunc("progress", w),
+		fmt:      formatters.ProgressFormatterFunc("progress", w, ""),
 		features: []*models.Feature{&ft},
 		scenarioInitializer: func(ctx *ScenarioContext) {
 			ctx.Step(`^sub1$`, func() error { return nil })
@@ -106,7 +106,7 @@ func Test_ProgressFormatterMultistepTemplates(t *testing.T) {
 	var buf bytes.Buffer
 	w := colors.Uncolored(&buf)
 	r := runner{
-		fmt:      formatters.ProgressFormatterFunc("progress", w),
+		fmt:      formatters.ProgressFormatterFunc("progress", w, ""),
 		features: []*models.Feature{&ft},
 		scenarioInitializer: func(ctx *ScenarioContext) {
 			ctx.Step(`^sub-sub$`, func() error { return nil })
@@ -182,7 +182,7 @@ Feature: basic
 	var buf bytes.Buffer
 	w := colors.Uncolored(&buf)
 	r := runner{
-		fmt:      formatters.ProgressFormatterFunc("progress", w),
+		fmt:      formatters.ProgressFormatterFunc("progress", w, ""),
 		features: []*models.Feature{&ft},
 		scenarioInitializer: func(ctx *ScenarioContext) {
 			ctx.Step(`^one$`, func() error { return nil })
@@ -226,7 +226,7 @@ Feature: basic
 	var buf bytes.Buffer
 	w := colors.Uncolored(&buf)
 	r := runner{
-		fmt:      formatters.ProgressFormatterFunc("progress", w),
+		fmt:      formatters.ProgressFormatterFunc("progress", w, ""),
 		features: []*models.Feature{&ft},
 		scenarioInitializer: func(ctx *ScenarioContext) {
 			ctx.Step(`^one$`, func() error { return nil })

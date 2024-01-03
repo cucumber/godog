@@ -2,8 +2,6 @@ package formatters
 
 import (
 	"fmt"
-	"github.com/cucumber/godog/internal/models"
-	"github.com/cucumber/godog/internal/snippets"
 	"io"
 	"math"
 	"sort"
@@ -18,15 +16,15 @@ func init() {
 }
 
 // ProgressFormatterFunc implements the FormatterFunc for the progress formatter.
-func ProgressFormatterFunc(suite string, out io.Writer) formatters.Formatter {
-	return NewProgress(suite, out)
+func ProgressFormatterFunc(suite string, out io.Writer, snippetFunc string) formatters.Formatter {
+	return NewProgress(suite, out, snippetFunc)
 }
 
 // NewProgress creates a new progress formatter.
-func NewProgress(suite string, out io.Writer) *Progress {
+func NewProgress(suite string, out io.Writer, snippetFunc string) *Progress {
 	steps := 0
 	return &Progress{
-		Base:        NewBase(suite, out),
+		Base:        NewBase(suite, out, snippetFunc),
 		StepsPerRow: 70,
 		Steps:       &steps,
 	}
@@ -40,7 +38,7 @@ type Progress struct {
 }
 
 // Summary renders summary information.
-func (f *Progress) Summary(sf snippets.Func) {
+func (f *Progress) Summary() {
 	left := math.Mod(float64(*f.Steps), float64(f.StepsPerRow))
 	if left != 0 {
 		if *f.Steps > f.StepsPerRow {
@@ -85,7 +83,7 @@ func (f *Progress) Summary(sf snippets.Func) {
 	}
 	fmt.Fprintln(f.out, "")
 
-	f.Base.Summary(sf)
+	f.Base.Summary()
 }
 
 func (f *Progress) step(pickleStepID string) {
@@ -112,7 +110,7 @@ func (f *Progress) step(pickleStepID string) {
 }
 
 // Passed captures passed step.
-func (f *Progress) Passed(pickle *messages.Pickle, step *messages.PickleStep, match *models.StepDefinitionBase) {
+func (f *Progress) Passed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Base.Passed(pickle, step, match)
 
 	f.Lock.Lock()
@@ -122,7 +120,7 @@ func (f *Progress) Passed(pickle *messages.Pickle, step *messages.PickleStep, ma
 }
 
 // Skipped captures skipped step.
-func (f *Progress) Skipped(pickle *messages.Pickle, step *messages.PickleStep, match *models.StepDefinitionBase) {
+func (f *Progress) Skipped(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Base.Skipped(pickle, step, match)
 
 	f.Lock.Lock()
@@ -132,7 +130,7 @@ func (f *Progress) Skipped(pickle *messages.Pickle, step *messages.PickleStep, m
 }
 
 // Undefined captures undefined step.
-func (f *Progress) Undefined(pickle *messages.Pickle, step *messages.PickleStep, match *models.StepDefinitionBase) {
+func (f *Progress) Undefined(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Base.Undefined(pickle, step, match)
 
 	f.Lock.Lock()
@@ -142,7 +140,7 @@ func (f *Progress) Undefined(pickle *messages.Pickle, step *messages.PickleStep,
 }
 
 // Failed captures failed step.
-func (f *Progress) Failed(pickle *messages.Pickle, step *messages.PickleStep, match *models.StepDefinitionBase, err error) {
+func (f *Progress) Failed(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition, err error) {
 	f.Base.Failed(pickle, step, match, err)
 
 	f.Lock.Lock()
@@ -152,7 +150,7 @@ func (f *Progress) Failed(pickle *messages.Pickle, step *messages.PickleStep, ma
 }
 
 // Pending captures pending step.
-func (f *Progress) Pending(pickle *messages.Pickle, step *messages.PickleStep, match *models.StepDefinitionBase) {
+func (f *Progress) Pending(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Base.Pending(pickle, step, match)
 
 	f.Lock.Lock()

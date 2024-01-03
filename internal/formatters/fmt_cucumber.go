@@ -14,7 +14,6 @@ package formatters
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cucumber/godog/internal/snippets"
 	"io"
 	"sort"
 	"strings"
@@ -29,8 +28,8 @@ func init() {
 }
 
 // CucumberFormatterFunc implements the FormatterFunc for the cucumber formatter
-func CucumberFormatterFunc(suite string, out io.Writer) formatters.Formatter {
-	return &Cuke{Base: NewBase(suite, out)}
+func CucumberFormatterFunc(suite string, out io.Writer, snippetFunc string) formatters.Formatter {
+	return &Cuke{Base: NewBase(suite, out, snippetFunc)}
 }
 
 // Cuke ...
@@ -39,7 +38,7 @@ type Cuke struct {
 }
 
 // Summary renders test result as Cucumber JSON.
-func (f *Cuke) Summary(sf snippets.Func) {
+func (f *Cuke) Summary() {
 	features := f.Storage.MustGetFeatures()
 
 	res := f.buildCukeFeatures(features)

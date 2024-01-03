@@ -62,6 +62,6 @@ func Test_Format(t *testing.T) {
 	assert.NotNil(t, actual)
 }
 
-func testFormatterFunc(suiteName string, out io.Writer) godog.Formatter {
+func testFormatterFunc(suiteName string, out io.Writer, snippetFunc string) godog.Formatter {
 	return nil
 }

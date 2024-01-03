@@ -1,10 +1,10 @@
 package formatters
 
 import (
-	"github.com/cucumber/godog/internal/models"
-	"github.com/cucumber/godog/internal/snippets"
-	messages "github.com/cucumber/messages/go/v21"
 	"io"
+	"regexp"
+
+	messages "github.com/cucumber/messages/go/v21"
 )
 
 type registeredFormatter struct {
@@ -16,7 +16,7 @@ type registeredFormatter struct {
 var registeredFormatters []*registeredFormatter
 
 // FindFmt searches available formatters registered
-// and returns FormaterFunc matched by given
+// and returns FormatterFunc matched by given
 // format name or nil otherwise
 func FindFmt(name string) FormatterFunc {
 	for _, el := range registeredFormatters {
@@ -64,15 +64,39 @@ type Formatter interface {
 	TestRunStarted()
 	Feature(*messages.GherkinDocument, string, []byte)
 	Pickle(*messages.Pickle)
-	Defined(*messages.Pickle, *messages.PickleStep, *models.StepDefinitionBase)
-	Failed(*messages.Pickle, *messages.PickleStep, *models.StepDefinitionBase, error)
-	Passed(*messages.Pickle, *messages.PickleStep, *models.StepDefinitionBase)
-	Skipped(*messages.Pickle, *messages.PickleStep, *models.StepDefinitionBase)
-	Undefined(*messages.Pickle, *messages.PickleStep, *models.StepDefinitionBase)
-	Pending(*messages.Pickle, *messages.PickleStep, *models.StepDefinitionBase)
-	Summary(snippets.Func)
+	Defined(*messages.Pickle, *messages.PickleStep, *StepDefinition)
+	Failed(*messages.Pickle, *messages.PickleStep, *StepDefinition, error)
+	Passed(*messages.Pickle, *messages.PickleStep, *StepDefinition)
+	Skipped(*messages.Pickle, *messages.PickleStep, *StepDefinition)
+	Undefined(*messages.Pickle, *messages.PickleStep, *StepDefinition)
+	Pending(*messages.Pickle, *messages.PickleStep, *StepDefinition)
+	Summary()
 }
 
 // FormatterFunc builds a formatter with given
 // suite name and io.Writer to record output
-type FormatterFunc func(string, io.Writer) Formatter
+// snippet string can be provided to use a different snippet generator
+type FormatterFunc func(string, io.Writer, string) Formatter
+
+// StepDefinition is a registered step definition
+// contains a StepHandler and regexp which
+// is used to match a step. Args which
+// were matched by last executed step
+//
+// This structure is passed to the formatter
+// when step is matched and is either failed
+// or successful
+type StepDefinition struct {
+	Expr    *regexp.Regexp
+	Handler interface{}
+	Keyword Keyword
+}
+
+type Keyword int64
+
+const (
+	Given Keyword = iota
+	When
+	Then
+	None
+)
