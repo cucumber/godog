@@ -20,6 +20,7 @@ func Test_BindFlagsShouldRespectFlagDefaults(t *testing.T) {
 	assert.Equal(t, "pretty", opts.Format)
 	assert.Equal(t, "", opts.Tags)
 	assert.Equal(t, 1, opts.Concurrency)
+	assert.Equal(t, "step_func", opts.SnippetFunc)
 	assert.False(t, opts.ShowStepDefinitions)
 	assert.False(t, opts.StopOnFailure)
 	assert.False(t, opts.Strict)
@@ -44,6 +45,7 @@ func Test_BindFlagsShouldRespectFlagOverrides(t *testing.T) {
 
 	flagSet.Parse([]string{
 		"--optOverrides.format=junit",
+		"--optOverrides.snippet-func=gwt_func",
 		"--optOverrides.tags=test2",
 		"--optOverrides.concurrency=3",
 		"--optOverrides.definitions=false",
@@ -56,6 +58,7 @@ func Test_BindFlagsShouldRespectFlagOverrides(t *testing.T) {
 	assert.Equal(t, "junit", opts.Format)
 	assert.Equal(t, "test2", opts.Tags)
 	assert.Equal(t, 3, opts.Concurrency)
+	assert.Equal(t, "gwt_func", opts.SnippetFunc)
 	assert.False(t, opts.ShowStepDefinitions)
 	assert.False(t, opts.StopOnFailure)
 	assert.False(t, opts.Strict)
