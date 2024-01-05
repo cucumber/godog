@@ -28,7 +28,7 @@ func Find(name string) Func {
 
 func List() []string {
 	result := make([]string, 0, len(registry))
-	for n, _ := range registry {
+	for n := range registry {
 		result = append(result, n)
 	}
 	return result
