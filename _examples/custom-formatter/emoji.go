@@ -20,13 +20,13 @@ func init() {
 	godog.Format("emoji", "Progress formatter with emojis", emojiFormatterFunc)
 }
 
-func emojiFormatterFunc(suite string, out io.Writer) godog.Formatter {
-	return newEmojiFmt(suite, out)
+func emojiFormatterFunc(suite string, out io.Writer, snippetFunc string) godog.Formatter {
+	return newEmojiFmt(suite, out, snippetFunc)
 }
 
-func newEmojiFmt(suite string, out io.Writer) *emojiFmt {
+func newEmojiFmt(suite string, out io.Writer, snippetFunc string) *emojiFmt {
 	return &emojiFmt{
-		ProgressFmt: godog.NewProgressFmt(suite, out),
+		ProgressFmt: godog.NewProgressFmt(suite, out, snippetFunc),
 		out:         out,
 	}
 }
