@@ -14,9 +14,14 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 - Added SnippetFunc "gwt_func" to generate Given/When/Then step snippets ([596](https://github.com/cucumber/godog/pull/596) - [crosscode-nl](https://github.com/crosscode-nl))
 - Added SnippetFunc "step_func" to generate Step snippets - this is the original and the default functionality ([596](https://github.com/cucumber/godog/pull/596) - [crosscode-nl](https://github.com/crosscode-nl))
 - Added command line argument "snippet-func" that allows providing the snippet func via command line ([596](https://github.com/cucumber/godog/pull/596) - [crosscode-nl](https://github.com/crosscode-nl)) 
+
 ### Changed
 
-- BREAKING CHANGE, changed formatters.FormatterFunc to take a snippetFunc string parameter ([596](https://github.com/cucumber/godog/pull/596) - [crosscode-nl](https://github.com/crosscode-nl))
+- BREAKING CHANGE, changed formatters.FormatterFunc to take a snippetFunc string parameter ([596](https://github.com/cucumber/godog/pull/596) - [crosscode-nl](https://github.com/crosscode-nl)) 
+
+### Deprecated
+
+- Dropped support for Go v1.16. The strings.Title function is deprecated and the package to use is golang.org/x/text/cases, but that package is not compatible with Go v.1.16.x
 
 ## [v0.13.0]
 ### Added
