@@ -7,7 +7,9 @@ This project adheres to [Semantic Versioning](http://semver.org).
 This document is formatted according to the principles of [Keep A CHANGELOG](http://keepachangelog.com).
 
 ## Unreleased
-
+### Fixed
+- Remove line overwriting for scenario outlines in cucumber formatter ([605](https://github.com/cucumber/godog/pull/605) - [glibas](https://github.com/glibas))
+  
 ## [v0.13.0]
 ### Added
 - Support for reading feature files from an `fs.FS` ([550](https://github.com/cucumber/godog/pull/550) - [tigh-latte](https://github.com/tigh-latte))
