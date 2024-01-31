@@ -252,10 +252,6 @@ func (f *Cuke) buildCukeStep(pickle *messages.Pickle, stepResult models.PickleSt
 	step := feature.FindStep(pickleStep.AstNodeIds[0])
 
 	line := step.Location.Line
-	if len(pickle.AstNodeIds) == 2 {
-		_, row := feature.FindExample(pickle.AstNodeIds[1])
-		line = row.Location.Line
-	}
 
 	cukeStep.Name = pickleStep.Text
 	cukeStep.Line = int(line)

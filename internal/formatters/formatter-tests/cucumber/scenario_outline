@@ -46,7 +46,7 @@
                     {
                         "keyword": "Given ",
                         "name": "passing step",
-                        "line": 13,
+                        "line": 6,
                         "match": {
                             "location": "fmt_output_test.go:101"
                         },
@@ -58,7 +58,7 @@
                     {
                         "keyword": "When ",
                         "name": "passing step",
-                        "line": 13,
+                        "line": 7,
                         "match": {
                             "location": "fmt_output_test.go:101"
                         },
@@ -70,7 +70,7 @@
                     {
                         "keyword": "Then ",
                         "name": "odd 1 and even 2 number",
-                        "line": 13,
+                        "line": 8,
                         "match": {
                             "location": "fmt_output_test.go:103"
                         },
@@ -110,7 +110,7 @@
                     {
                         "keyword": "Given ",
                         "name": "passing step",
-                        "line": 14,
+                        "line": 6,
                         "match": {
                             "location": "fmt_output_test.go:101"
                         },
@@ -122,7 +122,7 @@
                     {
                         "keyword": "When ",
                         "name": "passing step",
-                        "line": 14,
+                        "line": 7,
                         "match": {
                             "location": "fmt_output_test.go:101"
                         },
@@ -134,7 +134,7 @@
                     {
                         "keyword": "Then ",
                         "name": "odd 2 and even 0 number",
-                        "line": 14,
+                        "line": 8,
                         "match": {
                             "location": "fmt_output_test.go:103"
                         },
@@ -175,7 +175,7 @@
                     {
                         "keyword": "Given ",
                         "name": "passing step",
-                        "line": 15,
+                        "line": 6,
                         "match": {
                             "location": "fmt_output_test.go:101"
                         },
@@ -187,7 +187,7 @@
                     {
                         "keyword": "When ",
                         "name": "passing step",
-                        "line": 15,
+                        "line": 7,
                         "match": {
                             "location": "fmt_output_test.go:101"
                         },
@@ -199,7 +199,7 @@
                     {
                         "keyword": "Then ",
                         "name": "odd 3 and even 11 number",
-                        "line": 15,
+                        "line": 8,
                         "match": {
                             "location": "fmt_output_test.go:103"
                         },
@@ -240,7 +240,7 @@
                     {
                         "keyword": "Given ",
                         "name": "passing step",
-                        "line": 20,
+                        "line": 6,
                         "match": {
                             "location": "fmt_output_test.go:101"
                         },
@@ -252,7 +252,7 @@
                     {
                         "keyword": "When ",
                         "name": "passing step",
-                        "line": 20,
+                        "line": 7,
                         "match": {
                             "location": "fmt_output_test.go:101"
                         },
@@ -264,7 +264,7 @@
                     {
                         "keyword": "Then ",
                         "name": "odd 1 and even 14 number",
-                        "line": 20,
+                        "line": 8,
                         "match": {
                             "location": "fmt_output_test.go:103"
                         },
@@ -304,7 +304,7 @@
                     {
                         "keyword": "Given ",
                         "name": "passing step",
-                        "line": 21,
+                        "line": 6,
                         "match": {
                             "location": "fmt_output_test.go:101"
                         },
@@ -316,7 +316,7 @@
                     {
                         "keyword": "When ",
                         "name": "passing step",
-                        "line": 21,
+                        "line": 7,
                         "match": {
                             "location": "fmt_output_test.go:101"
                         },
@@ -328,7 +328,7 @@
                     {
                         "keyword": "Then ",
                         "name": "odd 3 and even 9 number",
-                        "line": 21,
+                        "line": 8,
                         "match": {
                             "location": "fmt_output_test.go:103"
                         },
