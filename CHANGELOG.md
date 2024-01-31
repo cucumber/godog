@@ -7,8 +7,18 @@ This project adheres to [Semantic Versioning](http://semver.org).
 This document is formatted according to the principles of [Keep A CHANGELOG](http://keepachangelog.com).
 
 ## Unreleased
+
+## [v0.14.0]
+### Added
+- Improve ErrSkip handling, add test for Summary and operations order ([584](https://github.com/cucumber/godog/pull/584) - [vearutop](https://github.com/vearutop))
+
 ### Fixed
 - Remove line overwriting for scenario outlines in cucumber formatter ([605](https://github.com/cucumber/godog/pull/605) - [glibas](https://github.com/glibas))
+- Remove duplicate warning message ([590](https://github.com/cucumber/godog/pull/590) - [vearutop](https://github.com/vearutop))
+- updated base formatter to set a scenario as passed unless there exist ([582](https://github.com/cucumber/godog/pull/582) - [roskee](https://github.com/roskee))
+
+### Changed
+- Update test.yml ([583](https://github.com/cucumber/godog/pull/583) - [vearutop](https://github.com/vearutop))
   
 ## [v0.13.0]
 ### Added
@@ -211,6 +221,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ### Changed
 - Changed code references to DATA-DOG/godog to cucumber/godog to help get things building correctly. ([mxygem](https://github.com/mxygem))
 
+[v0.14.0]: https://github.com/cucumber/godog/compare/v0.13.0...v0.14.0
 [v0.13.0]: https://github.com/cucumber/godog/compare/v0.12.6...v0.13.0
 [v0.12.6]: https://github.com/cucumber/godog/compare/v0.12.5...v0.12.6
 [v0.12.5]: https://github.com/cucumber/godog/compare/v0.12.4...v0.12.5
