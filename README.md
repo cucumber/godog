@@ -46,6 +46,8 @@ Godog is a community driven Open Source Project within the Cucumber organization
 
 See the [contributing guide] for more detail on how to get started.
 
+See the [releasing guide] for release flow details.
+
 ## Getting help
 
 We have a [community Slack] where you can chat with other users, developers, and BDD practitioners.
@@ -595,4 +597,5 @@ A simple example can be [found here](/_examples/custom-formatter).
 [cucumber]: https://cucumber.io/ "Behavior driven development framework"
 [license]: https://en.wikipedia.org/wiki/MIT_License "The MIT license"
 [contributing guide]: https://github.com/cucumber/godog/blob/main/CONTRIBUTING.md
+[releasing guide]: https://github.com/cucumber/godog/blob/main/RELEASING.md
 [community Slack]: https://cucumber.io/community#slack
