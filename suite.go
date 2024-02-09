@@ -88,12 +88,18 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 	// user multistep definitions may panic
 	defer func() {
 		if e := recover(); e != nil {
-			if err != nil {
+			pe, isErr := e.(error)
+			switch {
+			case isErr && errors.Is(pe, errFailNow):
+				// FailNow called on dogTestingT, recover the error so we set the step as a 'normal'
+				// fail instead of normal panic handling
+				err = e.(error)
+			case err != nil:
 				err = &traceError{
 					msg:   fmt.Sprintf("%s: %v", err.Error(), e),
 					stack: callStack(),
 				}
-			} else {
+			default:
 				err = &traceError{
 					msg:   fmt.Sprintf("%v", e),
 					stack: callStack(),
@@ -102,6 +108,11 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 		}
 
 		earlyReturn := scenarioErr != nil || errors.Is(err, ErrUndefined)
+
+		// Check for any calls to Fail on dogT
+		if err == nil {
+			err = getDogTestingT(ctx).isFailed()
+		}
 
 		switch {
 		case errors.Is(err, ErrPending):
@@ -523,10 +534,13 @@ func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 
 	s.fmt.Pickle(pickle)
 
+	dt := &dogTestingT{}
+	ctx = setContextDogTester(ctx, dt)
 	// scenario
 	if s.testingT != nil {
 		// Running scenario as a subtest.
 		s.testingT.Run(pickle.Name, func(t *testing.T) {
+			dt.t = t
 			ctx, err = s.runSteps(ctx, pickle, pickle.Steps)
 			if s.shouldFail(err) {
 				t.Errorf("%+v", err)
@@ -540,4 +554,24 @@ func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 	// so that error from handler can be added to step.
 
 	return err
+}
+
+// Logf will log test output. If called in the context of a test and testing.T has been registered,
+// this will log using the step's testing.T, else it will simply log to stdout.
+func Logf(ctx context.Context, format string, args ...interface{}) {
+	if t := getDogTestingT(ctx); t != nil {
+		t.Logf(format, args...)
+		return
+	}
+	fmt.Printf(format+"\n", args...)
+}
+
+// Log will log test output. If called in the context of a test and testing.T has been registered,
+// this will log using the step's testing.T, else it will simply log to stdout.
+func Log(ctx context.Context, args ...interface{}) {
+	if t := getDogTestingT(ctx); t != nil {
+		t.Log(args...)
+		return
+	}
+	fmt.Println(args...)
 }
