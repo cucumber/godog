@@ -31,8 +31,20 @@ type PickleStepResult struct {
 }
 
 // NewStepResult ...
-func NewStepResult(pickleID, pickleStepID string, match *StepDefinition) PickleStepResult {
-	return PickleStepResult{FinishedAt: utils.TimeNowFunc(), PickleID: pickleID, PickleStepID: pickleStepID, Def: match}
+func NewStepResult(
+	status StepResultStatus,
+	pickleID, pickleStepID string,
+	match *StepDefinition,
+	err error,
+) PickleStepResult {
+	return PickleStepResult{
+		Status:       status,
+		FinishedAt:   utils.TimeNowFunc(),
+		Err:          err,
+		PickleID:     pickleID,
+		PickleStepID: pickleStepID,
+		Def:          match,
+	}
 }
 
 // StepResultStatus ...
