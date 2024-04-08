@@ -361,6 +361,10 @@ func (ts TestSuite) RetrieveFeatures() ([]*models.Feature, error) {
 		}
 	}
 
+	if ts.Options.FS == nil {
+		ts.Options.FS = storage.FS{}
+	}
+
 	if len(opt.Paths) == 0 {
 		inf, err := func() (fs.FileInfo, error) {
 			file, err := opt.FS.Open("features")
