@@ -77,13 +77,10 @@ func (s *suite) matchStep(step *messages.PickleStep) *models.StepDefinition {
 }
 
 func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scenarioErr error, isFirst, isLast bool) (rctx context.Context, err error) {
-	var (
-		match *models.StepDefinition
-		sr    = models.NewStepResult(pickle.Id, step.Id, match)
-	)
+	var match *models.StepDefinition
 
 	rctx = ctx
-	sr.Status = StepUndefined
+	status := StepUndefined
 
 	// user multistep definitions may panic
 	defer func() {
@@ -105,19 +102,19 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 
 		switch {
 		case errors.Is(err, ErrPending):
-			sr.Status = StepPending
+			status = StepPending
 		case errors.Is(err, ErrSkip), err == nil && scenarioErr != nil:
-			sr.Status = StepSkipped
+			status = StepSkipped
 		case errors.Is(err, ErrUndefined):
-			sr.Status = StepUndefined
+			status = StepUndefined
 		case err != nil:
-			sr.Status = StepFailed
+			status = StepFailed
 		case err == nil && scenarioErr == nil:
-			sr.Status = StepPassed
+			status = StepPassed
 		}
 
 		// Run after step handlers.
-		rctx, err = s.runAfterStepHooks(ctx, step, sr.Status, err)
+		rctx, err = s.runAfterStepHooks(ctx, step, status, err)
 
 		shouldFail := s.shouldFail(err)
 
@@ -132,25 +129,20 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 
 		switch {
 		case err == nil:
-			sr.Status = models.Passed
+			sr := models.NewStepResult(models.Passed, pickle.Id, step.Id, match, nil)
 			s.storage.MustInsertPickleStepResult(sr)
-
 			s.fmt.Passed(pickle, step, match.GetInternalStepDefinition())
 		case errors.Is(err, ErrPending):
-			sr.Status = models.Pending
+			sr := models.NewStepResult(models.Pending, pickle.Id, step.Id, match, nil)
 			s.storage.MustInsertPickleStepResult(sr)
-
 			s.fmt.Pending(pickle, step, match.GetInternalStepDefinition())
 		case errors.Is(err, ErrSkip):
-			sr.Status = models.Skipped
+			sr := models.NewStepResult(models.Skipped, pickle.Id, step.Id, match, nil)
 			s.storage.MustInsertPickleStepResult(sr)
-
 			s.fmt.Skipped(pickle, step, match.GetInternalStepDefinition())
 		default:
-			sr.Status = models.Failed
-			sr.Err = err
+			sr := models.NewStepResult(models.Failed, pickle.Id, step.Id, match, err)
 			s.storage.MustInsertPickleStepResult(sr)
-
 			s.fmt.Failed(pickle, step, match.GetInternalStepDefinition(), err)
 		}
 	}()
@@ -165,14 +157,11 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 
 	match = s.matchStep(step)
 	s.storage.MustInsertStepDefintionMatch(step.AstNodeIds[0], match)
-	sr.Def = match
 	s.fmt.Defined(pickle, step, match.GetInternalStepDefinition())
 
 	if err != nil {
-		sr = models.NewStepResult(pickle.Id, step.Id, match)
-		sr.Status = models.Failed
+		sr := models.NewStepResult(models.Failed, pickle.Id, step.Id, match, nil)
 		s.storage.MustInsertPickleStepResult(sr)
-
 		return ctx, err
 	}
 
@@ -191,11 +180,9 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 				Nested:       match.Nested,
 				Undefined:    undef,
 			}
-			sr.Def = match
 		}
 
-		sr = models.NewStepResult(pickle.Id, step.Id, match)
-		sr.Status = models.Undefined
+		sr := models.NewStepResult(models.Undefined, pickle.Id, step.Id, match, nil)
 		s.storage.MustInsertPickleStepResult(sr)
 
 		s.fmt.Undefined(pickle, step, match.GetInternalStepDefinition())
@@ -203,8 +190,7 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 	}
 
 	if scenarioErr != nil {
-		sr = models.NewStepResult(pickle.Id, step.Id, match)
-		sr.Status = models.Skipped
+		sr := models.NewStepResult(models.Skipped, pickle.Id, step.Id, match, nil)
 		s.storage.MustInsertPickleStepResult(sr)
 
 		s.fmt.Skipped(pickle, step, match.GetInternalStepDefinition())
