@@ -350,7 +350,7 @@ Feature: pretty formatter
   Scenario: Should scenarios identified with path:line and preserve the order.
     Given a feature path "features/load.feature:6"
     And a feature path "features/multistep.feature:6"
-    And a feature path "features/load.feature:26"
+    And a feature path "features/load.feature:27"
     And a feature path "features/multistep.feature:23"
     When I run feature suite with formatter "pretty"
     Then the rendered output will be as follows:
@@ -363,7 +363,7 @@ Feature: pretty formatter
       Scenario: load features within path    # features/load.feature:6
         Given a feature path "features"      # suite_context_test.go:0 -> *godogFeaturesScenario
         When I parse features                # suite_context_test.go:0 -> *godogFeaturesScenario
-        Then I should have 13 feature files: # suite_context_test.go:0 -> *godogFeaturesScenario
+        Then I should have 14 feature files: # suite_context_test.go:0 -> *godogFeaturesScenario
           \"\"\"
           features/background.feature
           features/events.feature
@@ -378,6 +378,7 @@ Feature: pretty formatter
           features/run.feature
           features/snippets.feature
           features/tags.feature
+          features/testingt.feature
           \"\"\"
 
     Feature: run features with nested steps
@@ -407,7 +408,7 @@ Feature: pretty formatter
       As a test suite
       I need to be able to load features
 
-      Scenario: load a specific feature file         # features/load.feature:26
+      Scenario: load a specific feature file         # features/load.feature:27
         Given a feature path "features/load.feature" # suite_context_test.go:0 -> *godogFeaturesScenario
         When I parse features                        # suite_context_test.go:0 -> *godogFeaturesScenario
         Then I should have 1 feature file:           # suite_context_test.go:0 -> *godogFeaturesScenario

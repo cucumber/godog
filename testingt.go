@@ -193,10 +193,12 @@ func getTestingT(ctx context.Context) *testingT {
 	return dt
 }
 
-// fallbackLog is used to log when no testing.T is available
+// fallbackLog is used to log when no testing.T is available. Set as a variable so this can be
+// disabled / re-routed in future if needed.
 var fallbackLog = fmt.Println
 
-// fallbackLogf is used to log a formatted string when no testing.T is available
+// fallbackLogf is used to log a formatted string when no testing.T is available. Set as a variable
+// so this can be disabled / re-routed in future if needed.
 var fallbackLogf = func(message string, args ...interface{}) {
 	fmt.Printf(message+"\n", args...)
 }
