@@ -87,10 +87,10 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 		if e := recover(); e != nil {
 			pe, isErr := e.(error)
 			switch {
-			case isErr && errors.Is(pe, errFailNow):
-				// FailNow called on dogTestingT, recover the error so we set the step as a 'normal'
-				// fail instead of normal panic handling
-				err = e.(error)
+			case isErr && errors.Is(pe, errStopNow):
+				// FailNow or SkipNow called on dogTestingT, so clear the error to let the normal
+				// below getTestingT(ctx).isFailed() call handle the reasons.
+				err = nil
 			case err != nil:
 				err = &traceError{
 					msg:   fmt.Sprintf("%s: %v", err.Error(), e),
@@ -108,7 +108,7 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 
 		// Check for any calls to Fail on dogT
 		if err == nil {
-			err = getDogTestingT(ctx).isFailed()
+			err = getTestingT(ctx).isFailed()
 		}
 
 		switch {
@@ -520,8 +520,10 @@ func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 
 	s.fmt.Pickle(pickle)
 
-	dt := &dogTestingT{}
-	ctx = setContextDogTester(ctx, dt)
+	dt := &testingT{
+		name: pickle.Name,
+	}
+	ctx = setContextTestingT(ctx, dt)
 	// scenario
 	if s.testingT != nil {
 		// Running scenario as a subtest.
@@ -540,24 +542,4 @@ func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 	// so that error from handler can be added to step.
 
 	return err
-}
-
-// Logf will log test output. If called in the context of a test and testing.T has been registered,
-// this will log using the step's testing.T, else it will simply log to stdout.
-func Logf(ctx context.Context, format string, args ...interface{}) {
-	if t := getDogTestingT(ctx); t != nil {
-		t.Logf(format, args...)
-		return
-	}
-	fmt.Printf(format+"\n", args...)
-}
-
-// Log will log test output. If called in the context of a test and testing.T has been registered,
-// this will log using the step's testing.T, else it will simply log to stdout.
-func Log(ctx context.Context, args ...interface{}) {
-	if t := getDogTestingT(ctx); t != nil {
-		t.Log(args...)
-		return
-	}
-	fmt.Println(args...)
 }

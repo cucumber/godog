@@ -7,67 +7,165 @@ import (
 	"testing"
 )
 
+// TestingT is a subset of the public methods implemented by go's testing.T. It allows assertion
+// libraries to be used with godog, provided they depend only on this subset of methods.
 type TestingT interface {
+	// Name returns the name of the current pickle under test
+	Name() string
+	// Log will log to the current testing.T log if set, otherwise it will log to stdout
 	Log(args ...interface{})
+	// Logf will log a formatted string to the current testing.T log if set, otherwise it will log
+	// to stdout
 	Logf(format string, args ...interface{})
+	// Error fails the current test and logs the provided arguments. Equivalent to calling Log then
+	// Fail.
+	Error(args ...interface{})
+	// Errorf fails the current test and logs the formatted message. Equivalent to calling Logf then
+	// Fail.
 	Errorf(format string, args ...interface{})
+	// Fail marks the current test as failed, but does not halt execution of the step.
 	Fail()
+	// FailNow marks the current test as failed and halts execution of the step.
 	FailNow()
+	// Fatal logs the provided arguments, marks the test as failed and halts execution of the step.
+	Fatal(args ...interface{})
+	// Fatal logs the formatted message, marks the test as failed and halts execution of the step.
+	Fatalf(format string, args ...interface{})
+	// Skip logs the provided arguments and marks the test as skipped but does not halt execution
+	// of the step.
+	Skip(args ...interface{})
+	// Skipf logs the formatted message and marks the test as skipped but does not halt execution
+	// of the step.
+	Skipf(format string, args ...interface{})
+	// SkipNow marks the current test as skipped and halts execution of the step.
+	SkipNow()
+	// Skipped returns true if the test has been marked as skipped.
+	Skipped() bool
+}
+
+// Logf will log test output. If called in the context of a test and testing.T has been registered,
+// this will log using the step's testing.T, else it will simply log to stdout.
+func Logf(ctx context.Context, format string, args ...interface{}) {
+	if t := getTestingT(ctx); t != nil {
+		t.Logf(format, args...)
+		return
+	}
+	fallbackLogf(format, args...)
+}
+
+// Log will log test output. If called in the context of a test and testing.T has been registered,
+// this will log using the step's testing.T, else it will simply log to stdout.
+func Log(ctx context.Context, args ...interface{}) {
+	if t := getTestingT(ctx); t != nil {
+		t.Log(args...)
+		return
+	}
+	fallbackLog(args...)
 }
 
 // GetTestingT returns a TestingT compatible interface from the current test context. It will return
 // nil if called outside the context of a test. This can be used with (for example) testify's assert
 // and require packages.
 func GetTestingT(ctx context.Context) TestingT {
-	return getDogTestingT(ctx)
+	return getTestingT(ctx)
 }
 
-// errFailNow should be returned inside a panic within the test to immediately halt execution of that
+// errStopNow should be returned inside a panic within the test to immediately halt execution of that
 // test
-var errFailNow = fmt.Errorf("FailNow called")
+var errStopNow = fmt.Errorf("FailNow or SkipNow called")
 
-type dogTestingT struct {
+type testingT struct {
+	name         string
 	t            *testing.T
 	failed       bool
+	skipped      bool
 	failMessages []string
+	logMessages  []string
 }
 
 // check interface:
-var _ TestingT = &dogTestingT{}
+var _ TestingT = &testingT{}
 
-func (dt *dogTestingT) Log(args ...interface{}) {
+func (dt *testingT) Name() string {
+	if dt.t != nil {
+		return dt.t.Name()
+	}
+	return dt.name
+}
+
+func (dt *testingT) Log(args ...interface{}) {
+	dt.logMessages = append(dt.logMessages, fmt.Sprint(args...))
 	if dt.t != nil {
 		dt.t.Log(args...)
 		return
 	}
-	fmt.Println(args...)
+	fallbackLog(args...)
 }
 
-func (dt *dogTestingT) Logf(format string, args ...interface{}) {
+func (dt *testingT) Logf(format string, args ...interface{}) {
+	dt.logMessages = append(dt.logMessages, fmt.Sprintf(format, args...))
 	if dt.t != nil {
 		dt.t.Logf(format, args...)
 		return
 	}
-	fmt.Printf(format+"\n", args...)
+	fallbackLogf(format, args...)
 }
 
-func (dt *dogTestingT) Errorf(format string, args ...interface{}) {
+func (dt *testingT) Error(args ...interface{}) {
+	dt.Log(args...)
+	dt.failMessages = append(dt.failMessages, fmt.Sprintln(args...))
+	dt.Fail()
+}
+
+func (dt *testingT) Errorf(format string, args ...interface{}) {
 	dt.Logf(format, args...)
 	dt.failMessages = append(dt.failMessages, fmt.Sprintf(format, args...))
 	dt.Fail()
 }
 
-func (dt *dogTestingT) Fail() {
+func (dt *testingT) Fail() {
 	dt.failed = true
 }
 
-func (dt *dogTestingT) FailNow() {
+func (dt *testingT) FailNow() {
 	dt.Fail()
-	panic(errFailNow)
+	panic(errStopNow)
+}
+
+func (dt *testingT) Fatal(args ...interface{}) {
+	dt.Log(args...)
+	dt.FailNow()
+}
+
+func (dt *testingT) Fatalf(format string, args ...interface{}) {
+	dt.Logf(format, args...)
+	dt.FailNow()
+}
+
+func (dt *testingT) Skip(args ...interface{}) {
+	dt.Log(args...)
+	dt.skipped = true
+}
+
+func (dt *testingT) Skipf(format string, args ...interface{}) {
+	dt.Logf(format, args...)
+	dt.skipped = true
+}
+
+func (dt *testingT) SkipNow() {
+	dt.skipped = true
+	panic(errStopNow)
+}
+
+func (dt *testingT) Skipped() bool {
+	return dt.skipped
 }
 
 // isFailed will return an error representing the calls to Fail made during this test
-func (dt *dogTestingT) isFailed() error {
+func (dt *testingT) isFailed() error {
+	if dt.skipped {
+		return ErrSkip
+	}
 	if !dt.failed {
 		return nil
 	}
@@ -83,14 +181,22 @@ func (dt *dogTestingT) isFailed() error {
 
 type testingTCtxVal struct{}
 
-func setContextDogTester(ctx context.Context, dt *dogTestingT) context.Context {
+func setContextTestingT(ctx context.Context, dt *testingT) context.Context {
 	return context.WithValue(ctx, testingTCtxVal{}, dt)
 }
 
-func getDogTestingT(ctx context.Context) *dogTestingT {
-	dt, ok := ctx.Value(testingTCtxVal{}).(*dogTestingT)
+func getTestingT(ctx context.Context) *testingT {
+	dt, ok := ctx.Value(testingTCtxVal{}).(*testingT)
 	if !ok {
 		return nil
 	}
 	return dt
+}
+
+// fallbackLog is used to log when no testing.T is available
+var fallbackLog = fmt.Println
+
+// fallbackLogf is used to log a formatted string when no testing.T is available
+var fallbackLogf = func(message string, args ...interface{}) {
+	fmt.Printf(message+"\n", args...)
 }
