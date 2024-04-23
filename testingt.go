@@ -7,6 +7,12 @@ import (
 	"testing"
 )
 
+var (
+	_ TestingT = (*testing.B)(nil)
+	_ TestingT = (*testing.F)(nil)
+	_ TestingT = (*testing.T)(nil)
+)
+
 // TestingT is a subset of the public methods implemented by go's testing.T. It allows assertion
 // libraries to be used with godog, provided they depend only on this subset of methods.
 type TestingT interface {
