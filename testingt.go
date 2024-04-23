@@ -69,10 +69,10 @@ func Log(ctx context.Context, args ...interface{}) {
 	fallbackLog(args...)
 }
 
-// GetTestingT returns a TestingT compatible interface from the current test context. It will return
-// nil if called outside the context of a test. This can be used with (for example) testify's assert
-// and require packages.
-func GetTestingT(ctx context.Context) TestingT {
+// T returns a TestingT compatible interface from the current test context. It will return nil if
+// called outside the context of a test. This can be used with (for example) testify's assert and
+// require packages.
+func T(ctx context.Context) TestingT {
 	return getTestingT(ctx)
 }
 
