@@ -495,31 +495,12 @@ If you want to filter scenarios by tags, you can use the `-t=<expression>` or `-
 A more extensive example can be [found here](/_examples/assert-godogs).
 
 ```go
-func thereShouldBeRemaining(remaining int) error {
-	return assertExpectedAndActual(
-		assert.Equal, Godogs, remaining,
-		"Expected %d godogs to be remaining, but there is %d", remaining, Godogs,
-	)
-}
-
-// assertExpectedAndActual is a helper function to allow the step function to call
-// assertion functions where you want to compare an expected and an actual value.
-func assertExpectedAndActual(a expectedAndActualAssertion, expected, actual interface{}, msgAndArgs ...interface{}) error {
-	var t asserter
-	a(&t, expected, actual, msgAndArgs...)
-	return t.err
-}
-
-type expectedAndActualAssertion func(t assert.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool
-
-// asserter is used to be able to retrieve the error reported by the called assertion
-type asserter struct {
-	err error
-}
-
-// Errorf is used by the called assertion to report an error
-func (a *asserter) Errorf(format string, args ...interface{}) {
-	a.err = fmt.Errorf(format, args...)
+func thereShouldBeRemaining(ctx context.Context, remaining int) error {
+	assert.Equal(
+    godog.T(ctx), Godogs, remaining, 
+    "Expected %d godogs to be remaining, but there is %d", remaining, Godogs,
+  )
+	return nil
 }
 ```
 

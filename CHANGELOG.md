@@ -8,6 +8,9 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ## Unreleased
 
+### Added
+- Provide testing.T-compatible interface on test context, allowing usage of assertion libraries such as testify's assert/require - ([571](https://github.com/cucumber/godog/pull/571) - [mrsheepuk](https://github.com/mrsheepuk))
+
 ## [v0.14.0]
 ### Added
 - Improve ErrSkip handling, add test for Summary and operations order ([584](https://github.com/cucumber/godog/pull/584) - [vearutop](https://github.com/vearutop))
