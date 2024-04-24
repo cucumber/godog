@@ -7,11 +7,12 @@ import (
 	"testing"
 )
 
-var (
-	_ TestingT = (*testing.B)(nil)
-	_ TestingT = (*testing.F)(nil)
-	_ TestingT = (*testing.T)(nil)
-)
+// T returns a TestingT compatible interface from the current test context. It will return nil if
+// called outside the context of a test. This can be used with (for example) testify's assert and
+// require packages.
+func T(ctx context.Context) TestingT {
+	return getTestingT(ctx)
+}
 
 // TestingT is a subset of the public methods implemented by go's testing.T. It allows assertion
 // libraries to be used with godog, provided they depend only on this subset of methods.
@@ -69,11 +70,13 @@ func Log(ctx context.Context, args ...interface{}) {
 	fallbackLog(args...)
 }
 
-// T returns a TestingT compatible interface from the current test context. It will return nil if
-// called outside the context of a test. This can be used with (for example) testify's assert and
-// require packages.
-func T(ctx context.Context) TestingT {
-	return getTestingT(ctx)
+// LoggedMessages returns an array of any logged messages that have been recorded during the test
+// through calls to godog.Log / godog.Logf or via operations against godog.T(ctx)
+func LoggedMessages(ctx context.Context) []string {
+	if t := getTestingT(ctx); t != nil {
+		return t.logMessages
+	}
+	return nil
 }
 
 // errStopNow should be returned inside a panic within the test to immediately halt execution of that
@@ -89,8 +92,13 @@ type testingT struct {
 	logMessages  []string
 }
 
-// check interface:
-var _ TestingT = &testingT{}
+// check interface against our testingT and the upstream testing.B/F/T:
+var (
+	_ TestingT = &testingT{}
+	_ TestingT = (*testing.B)(nil)
+	_ TestingT = (*testing.F)(nil)
+	_ TestingT = (*testing.T)(nil)
+)
 
 func (dt *testingT) Name() string {
 	if dt.t != nil {

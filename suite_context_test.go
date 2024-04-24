@@ -162,18 +162,17 @@ func InitializeScenario(ctx *ScenarioContext) {
 	})
 
 	// introduced to test testingT
-	ctx.Step(`^I fail the test by calling FailNow on testing T$`, tc.iCallTFailNow)
-	ctx.Step(`^I fail the test by calling Fail on testing T$`, tc.iCallTFail)
-	ctx.Step(`^I fail the test by calling Error on testing T with message "([^"]*)"$`, tc.iCallTError)
-	ctx.Step(`^I fail the test by calling Errorf on testing T with message "([^"]*)" and argument "([^"]*)"$`, tc.iCallTErrorf)
-	ctx.Step(`^I skip the test by calling SkipNow on testing T$`, tc.iCallTSkipNow)
-	ctx.Step(`^I skip the test by calling Skip on testing T$`, tc.iCallTSkip)
-	ctx.Step(`^I call Logf on testing T with message "([^"]*)" and argument "([^"]*)"$`, tc.iCallTLogf)
-	ctx.Step(`^I call Log on testing T with message "([^"]*)"$`, tc.iCallTLog)
-	ctx.Step(`^I call testify's assert.Equal with expected "([^"]*)" and actual "([^"]*)"$`, tc.iCallTestifyAssertEqual)
-	ctx.Step(`^I call testify's require.Equal with expected "([^"]*)" and actual "([^"]*)"$`, tc.iCallTestifyRequireEqual)
-	ctx.Step(`^I call testify's assert.Equal ([0-9]+) times$`, tc.iCallTestifyAssertEqualMultipleTimes)
-	ctx.Step(`^I call testify's assert.Equal ([0-9]+) times with match$`, tc.iCallTestifyAssertEqualMultipleTimesWithMatch)
+	ctx.Step(`^my step (?:fails|skips) the test by calling (FailNow|Fail|SkipNow|Skip) on testing T$`, tc.myStepCallsTFailErrorSkip)
+	ctx.Step(`^my step fails the test by calling (Fatal|Error) on testing T with message "([^"]*)"$`, tc.myStepCallsTErrorFatal)
+	ctx.Step(`^my step fails the test by calling (Fatalf|Errorf) on testing T with message "([^"]*)" and argument "([^"]*)"$`, tc.myStepCallsTErrorfFatalf)
+	ctx.Step(`^my step calls Log on testing T with message "([^"]*)"$`, tc.myStepCallsTLog)
+	ctx.Step(`^my step calls Logf on testing T with message "([^"]*)" and argument "([^"]*)"$`, tc.myStepCallsTLogf)
+	ctx.Step(`^my step calls testify's assert.Equal with expected "([^"]*)" and actual "([^"]*)"$`, tc.myStepCallsTestifyAssertEqual)
+	ctx.Step(`^my step calls testify's require.Equal with expected "([^"]*)" and actual "([^"]*)"$`, tc.myStepCallsTestifyRequireEqual)
+	ctx.Step(`^my step calls testify's assert.Equal ([0-9]+) times(| with match)$`, tc.myStepCallsTestifyAssertEqualMultipleTimes)
+	ctx.Step(`^my step calls godog.Log with message "([^"]*)"$`, tc.myStepCallsDogLog)
+	ctx.Step(`^my step calls godog.Logf with message "([^"]*)" and argument "([^"]*)"$`, tc.myStepCallsDogLogf)
+	ctx.Step(`^the logged messages should include "([^"]*)"$`, tc.theLoggedMessagesShouldInclude)
 
 	ctx.StepContext().Before(tc.inject)
 }
@@ -399,88 +398,99 @@ func (tc *godogFeaturesScenario) iShouldSeeTheContextInTheNextStep(ctx context.C
 	return nil
 }
 
-func (tc *godogFeaturesScenario) iCallTFailNow(ctx context.Context) error {
-	t := GetTestingT(ctx)
-	t.FailNow()
+func (tc *godogFeaturesScenario) myStepCallsTFailErrorSkip(ctx context.Context, op string) error {
+	switch op {
+	case "FailNow":
+		T(ctx).FailNow()
+	case "Fail":
+		T(ctx).Fail()
+	case "SkipNow":
+		T(ctx).SkipNow()
+	case "Skip":
+		T(ctx).Skip()
+	default:
+		return fmt.Errorf("operation %s not supported by iCallTFailErrorSkip", op)
+	}
 	return nil
 }
 
-func (tc *godogFeaturesScenario) iCallTFail(ctx context.Context) error {
-	t := GetTestingT(ctx)
-	t.Fail()
+func (tc *godogFeaturesScenario) myStepCallsTErrorFatal(ctx context.Context, op string, message string) error {
+	switch op {
+	case "Error":
+		T(ctx).Error(message)
+	case "Fatal":
+		T(ctx).Fatal(message)
+	default:
+		return fmt.Errorf("operation %s not supported by iCallTErrorFatal", op)
+	}
 	return nil
 }
 
-func (tc *godogFeaturesScenario) iCallTSkipNow(ctx context.Context) error {
-	t := GetTestingT(ctx)
-	t.SkipNow()
+func (tc *godogFeaturesScenario) myStepCallsTErrorfFatalf(ctx context.Context, op string, message string, arg string) error {
+	switch op {
+	case "Errorf":
+		T(ctx).Errorf(message, arg)
+	case "Fatalf":
+		T(ctx).Fatalf(message, arg)
+	default:
+		return fmt.Errorf("operation %s not supported by iCallTErrorfFatalf", op)
+	}
 	return nil
 }
 
-func (tc *godogFeaturesScenario) iCallTSkip(ctx context.Context) error {
-	t := GetTestingT(ctx)
-	t.Skip()
+func (tc *godogFeaturesScenario) myStepCallsTestifyAssertEqual(ctx context.Context, a string, b string) error {
+	assert.Equal(T(ctx), a, b)
 	return nil
 }
 
-func (tc *godogFeaturesScenario) iCallTError(ctx context.Context, message string) error {
-	t := GetTestingT(ctx)
-	t.Error(message)
-	return nil
-}
-
-func (tc *godogFeaturesScenario) iCallTErrorf(ctx context.Context, message string, arg string) error {
-	t := GetTestingT(ctx)
-	t.Errorf(message, arg)
-	return nil
-}
-
-func (tc *godogFeaturesScenario) iCallTestifyAssertEqual(ctx context.Context, a string, b string) error {
-	t := GetTestingT(ctx)
-	assert.Equal(t, a, b)
-	return nil
-}
-
-func (tc *godogFeaturesScenario) iCallTestifyAssertEqualMultipleTimes(ctx context.Context, times string) error {
-	t := GetTestingT(ctx)
+func (tc *godogFeaturesScenario) myStepCallsTestifyAssertEqualMultipleTimes(ctx context.Context, times string, withMatch string) error {
 	timesInt, err := strconv.Atoi(times)
 	if err != nil {
 		return fmt.Errorf("test step has invalid times value %s: %w", times, err)
 	}
 	for i := 0; i < timesInt; i++ {
-		assert.Equal(t, "exp", fmt.Sprintf("notexp%v", i))
+		if withMatch == " with match" {
+			assert.Equal(T(ctx), fmt.Sprintf("exp%v", i), fmt.Sprintf("exp%v", i))
+		} else {
+			assert.Equal(T(ctx), "exp", fmt.Sprintf("notexp%v", i))
+		}
 	}
 	return nil
 }
 
-func (tc *godogFeaturesScenario) iCallTestifyAssertEqualMultipleTimesWithMatch(ctx context.Context, times string) error {
-	t := GetTestingT(ctx)
-	timesInt, err := strconv.Atoi(times)
-	if err != nil {
-		return fmt.Errorf("test step has invalid times value %s: %w", times, err)
+func (tc *godogFeaturesScenario) myStepCallsTestifyRequireEqual(ctx context.Context, a string, b string) error {
+	require.Equal(T(ctx), a, b)
+	return nil
+}
+
+func (tc *godogFeaturesScenario) myStepCallsTLog(ctx context.Context, message string) error {
+	T(ctx).Log(message)
+	return nil
+}
+
+func (tc *godogFeaturesScenario) myStepCallsTLogf(ctx context.Context, message string, arg string) error {
+	T(ctx).Logf(message, arg)
+	return nil
+}
+
+func (tc *godogFeaturesScenario) myStepCallsDogLog(ctx context.Context, message string) error {
+	Log(ctx, message)
+	return nil
+}
+
+func (tc *godogFeaturesScenario) myStepCallsDogLogf(ctx context.Context, message string, arg string) error {
+	Logf(ctx, message, arg)
+	return nil
+}
+
+func (tc *godogFeaturesScenario) theLoggedMessagesShouldInclude(ctx context.Context, message string) error {
+	messages := LoggedMessages(ctx)
+	for _, m := range messages {
+		if strings.Contains(m, message) {
+			return nil
+		}
 	}
-	for i := 0; i < timesInt; i++ {
-		assert.Equal(t, fmt.Sprintf("exp%v", i), fmt.Sprintf("exp%v", i))
-	}
-	return nil
-}
-
-func (tc *godogFeaturesScenario) iCallTestifyRequireEqual(ctx context.Context, a string, b string) error {
-	t := GetTestingT(ctx)
-	require.Equal(t, a, b)
-	return nil
-}
-
-func (tc *godogFeaturesScenario) iCallTLog(ctx context.Context, message string) error {
-	t := GetTestingT(ctx)
-	t.Log(message)
-	return nil
-}
-
-func (tc *godogFeaturesScenario) iCallTLogf(ctx context.Context, message string, arg string) error {
-	t := GetTestingT(ctx)
-	t.Logf(message, arg)
-	return nil
+	return fmt.Errorf("the message %q was not logged (logged messages: %v)", message, messages)
 }
 
 func (tc *godogFeaturesScenario) followingStepsShouldHave(status string, steps *DocString) error {
