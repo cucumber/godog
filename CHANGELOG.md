@@ -8,8 +8,15 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ## Unreleased
 
+## [v0.14.1]
+
 ### Added
 - Provide testing.T-compatible interface on test context, allowing usage of assertion libraries such as testify's assert/require - ([571](https://github.com/cucumber/godog/pull/571) - [mrsheepuk](https://github.com/mrsheepuk))
+- Created releasing guidelines - ([608](https://github.com/cucumber/godog/pull/608) - [glibas](https://github.com/glibas))
+
+### Fixed
+- Step duration calculation - ([616](https://github.com/cucumber/godog/pull/616) - [iaroslav-ciupin](https://github.com/iaroslav-ciupin))
+- Invalid memory address or nil pointer dereference in RetrieveFeatures - ([566](https://github.com/cucumber/godog/pull/566) - [corneldamian](https://github.com/corneldamian))
 
 ## [v0.14.0]
 ### Added
@@ -224,6 +231,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ### Changed
 - Changed code references to DATA-DOG/godog to cucumber/godog to help get things building correctly. ([mxygem](https://github.com/mxygem))
 
+[v0.14.1]: https://github.com/cucumber/godog/compare/v0.14.0...v0.14.1
 [v0.14.0]: https://github.com/cucumber/godog/compare/v0.13.0...v0.14.0
 [v0.13.0]: https://github.com/cucumber/godog/compare/v0.12.6...v0.13.0
 [v0.12.6]: https://github.com/cucumber/godog/compare/v0.12.5...v0.12.6
