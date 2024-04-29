@@ -57,7 +57,7 @@ func Logf(ctx context.Context, format string, args ...interface{}) {
 		t.Logf(format, args...)
 		return
 	}
-	fallbackLogf(format, args...)
+	fmt.Printf(format+"\n", args...)
 }
 
 // Log will log test output. If called in the context of a test and testing.T has been registered,
@@ -67,7 +67,7 @@ func Log(ctx context.Context, args ...interface{}) {
 		t.Log(args...)
 		return
 	}
-	fallbackLog(args...)
+	fmt.Println(args...)
 }
 
 // LoggedMessages returns an array of any logged messages that have been recorded during the test
@@ -95,8 +95,6 @@ type testingT struct {
 // check interface against our testingT and the upstream testing.B/F/T:
 var (
 	_ TestingT = &testingT{}
-	_ TestingT = (*testing.B)(nil)
-	_ TestingT = (*testing.F)(nil)
 	_ TestingT = (*testing.T)(nil)
 )
 
@@ -113,7 +111,7 @@ func (dt *testingT) Log(args ...interface{}) {
 		dt.t.Log(args...)
 		return
 	}
-	fallbackLog(args...)
+	fmt.Println(args...)
 }
 
 func (dt *testingT) Logf(format string, args ...interface{}) {
@@ -122,7 +120,7 @@ func (dt *testingT) Logf(format string, args ...interface{}) {
 		dt.t.Logf(format, args...)
 		return
 	}
-	fallbackLogf(format, args...)
+	fmt.Printf(format+"\n", args...)
 }
 
 func (dt *testingT) Error(args ...interface{}) {
@@ -205,14 +203,4 @@ func getTestingT(ctx context.Context) *testingT {
 		return nil
 	}
 	return dt
-}
-
-// fallbackLog is used to log when no testing.T is available. Set as a variable so this can be
-// disabled / re-routed in future if needed.
-var fallbackLog = fmt.Println
-
-// fallbackLogf is used to log a formatted string when no testing.T is available. Set as a variable
-// so this can be disabled / re-routed in future if needed.
-var fallbackLogf = func(message string, args ...interface{}) {
-	fmt.Printf(message+"\n", args...)
 }
