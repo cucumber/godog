@@ -85,12 +85,18 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 	// user multistep definitions may panic
 	defer func() {
 		if e := recover(); e != nil {
-			if err != nil {
+			pe, isErr := e.(error)
+			switch {
+			case isErr && errors.Is(pe, errStopNow):
+				// FailNow or SkipNow called on dogTestingT, so clear the error to let the normal
+				// below getTestingT(ctx).isFailed() call handle the reasons.
+				err = nil
+			case err != nil:
 				err = &traceError{
 					msg:   fmt.Sprintf("%s: %v", err.Error(), e),
 					stack: callStack(),
 				}
-			} else {
+			default:
 				err = &traceError{
 					msg:   fmt.Sprintf("%v", e),
 					stack: callStack(),
@@ -99,6 +105,11 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 		}
 
 		earlyReturn := scenarioErr != nil || errors.Is(err, ErrUndefined)
+
+		// Check for any calls to Fail on dogT
+		if err == nil {
+			err = getTestingT(ctx).isFailed()
+		}
 
 		switch {
 		case errors.Is(err, ErrPending):
@@ -509,10 +520,15 @@ func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 
 	s.fmt.Pickle(pickle)
 
+	dt := &testingT{
+		name: pickle.Name,
+	}
+	ctx = setContextTestingT(ctx, dt)
 	// scenario
 	if s.testingT != nil {
 		// Running scenario as a subtest.
 		s.testingT.Run(pickle.Name, func(t *testing.T) {
+			dt.t = t
 			ctx, err = s.runSteps(ctx, pickle, pickle.Steps)
 			if s.shouldFail(err) {
 				t.Errorf("%+v", err)

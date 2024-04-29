@@ -161,6 +161,19 @@ func InitializeScenario(ctx *ScenarioContext) {
 		}
 	})
 
+	// introduced to test testingT
+	ctx.Step(`^my step (?:fails|skips) the test by calling (FailNow|Fail|SkipNow|Skip) on testing T$`, tc.myStepCallsTFailErrorSkip)
+	ctx.Step(`^my step fails the test by calling (Fatal|Error) on testing T with message "([^"]*)"$`, tc.myStepCallsTErrorFatal)
+	ctx.Step(`^my step fails the test by calling (Fatalf|Errorf) on testing T with message "([^"]*)" and argument "([^"]*)"$`, tc.myStepCallsTErrorfFatalf)
+	ctx.Step(`^my step calls Log on testing T with message "([^"]*)"$`, tc.myStepCallsTLog)
+	ctx.Step(`^my step calls Logf on testing T with message "([^"]*)" and argument "([^"]*)"$`, tc.myStepCallsTLogf)
+	ctx.Step(`^my step calls testify's assert.Equal with expected "([^"]*)" and actual "([^"]*)"$`, tc.myStepCallsTestifyAssertEqual)
+	ctx.Step(`^my step calls testify's require.Equal with expected "([^"]*)" and actual "([^"]*)"$`, tc.myStepCallsTestifyRequireEqual)
+	ctx.Step(`^my step calls testify's assert.Equal ([0-9]+) times(| with match)$`, tc.myStepCallsTestifyAssertEqualMultipleTimes)
+	ctx.Step(`^my step calls godog.Log with message "([^"]*)"$`, tc.myStepCallsDogLog)
+	ctx.Step(`^my step calls godog.Logf with message "([^"]*)" and argument "([^"]*)"$`, tc.myStepCallsDogLogf)
+	ctx.Step(`^the logged messages should include "([^"]*)"$`, tc.theLoggedMessagesShouldInclude)
+
 	ctx.StepContext().Before(tc.inject)
 }
 
@@ -383,6 +396,101 @@ func (tc *godogFeaturesScenario) iShouldSeeTheContextInTheNextStep(ctx context.C
 		return errors.New("context has the wrong value for our key")
 	}
 	return nil
+}
+
+func (tc *godogFeaturesScenario) myStepCallsTFailErrorSkip(ctx context.Context, op string) error {
+	switch op {
+	case "FailNow":
+		T(ctx).FailNow()
+	case "Fail":
+		T(ctx).Fail()
+	case "SkipNow":
+		T(ctx).SkipNow()
+	case "Skip":
+		T(ctx).Skip()
+	default:
+		return fmt.Errorf("operation %s not supported by iCallTFailErrorSkip", op)
+	}
+	return nil
+}
+
+func (tc *godogFeaturesScenario) myStepCallsTErrorFatal(ctx context.Context, op string, message string) error {
+	switch op {
+	case "Error":
+		T(ctx).Error(message)
+	case "Fatal":
+		T(ctx).Fatal(message)
+	default:
+		return fmt.Errorf("operation %s not supported by iCallTErrorFatal", op)
+	}
+	return nil
+}
+
+func (tc *godogFeaturesScenario) myStepCallsTErrorfFatalf(ctx context.Context, op string, message string, arg string) error {
+	switch op {
+	case "Errorf":
+		T(ctx).Errorf(message, arg)
+	case "Fatalf":
+		T(ctx).Fatalf(message, arg)
+	default:
+		return fmt.Errorf("operation %s not supported by iCallTErrorfFatalf", op)
+	}
+	return nil
+}
+
+func (tc *godogFeaturesScenario) myStepCallsTestifyAssertEqual(ctx context.Context, a string, b string) error {
+	assert.Equal(T(ctx), a, b)
+	return nil
+}
+
+func (tc *godogFeaturesScenario) myStepCallsTestifyAssertEqualMultipleTimes(ctx context.Context, times string, withMatch string) error {
+	timesInt, err := strconv.Atoi(times)
+	if err != nil {
+		return fmt.Errorf("test step has invalid times value %s: %w", times, err)
+	}
+	for i := 0; i < timesInt; i++ {
+		if withMatch == " with match" {
+			assert.Equal(T(ctx), fmt.Sprintf("exp%v", i), fmt.Sprintf("exp%v", i))
+		} else {
+			assert.Equal(T(ctx), "exp", fmt.Sprintf("notexp%v", i))
+		}
+	}
+	return nil
+}
+
+func (tc *godogFeaturesScenario) myStepCallsTestifyRequireEqual(ctx context.Context, a string, b string) error {
+	require.Equal(T(ctx), a, b)
+	return nil
+}
+
+func (tc *godogFeaturesScenario) myStepCallsTLog(ctx context.Context, message string) error {
+	T(ctx).Log(message)
+	return nil
+}
+
+func (tc *godogFeaturesScenario) myStepCallsTLogf(ctx context.Context, message string, arg string) error {
+	T(ctx).Logf(message, arg)
+	return nil
+}
+
+func (tc *godogFeaturesScenario) myStepCallsDogLog(ctx context.Context, message string) error {
+	Log(ctx, message)
+	return nil
+}
+
+func (tc *godogFeaturesScenario) myStepCallsDogLogf(ctx context.Context, message string, arg string) error {
+	Logf(ctx, message, arg)
+	return nil
+}
+
+func (tc *godogFeaturesScenario) theLoggedMessagesShouldInclude(ctx context.Context, message string) error {
+	messages := LoggedMessages(ctx)
+	for _, m := range messages {
+		if strings.Contains(m, message) {
+			return nil
+		}
+	}
+	return fmt.Errorf("the message %q was not logged (logged messages: %v)", message, messages)
 }
 
 func (tc *godogFeaturesScenario) followingStepsShouldHave(status string, steps *DocString) error {
