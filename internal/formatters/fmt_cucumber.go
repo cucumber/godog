@@ -20,7 +20,7 @@ import (
 
 	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/models"
-	messages "github.com/cucumber/messages/go/v21"
+	messages "github.com/cucumber/messages/go/v24"
 )
 
 func init() {
