@@ -153,6 +153,32 @@ func (f *Events) step(pickle *messages.Pickle, pickleStep *messages.PickleStep) 
 	if pickleStepResult.Err != nil {
 		errMsg = pickleStepResult.Err.Error()
 	}
+	// JL
+
+	if pickleStepResult.Attachments != nil {
+		for _, attachment := range pickleStepResult.Attachments {
+
+			f.event(&struct {
+				Event           string `json:"event"`
+				Location        string `json:"location"`
+				Timestamp       int64  `json:"timestamp"`
+				ContentEncoding string `json:"contentEncoding"`
+				FileName        string `json:"fileName"`
+				MimeType        string `json:"mimeType"`
+				Body            string `json:"body"`
+			}{
+				"Attachment",
+				fmt.Sprintf("%s:%d", pickle.Uri, step.Location.Line),
+				utils.TimeNowFunc().UnixNano() / nanoSec,
+				messages.AttachmentContentEncoding_BASE64.String(),
+				attachment.Name,
+				attachment.MimeType,
+				string(attachment.Data),
+			})
+
+		}
+	}
+
 	f.event(&struct {
 		Event     string `json:"event"`
 		Location  string `json:"location"`

@@ -2,11 +2,12 @@ package formatters_test
 
 import (
 	"bytes"
+	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -24,9 +25,7 @@ func Test_FmtOutput(t *testing.T) {
 
 	featureFiles, err := listFmtOutputTestsFeatureFiles()
 	require.Nil(t, err)
-
 	formatters := []string{"cucumber", "events", "junit", "pretty", "progress", "junit,pretty"}
-
 	for _, fmtName := range formatters {
 		for _, featureFile := range featureFiles {
 			testName := fmt.Sprintf("%s/%s", fmtName, featureFile)
@@ -65,6 +64,7 @@ func fmtOutputTest(fmtName, testName, featureFilePath string) func(*testing.T) {
 		ctx.Step(`^(?:a )?pending step$`, pendingStepDef)
 		ctx.Step(`^(?:a )?passing step$`, passingStepDef)
 		ctx.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)
+		ctx.Step(`^(?:a )?a step with attachment$`, stepWithAttachment)
 	}
 
 	return func(t *testing.T) {
@@ -74,7 +74,7 @@ func fmtOutputTest(fmtName, testName, featureFilePath string) func(*testing.T) {
 			t.Skipf("Couldn't find expected output file %q", expectOutputPath)
 		}
 
-		expectedOutput, err := ioutil.ReadFile(expectOutputPath)
+		expectedOutput, err := os.ReadFile(expectOutputPath)
 		require.NoError(t, err)
 
 		var buf bytes.Buffer
@@ -92,10 +92,21 @@ func fmtOutputTest(fmtName, testName, featureFilePath string) func(*testing.T) {
 			Options:             &opts,
 		}.Run()
 
-		expected := string(expectedOutput)
-		actual := buf.String()
+		// normalise on unix line ending so expected vs actual works cross platform
+		expected := normalise(string(expectedOutput))
+		actual := normalise(buf.String())
 		assert.Equalf(t, expected, actual, "path: %s", expectOutputPath)
 	}
+}
+
+func normalise(s string) string {
+
+	m := regexp.MustCompile("fmt_output_test.go:[0-9]+")
+	normalised := m.ReplaceAllString(s, "fmt_output_test.go:XXX")
+	normalised = strings.Replace(normalised, "\r\n", "\n", -1)
+	normalised = strings.Replace(normalised, "\\r\\n", "\\n", -1)
+
+	return normalised
 }
 
 func passingStepDef() error { return nil }
@@ -115,3 +126,12 @@ func oddOrEven(odd, even int) error {
 func pendingStepDef() error { return godog.ErrPending }
 
 func failingStepDef() error { return fmt.Errorf("step failed") }
+
+func stepWithAttachment(ctx context.Context) (context.Context, error) {
+	ctxOut := godog.Attach(ctx,
+		godog.Attachment{Body: []byte("TheData1"), FileName: "TheFilename1", MediaType: "text/plain"},
+		godog.Attachment{Body: []byte("TheData2"), FileName: "TheFilename2", MediaType: "text/plain"},
+	)
+
+	return ctxOut, nil
+}

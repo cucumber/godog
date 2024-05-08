@@ -12,6 +12,7 @@ package formatters
 */
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -139,14 +140,21 @@ type cukeMatch struct {
 	Location string `json:"location"`
 }
 
+type cukeEmbedding struct {
+	Name     string `json:"name"`
+	MimeType string `json:"mime_type"`
+	Data     string `json:"data"`
+}
+
 type cukeStep struct {
-	Keyword   string              `json:"keyword"`
-	Name      string              `json:"name"`
-	Line      int                 `json:"line"`
-	Docstring *cukeDocstring      `json:"doc_string,omitempty"`
-	Match     cukeMatch           `json:"match"`
-	Result    cukeResult          `json:"result"`
-	DataTable []*cukeDataTableRow `json:"rows,omitempty"`
+	Keyword    string              `json:"keyword"`
+	Name       string              `json:"name"`
+	Line       int                 `json:"line"`
+	Docstring  *cukeDocstring      `json:"doc_string,omitempty"`
+	Match      cukeMatch           `json:"match"`
+	Result     cukeResult          `json:"result"`
+	DataTable  []*cukeDataTableRow `json:"rows,omitempty"`
+	Embeddings []*cukeEmbedding    `json:"embeddings,omitempty"`
 }
 
 type cukeDataTableRow struct {
@@ -294,6 +302,21 @@ func (f *Cuke) buildCukeStep(pickle *messages.Pickle, stepResult models.PickleSt
 		cukeStep.Match.Location = fmt.Sprintf("%s:%d", pickle.Uri, step.Location.Line)
 	}
 
+	if stepResult.Attachments != nil {
+		attachments := []*cukeEmbedding{}
+
+		for _, a := range stepResult.Attachments {
+			attachments = append(attachments, &cukeEmbedding{
+				Name:     a.Name,
+				Data:     base64.RawStdEncoding.EncodeToString(a.Data),
+				MimeType: a.MimeType,
+			})
+		}
+
+		if len(attachments) > 0 {
+			cukeStep.Embeddings = attachments
+		}
+	}
 	return cukeStep
 }
 

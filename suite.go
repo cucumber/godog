@@ -68,6 +68,42 @@ type suite struct {
 	afterScenarioHandlers  []AfterScenarioHook
 }
 
+type Attachment struct {
+	Body      []byte
+	FileName  string
+	MediaType string
+}
+
+type attachmentKey struct{}
+
+func Attach(ctx context.Context, attachments ...Attachment) context.Context {
+	return context.WithValue(ctx, attachmentKey{}, attachments)
+}
+func Attachments(ctx context.Context) []Attachment {
+	v := ctx.Value(attachmentKey{})
+
+	if v == nil {
+		return []Attachment{}
+	}
+	return v.([]Attachment)
+}
+
+func pickleAttachments(ctx context.Context) []*models.PickleAttachment {
+
+	pickedAttachments := []*models.PickleAttachment{}
+	attachments := Attachments(ctx)
+
+	for _, a := range attachments {
+		pickedAttachments = append(pickedAttachments, &models.PickleAttachment{
+			Name:     a.FileName,
+			Data:     a.Body,
+			MimeType: a.MediaType,
+		})
+	}
+
+	return pickedAttachments
+}
+
 func (s *suite) matchStep(step *messages.PickleStep) *models.StepDefinition {
 	def := s.matchStepTextAndType(step.Text, step.Type)
 	if def != nil && step.Argument != nil {
@@ -124,6 +160,10 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 			status = StepPassed
 		}
 
+		// JL
+		pickedAttachments := pickleAttachments(ctx)
+		ctx = Attach(ctx)
+
 		// Run after step handlers.
 		rctx, err = s.runAfterStepHooks(ctx, step, status, err)
 
@@ -140,19 +180,19 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 
 		switch {
 		case err == nil:
-			sr := models.NewStepResult(models.Passed, pickle.Id, step.Id, match, nil)
+			sr := models.NewStepResult(models.Passed, pickle.Id, step.Id, match, pickedAttachments, nil)
 			s.storage.MustInsertPickleStepResult(sr)
 			s.fmt.Passed(pickle, step, match.GetInternalStepDefinition())
 		case errors.Is(err, ErrPending):
-			sr := models.NewStepResult(models.Pending, pickle.Id, step.Id, match, nil)
+			sr := models.NewStepResult(models.Pending, pickle.Id, step.Id, match, pickedAttachments, nil)
 			s.storage.MustInsertPickleStepResult(sr)
 			s.fmt.Pending(pickle, step, match.GetInternalStepDefinition())
 		case errors.Is(err, ErrSkip):
-			sr := models.NewStepResult(models.Skipped, pickle.Id, step.Id, match, nil)
+			sr := models.NewStepResult(models.Skipped, pickle.Id, step.Id, match, pickedAttachments, nil)
 			s.storage.MustInsertPickleStepResult(sr)
 			s.fmt.Skipped(pickle, step, match.GetInternalStepDefinition())
 		default:
-			sr := models.NewStepResult(models.Failed, pickle.Id, step.Id, match, err)
+			sr := models.NewStepResult(models.Failed, pickle.Id, step.Id, match, pickedAttachments, err)
 			s.storage.MustInsertPickleStepResult(sr)
 			s.fmt.Failed(pickle, step, match.GetInternalStepDefinition(), err)
 		}
@@ -171,7 +211,11 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 	s.fmt.Defined(pickle, step, match.GetInternalStepDefinition())
 
 	if err != nil {
-		sr := models.NewStepResult(models.Failed, pickle.Id, step.Id, match, nil)
+
+		pickedAttachments := pickleAttachments(ctx)
+		ctx = Attach(ctx)
+
+		sr := models.NewStepResult(models.Failed, pickle.Id, step.Id, match, pickedAttachments, nil)
 		s.storage.MustInsertPickleStepResult(sr)
 		return ctx, err
 	}
@@ -193,7 +237,10 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 			}
 		}
 
-		sr := models.NewStepResult(models.Undefined, pickle.Id, step.Id, match, nil)
+		pickedAttachments := pickleAttachments(ctx)
+		ctx = Attach(ctx)
+
+		sr := models.NewStepResult(models.Undefined, pickle.Id, step.Id, match, pickedAttachments, nil)
 		s.storage.MustInsertPickleStepResult(sr)
 
 		s.fmt.Undefined(pickle, step, match.GetInternalStepDefinition())
@@ -201,7 +248,10 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 	}
 
 	if scenarioErr != nil {
-		sr := models.NewStepResult(models.Skipped, pickle.Id, step.Id, match, nil)
+		pickedAttachments := pickleAttachments(ctx)
+		ctx = Attach(ctx)
+
+		sr := models.NewStepResult(models.Skipped, pickle.Id, step.Id, match, pickedAttachments, nil)
 		s.storage.MustInsertPickleStepResult(sr)
 
 		s.fmt.Skipped(pickle, step, match.GetInternalStepDefinition())
