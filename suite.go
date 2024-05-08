@@ -210,6 +210,7 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 	s.fmt.Defined(pickle, step, match.GetInternalStepDefinition())
 
 	if err != nil {
+
 		pickledAttachments := pickleAttachments(ctx)
 		ctx = Attach(ctx)
 
