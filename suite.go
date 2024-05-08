@@ -90,18 +90,18 @@ func Attachments(ctx context.Context) []Attachment {
 
 func pickleAttachments(ctx context.Context) []*models.PickleAttachment {
 
-	pickedAttachments := []*models.PickleAttachment{}
+	pickledAttachments := []*models.PickleAttachment{}
 	attachments := Attachments(ctx)
 
 	for _, a := range attachments {
-		pickedAttachments = append(pickedAttachments, &models.PickleAttachment{
+		pickledAttachments = append(pickledAttachments, &models.PickleAttachment{
 			Name:     a.FileName,
 			Data:     a.Body,
 			MimeType: a.MediaType,
 		})
 	}
 
-	return pickedAttachments
+	return pickledAttachments
 }
 
 func (s *suite) matchStep(step *messages.PickleStep) *models.StepDefinition {
@@ -160,8 +160,7 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 			status = StepPassed
 		}
 
-		// JL
-		pickedAttachments := pickleAttachments(ctx)
+		pickledAttachments := pickleAttachments(ctx)
 		ctx = Attach(ctx)
 
 		// Run after step handlers.
@@ -180,19 +179,19 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 
 		switch {
 		case err == nil:
-			sr := models.NewStepResult(models.Passed, pickle.Id, step.Id, match, pickedAttachments, nil)
+			sr := models.NewStepResult(models.Passed, pickle.Id, step.Id, match, pickledAttachments, nil)
 			s.storage.MustInsertPickleStepResult(sr)
 			s.fmt.Passed(pickle, step, match.GetInternalStepDefinition())
 		case errors.Is(err, ErrPending):
-			sr := models.NewStepResult(models.Pending, pickle.Id, step.Id, match, pickedAttachments, nil)
+			sr := models.NewStepResult(models.Pending, pickle.Id, step.Id, match, pickledAttachments, nil)
 			s.storage.MustInsertPickleStepResult(sr)
 			s.fmt.Pending(pickle, step, match.GetInternalStepDefinition())
 		case errors.Is(err, ErrSkip):
-			sr := models.NewStepResult(models.Skipped, pickle.Id, step.Id, match, pickedAttachments, nil)
+			sr := models.NewStepResult(models.Skipped, pickle.Id, step.Id, match, pickledAttachments, nil)
 			s.storage.MustInsertPickleStepResult(sr)
 			s.fmt.Skipped(pickle, step, match.GetInternalStepDefinition())
 		default:
-			sr := models.NewStepResult(models.Failed, pickle.Id, step.Id, match, pickedAttachments, err)
+			sr := models.NewStepResult(models.Failed, pickle.Id, step.Id, match, pickledAttachments, err)
 			s.storage.MustInsertPickleStepResult(sr)
 			s.fmt.Failed(pickle, step, match.GetInternalStepDefinition(), err)
 		}
@@ -211,11 +210,10 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 	s.fmt.Defined(pickle, step, match.GetInternalStepDefinition())
 
 	if err != nil {
-
-		pickedAttachments := pickleAttachments(ctx)
+		pickledAttachments := pickleAttachments(ctx)
 		ctx = Attach(ctx)
 
-		sr := models.NewStepResult(models.Failed, pickle.Id, step.Id, match, pickedAttachments, nil)
+		sr := models.NewStepResult(models.Failed, pickle.Id, step.Id, match, pickledAttachments, nil)
 		s.storage.MustInsertPickleStepResult(sr)
 		return ctx, err
 	}
@@ -237,10 +235,10 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 			}
 		}
 
-		pickedAttachments := pickleAttachments(ctx)
+		pickledAttachments := pickleAttachments(ctx)
 		ctx = Attach(ctx)
 
-		sr := models.NewStepResult(models.Undefined, pickle.Id, step.Id, match, pickedAttachments, nil)
+		sr := models.NewStepResult(models.Undefined, pickle.Id, step.Id, match, pickledAttachments, nil)
 		s.storage.MustInsertPickleStepResult(sr)
 
 		s.fmt.Undefined(pickle, step, match.GetInternalStepDefinition())
@@ -248,10 +246,10 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 	}
 
 	if scenarioErr != nil {
-		pickedAttachments := pickleAttachments(ctx)
+		pickledAttachments := pickleAttachments(ctx)
 		ctx = Attach(ctx)
 
-		sr := models.NewStepResult(models.Skipped, pickle.Id, step.Id, match, pickedAttachments, nil)
+		sr := models.NewStepResult(models.Skipped, pickle.Id, step.Id, match, pickledAttachments, nil)
 		s.storage.MustInsertPickleStepResult(sr)
 
 		s.fmt.Skipped(pickle, step, match.GetInternalStepDefinition())
