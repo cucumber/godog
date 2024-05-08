@@ -153,7 +153,6 @@ func (f *Events) step(pickle *messages.Pickle, pickleStep *messages.PickleStep) 
 	if pickleStepResult.Err != nil {
 		errMsg = pickleStepResult.Err.Error()
 	}
-	// JL
 
 	if pickleStepResult.Attachments != nil {
 		for _, attachment := range pickleStepResult.Attachments {
