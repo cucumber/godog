@@ -581,3 +581,4 @@ A simple example can be [found here](/_examples/custom-formatter).
 [releasing guide]: https://github.com/cucumber/godog/blob/main/RELEASING.md
 [community Slack]: https://cucumber.io/community#slack
 
+
