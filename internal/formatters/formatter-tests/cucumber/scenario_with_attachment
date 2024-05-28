@@ -1,0 +1,46 @@
+[
+    {
+        "uri": "formatter-tests/features/scenario_with_attachment.feature",
+        "id": "scenario-with-attachment",
+        "keyword": "Feature",
+        "name": "scenario with attachment",
+        "description": "  describes\n  an attachment\n  feature",
+        "line": 1,
+        "elements": [
+            {
+                "id": "scenario-with-attachment;step-with-attachment",
+                "keyword": "Scenario",
+                "name": "step with attachment",
+                "description": "",
+                "line": 6,
+                "type": "scenario",
+                "steps": [
+                    {
+                        "keyword": "Given ",
+                        "name": "a step with attachment",
+                        "line": 7,
+                        "match": {
+                            "location": "fmt_output_test.go:119"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        },
+                        "embeddings": [
+                            {
+                                "name": "TheFilename1",
+                                "mime_type": "text/plain",
+                                "data": "VGhlRGF0YTE"
+                            },
+                            {
+                                "name": "TheFilename2",
+                                "mime_type": "text/plain",
+                                "data": "VGhlRGF0YTI"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]
