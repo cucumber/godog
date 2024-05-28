@@ -8,10 +8,11 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ## Unreleased
 
+- Provide support for attachments / embeddings  - ([623](https://github.com/cucumber/godog/pull/623) - [johnlon](https://github.com/johnlon))
+
 ## [v0.14.1]
 
 ### Added
-- Provide support for attachments / embeddings  - ([623](https://github.com/cucumber/godog/pull/623) - [johnlon](https://github.com/johnlon))
 - Provide testing.T-compatible interface on test context, allowing usage of assertion libraries such as testify's assert/require - ([571](https://github.com/cucumber/godog/pull/571) - [mrsheepuk](https://github.com/mrsheepuk))
 - Created releasing guidelines - ([608](https://github.com/cucumber/godog/pull/608) - [glibas](https://github.com/glibas))
 
