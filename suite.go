@@ -592,4 +592,3 @@ func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 
 	return err
 }
-
