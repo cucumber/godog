@@ -95,13 +95,13 @@ func clearAttach(ctx context.Context) context.Context {
 	return context.WithValue(ctx, attachmentKey{}, nil)
 }
 
-func pickleAttachments(ctx context.Context) []*models.PickleAttachment {
+func pickleAttachments(ctx context.Context) []models.PickleAttachment {
 
-	pickledAttachments := []*models.PickleAttachment{}
+	pickledAttachments := []models.PickleAttachment{}
 	attachments := Attachments(ctx)
 
 	for _, a := range attachments {
-		pickledAttachments = append(pickledAttachments, &models.PickleAttachment{
+		pickledAttachments = append(pickledAttachments, models.PickleAttachment{
 			Name:     a.FileName,
 			Data:     a.Body,
 			MimeType: a.MediaType,
