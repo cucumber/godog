@@ -56,7 +56,7 @@ func Test_ProgressFormatterWhenStepPanics(t *testing.T) {
 	require.True(t, failed)
 
 	actual := buf.String()
-	assert.Contains(t, actual, "godog/run_progress_test.go:")
+	assert.Contains(t, actual, "run_progress_test.go:")
 }
 
 func Test_ProgressFormatterWithPanicInMultistep(t *testing.T) {
