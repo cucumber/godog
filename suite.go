@@ -77,8 +77,11 @@ type Attachment struct {
 type attachmentKey struct{}
 
 func Attach(ctx context.Context, attachments ...Attachment) context.Context {
-	return context.WithValue(ctx, attachmentKey{}, attachments)
+	existing := Attachments(ctx)
+	updated := append(existing, attachments...)
+	return context.WithValue(ctx, attachmentKey{}, updated)
 }
+
 func Attachments(ctx context.Context) []Attachment {
 	v := ctx.Value(attachmentKey{})
 
@@ -88,13 +91,17 @@ func Attachments(ctx context.Context) []Attachment {
 	return v.([]Attachment)
 }
 
-func pickleAttachments(ctx context.Context) []*models.PickleAttachment {
+func clearAttach(ctx context.Context) context.Context {
+	return context.WithValue(ctx, attachmentKey{}, nil)
+}
 
-	pickledAttachments := []*models.PickleAttachment{}
+func pickleAttachments(ctx context.Context) []models.PickleAttachment {
+
+	pickledAttachments := []models.PickleAttachment{}
 	attachments := Attachments(ctx)
 
 	for _, a := range attachments {
-		pickledAttachments = append(pickledAttachments, &models.PickleAttachment{
+		pickledAttachments = append(pickledAttachments, models.PickleAttachment{
 			Name:     a.FileName,
 			Data:     a.Body,
 			MimeType: a.MediaType,
@@ -161,7 +168,7 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 		}
 
 		pickledAttachments := pickleAttachments(ctx)
-		ctx = Attach(ctx)
+		ctx = clearAttach(ctx)
 
 		// Run after step handlers.
 		rctx, err = s.runAfterStepHooks(ctx, step, status, err)
@@ -212,7 +219,7 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 	if err != nil {
 
 		pickledAttachments := pickleAttachments(ctx)
-		ctx = Attach(ctx)
+		ctx = clearAttach(ctx)
 
 		sr := models.NewStepResult(models.Failed, pickle.Id, step.Id, match, pickledAttachments, nil)
 		s.storage.MustInsertPickleStepResult(sr)
@@ -237,7 +244,7 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 		}
 
 		pickledAttachments := pickleAttachments(ctx)
-		ctx = Attach(ctx)
+		ctx = clearAttach(ctx)
 
 		sr := models.NewStepResult(models.Undefined, pickle.Id, step.Id, match, pickledAttachments, nil)
 		s.storage.MustInsertPickleStepResult(sr)
@@ -248,7 +255,7 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 
 	if scenarioErr != nil {
 		pickledAttachments := pickleAttachments(ctx)
-		ctx = Attach(ctx)
+		ctx = clearAttach(ctx)
 
 		sr := models.NewStepResult(models.Skipped, pickle.Id, step.Id, match, pickledAttachments, nil)
 		s.storage.MustInsertPickleStepResult(sr)

@@ -154,7 +154,7 @@ type cukeStep struct {
 	Match      cukeMatch           `json:"match"`
 	Result     cukeResult          `json:"result"`
 	DataTable  []*cukeDataTableRow `json:"rows,omitempty"`
-	Embeddings []*cukeEmbedding    `json:"embeddings,omitempty"`
+	Embeddings []cukeEmbedding     `json:"embeddings,omitempty"`
 }
 
 type cukeDataTableRow struct {
@@ -303,10 +303,10 @@ func (f *Cuke) buildCukeStep(pickle *messages.Pickle, stepResult models.PickleSt
 	}
 
 	if stepResult.Attachments != nil {
-		attachments := []*cukeEmbedding{}
+		attachments := []cukeEmbedding{}
 
 		for _, a := range stepResult.Attachments {
-			attachments = append(attachments, &cukeEmbedding{
+			attachments = append(attachments, cukeEmbedding{
 				Name:     a.Name,
 				Data:     base64.RawStdEncoding.EncodeToString(a.Data),
 				MimeType: a.MimeType,

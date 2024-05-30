@@ -292,6 +292,10 @@ When steps are orthogonal and small, you can combine them just like you do with 
 
 `TestFeatures` acts as a regular Go test, so you can leverage your IDE facilities to run and debug it.
 
+### Attachments
+
+An example showing how to make attachments (aka embeddings) to the results is shown in [_examples/attachments](/_examples/attachments/)
+
 ## Code of Conduct
 
 Everyone interacting in this codebase and issue tracker is expected to follow the Cucumber [code of conduct](https://github.com/cucumber/cucumber/blob/master/CODE_OF_CONDUCT.md).

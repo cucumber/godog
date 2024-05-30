@@ -36,7 +36,7 @@ type PickleStepResult struct {
 
 	Def *StepDefinition
 
-	Attachments []*PickleAttachment
+	Attachments []PickleAttachment
 }
 
 // NewStepResult ...
@@ -44,7 +44,7 @@ func NewStepResult(
 	status StepResultStatus,
 	pickleID, pickleStepID string,
 	match *StepDefinition,
-	attachments []*PickleAttachment,
+	attachments []PickleAttachment,
 	err error,
 ) PickleStepResult {
 	return PickleStepResult{
