@@ -19,7 +19,10 @@ import (
 
 const fmtOutputTestsFeatureDir = "formatter-tests/features"
 
+var tT *testing.T
+
 func Test_FmtOutput(t *testing.T) {
+	tT = t
 	pkg := os.Getenv("GODOG_TESTED_PACKAGE")
 	os.Setenv("GODOG_TESTED_PACKAGE", "github.com/cucumber/godog")
 
@@ -64,7 +67,8 @@ func fmtOutputTest(fmtName, testName, featureFilePath string) func(*testing.T) {
 		ctx.Step(`^(?:a )?pending step$`, pendingStepDef)
 		ctx.Step(`^(?:a )?passing step$`, passingStepDef)
 		ctx.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)
-		ctx.Step(`^(?:a )?a step with attachment$`, stepWithAttachment)
+		ctx.Step(`^(?:a )?a step with a single attachment call for multiple attachments$`, stepWithSingleAttachmentCall)
+		ctx.Step(`^(?:a )?a step with multiple attachment calls$`, stepWithMultipleAttachmentCalls)
 	}
 
 	return func(t *testing.T) {
@@ -127,11 +131,29 @@ func pendingStepDef() error { return godog.ErrPending }
 
 func failingStepDef() error { return fmt.Errorf("step failed") }
 
-func stepWithAttachment(ctx context.Context) (context.Context, error) {
-	ctxOut := godog.Attach(ctx,
+func stepWithSingleAttachmentCall(ctx context.Context) (context.Context, error) {
+	if len(godog.Attachments(ctx)) > 0 {
+		assert.FailNow(tT, "Unexpected Attachments found - should have been empty")
+	}
+
+	ctx = godog.Attach(ctx,
 		godog.Attachment{Body: []byte("TheData1"), FileName: "TheFilename1", MediaType: "text/plain"},
 		godog.Attachment{Body: []byte("TheData2"), FileName: "TheFilename2", MediaType: "text/plain"},
 	)
 
-	return ctxOut, nil
+	return ctx, nil
+}
+func stepWithMultipleAttachmentCalls(ctx context.Context) (context.Context, error) {
+	if len(godog.Attachments(ctx)) > 0 {
+		assert.FailNow(tT, "Unexpected Attachments found - should have been empty")
+	}
+
+	ctx = godog.Attach(ctx,
+		godog.Attachment{Body: []byte("TheData1"), FileName: "TheFilename1", MediaType: "text/plain"},
+	)
+	ctx = godog.Attach(ctx,
+		godog.Attachment{Body: []byte("TheData2"), FileName: "TheFilename2", MediaType: "text/plain"},
+	)
+
+	return ctx, nil
 }
