@@ -62,30 +62,6 @@
                                 "data": "VGhlRGF0YTI="
                             }
                         ]
-                    },
-                    {
-                        "keyword": "And ",
-                        "name": "a step with multiple attachment calls",
-                        "line": 8,
-                        "match": {
-                            "location": "fmt_output_test.go:119"
-                        },
-                        "result": {
-                            "status": "passed",
-                            "duration": 0
-                        },
-                        "embeddings": [
-                            {
-                                "name": "TheFilename1",
-                                "mime_type": "text/plain",
-                                "data": "VGhlRGF0YTE"
-                            },
-                            {
-                                "name": "TheFilename2",
-                                "mime_type": "text/plain",
-                                "data": "VGhlRGF0YTI"
-                            }
-                        ]
                     }
                 ]
             }
