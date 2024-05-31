@@ -30,12 +30,12 @@
                             {
                                 "name": "TheFilename1",
                                 "mime_type": "text/plain",
-                                "data": "VGhlRGF0YTE"
+                                "data": "VGhlRGF0YTE="
                             },
                             {
                                 "name": "TheFilename2",
                                 "mime_type": "text/plain",
-                                "data": "VGhlRGF0YTI"
+                                "data": "VGhlRGF0YTI="
                             }
                         ]
                     },
@@ -54,12 +54,12 @@
                             {
                                 "name": "TheFilename1",
                                 "mime_type": "text/plain",
-                                "data": "VGhlRGF0YTE"
+                                "data": "VGhlRGF0YTE="
                             },
                             {
                                 "name": "TheFilename2",
                                 "mime_type": "text/plain",
-                                "data": "VGhlRGF0YTI"
+                                "data": "VGhlRGF0YTI="
                             }
                         ]
                     }

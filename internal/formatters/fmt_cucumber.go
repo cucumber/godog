@@ -308,7 +308,7 @@ func (f *Cuke) buildCukeStep(pickle *messages.Pickle, stepResult models.PickleSt
 		for _, a := range stepResult.Attachments {
 			attachments = append(attachments, cukeEmbedding{
 				Name:     a.Name,
-				Data:     base64.RawStdEncoding.EncodeToString(a.Data),
+				Data:     base64.StdEncoding.EncodeToString(a.Data),
 				MimeType: a.MimeType,
 			})
 		}
