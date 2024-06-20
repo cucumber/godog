@@ -144,8 +144,8 @@ godogs
 - godogs_test.go
 ```
 
-Run `go test` in the **godogs** directory to run the steps you have defined. You should now see that the scenario runs 
-with a warning stating there are no tests to run. 
+Run `go get github.com/cucumber/godog`, `go mod tidy`, and `go test` in the **godogs** directory to run the steps you have defined. 
+You should now see that the scenario runs with a warning stating there are no tests to run. 
 ```
 testing: warning: no tests to run
 PASS
