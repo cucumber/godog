@@ -64,6 +64,7 @@ type suite struct {
 	// suite event handlers
 	beforeScenarioHandlers []BeforeScenarioHook
 	beforeStepHandlers     []BeforeStepHook
+	postStepHandlers       []PostStepHook
 	afterStepHandlers      []AfterStepHook
 	afterScenarioHandlers  []AfterScenarioHook
 }
@@ -123,10 +124,9 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 	var match *models.StepDefinition
 
 	rctx = ctx
-	status := StepUndefined
-
 	// user multistep definitions may panic
 	defer func() {
+
 		if e := recover(); e != nil {
 			pe, isErr := e.(error)
 			switch {
@@ -154,6 +154,8 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 			err = getTestingT(ctx).isFailed()
 		}
 
+		status := StepUndefined
+
 		switch {
 		case errors.Is(err, ErrPending):
 			status = StepPending
@@ -170,8 +172,11 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 		pickledAttachments := pickleAttachments(ctx)
 		ctx = clearAttach(ctx)
 
+		// Run post step handlers.
+		rctx, status, err = s.runPostStepHooks(ctx, step, status, err)
+
 		// Run after step handlers.
-		rctx, err = s.runAfterStepHooks(ctx, step, status, err)
+		rctx, err = s.runAfterStepHooks(rctx, step, status, err)
 
 		shouldFail := s.shouldFail(err)
 
@@ -294,6 +299,14 @@ func (s *suite) runBeforeStepHooks(ctx context.Context, step *Step, err error) (
 	}
 
 	return ctx, err
+}
+
+func (s *suite) runPostStepHooks(ctx context.Context, step *Step, status StepResultStatus, err error) (context.Context, StepResultStatus, error) {
+	for _, f := range s.postStepHandlers {
+		ctx, status, err = f(ctx, step, status, err)
+	}
+
+	return ctx, status, err
 }
 
 func (s *suite) runAfterStepHooks(ctx context.Context, step *Step, status StepResultStatus, err error) (context.Context, error) {
@@ -461,6 +474,8 @@ func (s *suite) runSubStep(ctx context.Context, text string, def *models.StepDef
 		case err != nil:
 			status = StepFailed
 		}
+
+		ctx, status, err = s.runPostStepHooks(ctx, st, status, err)
 
 		ctx, err = s.runAfterStepHooks(ctx, st, status, err)
 	}()

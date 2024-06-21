@@ -148,18 +148,35 @@ func (ctx StepContext) Before(h BeforeStepHook) {
 // BeforeStepHook defines a hook before step.
 type BeforeStepHook func(ctx context.Context, st *Step) (context.Context, error)
 
+// Post registers a function or method
+// to be run directly after step to post process the result.
+// This function is a decorator the allows complete manipulation of all features of the step results.
+// The Post handler differs from an After handler in two important ways:
+// - the After handler cannot modify the step status that is chained through the various hooks
+// - the After step cannot replace an existing error with a new error, instead it appends errors together
+func (ctx StepContext) Post(h PostStepHook) {
+	ctx.suite.postStepHandlers = append(ctx.suite.postStepHandlers, h)
+}
+
 // After registers a function or method
 // to be run after every step.
 //
 // It may be convenient to return a different kind of error
 // in order to print more state details which may help
-// in case of step failure
+// in case of step failure.
+// Any errors returned by an After handler do not replace the errors returned by the step but
+// instead are prepended to the step error messages.
+// If you want to entirely replace the status, error or context returned by the step then use a
+// Post handler.
 //
 // In some cases, for example when running a headless
 // browser, to take a screenshot after failure.
 func (ctx StepContext) After(h AfterStepHook) {
 	ctx.suite.afterStepHandlers = append(ctx.suite.afterStepHandlers, h)
 }
+
+// PostStepHook defines a hook as a suffix to the step to allow manipulation of step step status, error or context in a generic manner.
+type PostStepHook func(ctx context.Context, st *Step, status StepResultStatus, err error) (context.Context, StepResultStatus, error)
 
 // AfterStepHook defines a hook after step.
 type AfterStepHook func(ctx context.Context, st *Step, status StepResultStatus, err error) (context.Context, error)
