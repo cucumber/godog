@@ -1,15 +1,8 @@
 package attachments_test
 
-// This example shows how to set up test suite runner with Go subtests and godog command line parameters.
-// Sample commands:
-// * run all scenarios from default directory (features): go test -test.run "^TestFeatures/"
-// * run all scenarios and list subtest names: go test -test.v -test.run "^TestFeatures/"
-// * run all scenarios from one feature file: go test -test.v -godog.paths features/nodogs.feature -test.run "^TestFeatures/"
-// * run all scenarios from multiple feature files: go test -test.v -godog.paths features/nodogs.feature,features/godogs.feature -test.run "^TestFeatures/"
-// * run single scenario as a subtest: go test -test.v -test.run "^TestFeatures/Eat_5_out_of_12$"
-// * show usage help: go test -godog.help
-// * show usage help if there were other test files in directory: go test -godog.help godogs_test.go
-// * run scenarios with multiple formatters: go test -test.v -godog.format cucumber:cuc.json,pretty -test.run "^TestFeatures/"
+// This example shows how to attach data to the cucumber reports
+// Run the sample with : go test -v attachments_test.go
+// Then review the "embeddings" within the JSON emitted on the console.
 
 import (
 	"context"
