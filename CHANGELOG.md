@@ -8,6 +8,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ## Unreleased
 
+- Provide support for a hooks to inject, replace or remove an error state from a step - ([TBD](https://github.com/cucumber/godog/pull/TBD) - [johnlon](https://github.com/johnlon))
 - Provide support for attachments / embeddings including a new example in the examples dir - ([623](https://github.com/cucumber/godog/pull/623) - [johnlon](https://github.com/johnlon))
 
 ## [v0.14.1]
