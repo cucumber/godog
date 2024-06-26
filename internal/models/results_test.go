@@ -21,6 +21,7 @@ var stepResultStatusTestCases = []stepResultStatusTestCase{
 	{st: models.Skipped, str: "skipped", clr: colors.Cyan},
 	{st: models.Undefined, str: "undefined", clr: colors.Yellow},
 	{st: models.Pending, str: "pending", clr: colors.Yellow},
+	{st: models.Ambiguous, str: "ambiguous", clr: colors.Yellow},
 	{st: -1, str: "unknown", clr: colors.Yellow},
 }
 
