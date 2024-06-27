@@ -499,7 +499,6 @@ func (s *suite) runSubStep(ctx context.Context, text string, def *models.StepDef
 }
 
 func (s *suite) matchStepTextAndType(text string, stepType messages.PickleStepType) (*models.StepDefinition, error) {
-
 	var first *models.StepDefinition
 	matchingExpressions := make([]string, 0)
 
@@ -534,9 +533,13 @@ func (s *suite) matchStepTextAndType(text string, stepType messages.PickleStepTy
 		}
 	}
 
-	// if len(matchingExpressions) > 1 {
-	// 	return nil, fmt.Errorf("ambiguous step definition, step text: %s\n\tmatches:\n\t\t%s", text, strings.Join(matchingExpressions, "\n\t\t"))
-	// }
+	if s.strict {
+		if len(matchingExpressions) > 1 {
+			fmt.Printf("IS STRICT=%v\n", len(matchingExpressions))
+			errs := "\n\t\t" + strings.Join(matchingExpressions, "\n\t\t")
+			return nil, fmt.Errorf("ambiguous step definition, step text: %s\n\tmatches:%s", text, errs)
+		}
+	}
 
 	return first, nil
 }
