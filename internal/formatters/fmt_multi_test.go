@@ -11,6 +11,7 @@ import (
 
 var (
 	mock = DummyFormatter{}
+	base = BaseFormatter{}
 
 	document   = &messages.GherkinDocument{}
 	str        = "theString"
@@ -27,6 +28,8 @@ func TestRepeater(t *testing.T) {
 	mock.tt = t
 	f := make(repeater, 0)
 	f = append(f, &mock)
+	f = append(f, &mock)
+	f = append(f, &base)
 
 	f.Feature(document, str, byt)
 	f.TestRunStarted()
@@ -39,17 +42,21 @@ func TestRepeater(t *testing.T) {
 	f.Pending(pickle, step, definition)
 	f.Ambiguous(pickle, step, definition, err)
 
-	assert.Equal(t, 1, mock.CountFeature)
-	assert.Equal(t, 1, mock.CountTestRunStarted, 1)
-	assert.Equal(t, 1, mock.CountPickle, 1)
-	assert.Equal(t, 1, mock.CountDefined, 1)
-	assert.Equal(t, 1, mock.CountPassed, 1)
-	assert.Equal(t, 1, mock.CountSkipped, 1)
-	assert.Equal(t, 1, mock.CountUndefined, 1)
-	assert.Equal(t, 1, mock.CountFailed, 1)
-	assert.Equal(t, 1, mock.CountPending, 1)
-	assert.Equal(t, 1, mock.CountAmbiguous, 1)
+	assert.Equal(t, 2, mock.CountFeature)
+	assert.Equal(t, 2, mock.CountTestRunStarted)
+	assert.Equal(t, 2, mock.CountPickle)
+	assert.Equal(t, 2, mock.CountDefined)
+	assert.Equal(t, 2, mock.CountPassed)
+	assert.Equal(t, 2, mock.CountSkipped)
+	assert.Equal(t, 2, mock.CountUndefined)
+	assert.Equal(t, 2, mock.CountFailed)
+	assert.Equal(t, 2, mock.CountPending)
+	assert.Equal(t, 2, mock.CountAmbiguous)
 
+}
+
+type BaseFormatter struct {
+	*Base
 }
 
 type DummyFormatter struct {
