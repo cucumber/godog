@@ -8,6 +8,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ## Unreleased
 
+- Ambiguous step definitions will now be detected when strit mode is activated - ([636](https://github.com/cucumber/godog/pull/636) - [johnlon](https://github.com/johnlon))
 - Provide support for attachments / embeddings including a new example in the examples dir - ([623](https://github.com/cucumber/godog/pull/623) - [johnlon](https://github.com/johnlon))
 
 ## [v0.14.1]
