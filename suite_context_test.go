@@ -1230,7 +1230,7 @@ func TestTestSuite_Run(t *testing.T) {
 
 				},
 				Options: &Options{
-					Format:   "cucumber", // JOHN JL
+					Format:   "pretty",
 					Strict:   !tc.noStrict,
 					NoColors: true,
 					FeatureContents: []Feature{
