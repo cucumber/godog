@@ -101,7 +101,8 @@ func (f *Cuke) buildCukeElements(pickles []*messages.Pickle) (res []cukeElement)
 			cukeStep.Result.Duration = &d
 			if stepResult.Status == undefined ||
 				stepResult.Status == pending ||
-				stepResult.Status == skipped {
+				stepResult.Status == skipped ||
+				stepResult.Status == ambiguous {
 				cukeStep.Result.Duration = nil
 			}
 

@@ -165,6 +165,8 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 		status := StepUndefined
 
 		switch {
+		case errors.Is(err, ErrAmbiguous):
+			status = StepAmbiguous
 		case errors.Is(err, ErrPending):
 			status = StepPending
 		case errors.Is(err, ErrSkip), err == nil && scenarioErr != nil:
@@ -207,17 +209,16 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 			sr := models.NewStepResult(models.Skipped, pickle.Id, step.Id, match, pickledAttachments, nil)
 			s.storage.MustInsertPickleStepResult(sr)
 			s.fmt.Skipped(pickle, step, match.GetInternalStepDefinition())
+		case errors.Is(err, ErrAmbiguous):
+			sr := models.NewStepResult(models.Ambiguous, pickle.Id, step.Id, match, pickledAttachments, err)
+			s.storage.MustInsertPickleStepResult(sr)
+			s.fmt.Ambiguous(pickle, step, match.GetInternalStepDefinition(), err)
 		default:
 			sr := models.NewStepResult(models.Failed, pickle.Id, step.Id, match, pickledAttachments, err)
 			s.storage.MustInsertPickleStepResult(sr)
 			s.fmt.Failed(pickle, step, match.GetInternalStepDefinition(), err)
 		}
 	}()
-
-	match, err = s.matchStep(step)
-	if err != nil {
-		return ctx, err
-	}
 
 	// run before scenario handlers
 	if isFirst {
@@ -226,6 +227,10 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 
 	// run before step handlers
 	ctx, err = s.runBeforeStepHooks(ctx, step, err)
+
+	// TODO JL MOVE THIS TO XXXX
+	var matchError error
+	match, matchError = s.matchStep(step)
 
 	s.storage.MustInsertStepDefintionMatch(step.AstNodeIds[0], match)
 	s.fmt.Defined(pickle, step, match.GetInternalStepDefinition())
@@ -238,6 +243,11 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 		sr := models.NewStepResult(models.Failed, pickle.Id, step.Id, match, pickledAttachments, nil)
 		s.storage.MustInsertPickleStepResult(sr)
 		return ctx, err
+	}
+
+	// XXXXX
+	if matchError != nil {
+		return ctx, matchError
 	}
 
 	if ctx, undef, err := s.maybeUndefined(ctx, step.Text, step.Argument, step.Type); err != nil {
@@ -537,7 +547,7 @@ func (s *suite) matchStepTextAndType(text string, stepType messages.PickleStepTy
 		if len(matchingExpressions) > 1 {
 			fmt.Printf("IS STRICT=%v\n", len(matchingExpressions))
 			errs := "\n\t\t" + strings.Join(matchingExpressions, "\n\t\t")
-			return nil, fmt.Errorf("ambiguous step definition, step text: %s\n\tmatches:%s", text, errs)
+			return nil, fmt.Errorf("%w, step text: %s\n\tmatches:%s", ErrAmbiguous, text, errs)
 		}
 	}
 
