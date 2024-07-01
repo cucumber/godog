@@ -85,6 +85,10 @@ func (f *Base) Failed(*messages.Pickle, *messages.PickleStep, *formatters.StepDe
 func (f *Base) Pending(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition) {
 }
 
+// Ambiguous captures ambiguous step.
+func (f *Base) Ambiguous(*messages.Pickle, *messages.PickleStep, *formatters.StepDefinition, error) {
+}
+
 // Summary renders summary information.
 func (f *Base) Summary() {
 	var totalSc, passedSc, undefinedSc int
