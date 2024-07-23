@@ -179,16 +179,15 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 			status = StepPassed
 		}
 
-		pickledAttachments := pickleAttachments(ctx)
-		ctx = clearAttach(ctx)
-
 		// Run after step handlers.
 		rctx, err = s.runAfterStepHooks(ctx, step, status, err)
 
-		shouldFail := s.shouldFail(err)
+		// extract any accumulated attachments and clear them
+		pickledAttachments := pickleAttachments(rctx)
+		rctx = clearAttach(rctx)
 
 		// Trigger after scenario on failing or last step to attach possible hook error to step.
-		if !s.shouldFail(scenarioErr) && (isLast || shouldFail) {
+		if !s.shouldFail(scenarioErr) && (isLast || s.shouldFail(err)) {
 			rctx, err = s.runAfterScenarioHooks(rctx, pickle, err)
 		}
 
