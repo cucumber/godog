@@ -46,6 +46,19 @@ func TestFeatures(t *testing.T) {
 
 func InitializeScenario(ctx *godog.ScenarioContext) {
 
+	ctx.StepContext().Before(func(ctx context.Context, st *godog.Step) (context.Context, error) {
+		ctx = godog.Attach(ctx,
+			godog.Attachment{Body: []byte("BeforeStepAttachment"), FileName: "Data Attachment", MediaType: "text/plain"},
+		)
+		return ctx, nil
+	})
+	ctx.StepContext().After(func(ctx context.Context, st *godog.Step, status godog.StepResultStatus, err error) (context.Context, error) {
+		ctx = godog.Attach(ctx,
+			godog.Attachment{Body: []byte("AfterStepAttachment"), FileName: "Data Attachment", MediaType: "text/plain"},
+		)
+		return ctx, nil
+	})
+
 	ctx.Step(`^I have attached two documents in sequence$`, func(ctx context.Context) (context.Context, error) {
 		// the attached bytes will be base64 encoded by the framework and placed in the embeddings section of the cuke report
 		ctx = godog.Attach(ctx,

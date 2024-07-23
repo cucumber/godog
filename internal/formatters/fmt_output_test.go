@@ -63,6 +63,36 @@ func listFmtOutputTestsFeatureFiles() (featureFiles []string, err error) {
 
 func fmtOutputTest(fmtName, testName, featureFilePath string) func(*testing.T) {
 	fmtOutputScenarioInitializer := func(ctx *godog.ScenarioContext) {
+
+		ctx.StepContext().Before(func(ctx context.Context, st *godog.Step) (context.Context, error) {
+			att := godog.Attachments(ctx)
+			attCount := len(att)
+			if attCount > 0 {
+				assert.FailNow(tT, fmt.Sprintf("Unexpected Attachments found - should have been empty, found %d\n%+v", attCount, att))
+			}
+
+			if st.Text == "a step with multiple attachment calls" {
+				ctx = godog.Attach(ctx,
+					godog.Attachment{Body: []byte("BeforeStepAttachment"), FileName: "Data Attachment", MediaType: "text/plain"},
+				)
+			}
+			return ctx, nil
+		})
+		ctx.StepContext().After(func(ctx context.Context, st *godog.Step, status godog.StepResultStatus, err error) (context.Context, error) {
+
+			if st.Text == "a step with multiple attachment calls" {
+				att := godog.Attachments(ctx)
+				attCount := len(att)
+				if attCount != 3 {
+					assert.FailNow(tT, fmt.Sprintf("Expected 3 Attachments - 1 from the before step and 2 from the step, found %d\n%+v", attCount, att))
+				}
+				ctx = godog.Attach(ctx,
+					godog.Attachment{Body: []byte("AfterStepAttachment"), FileName: "Data Attachment", MediaType: "text/plain"},
+				)
+			}
+			return ctx, nil
+		})
+
 		ctx.Step(`^(?:a )?failing step`, failingStepDef)
 		ctx.Step(`^(?:a )?pending step$`, pendingStepDef)
 		ctx.Step(`^(?:a )?passing step$`, passingStepDef)
@@ -144,8 +174,8 @@ func stepWithSingleAttachmentCall(ctx context.Context) (context.Context, error) 
 	return ctx, nil
 }
 func stepWithMultipleAttachmentCalls(ctx context.Context) (context.Context, error) {
-	if len(godog.Attachments(ctx)) > 0 {
-		assert.FailNow(tT, "Unexpected Attachments found - should have been empty")
+	if len(godog.Attachments(ctx)) != 1 {
+		assert.FailNow(tT, "Expected 1 Attachment that should have been inserted by before step")
 	}
 
 	ctx = godog.Attach(ctx,

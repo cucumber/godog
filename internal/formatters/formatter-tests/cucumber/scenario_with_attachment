@@ -52,6 +52,11 @@
                         },
                         "embeddings": [
                             {
+                                "name": "Data Attachment",
+                                "mime_type": "text/plain",
+                                "data": "QmVmb3JlU3RlcEF0dGFjaG1lbnQ="
+                            },
+                            {
                                 "name": "TheFilename1",
                                 "mime_type": "text/plain",
                                 "data": "VGhlRGF0YTE="
@@ -60,6 +65,11 @@
                                 "name": "TheFilename2",
                                 "mime_type": "text/plain",
                                 "data": "VGhlRGF0YTI="
+                            },
+                            {
+                                "name": "Data Attachment",
+                                "mime_type": "text/plain",
+                                "data": "QWZ0ZXJTdGVwQXR0YWNobWVudA=="
                             }
                         ]
                     }
