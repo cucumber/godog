@@ -544,7 +544,7 @@ func Test_AllFeaturesRun(t *testing.T) {
 	assert.Equal(t, expected, actualOutput)
 }
 
-func Test_AllFeaturesRunAsSubtests(t *testing.T) {
+func Test_AllScenariosRunAsSubtests(t *testing.T) {
 	const concurrency = 100
 	const noRandomFlag = 0
 	const format = "progress"
@@ -571,6 +571,41 @@ func Test_AllFeaturesRunAsSubtests(t *testing.T) {
 			Paths:       []string{"features"},
 			Randomize:   noRandomFlag,
 			TestingT:    t,
+		},
+		InitializeScenario,
+	)
+
+	assert.Equal(t, exitSuccess, actualStatus)
+	assert.Equal(t, expected, actualOutput)
+}
+
+func Test_AllFeaturesAndScenariosRunAsSubtests(t *testing.T) {
+	const concurrency = 100
+	const noRandomFlag = 0
+	const format = "progress"
+
+	const expected = `...................................................................... 70
+...................................................................... 140
+...................................................................... 210
+...................................................................... 280
+...................................................................... 350
+...................................................................... 420
+...                                                                    423
+
+
+108 scenarios (108 passed)
+423 steps (423 passed)
+0s
+`
+
+	actualStatus, actualOutput := testRunWithOptions(
+		t,
+		Options{
+			Format:             format,
+			Concurrency:        concurrency,
+			Paths:              []string{"features"},
+			Randomize:          noRandomFlag,
+			FeaturesInSubtests: t,
 		},
 		InitializeScenario,
 	)

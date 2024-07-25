@@ -40,8 +40,9 @@ type runner struct {
 	randomSeed            int64
 	stopOnFailure, strict bool
 
-	defaultContext context.Context
-	testingT       *testing.T
+	defaultContext     context.Context
+	testingT           *testing.T
+	featuresInSubtests *testing.T
 
 	features []*models.Feature
 
@@ -83,7 +84,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 	}
 
 	queue := make(chan int, rate)
-	for _, ft := range r.features {
+	runFeature := func(t *testing.T, ft *models.Feature) {
 		pickles := make([]*messages.Pickle, len(ft.Pickles))
 		if r.randomSeed != 0 {
 			r := rand.New(rand.NewSource(r.randomSeed))
@@ -115,6 +116,11 @@ func (r *runner) concurrent(rate int) (failed bool) {
 
 				// Copy base suite.
 				suite := *testSuiteContext.suite
+				if t != nil {
+					// Feature was run as a subtest.
+					// Using its *testing.T to run scenarios.
+					suite.testingT = t
+				}
 
 				if r.scenarioInitializer != nil {
 					sc := ScenarioContext{suite: &suite}
@@ -136,6 +142,16 @@ func (r *runner) concurrent(rate int) (failed bool) {
 			} else {
 				go runPickle(&failed, &pickle)
 			}
+		}
+	}
+
+	for _, ft := range r.features {
+		if r.featuresInSubtests != nil {
+			r.featuresInSubtests.Run(ft.GherkinDocument.Feature.Name, func(t *testing.T) {
+				runFeature(t, ft)
+			})
+		} else {
+			runFeature(nil, ft)
 		}
 	}
 
@@ -274,6 +290,7 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 	runner.strict = opt.Strict
 	runner.defaultContext = opt.DefaultContext
 	runner.testingT = opt.TestingT
+	runner.featuresInSubtests = opt.FeaturesInSubtests
 
 	// store chosen seed in environment, so it could be seen in formatter summary report
 	os.Setenv("GODOG_SEED", strconv.FormatInt(runner.randomSeed, 10))

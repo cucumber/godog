@@ -66,6 +66,11 @@ type Options struct {
 	// TestingT runs scenarios as subtests.
 	TestingT *testing.T
 
+	// FeaturesInSubtests runs features as subtests.
+	// This will override TestingT option and scenatios will be
+	// run as subtests of the features.
+	FeaturesInSubtests *testing.T
+
 	// FeatureContents allows passing in each feature manually
 	// where the contents of each feature is stored as a byte slice
 	// in a map entry
