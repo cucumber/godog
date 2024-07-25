@@ -963,156 +963,193 @@ func TestTestSuite_Run(t *testing.T) {
 		{
 			name: "fail_then_pass_fails_scenario", afterStepCnt: 2, beforeStepCnt: 2,
 			body: `
-				When step fails
-				Then step passes`,
+					When step fails
+					Then step passes`,
 			log: `
-				>>>> Before suite
-				>> Before scenario "test"
-				Before step "step fails"
-				After step "step fails", error: oops, status: failed
-				<< After scenario "test", error: oops
-				Before step "step passes"
-				After step "step passes", error: <nil>, status: skipped
-				<<<< After suite`,
+					>>>> Before suite
+					>> Before scenario "test"
+					Before step "step fails"
+					After step "step fails", error: oops, status: failed
+					<< After scenario "test", error: oops
+					Before step "step passes"
+					After step "step passes", error: <nil>, status: skipped
+					<<<< After suite`,
 		},
 		{
 			name: "pending_then_pass_fails_scenario", afterStepCnt: 2, beforeStepCnt: 2,
 			body: `
-				When step is pending
-				Then step passes`,
+					When step is pending
+					Then step passes`,
 			log: `
-				>>>> Before suite
-				>> Before scenario "test"
-				Before step "step is pending"
-				After step "step is pending", error: step implementation is pending, status: pending
-				<< After scenario "test", error: step implementation is pending
-				Before step "step passes"
-				After step "step passes", error: <nil>, status: skipped
-				<<<< After suite`,
+					>>>> Before suite
+					>> Before scenario "test"
+					Before step "step is pending"
+					After step "step is pending", error: step implementation is pending, status: pending
+					<< After scenario "test", error: step implementation is pending
+					Before step "step passes"
+					After step "step passes", error: <nil>, status: skipped
+					<<<< After suite`,
 		},
 		{
 			name: "pending_then_pass_no_strict_doesnt_fail_scenario", afterStepCnt: 2, beforeStepCnt: 2, noStrict: true, suitePasses: true,
 			body: `
-				When step is pending
-				Then step passes`,
+					When step is pending
+					Then step passes`,
 			log: `
-				>>>> Before suite
-				>> Before scenario "test"
-				Before step "step is pending"
-				After step "step is pending", error: step implementation is pending, status: pending
-				Before step "step passes"
-				After step "step passes", error: <nil>, status: skipped
-				<< After scenario "test", error: <nil>
-				<<<< After suite`,
+					>>>> Before suite
+					>> Before scenario "test"
+					Before step "step is pending"
+					After step "step is pending", error: step implementation is pending, status: pending
+					Before step "step passes"
+					After step "step passes", error: <nil>, status: skipped
+					<< After scenario "test", error: <nil>
+					<<<< After suite`,
 		},
 		{
 			name: "undefined_then_pass_no_strict_doesnt_fail_scenario", afterStepCnt: 2, beforeStepCnt: 2, noStrict: true, suitePasses: true,
 			body: `
-				When step is undefined
-				Then step passes`,
+					When step is undefined
+					Then step passes`,
 			log: `
-				>>>> Before suite
-				>> Before scenario "test"
-				Before step "step is undefined"
-				After step "step is undefined", error: step is undefined, status: undefined
-				Before step "step passes"
-				After step "step passes", error: <nil>, status: skipped
-				<< After scenario "test", error: <nil>
-				<<<< After suite`,
+					>>>> Before suite
+					>> Before scenario "test"
+					Before step "step is undefined"
+					After step "step is undefined", error: step is undefined, status: undefined
+					Before step "step passes"
+					After step "step passes", error: <nil>, status: skipped
+					<< After scenario "test", error: <nil>
+					<<<< After suite`,
 		},
 		{
 			name: "undefined_then_pass_fails_scenario", afterStepCnt: 2, beforeStepCnt: 2,
 			body: `
-				When step is undefined
-				Then step passes`,
+					When step is undefined
+					Then step passes`,
 			log: `
-				>>>> Before suite
-				>> Before scenario "test"
-				Before step "step is undefined"
-				After step "step is undefined", error: step is undefined, status: undefined
-				<< After scenario "test", error: step is undefined
-				Before step "step passes"
-				After step "step passes", error: <nil>, status: skipped
-				<<<< After suite`,
+					>>>> Before suite
+					>> Before scenario "test"
+					Before step "step is undefined"
+					After step "step is undefined", error: step is undefined, status: undefined
+					<< After scenario "test", error: step is undefined
+					Before step "step passes"
+					After step "step passes", error: <nil>, status: skipped
+					<<<< After suite`,
 		},
 		{
 			name: "fail_then_undefined_fails_scenario", afterStepCnt: 2, beforeStepCnt: 2,
 			body: `
-				When step fails
-				Then step is undefined`,
+					When step fails
+					Then step is undefined`,
 			log: `
-				>>>> Before suite
-				>> Before scenario "test"
-				Before step "step fails"
-				After step "step fails", error: oops, status: failed
-				<< After scenario "test", error: oops
-				Before step "step is undefined"
-				After step "step is undefined", error: step is undefined, status: undefined
-				<<<< After suite`,
+					>>>> Before suite
+					>> Before scenario "test"
+					Before step "step fails"
+					After step "step fails", error: oops, status: failed
+					<< After scenario "test", error: oops
+					Before step "step is undefined"
+					After step "step is undefined", error: step is undefined, status: undefined
+					<<<< After suite`,
 		},
 		{
 			name: "passes", afterStepCnt: 2, beforeStepCnt: 2,
 			body: `
-				When step passes
-				Then step passes`,
+					When step passes
+					Then step passes`,
 			suitePasses: true,
 			log: `
-				>>>> Before suite
-				>> Before scenario "test"
-				Before step "step passes"
-				<step action>
-				After step "step passes", error: <nil>, status: passed
-				Before step "step passes"
-				<step action>
-				After step "step passes", error: <nil>, status: passed
-				<< After scenario "test", error: <nil>
-				<<<< After suite`,
+					>>>> Before suite
+					>> Before scenario "test"
+					Before step "step passes"
+					<step action>
+					After step "step passes", error: <nil>, status: passed
+					Before step "step passes"
+					<step action>
+					After step "step passes", error: <nil>, status: passed
+					<< After scenario "test", error: <nil>
+					<<<< After suite`,
 		},
 		{
 			name: "skip_does_not_fail_scenario", afterStepCnt: 2, beforeStepCnt: 2,
 			body: `
-				When step skips scenario
-				Then step fails`,
+					When step skips scenario
+					Then step fails`,
 			suitePasses: true,
 			log: `
-				>>>> Before suite
-				>> Before scenario "test"
-				Before step "step skips scenario"
-				After step "step skips scenario", error: skipped, status: skipped
-				Before step "step fails"
-				After step "step fails", error: <nil>, status: skipped
-				<< After scenario "test", error: <nil>
-				<<<< After suite`,
+					>>>> Before suite
+					>> Before scenario "test"
+					Before step "step skips scenario"
+					After step "step skips scenario", error: skipped, status: skipped
+					Before step "step fails"
+					After step "step fails", error: <nil>, status: skipped
+					<< After scenario "test", error: <nil>
+					<<<< After suite`,
 		},
 		{
 			name: "multistep_passes", afterStepCnt: 6, beforeStepCnt: 6,
 			body: `
-				When multistep passes
-				Then multistep passes`,
+					When multistep passes
+					Then multistep passes`,
 			suitePasses: true,
+			log: `
+					>>>> Before suite
+					>> Before scenario "test"
+					Before step "multistep passes"
+					Before step "step passes"
+					<step action>
+					After step "step passes", error: <nil>, status: passed
+					Before step "step passes"
+					<step action>
+					After step "step passes", error: <nil>, status: passed
+					After step "multistep passes", error: <nil>, status: passed
+					Before step "multistep passes"
+					Before step "step passes"
+					<step action>
+					After step "step passes", error: <nil>, status: passed
+					Before step "step passes"
+					<step action>
+					After step "step passes", error: <nil>, status: passed
+					After step "multistep passes", error: <nil>, status: passed
+					<< After scenario "test", error: <nil>
+					<<<< After suite`,
+		},
+		{
+			name: "ambiguous", afterStepCnt: 1, beforeStepCnt: 1,
+			body: `
+					Then step is ambiguous`,
+			log: `
+					>>>> Before suite
+					>> Before scenario "test"
+					Before step "step is ambiguous"
+					After step "step is ambiguous", error: ambiguous step definition, step text: step is ambiguous
+		        	            		matches:
+		        	            			^step is ambiguous$
+		        	            			^step is ambiguous$, status: ambiguous
+					<< After scenario "test", error: ambiguous step definition, step text: step is ambiguous
+		        	            		matches:
+		        	            			^step is ambiguous$
+		        	            			^step is ambiguous$
+					<<<< After suite`,
+		},
+		{
+			name: "ambiguous nested steps", afterStepCnt: 1, beforeStepCnt: 1,
+			body: `
+				Then multistep has ambiguous`,
 			log: `
 				>>>> Before suite
 				>> Before scenario "test"
-				Before step "multistep passes"
-				Before step "step passes"
-				<step action>
-				After step "step passes", error: <nil>, status: passed
-				Before step "step passes"
-				<step action>
-				After step "step passes", error: <nil>, status: passed
-				After step "multistep passes", error: <nil>, status: passed
-				Before step "multistep passes"
-				Before step "step passes"
-				<step action>
-				After step "step passes", error: <nil>, status: passed
-				Before step "step passes"
-				<step action>
-				After step "step passes", error: <nil>, status: passed
-				After step "multistep passes", error: <nil>, status: passed
-				<< After scenario "test", error: <nil>
+				Before step "multistep has ambiguous"
+				After step "multistep has ambiguous", error: ambiguous step definition, step text: step is ambiguous
+            	            		matches:
+            	            			^step is ambiguous$
+            	            			^step is ambiguous$, status: ambiguous
+				<< After scenario "test", error: ambiguous step definition, step text: step is ambiguous
+            	            		matches:
+            	            			^step is ambiguous$
+            	            			^step is ambiguous$
 				<<<< After suite`,
 		},
 	} {
+		// JL
 		t.Run(tc.name, func(t *testing.T) {
 			afterScenarioCnt := 0
 			beforeScenarioCnt := 0
@@ -1180,6 +1217,17 @@ func TestTestSuite_Run(t *testing.T) {
 					s.Step("pending", func() error {
 						return ErrPending
 					})
+
+					s.Step("^step is ambiguous$", func() {
+						log += "<step action>\n"
+					})
+					s.Step("^step is ambiguous$", func() {
+						log += "<step action>\n"
+					})
+					s.Step("^multistep has ambiguous$", func() Steps {
+						return Steps{"step is ambiguous"}
+					})
+
 				},
 				Options: &Options{
 					Format:   "pretty",

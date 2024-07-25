@@ -72,6 +72,8 @@ const (
 	Undefined
 	// Pending ...
 	Pending
+	// Ambiguous ...
+	Ambiguous
 )
 
 // Color ...
@@ -101,6 +103,8 @@ func (st StepResultStatus) String() string {
 		return "undefined"
 	case Pending:
 		return "pending"
+	case Ambiguous:
+		return "ambiguous"
 	default:
 		return "unknown"
 	}

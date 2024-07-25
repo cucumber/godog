@@ -21,6 +21,9 @@ var (
 	contextInterface = reflect.TypeOf((*context.Context)(nil)).Elem()
 )
 
+// more than one regex matched the step text
+var ErrAmbiguous = fmt.Errorf("ambiguous step definition")
+
 // ErrUndefined is returned in case if step definition was not found
 var ErrUndefined = fmt.Errorf("step is undefined")
 
@@ -45,6 +48,8 @@ const (
 	StepUndefined = models.Undefined
 	// StepPending indicates step with pending implementation.
 	StepPending = models.Pending
+	// StepAmbiguous indicates step text matches more than one step def
+	StepAmbiguous = models.Ambiguous
 )
 
 type suite struct {
@@ -111,19 +116,22 @@ func pickleAttachments(ctx context.Context) []models.PickleAttachment {
 	return pickledAttachments
 }
 
-func (s *suite) matchStep(step *messages.PickleStep) *models.StepDefinition {
-	def := s.matchStepTextAndType(step.Text, step.Type)
+func (s *suite) matchStep(step *messages.PickleStep) (*models.StepDefinition, error) {
+	def, err := s.matchStepTextAndType(step.Text, step.Type)
+	if err != nil {
+		return nil, err
+	}
+
 	if def != nil && step.Argument != nil {
 		def.Args = append(def.Args, step.Argument)
 	}
-	return def
+	return def, nil
 }
 
 func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scenarioErr error, isFirst, isLast bool) (rctx context.Context, err error) {
 	var match *models.StepDefinition
 
 	rctx = ctx
-	status := StepUndefined
 
 	// user multistep definitions may panic
 	defer func() {
@@ -154,7 +162,11 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 			err = getTestingT(ctx).isFailed()
 		}
 
+		status := StepUndefined
+
 		switch {
+		case errors.Is(err, ErrAmbiguous):
+			status = StepAmbiguous
 		case errors.Is(err, ErrPending):
 			status = StepPending
 		case errors.Is(err, ErrSkip), err == nil && scenarioErr != nil:
@@ -167,16 +179,15 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 			status = StepPassed
 		}
 
-		pickledAttachments := pickleAttachments(ctx)
-		ctx = clearAttach(ctx)
-
 		// Run after step handlers.
 		rctx, err = s.runAfterStepHooks(ctx, step, status, err)
 
-		shouldFail := s.shouldFail(err)
+		// extract any accumulated attachments and clear them
+		pickledAttachments := pickleAttachments(rctx)
+		rctx = clearAttach(rctx)
 
 		// Trigger after scenario on failing or last step to attach possible hook error to step.
-		if !s.shouldFail(scenarioErr) && (isLast || shouldFail) {
+		if !s.shouldFail(scenarioErr) && (isLast || s.shouldFail(err)) {
 			rctx, err = s.runAfterScenarioHooks(rctx, pickle, err)
 		}
 
@@ -197,6 +208,10 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 			sr := models.NewStepResult(models.Skipped, pickle.Id, step.Id, match, pickledAttachments, nil)
 			s.storage.MustInsertPickleStepResult(sr)
 			s.fmt.Skipped(pickle, step, match.GetInternalStepDefinition())
+		case errors.Is(err, ErrAmbiguous):
+			sr := models.NewStepResult(models.Ambiguous, pickle.Id, step.Id, match, pickledAttachments, err)
+			s.storage.MustInsertPickleStepResult(sr)
+			s.fmt.Ambiguous(pickle, step, match.GetInternalStepDefinition(), err)
 		default:
 			sr := models.NewStepResult(models.Failed, pickle.Id, step.Id, match, pickledAttachments, err)
 			s.storage.MustInsertPickleStepResult(sr)
@@ -212,7 +227,10 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 	// run before step handlers
 	ctx, err = s.runBeforeStepHooks(ctx, step, err)
 
-	match = s.matchStep(step)
+	// TODO JL MOVE THIS TO XXXX
+	var matchError error
+	match, matchError = s.matchStep(step)
+
 	s.storage.MustInsertStepDefintionMatch(step.AstNodeIds[0], match)
 	s.fmt.Defined(pickle, step, match.GetInternalStepDefinition())
 
@@ -224,6 +242,11 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 		sr := models.NewStepResult(models.Failed, pickle.Id, step.Id, match, pickledAttachments, nil)
 		s.storage.MustInsertPickleStepResult(sr)
 		return ctx, err
+	}
+
+	// XXXXX
+	if matchError != nil {
+		return ctx, matchError
 	}
 
 	if ctx, undef, err := s.maybeUndefined(ctx, step.Text, step.Argument, step.Type); err != nil {
@@ -382,12 +405,16 @@ func (s *suite) runAfterScenarioHooks(ctx context.Context, pickle *messages.Pick
 }
 
 func (s *suite) maybeUndefined(ctx context.Context, text string, arg interface{}, stepType messages.PickleStepType) (context.Context, []string, error) {
-	step := s.matchStepTextAndType(text, stepType)
+	var undefined []string
+	step, err := s.matchStepTextAndType(text, stepType)
+	if err != nil {
+		return ctx, undefined, err
+	}
+
 	if nil == step {
 		return ctx, []string{text}, nil
 	}
 
-	var undefined []string
 	if !step.Nested {
 		return ctx, undefined, nil
 	}
@@ -430,10 +457,13 @@ func (s *suite) maybeSubSteps(ctx context.Context, result interface{}) (context.
 		return ctx, fmt.Errorf("unexpected error, should have been godog.Steps: %T - %+v", result, result)
 	}
 
-	var err error
-
 	for _, text := range steps {
-		if def := s.matchStepTextAndType(text, messages.PickleStepType_UNKNOWN); def == nil {
+		def, err := s.matchStepTextAndType(text, messages.PickleStepType_UNKNOWN)
+		if err != nil {
+			return ctx, err
+		}
+
+		if def == nil {
 			return ctx, ErrUndefined
 		} else {
 			ctx, err = s.runSubStep(ctx, text, def)
@@ -477,7 +507,10 @@ func (s *suite) runSubStep(ctx context.Context, text string, def *models.StepDef
 	return ctx, nil
 }
 
-func (s *suite) matchStepTextAndType(text string, stepType messages.PickleStepType) *models.StepDefinition {
+func (s *suite) matchStepTextAndType(text string, stepType messages.PickleStepType) (*models.StepDefinition, error) {
+	var first *models.StepDefinition
+	matchingExpressions := make([]string, 0)
+
 	for _, h := range s.steps {
 		if m := h.Expr.FindStringSubmatch(text); len(m) > 0 {
 			if !keywordMatches(h.Keyword, stepType) {
@@ -488,9 +521,11 @@ func (s *suite) matchStepTextAndType(text string, stepType messages.PickleStepTy
 				args = append(args, m)
 			}
 
+			matchingExpressions = append(matchingExpressions, h.Expr.String())
+
 			// since we need to assign arguments
 			// better to copy the step definition
-			return &models.StepDefinition{
+			match := &models.StepDefinition{
 				StepDefinition: formatters.StepDefinition{
 					Expr:    h.Expr,
 					Handler: h.Handler,
@@ -500,9 +535,22 @@ func (s *suite) matchStepTextAndType(text string, stepType messages.PickleStepTy
 				HandlerValue: h.HandlerValue,
 				Nested:       h.Nested,
 			}
+
+			if first == nil {
+				first = match
+			}
 		}
 	}
-	return nil
+
+	if s.strict {
+		if len(matchingExpressions) > 1 {
+			fmt.Printf("IS STRICT=%v\n", len(matchingExpressions))
+			errs := "\n\t\t" + strings.Join(matchingExpressions, "\n\t\t")
+			return nil, fmt.Errorf("%w, step text: %s\n\tmatches:%s", ErrAmbiguous, text, errs)
+		}
+	}
+
+	return first, nil
 }
 
 func keywordMatches(k formatters.Keyword, stepType messages.PickleStepType) bool {

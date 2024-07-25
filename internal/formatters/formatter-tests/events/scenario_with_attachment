@@ -8,8 +8,10 @@
 {"event":"TestStepFinished","location":"formatter-tests/features/scenario_with_attachment.feature:7","timestamp":-6795364578871,"status":"passed"}
 {"event":"StepDefinitionFound","location":"formatter-tests/features/scenario_with_attachment.feature:8","definition_id":"fmt_output_test.go:XXX -\u003e github.com/cucumber/godog/internal/formatters_test.stepWithMultipleAttachmentCalls","arguments":[]}
 {"event":"TestStepStarted","location":"formatter-tests/features/scenario_with_attachment.feature:8","timestamp":-6795364578871}
+{"event":"Attachment","location":"formatter-tests/features/scenario_with_attachment.feature:8","timestamp":-6795364578871,"contentEncoding":"BASE64","fileName":"Data Attachment","mimeType":"text/plain","body":"BeforeStepAttachment"}
 {"event":"Attachment","location":"formatter-tests/features/scenario_with_attachment.feature:8","timestamp":-6795364578871,"contentEncoding":"BASE64","fileName":"TheFilename1","mimeType":"text/plain","body":"TheData1"}
 {"event":"Attachment","location":"formatter-tests/features/scenario_with_attachment.feature:8","timestamp":-6795364578871,"contentEncoding":"BASE64","fileName":"TheFilename2","mimeType":"text/plain","body":"TheData2"}
+{"event":"Attachment","location":"formatter-tests/features/scenario_with_attachment.feature:8","timestamp":-6795364578871,"contentEncoding":"BASE64","fileName":"Data Attachment","mimeType":"text/plain","body":"AfterStepAttachment"}
 {"event":"TestStepFinished","location":"formatter-tests/features/scenario_with_attachment.feature:8","timestamp":-6795364578871,"status":"passed"}
 {"event":"TestCaseFinished","location":"formatter-tests/features/scenario_with_attachment.feature:6","timestamp":-6795364578871,"status":"passed"}
 {"event":"TestRunFinished","status":"passed","timestamp":-6795364578871,"snippets":"","memory":""}
