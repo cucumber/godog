@@ -577,7 +577,7 @@ A simple example can be [found here](/_examples/custom-formatter).
 [license]: https://en.wikipedia.org/wiki/MIT_License "The MIT license"
 [contributing guide]: https://github.com/cucumber/godog/blob/main/CONTRIBUTING.md
 [releasing guide]: https://github.com/cucumber/godog/blob/main/RELEASING.md
-[community Slack]: https://cucumber.io/community#slack
+[community Discord]: https://cucumber.io/community#discord
 
 
 
