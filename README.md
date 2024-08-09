@@ -50,13 +50,7 @@ See the [releasing guide] for release flow details.
 
 ## Getting help
 
-We have a [community Slack] where you can chat with other users, developers, and BDD practitioners.
-
-Here are some useful channels to try:
-
-- [#help-godog](https://cucumberbdd.slack.com/archives/CTNL1JCVA) - General Godog Adoption Help
-- [#committers-go](https://cucumberbdd.slack.com/archives/CA5NJPDJ4) - Golang focused Cucumber Contributors
-- [#committers](https://cucumberbdd.slack.com/archives/C62D0FK0E) - General Cucumber Contributors
+We have a [community Discord](https://cucumber.io/docs/community/get-in-touch/#discord) where you can chat with other users, developers, and BDD practitioners.
 
 ## Examples
 
