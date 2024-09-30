@@ -1,8 +1,36 @@
 # Duplicate Steps
 
+## Updated Statement
+
+After submitting this example / feedback, while looking through the `godog` source
+code, I came across [PR-636](https://github.com/cucumber/godog/pull/636) which deals
+with the very same issue as described below - i.e., duplicate (ambiguous) steps.
+
+Indeed, this accepted and merged PR wasn't available in the `godog` library version
+we are using (you can be sure I'll put in an upgrade request to the team, though!),
+so I was not familiar with it.  
+
+Now that this PR is in place and enabled when using `strict` mode (which we _are_
+using), it will help us - at least our developers will receive a repeatable test
+failure _right away_ when duplicate (ambiguous) steps are detected (though the
+"error" message is a bit cryptic: i.e., it seems like it just says **"IS STRICT=2"**
+in the given example case).  However, ultimately as described below we'd like
+to be able to encapsulate step implementations completely within a scenario,
+and it seems this desired functionality is not (yet?) available.
+
+Therefore, the focus of this PR is now upon tips / suggestions for how to implement
+the desired functionality of limiting the scope of a step definition to either
+a scenario and/or perhaps a feature (as opposed to always globally).  Or possibly,
+why that's a bad idea (I find it suspicious that hasn't been done already ;-0).
+
+The original (pre-update above) text of this README is preserved for posterity,
+below:
+
+## Original Statement
+
 This example reproduces the problem wherein duplicate steps are silently overridden.
 
-## Motivation 
+### Motivation 
 
 As a relatively new user of Cucumber & its [Gherkin syntax](https://cucumber.io/docs/gherkin/), and
 as an implementer of steps for a scenario using `godog`, I'd like to have the ability to encapsulate
@@ -28,7 +56,7 @@ _NOTE:_ due to a limitation in our Jenkins pipeline, all of our features & scena
 within the same `godog.Suite`, else (I realize) we could just "solve" this problem by running each scenario
 in its own invocation of `godog`.  
 
-## Summary
+### Summary
 
 In light of the specifics of the "Motivation" above, the stated "problem" here might then be more
 effectively re-characterized as a "request" to give more control to the end-user, as suggested above.

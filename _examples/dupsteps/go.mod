@@ -19,3 +19,6 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+// See updated comment in the README - using the local source tree to get the "strict" functionality in PR-636
+replace github.com/cucumber/godog v0.14.1 => ../..
