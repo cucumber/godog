@@ -105,16 +105,27 @@ func (r *runner) concurrent(rate int) (failed bool) {
 			}
 
 			runPickle := func(fail *bool, pickle *messages.Pickle) {
+				// Copy base suite.
+				suite := *testSuiteContext.suite
+				if rate > 1 {
+					// if running concurrently, only print at end of scenario to keep
+					// scenario logs segregated
+					suite.fmt = ifmt.WrapOnFlush(testSuiteContext.suite.fmt)
+				}
+
 				defer func() {
+					// if log can be flushed, do so
+					if fmt, ok := suite.fmt.(interface {
+						Flush()
+					}); ok {
+						fmt.Flush()
+					}
 					<-queue // free a space in queue
 				}()
 
 				if r.stopOnFailure && *fail {
 					return
 				}
-
-				// Copy base suite.
-				suite := *testSuiteContext.suite
 
 				if r.scenarioInitializer != nil {
 					sc := ScenarioContext{suite: &suite}
