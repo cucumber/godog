@@ -6,10 +6,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFlushWrapOnFormatter(t *testing.T) {
-	mock.tt = t
+var flushMock = DummyFormatter{}
 
-	fmt := WrapOnFlush(&mock)
+func TestFlushWrapOnFormatter(t *testing.T) {
+	flushMock.tt = t
+
+	fmt := WrapOnFlush(&flushMock)
 
 	fmt.Feature(document, str, byt)
 	fmt.TestRunStarted()
@@ -22,27 +24,27 @@ func TestFlushWrapOnFormatter(t *testing.T) {
 	fmt.Pending(pickle, step, definition)
 	fmt.Ambiguous(pickle, step, definition, err)
 
-	assert.Equal(t, 0, mock.CountFeature)
-	assert.Equal(t, 0, mock.CountTestRunStarted)
-	assert.Equal(t, 0, mock.CountPickle)
-	assert.Equal(t, 0, mock.CountDefined)
-	assert.Equal(t, 0, mock.CountPassed)
-	assert.Equal(t, 0, mock.CountSkipped)
-	assert.Equal(t, 0, mock.CountUndefined)
-	assert.Equal(t, 0, mock.CountFailed)
-	assert.Equal(t, 0, mock.CountPending)
-	assert.Equal(t, 0, mock.CountAmbiguous)
+	assert.Equal(t, 0, flushMock.CountFeature)
+	assert.Equal(t, 0, flushMock.CountTestRunStarted)
+	assert.Equal(t, 0, flushMock.CountPickle)
+	assert.Equal(t, 0, flushMock.CountDefined)
+	assert.Equal(t, 0, flushMock.CountPassed)
+	assert.Equal(t, 0, flushMock.CountSkipped)
+	assert.Equal(t, 0, flushMock.CountUndefined)
+	assert.Equal(t, 0, flushMock.CountFailed)
+	assert.Equal(t, 0, flushMock.CountPending)
+	assert.Equal(t, 0, flushMock.CountAmbiguous)
 
 	fmt.Flush()
 
-	assert.Equal(t, 1, mock.CountFeature)
-	assert.Equal(t, 1, mock.CountTestRunStarted)
-	assert.Equal(t, 1, mock.CountPickle)
-	assert.Equal(t, 1, mock.CountDefined)
-	assert.Equal(t, 1, mock.CountPassed)
-	assert.Equal(t, 1, mock.CountSkipped)
-	assert.Equal(t, 1, mock.CountUndefined)
-	assert.Equal(t, 1, mock.CountFailed)
-	assert.Equal(t, 1, mock.CountPending)
-	assert.Equal(t, 1, mock.CountAmbiguous)
+	assert.Equal(t, 1, flushMock.CountFeature)
+	assert.Equal(t, 1, flushMock.CountTestRunStarted)
+	assert.Equal(t, 1, flushMock.CountPickle)
+	assert.Equal(t, 1, flushMock.CountDefined)
+	assert.Equal(t, 1, flushMock.CountPassed)
+	assert.Equal(t, 1, flushMock.CountSkipped)
+	assert.Equal(t, 1, flushMock.CountUndefined)
+	assert.Equal(t, 1, flushMock.CountFailed)
+	assert.Equal(t, 1, flushMock.CountPending)
+	assert.Equal(t, 1, flushMock.CountAmbiguous)
 }
