@@ -23,6 +23,7 @@ func TestFlushWrapOnFormatter(t *testing.T) {
 	fmt.Failed(pickle, step, definition, err)
 	fmt.Pending(pickle, step, definition)
 	fmt.Ambiguous(pickle, step, definition, err)
+	fmt.Summary()
 
 	assert.Equal(t, 0, flushMock.CountFeature)
 	assert.Equal(t, 0, flushMock.CountTestRunStarted)
@@ -34,6 +35,7 @@ func TestFlushWrapOnFormatter(t *testing.T) {
 	assert.Equal(t, 0, flushMock.CountFailed)
 	assert.Equal(t, 0, flushMock.CountPending)
 	assert.Equal(t, 0, flushMock.CountAmbiguous)
+	assert.Equal(t, 0, flushMock.CountSummary)
 
 	fmt.Flush()
 
@@ -47,4 +49,5 @@ func TestFlushWrapOnFormatter(t *testing.T) {
 	assert.Equal(t, 1, flushMock.CountFailed)
 	assert.Equal(t, 1, flushMock.CountPending)
 	assert.Equal(t, 1, flushMock.CountAmbiguous)
+	assert.Equal(t, 1, flushMock.CountSummary)
 }
