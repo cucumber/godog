@@ -128,6 +128,40 @@ func Test_MustGetPickleStepResultsByPickleID(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+func Test_MustGetPickleStepResultsByPickleIDUntilStep(t *testing.T) {
+	s := storage.NewStorage()
+
+	const pickleID = "p1"
+	const stepID = "s2"
+
+	store := []models.PickleStepResult{
+		{
+			Status:       models.Passed,
+			PickleID:     pickleID,
+			PickleStepID: "s1",
+		},
+		{
+			Status:       models.Passed,
+			PickleID:     pickleID,
+			PickleStepID: "s2",
+		},
+		{
+			Status:       models.Passed,
+			PickleID:     pickleID,
+			PickleStepID: "s3",
+		},
+	}
+
+	for _, psr := range store {
+		s.MustInsertPickleStepResult(psr)
+	}
+
+	expected := store[:2]
+
+	actual := s.MustGetPickleStepResultsByPickleIDUntilStep(pickleID, stepID)
+	assert.Equal(t, expected, actual)
+}
+
 func Test_MustGetPickleStepResultsByStatus(t *testing.T) {
 	s := storage.NewStorage()
 
