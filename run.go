@@ -121,14 +121,14 @@ func (r *runner) concurrent(rate int) (failed bool) {
 					// if running concurrently, only print at end of scenario to keep
 					// scenario logs segregated
 					suite.fmt = ifmt.WrapOnFlush(testSuiteContext.suite.fmt)
+					defer func() {
+						// if log can be flushed, do so. Should always be true but it's
+						// better to be safe.
+						if fmttr, ok := suite.fmt.(formatters.FlushFormatter); ok {
+							fmttr.Flush()
+						}
+					}()
 				}
-
-				defer func() {
-					// if log can be flushed, do so
-					if fmttr, ok := suite.fmt.(formatters.FlushFormatter); ok {
-						fmttr.Flush()
-					}
-				}()
 
 				if r.scenarioInitializer != nil {
 					sc := ScenarioContext{suite: &suite}
