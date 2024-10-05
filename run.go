@@ -33,8 +33,10 @@ const (
 	exitOptionError
 )
 
-type testSuiteInitializer func(*TestSuiteContext)
-type scenarioInitializer func(*ScenarioContext)
+type (
+	testSuiteInitializer func(*TestSuiteContext)
+	scenarioInitializer  func(*ScenarioContext)
+)
 
 type runner struct {
 	randomSeed            int64
@@ -105,6 +107,14 @@ func (r *runner) concurrent(rate int) (failed bool) {
 			}
 
 			runPickle := func(fail *bool, pickle *messages.Pickle) {
+				defer func() {
+					<-queue // free a space in queue
+				}()
+
+				if r.stopOnFailure && *fail {
+					return
+				}
+
 				// Copy base suite.
 				suite := *testSuiteContext.suite
 				if rate > 1 {
@@ -120,12 +130,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 					}); ok {
 						fmt.Flush()
 					}
-					<-queue // free a space in queue
 				}()
-
-				if r.stopOnFailure && *fail {
-					return
-				}
 
 				if r.scenarioInitializer != nil {
 					sc := ScenarioContext{suite: &suite}
