@@ -234,13 +234,13 @@ func (s *Storage) MustGetPickleStepResultsByPickleID(pickleID string) (psrs []mo
 }
 
 // MustGetPickleStepResultsByPickleIDUntilStep will retrieve pickle step results by pickle id
-// from 0..stepId for that pickle.
-func (s *Storage) MustGetPickleStepResultsByPickleIDUntilStep(pickleID string, untilStepId string) (psrs []models.PickleStepResult) {
+// from 0..stepID for that pickle.
+func (s *Storage) MustGetPickleStepResultsByPickleIDUntilStep(pickleID string, untilStepID string) (psrs []models.PickleStepResult) {
 	it := s.mustGet(tablePickleStepResult, tablePickleStepResultIndexPickleID, pickleID)
 	for v := it.Next(); v != nil; v = it.Next() {
 		psr := v.(models.PickleStepResult)
 		psrs = append(psrs, psr)
-		if psr.PickleStepID == untilStepId {
+		if psr.PickleStepID == untilStepID {
 			break
 		}
 	}
