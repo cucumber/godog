@@ -125,9 +125,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 
 				defer func() {
 					// if log can be flushed, do so
-					if fmt, ok := suite.fmt.(interface {
-						Flush()
-					}); ok {
+					if fmt, ok := suite.fmt.(formatters.FlushFormatter); ok {
 						fmt.Flush()
 					}
 				}()
