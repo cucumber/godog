@@ -6,6 +6,10 @@ After submitting this example / feedback, while looking through the `godog` sour
 code, I came across [PR-636](https://github.com/cucumber/godog/pull/636) which deals
 with the very same issue as described below - i.e., duplicate (ambiguous) steps.
 
+- _NOTE: until the change made in [PR-636](https://github.com/cucumber/godog/pull/636)
+  is made available (it's not yet been released as of this writing), you can use something
+  like the [stepchecker](cmd/stepchecker/README.md) to detect such cases._
+
 Indeed, this accepted and merged PR wasn't available in the `godog` library version
 we are using (you can be sure I'll put in an upgrade request to the team, though!),
 so I was not familiar with it.  
