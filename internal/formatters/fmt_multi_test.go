@@ -24,7 +24,6 @@ var (
 
 // TestRepeater tests the delegation of the repeater functions.
 func TestRepeater(t *testing.T) {
-
 	mock.tt = t
 	f := make(repeater, 0)
 	f = append(f, &mock)
@@ -52,7 +51,6 @@ func TestRepeater(t *testing.T) {
 	assert.Equal(t, 2, mock.CountFailed)
 	assert.Equal(t, 2, mock.CountPending)
 	assert.Equal(t, 2, mock.CountAmbiguous)
-
 }
 
 type BaseFormatter struct {
@@ -73,6 +71,7 @@ type DummyFormatter struct {
 	CountFailed         int
 	CountPending        int
 	CountAmbiguous      int
+	CountSummary        int
 }
 
 // SetStorage assigns gherkin data storage.
@@ -157,4 +156,9 @@ func (f *DummyFormatter) Ambiguous(p *messages.Pickle, s *messages.PickleStep, d
 	assert.Equal(f.tt, s, step)
 	assert.Equal(f.tt, d, definition)
 	f.CountAmbiguous++
+}
+
+// Pickle receives scenario.
+func (f *DummyFormatter) Summary() {
+	f.CountSummary++
 }

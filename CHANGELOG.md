@@ -8,6 +8,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ## Unreleased
 
+- fix(formatter): On concurrent execution, execute formatter at end of Scenario - ([645](https://github.com/cucumber/godog/pull/645) - [tigh-latte](https://github.com/tigh-latte))
 - Ambiguous step definitions will now be detected when strict mode is activated - ([636](https://github.com/cucumber/godog/pull/636) - [johnlon](https://github.com/johnlon))
 - Provide support for attachments / embeddings including a new example in the examples dir - ([623](https://github.com/cucumber/godog/pull/623) - [johnlon](https://github.com/johnlon))
 
@@ -32,7 +33,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Changed
 - Update test.yml ([583](https://github.com/cucumber/godog/pull/583) - [vearutop](https://github.com/vearutop))
-  
+
 ## [v0.13.0]
 ### Added
 - Support for reading feature files from an `fs.FS` ([550](https://github.com/cucumber/godog/pull/550) - [tigh-latte](https://github.com/tigh-latte))
