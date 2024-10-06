@@ -1,16 +1,16 @@
 [
     {
         "uri": "formatter-tests/features/scenario_with_attachment.feature",
-        "id": "scenario-with-attachment",
+        "id": "feature-with-attachment",
         "keyword": "Feature",
-        "name": "scenario with attachment",
+        "name": "feature with attachment",
         "description": "  describes\n  an attachment\n  feature",
         "line": 1,
         "elements": [
             {
-                "id": "scenario-with-attachment;step-with-attachment",
+                "id": "feature-with-attachment;scenario-with-attachment",
                 "keyword": "Scenario",
-                "name": "step with attachment",
+                "name": "scenario with attachment",
                 "description": "",
                 "line": 6,
                 "type": "scenario",
@@ -28,6 +28,16 @@
                         },
                         "embeddings": [
                             {
+                                "name": "Before Scenario Attachment 1",
+                                "mime_type": "text/plain",
+                                "data": "QmVmb3JlU2NlbmFyaW9BdHRhY2htZW50"
+                            },
+                            {
+                                "name": "Before Step Attachment 3",
+                                "mime_type": "text/plain",
+                                "data": "QmVmb3JlU3RlcEF0dGFjaG1lbnQ="
+                            },
+                            {
                                 "name": "TheFilename1",
                                 "mime_type": "text/plain",
                                 "data": "VGhlRGF0YTE="
@@ -36,6 +46,11 @@
                                 "name": "TheFilename2",
                                 "mime_type": "text/plain",
                                 "data": "VGhlRGF0YTI="
+                            },
+                            {
+                                "name": "After Step Attachment 4",
+                                "mime_type": "text/plain",
+                                "data": "QWZ0ZXJTdGVwQXR0YWNobWVudA=="
                             }
                         ]
                     },
@@ -52,24 +67,29 @@
                         },
                         "embeddings": [
                             {
-                                "name": "Data Attachment",
+                                "name": "Before Step Attachment 3",
                                 "mime_type": "text/plain",
                                 "data": "QmVmb3JlU3RlcEF0dGFjaG1lbnQ="
                             },
                             {
-                                "name": "TheFilename1",
+                                "name": "TheFilename3",
                                 "mime_type": "text/plain",
                                 "data": "VGhlRGF0YTE="
                             },
                             {
-                                "name": "TheFilename2",
+                                "name": "TheFilename4",
                                 "mime_type": "text/plain",
                                 "data": "VGhlRGF0YTI="
                             },
                             {
-                                "name": "Data Attachment",
+                                "name": "After Step Attachment 4",
                                 "mime_type": "text/plain",
                                 "data": "QWZ0ZXJTdGVwQXR0YWNobWVudA=="
+                            },
+                            {
+                                "name": "After Scenario Attachment 2",
+                                "mime_type": "text/plain",
+                                "data": "QWZ0ZXJTY2VuYXJpb0F0dGFjaG1lbnQ="
                             }
                         ]
                     }
