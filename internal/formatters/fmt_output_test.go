@@ -63,31 +63,79 @@ func listFmtOutputTestsFeatureFiles() (featureFiles []string, err error) {
 
 func fmtOutputTest(fmtName, testName, featureFilePath string) func(*testing.T) {
 	fmtOutputScenarioInitializer := func(ctx *godog.ScenarioContext) {
+		stepIndex := 0
+		ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
+			if strings.Contains(sc.Name, "attachment") {
+				att := godog.Attachments(ctx)
+				attCount := len(att)
+				if attCount != 0 {
+					assert.FailNowf(tT, "Unexpected attachments: "+sc.Name, "should have been empty, found %d", attCount)
+				}
+
+				ctx = godog.Attach(ctx,
+					godog.Attachment{Body: []byte("BeforeScenarioAttachment"), FileName: "Before Scenario Attachment 1", MediaType: "text/plain"},
+				)
+			}
+			return ctx, nil
+		})
+
+		ctx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
+
+			if strings.Contains(sc.Name, "attachment") {
+				att := godog.Attachments(ctx)
+				attCount := len(att)
+				if attCount != 4 {
+					assert.FailNow(tT, "Unexpected attachements: "+sc.Name, "expected 4, found %d", attCount)
+				}
+				ctx = godog.Attach(ctx,
+					godog.Attachment{Body: []byte("AfterScenarioAttachment"), FileName: "After Scenario Attachment 2", MediaType: "text/plain"},
+				)
+			}
+			return ctx, nil
+		})
 
 		ctx.StepContext().Before(func(ctx context.Context, st *godog.Step) (context.Context, error) {
-			att := godog.Attachments(ctx)
-			attCount := len(att)
-			if attCount > 0 {
-				assert.FailNow(tT, fmt.Sprintf("Unexpected Attachments found - should have been empty, found %d\n%+v", attCount, att))
-			}
+			stepIndex++
 
-			if st.Text == "a step with multiple attachment calls" {
+			if strings.Contains(st.Text, "attachment") {
+				att := godog.Attachments(ctx)
+				attCount := len(att)
+
+				// 1 for before scenario ONLY if this is the 1st step
+				expectedAttCount := 0
+				if stepIndex == 1 {
+					expectedAttCount = 1
+				}
+
+				if attCount != expectedAttCount {
+					assert.FailNow(tT, "Unexpected attachments: "+st.Text, "expected 1, found %d\n%+v", attCount, att)
+				}
 				ctx = godog.Attach(ctx,
-					godog.Attachment{Body: []byte("BeforeStepAttachment"), FileName: "Data Attachment", MediaType: "text/plain"},
+					godog.Attachment{Body: []byte("BeforeStepAttachment"), FileName: "Before Step Attachment 3", MediaType: "text/plain"},
 				)
 			}
 			return ctx, nil
 		})
 		ctx.StepContext().After(func(ctx context.Context, st *godog.Step, status godog.StepResultStatus, err error) (context.Context, error) {
 
-			if st.Text == "a step with multiple attachment calls" {
+			if strings.Contains(st.Text, "attachment") {
 				att := godog.Attachments(ctx)
 				attCount := len(att)
-				if attCount != 3 {
-					assert.FailNow(tT, fmt.Sprintf("Expected 3 Attachments - 1 from the before step and 2 from the step, found %d\n%+v", attCount, att))
+
+				// 1 for before scenario ONLY if this is the 1st step
+				// 1 for before before step
+				// 2 from from step
+				expectedAttCount := 3
+				if stepIndex == 1 {
+					expectedAttCount = 4
+				}
+
+				if attCount != expectedAttCount {
+					// 1 from before scenario, 1 from before step, 1 from step
+					assert.FailNow(tT, "Unexpected attachments: "+st.Text, "expected 4, found %d", attCount)
 				}
 				ctx = godog.Attach(ctx,
-					godog.Attachment{Body: []byte("AfterStepAttachment"), FileName: "Data Attachment", MediaType: "text/plain"},
+					godog.Attachment{Body: []byte("AfterStepAttachment"), FileName: "After Step Attachment 4", MediaType: "text/plain"},
 				)
 			}
 			return ctx, nil
@@ -105,7 +153,8 @@ func fmtOutputTest(fmtName, testName, featureFilePath string) func(*testing.T) {
 		expectOutputPath := strings.Replace(featureFilePath, "features", fmtName, 1)
 		expectOutputPath = strings.TrimSuffix(expectOutputPath, path.Ext(expectOutputPath))
 		if _, err := os.Stat(expectOutputPath); err != nil {
-			t.Skipf("Couldn't find expected output file %q", expectOutputPath)
+			// the test author needs to write an "expected output" file for any formats they want the test feature to be verified against
+			t.Skipf("Skipping test for feature '%v' for format '%v', because no 'expected output' file %q", featureFilePath, fmtName, expectOutputPath)
 		}
 
 		expectedOutput, err := os.ReadFile(expectOutputPath)
@@ -130,6 +179,9 @@ func fmtOutputTest(fmtName, testName, featureFilePath string) func(*testing.T) {
 		expected := normalise(string(expectedOutput))
 		actual := normalise(buf.String())
 		assert.Equalf(t, expected, actual, "path: %s", expectOutputPath)
+		if expected != actual {
+			println("diff")
+		}
 	}
 }
 
@@ -162,8 +214,10 @@ func pendingStepDef() error { return godog.ErrPending }
 func failingStepDef() error { return fmt.Errorf("step failed") }
 
 func stepWithSingleAttachmentCall(ctx context.Context) (context.Context, error) {
-	if len(godog.Attachments(ctx)) > 0 {
-		assert.FailNow(tT, "Unexpected Attachments found - should have been empty")
+	aCount := len(godog.Attachments(ctx))
+	if aCount != 2 {
+		// 1 from before scenario, 1 from before step
+		assert.FailNowf(tT, "Unexpected Attachments found", "should have been 2, but found %v", aCount)
 	}
 
 	ctx = godog.Attach(ctx,
@@ -174,15 +228,16 @@ func stepWithSingleAttachmentCall(ctx context.Context) (context.Context, error) 
 	return ctx, nil
 }
 func stepWithMultipleAttachmentCalls(ctx context.Context) (context.Context, error) {
-	if len(godog.Attachments(ctx)) != 1 {
-		assert.FailNow(tT, "Expected 1 Attachment that should have been inserted by before step")
+	aCount := len(godog.Attachments(ctx))
+	if aCount != 1 {
+		assert.FailNowf(tT, "Unexpected Attachments found", "Expected 1 Attachment, but found %v", aCount)
 	}
 
 	ctx = godog.Attach(ctx,
-		godog.Attachment{Body: []byte("TheData1"), FileName: "TheFilename1", MediaType: "text/plain"},
+		godog.Attachment{Body: []byte("TheData1"), FileName: "TheFilename3", MediaType: "text/plain"},
 	)
 	ctx = godog.Attach(ctx,
-		godog.Attachment{Body: []byte("TheData2"), FileName: "TheFilename2", MediaType: "text/plain"},
+		godog.Attachment{Body: []byte("TheData2"), FileName: "TheFilename4", MediaType: "text/plain"},
 	)
 
 	return ctx, nil

@@ -182,14 +182,14 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 		// Run after step handlers.
 		rctx, err = s.runAfterStepHooks(ctx, step, status, err)
 
-		// extract any accumulated attachments and clear them
-		pickledAttachments := pickleAttachments(rctx)
-		rctx = clearAttach(rctx)
-
 		// Trigger after scenario on failing or last step to attach possible hook error to step.
 		if !s.shouldFail(scenarioErr) && (isLast || s.shouldFail(err)) {
 			rctx, err = s.runAfterScenarioHooks(rctx, pickle, err)
 		}
+
+		// extract any accumulated attachments and clear them
+		pickledAttachments := pickleAttachments(rctx)
+		rctx = clearAttach(rctx)
 
 		if earlyReturn {
 			return
@@ -227,7 +227,6 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 	// run before step handlers
 	ctx, err = s.runBeforeStepHooks(ctx, step, err)
 
-	// TODO JL MOVE THIS TO XXXX
 	var matchError error
 	match, matchError = s.matchStep(step)
 
@@ -235,7 +234,6 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 	s.fmt.Defined(pickle, step, match.GetInternalStepDefinition())
 
 	if err != nil {
-
 		pickledAttachments := pickleAttachments(ctx)
 		ctx = clearAttach(ctx)
 
@@ -244,7 +242,6 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 		return ctx, err
 	}
 
-	// XXXXX
 	if matchError != nil {
 		return ctx, matchError
 	}

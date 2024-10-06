@@ -11,6 +11,6 @@ The example in this directory shows how the godog API is used to add attachments
 
 You must use the '-v' flag or you will not see the cucumber JSON output.
 
-go test -v atttachment_test.go
+go test -v attachments_test.go
 
 
