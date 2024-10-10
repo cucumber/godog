@@ -327,6 +327,7 @@ func (ctx ScenarioContext) stepWithKeyword(expr interface{}, stepFunc interface{
 		panic(fmt.Sprintf("expected handler to return either zero, one or two values, but it has: %d", numOut))
 	}
 
+	// Register the handler
 	def := &models.StepDefinition{
 		StepDefinition: formatters.StepDefinition{
 			Handler: stepFunc,
