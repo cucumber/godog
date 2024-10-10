@@ -1,4 +1,4 @@
-package tests
+package demo
 
 import (
 	"bytes"
@@ -150,6 +150,7 @@ func (ft *flatTire) continueOnMyWay() error {
 
 var defaultOpts = godog.Options{
 	Strict: true,
+	Paths:  []string{"../features"},
 }
 
 func init() {
