@@ -75,11 +75,11 @@ func Test_ProgressFormatterWithPanicInMultistep(t *testing.T) {
 		fmt:      formatters.ProgressFormatterFunc("progress", w),
 		features: []*models.Feature{&ft},
 		scenarioInitializer: func(ctx *ScenarioContext) {
-			ctx.Step(`^sub1$`, func() error { return nil })
+			ctx.Step(`^sub1$`, func() error { panic("DELIBERATE FAILURE") })
 			ctx.Step(`^sub-sub$`, func() error { return nil })
-			ctx.Step(`^sub2$`, func() []string { return []string{"sub-sub", "sub1", "one"} })
+			ctx.Step(`^sub2$`, func() Steps { return Steps{"sub-sub", "sub1", "one"} })
 			ctx.Step(`^one$`, func() error { return nil })
-			ctx.Step(`^two$`, func() []string { return []string{"sub1", "sub2"} })
+			ctx.Step(`^two$`, func() Steps { return []string{"sub1", "sub2"} })
 		},
 	}
 

@@ -36,6 +36,9 @@ type StepDefinition struct {
 var typeOfContext = reflect.TypeOf((*context.Context)(nil)).Elem()
 
 // Run a step with the matched arguments using reflect
+// Returns one of ...
+// (context, error)
+// (context, godog.Steps)
 func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}) {
 	var values []reflect.Value
 
@@ -184,17 +187,31 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 		return ctx, nil
 	}
 
-	if len(res) == 1 {
-		r := res[0].Interface()
+	// Note that the step fn return types were validated at Initialise in test_context.go stepWithKeyword()
 
-		if ctx, ok := r.(context.Context); ok {
+	// single return value may be one of ...
+	// error
+	// context.Context
+	// godog.Steps
+	result0 := res[0].Interface()
+	if len(res) == 1 {
+
+		// if the single return value is a context then just return it
+		if ctx, ok := result0.(context.Context); ok {
 			return ctx, nil
 		}
 
-		return ctx, res[0].Interface()
+		// return type is presumably one of nil, "error" or "Steps" so place it into second return position
+		return ctx, result0
 	}
 
-	return res[0].Interface().(context.Context), res[1].Interface()
+	// multi-value value return must be
+	//  (context, error) and the context value must not be nil
+	if ctx, ok := result0.(context.Context); ok {
+		return ctx, res[1].Interface()
+	}
+
+	panic(fmt.Errorf("step should have returned (context.Context, error), but found %v rather than a context.Context value", result0))
 }
 
 func (sd *StepDefinition) shouldBeString(idx int) (string, error) {

@@ -1149,7 +1149,6 @@ func TestTestSuite_Run(t *testing.T) {
 				<<<< After suite`,
 		},
 	} {
-		// JL
 		t.Run(tc.name, func(t *testing.T) {
 			afterScenarioCnt := 0
 			beforeScenarioCnt := 0
