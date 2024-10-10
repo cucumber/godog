@@ -40,7 +40,7 @@ func TestScenarioContext_Step(t *testing.T) {
 
 	for _, c := range []tc{
 		{n: "ScenarioContext should panic if step expression is neither a string, regex or byte slice",
-			p: "expecting expr to be a *regexp.Regexp or a string, got type: int",
+			p: "expecting expr to be a *regexp.Regexp or a string or []byte, got type: int",
 			f: func() { ctx.Step(1251, okVoidResult) }},
 		{n: "ScenarioContext should panic if step handler is not a function",
 			p: "expected handler to be func, but got: int",
@@ -53,20 +53,20 @@ func TestScenarioContext_Step(t *testing.T) {
 			f: func() { ctx.Step(".*", nokLimitCase5) }},
 
 		{n: "ScenarioContext should panic if step expression is neither a string, regex or byte slice",
-			p: "expecting expr to be a *regexp.Regexp or a string, got type: int",
+			p: "expecting expr to be a *regexp.Regexp or a string or []byte, got type: int",
 			f: func() { ctx.Step(1251, okVoidResult) }},
 
 		{n: "ScenarioContext should panic if step return type is []string",
 			p: "expected handler to return one of error or context.Context or godog.Steps or (context.Context, error), but got: []string",
 			f: func() { ctx.Step(".*", nokSliceStringResult) }},
 		{n: "ScenarioContext should panic if step handler return type is not an error or string slice or void (interface)",
-			p: "expected handler to return one of error or context.Context or godog.Steps or (context.Context, error), but got: interface",
+			p: "expected handler to return one of error or context.Context or godog.Steps or (context.Context, error), but got: interface {}",
 			f: func() { ctx.Step(".*", nokInvalidReturnInterfaceType) }},
 		{n: "ScenarioContext should panic if step handler return type is not an error or string slice or void (slice)",
 			p: "expected handler to return one of error or context.Context or godog.Steps or (context.Context, error), but got: []int",
 			f: func() { ctx.Step(".*", nokInvalidReturnSliceType) }},
 		{n: "ScenarioContext should panic if step handler return type is not an error or string slice or void (other)",
-			p: "expected handler to return one of error or context.Context or godog.Steps or (context.Context, error), but got: chan",
+			p: "expected handler to return one of error or context.Context or godog.Steps or (context.Context, error), but got: chan int",
 			f: func() { ctx.Step(".*", nokInvalidReturnOtherType) }},
 	} {
 		t.Run(c.n, func(t *testing.T) {

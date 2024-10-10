@@ -281,6 +281,7 @@ func (ctx ScenarioContext) Then(expr, stepFunc interface{}) {
 func (ctx ScenarioContext) stepWithKeyword(expr interface{}, stepFunc interface{}, keyword formatters.Keyword) {
 	var regex *regexp.Regexp
 
+	// Validate the first input param is regex compatible
 	switch t := expr.(type) {
 	case *regexp.Regexp:
 		regex = t
@@ -289,17 +290,41 @@ func (ctx ScenarioContext) stepWithKeyword(expr interface{}, stepFunc interface{
 	case []byte:
 		regex = regexp.MustCompile(string(t))
 	default:
-		panic(fmt.Sprintf("expecting expr to be a *regexp.Regexp or a string, got type: %T", expr))
+		panic(fmt.Sprintf("expecting expr to be a *regexp.Regexp or a string or []byte, got type: %T", expr))
 	}
 
-	v := reflect.ValueOf(stepFunc)
-	fnTyp := v.Type()
-	if fnTyp.Kind() != reflect.Func {
+	// Validate that the handler is a function.
+	handlerType := reflect.TypeOf(stepFunc)
+	if handlerType.Kind() != reflect.Func {
 		panic(fmt.Sprintf("expected handler to be func, but got: %T", stepFunc))
 	}
 
-	if fnTyp.NumOut() > 2 {
-		panic(fmt.Sprintf("expected handler to return either zero, one or two values, but it has: %d", fnTyp.NumOut()))
+	// Validate the function's return types.
+	helpPrefix := "expected handler to return one of error or context.Context or godog.Steps or (context.Context, error)"
+	isNested := false
+
+	numOut := handlerType.NumOut()
+	switch numOut {
+	case 0:
+		// No return values.
+	case 1:
+		// One return value: should be error, Steps, or context.Context.
+		outType := handlerType.Out(0)
+		if outType == reflect.TypeOf(Steps{}) {
+			isNested = true
+		} else {
+			if outType != errorInterface && outType != contextInterface {
+				panic(fmt.Sprintf("%s, but got: %v", helpPrefix, outType))
+			}
+		}
+	case 2:
+		// Two return values: should be (context.Context, error).
+		if handlerType.Out(0) != contextInterface || handlerType.Out(1) != errorInterface {
+			panic(fmt.Sprintf("%s, but got: %v, %v", helpPrefix, handlerType.Out(0), handlerType.Out(1)))
+		}
+	default:
+		// More than two return values.
+		panic(fmt.Sprintf("expected handler to return either zero, one or two values, but it has: %d", numOut))
 	}
 
 	def := &models.StepDefinition{
@@ -308,39 +333,8 @@ func (ctx ScenarioContext) stepWithKeyword(expr interface{}, stepFunc interface{
 			Expr:    regex,
 			Keyword: keyword,
 		},
-		HandlerValue: v,
-	}
-
-	// verify valid return types
-	helpPrefix := "expected handler to return one of error or context.Context or godog.Steps or (context.Context, error)"
-
-	if fnTyp.NumOut() == 1 {
-		typ0 := fnTyp.Out(0)
-
-		if typ0 == reflect.TypeOf(Steps{}) {
-			// a return value of Steps is ok
-			def.Nested = true
-		} else {
-			switch typ0.Kind() {
-			case reflect.Interface:
-				// error and context are ok
-				if !typ0.Implements(errorInterface) && !typ0.Implements(contextInterface) {
-					panic(fmt.Sprintf("%s, but got: %s", helpPrefix, typ0.Kind()))
-				}
-			case reflect.Slice:
-				panic(fmt.Sprintf("%s, but got: []%s", helpPrefix, typ0.Elem().Kind()))
-			default:
-				panic(fmt.Sprintf("%s, but got: %s", helpPrefix, typ0.Kind()))
-			}
-		}
-	}
-
-	if fnTyp.NumOut() == 2 {
-		typ0 := fnTyp.Out(0)
-		typ1 := fnTyp.Out(1)
-		if !typ0.Implements(contextInterface) || !typ1.Implements(errorInterface) {
-			panic(fmt.Sprintf("%s, but got (%v, %s)", helpPrefix, typ0.Name(), typ1.Name()))
-		}
+		HandlerValue: reflect.ValueOf(stepFunc),
+		Nested:       isNested,
 	}
 
 	// stash the step
