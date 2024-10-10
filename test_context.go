@@ -293,13 +293,13 @@ func (ctx ScenarioContext) stepWithKeyword(expr interface{}, stepFunc interface{
 	}
 
 	v := reflect.ValueOf(stepFunc)
-	typ := v.Type()
-	if typ.Kind() != reflect.Func {
+	fnTyp := v.Type()
+	if fnTyp.Kind() != reflect.Func {
 		panic(fmt.Sprintf("expected handler to be func, but got: %T", stepFunc))
 	}
 
-	if typ.NumOut() > 2 {
-		panic(fmt.Sprintf("expected handler to return either zero, one or two values, but it has: %d", typ.NumOut()))
+	if fnTyp.NumOut() > 2 {
+		panic(fmt.Sprintf("expected handler to return either zero, one or two values, but it has: %d", fnTyp.NumOut()))
 	}
 
 	def := &models.StepDefinition{
@@ -311,23 +311,39 @@ func (ctx ScenarioContext) stepWithKeyword(expr interface{}, stepFunc interface{
 		HandlerValue: v,
 	}
 
-	if typ.NumOut() == 1 {
-		typ = typ.Out(0)
-		switch typ.Kind() {
-		case reflect.Interface:
-			if !typ.Implements(errorInterface) && !typ.Implements(contextInterface) {
-				panic(fmt.Sprintf("expected handler to return an error or context.Context, but got: %s", typ.Kind()))
-			}
-		case reflect.Slice:
-			if typ.Elem().Kind() != reflect.String {
-				panic(fmt.Sprintf("expected handler to return []string for multistep, but got: []%s", typ.Elem().Kind()))
-			}
+	// verify valid return types
+	helpPrefix := "expected handler to return one of error or context.Context or godog.Steps or (context.Context, error)"
+
+	if fnTyp.NumOut() == 1 {
+		typ0 := fnTyp.Out(0)
+
+		if typ0 == reflect.TypeOf(Steps{}) {
+			// a return value of Steps is ok
 			def.Nested = true
-		default:
-			panic(fmt.Sprintf("expected handler to return an error or []string, but got: %s", typ.Kind()))
+		} else {
+			switch typ0.Kind() {
+			case reflect.Interface:
+				// error and context are ok
+				if !typ0.Implements(errorInterface) && !typ0.Implements(contextInterface) {
+					panic(fmt.Sprintf("%s, but got: %s", helpPrefix, typ0.Kind()))
+				}
+			case reflect.Slice:
+				panic(fmt.Sprintf("%s, but got: []%s", helpPrefix, typ0.Elem().Kind()))
+			default:
+				panic(fmt.Sprintf("%s, but got: %s", helpPrefix, typ0.Kind()))
+			}
 		}
 	}
 
+	if fnTyp.NumOut() == 2 {
+		typ0 := fnTyp.Out(0)
+		typ1 := fnTyp.Out(1)
+		if !typ0.Implements(contextInterface) || !typ1.Implements(errorInterface) {
+			panic(fmt.Sprintf("%s, but got (%v, %s)", helpPrefix, typ0.Name(), typ1.Name()))
+		}
+	}
+
+	// stash the step
 	ctx.suite.steps = append(ctx.suite.steps, def)
 }
 

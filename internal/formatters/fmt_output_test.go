@@ -179,9 +179,6 @@ func fmtOutputTest(fmtName, testName, featureFilePath string) func(*testing.T) {
 		expected := normalise(string(expectedOutput))
 		actual := normalise(buf.String())
 		assert.Equalf(t, expected, actual, "path: %s", expectOutputPath)
-		if expected != actual {
-			println("diff")
-		}
 	}
 }
 
