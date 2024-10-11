@@ -299,6 +299,10 @@ func (ctx ScenarioContext) stepWithKeyword(expr interface{}, stepFunc interface{
 		panic(fmt.Sprintf("expected handler to be func, but got: %T", stepFunc))
 	}
 
+	// FIXME = Validate the handler function param types here so 
+	// that any errors are discovered early.
+	// StepDefinition.Run defines the supported types but fails at run time not registration time
+
 	// Validate the function's return types.
 	helpPrefix := "expected handler to return one of error or context.Context or godog.Steps or (context.Context, error)"
 	isNested := false

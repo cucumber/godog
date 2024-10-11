@@ -16,9 +16,9 @@ var typeOfBytes = reflect.TypeOf([]byte(nil))
 
 // matchable errors
 var (
-	ErrUnmatchedStepArgumentNumber = errors.New("func received more arguments than expected")
+	ErrUnmatchedStepArgumentNumber = errors.New("func expected more arguments than given")
 	ErrCannotConvert               = errors.New("cannot convert argument")
-	ErrUnsupportedArgumentType     = errors.New("unsupported argument type")
+	ErrUnsupportedParameterType    = errors.New("func has unsupported parameter type")
 )
 
 // StepDefinition ...
@@ -164,7 +164,8 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 
 				return ctx, fmt.Errorf(`%w %d: "%v" of type "%T" to *messages.PickleTable`, ErrCannotConvert, i, arg, arg)
 			default:
-				return ctx, fmt.Errorf("%w: the argument %d type %T is not supported %s", ErrUnsupportedArgumentType, i, arg, param.Elem().String())
+				// the error here is that the declared function has an unsupported param type - really this ought to be trapped at registration ti,e
+				return ctx, fmt.Errorf("%w: the data type of parameter %d type *%s is not supported", ErrUnsupportedParameterType, i, param.Elem().String())
 			}
 		case reflect.Slice:
 			switch param {
@@ -175,10 +176,13 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 				}
 				values = append(values, reflect.ValueOf([]byte(s)))
 			default:
-				return ctx, fmt.Errorf("%w: the slice argument %d type %s is not supported", ErrUnsupportedArgumentType, i, param.Kind())
+				// the problem is the function decl is not using a support slice type as the param
+				return ctx, fmt.Errorf("%w: the slice parameter %d type []%s is not supported", ErrUnsupportedParameterType, i, param.Elem().Kind())
 			}
+		case reflect.Struct:
+			return ctx, fmt.Errorf("%w: the struct parameter %d type %s is not supported", ErrUnsupportedParameterType, i, param.String())
 		default:
-			return ctx, fmt.Errorf("%w: the argument %d type %s is not supported", ErrUnsupportedArgumentType, i, param.Kind())
+			return ctx, fmt.Errorf("%w: the parameter %d type %s is not supported", ErrUnsupportedParameterType, i, param.Kind())
 		}
 	}
 
@@ -211,7 +215,11 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 		return ctx, res[1].Interface()
 	}
 
-	panic(fmt.Errorf("step should have returned (context.Context, error), but found %v rather than a context.Context value", result0))
+	if result0 == nil {
+		panic("step definitions with return type (context.Context, error) must not return <nil> for the context.Context value")
+	}
+
+	panic(fmt.Errorf("step definition has return type (context.Context, error), but found %v rather than a context.Context value", result0))
 }
 
 func (sd *StepDefinition) shouldBeString(idx int) (string, error) {
