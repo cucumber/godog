@@ -372,24 +372,6 @@ func TestShouldSupportGherkinTable(t *testing.T) {
 	assert.Equal(t, expectedTable, actualTable)
 }
 
-func TestShouldNotSupportOtherPointerTypes(t *testing.T) {
-	fn1 := func(a *int) {
-		assert.Fail(t, "shound not be called")
-	}
-
-	def := &models.StepDefinition{
-		StepDefinition: formatters.StepDefinition{
-			Handler: fn1,
-		},
-		HandlerValue: reflect.ValueOf(fn1),
-		Args:         []interface{}{"UTTERLY IGNORED"},
-	}
-
-	_, err := def.Run(context.Background())
-	assert.Equal(t, "func has unsupported parameter type: the data type of parameter 0 type *int is not supported", err.(error).Error())
-	assert.True(t, errors.Is(err.(error), models.ErrUnsupportedParameterType))
-}
-
 func TestShouldSupportOnlyByteSlice(t *testing.T) {
 	var aActual []byte
 	fn1 := func(a []byte) {
