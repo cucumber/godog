@@ -14,8 +14,7 @@ import (
 //  (e.g., `godog.TestSuite` instances), using standard `go` table-driven tests.  See associated README file.
 //
 
-// the main unit test runs the case(s) defined in the table, then finally aggregates the outputs into a single report
-
+// TestSeparateScenarios runs the case(s) defined in the table, then combines the outputs into a single report
 func TestSeparateScenarios(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -51,7 +50,7 @@ func TestSeparateScenarios(t *testing.T) {
 			// test runs only selected features/scenarios
 			opts.Paths = test.paths
 			opts.Format = "cucumber"
-			opts.Output = outputCollector.NewOutput()
+			opts.Output = outputCollector.NewWriter()
 
 			gts := godog.TestSuite{
 				Name:                t.Name(),
@@ -65,7 +64,7 @@ func TestSeparateScenarios(t *testing.T) {
 
 	// then invokes a "combiner" appropriate for the output(s) produced by the test case(s)
 	// NOTE: the "combiner" is formatter-specific; this one "knows" to combine "cucumber" reports
-	outputs, err := CombineCukeOutputs(outputCollector.GetOutputs())
+	combinedReport, err := CombineCukeReports(outputCollector.GetOutputs())
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "combiner error: %s\n", err)
 		return
@@ -73,5 +72,5 @@ func TestSeparateScenarios(t *testing.T) {
 
 	// route the combined output to where it should go...
 	// hmm, it'd be nice to have some CLI options to control this destination...
-	fmt.Println(string(outputs))
+	fmt.Println(string(combinedReport))
 }

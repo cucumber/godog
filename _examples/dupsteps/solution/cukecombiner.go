@@ -7,12 +7,11 @@ import (
 	"github.com/cucumber/godog/internal/formatters"
 )
 
-// Cucumber combiner - "knows" how to combine multiple "cucumber" reports into one
+// CombineCukeReports "knows" how to combine multiple "cucumber" reports into one
+func CombineCukeReports(cukeReportOutputs [][]byte) ([]byte, error) {
+	var allCukeFeatureJSONs []formatters.CukeFeatureJSON
 
-func CombineCukeOutputs(outputs [][]byte) ([]byte, error) {
-	var result []formatters.CukeFeatureJSON
-
-	for _, output := range outputs {
+	for _, output := range cukeReportOutputs {
 		var cukeFeatureJSONS []formatters.CukeFeatureJSON
 
 		err := json.Unmarshal(output, &cukeFeatureJSONS)
@@ -20,13 +19,13 @@ func CombineCukeOutputs(outputs [][]byte) ([]byte, error) {
 			return nil, fmt.Errorf("can't unmarshal cuke feature JSON: %w", err)
 		}
 
-		result = append(result, cukeFeatureJSONS...)
+		allCukeFeatureJSONs = append(allCukeFeatureJSONs, cukeFeatureJSONS...)
 	}
 
-	aggregatedResults, err := json.MarshalIndent(result, "", "    ")
+	combinedCukeReport, err := json.MarshalIndent(allCukeFeatureJSONs, "", "    ")
 	if err != nil {
 		return nil, fmt.Errorf("can't marshal combined cuke feature JSON: %w", err)
 	}
 
-	return aggregatedResults, nil
+	return combinedCukeReport, nil
 }

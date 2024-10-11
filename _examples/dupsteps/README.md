@@ -2,43 +2,46 @@
 
 ## Problem Statement
 
-In a testing pipeline in which many `godog` scenario test cases for a single feature were
-written and maintained by different developers, it quickly became apparent that Cucumber's
-approach of considering step definitions as "global" - i.e., the need for a step's text to
-identify it uniquely unique across all scenarios being tested - was problematic.
+In a testing pipeline in which many `godog` Scenario test cases for a single Feature are run
+within a single `godog.TestSuite` (in order to produce a single report of results), it quickly
+became apparent that Cucumber's requirement for a global one-to-one pairing between the Pattern
+used to match the text of a Step to the Function implementing it is problematic.
 
-In the example provided here (see the `demo` and associated `features` folders),
-the fact that the step with text `I fixed it` is used in two scenarios, but needs to
-be interpreted _differently_ based upon which scenario is executing, implies that
-either the development of both scenarios needs to be coordinated (i.e., to come
-to a common implementation of that step, like an API), _or_ the step text needs
-to be unique between them so that the implementations can be different.
+In the illustrative example provided (see the [demo](./demo) and associated [features](./features) folders),
+Steps with matching text (e.g., `I fixed it`) appear in two Scenarios; but, each calls
+for a _different_ implementation, specific to its Scenario.  Cucumber's requirement (as
+mentioned above) would force a single implementation of this Step across both Scenarios.
+To accommodate this requirement, either the Gherkin (i.e., the _given_ business language)
+would have to change, or coding best practices (e.g., Single Responsibility Principle,
+Separation of Concerns, Modularity, Encapsulation, Cohesion, etc.) would have to give.
 
-Running the tests for the two scenarios separately (e.g., using a separate 
-`godog.TestSuite`) would "solve" the problem, as the step implementations 
-would be unique within each testing context.  However, a hard requirement for
-a single testing phase within our build pipeline requires a single "cucumber
-report" file to be produced as evidence of the success or failure of each
-test scenario.  And, `godog` produces a separate report for each invocation
-of `godog.TestSuite`, so _something needed to change._
+Running the tests for the two Scenarios _separately_ (e.g., using a separate `godog.TestSuite`)
+could "solve" the problem, as matching the common Step text to its scenario-specific Function
+would then be unambiguous within the Scenario-specific testing run context.  However, a hard requirement
+within our build pipeline requires a single "cucumber report" file to be produced as evidence
+of the success or failure of _all_ required test Scenarios.  Because `godog` produces a
+_separate_ report for each invocation of `godog.TestSuite`, _something had to change._
+
+## Problem Detection
+
+A ["step checker" tool](cmd/stepchecker/README.md) was created to facilitate early detection
+of the problem situation described above.  Using this tool while modifying or adding tests
+for new scenarios given by the business was proven useful as part of a "shift left" testing
+strategy.
 
 ## Proposed Solution
 
-See a proposed "solution" of using a simple "report combiner" in conjunction
-with establishment of separate, standard `go` tests, within the nested `solution`
-folder.
+A ["solution" was proposed](solution/README.md) of using a simple "report combiner" in conjunction
+with establishment of separate, standard `go` tests.
 
-The main approach is to feed each `godog.TestSuite` used to partition execution
-of the test's scenarios with its own `Output` buffer, and to combine them
-into a single "cucumber report" meeting the needs of our build pipeline.
+The main idea in the proposed "solution" _is to use separate_ `godog.TestSuite` instances
+to partition execution of the test Scenarios, then collect and combine their output into
+the single "cucumber report" required by our build pipeline.
 
 ## Notes
 
 - See [PR-636](https://github.com/cucumber/godog/pull/636) dealing with a related issue: when `godog` chooses an
-  incorrect step function when more than one step function matches the text
-  from a scenario being tested (i.e., an "ambiguous" step, such as illustrated
-  by the `I fixed it` step in the nested `demo` folder).
-- _NOTE: until the change made in [PR-636](https://github.com/cucumber/godog/pull/636)
-  is made available (it's not yet been released as of this writing), you can use something
-  like the [stepchecker](cmd/stepchecker/README.md) to detect such cases._
+  incorrect Step Function when more than one matches the text
+  from a Scenario being tested (i.e., an "ambiguous" Step, such as illustrated
+  by the `I fixed it` Step in the nested `demo` folder).
 

@@ -17,19 +17,18 @@ import (
 // the single global var needed to "collect" the output(s) produced by the test(s)
 var mw = MultiWriter{}
 
-// the main test "scaffold" which runs the test case(s), then finally aggregates the outputs into a single report
-
+// TestMain runs the test case(s), then combines the outputs into a single report
 func TestMain(m *testing.M) {
 	rc := m.Run() // runs the test case(s)
 
 	// then invokes a "combiner" appropriate for the output(s) produced by the test case(s)
 	// NOTE: the "combiner" is formatter-specific; this one "knows" to combine "cucumber" reports
-	outputs, err := CombineCukeOutputs(mw.GetOutputs())
+	combinedReport, err := CombineCukeReports(mw.GetOutputs())
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "combiner error: %s\n", err)
 	} else {
 		// hmm, it'd be nice to have some CLI options to control this destination...
-		fmt.Println(string(outputs))
+		fmt.Println(string(combinedReport))
 	}
 
 	os.Exit(rc)
@@ -42,7 +41,7 @@ func TestFlatTire(t *testing.T) {
 
 	// test runs only selected features/scenarios
 	opts.Paths = []string{"../features/flatTire.feature"}
-	opts.Output = mw.NewOutput()
+	opts.Output = mw.NewWriter()
 
 	gts := godog.TestSuite{
 		Name: t.Name(),
@@ -62,7 +61,7 @@ func TestCloggedDrain(t *testing.T) {
 
 	// test runs only selected features/scenarios
 	opts.Paths = []string{"../features/cloggedDrain.feature"}
-	opts.Output = mw.NewOutput()
+	opts.Output = mw.NewWriter()
 
 	gts := godog.TestSuite{
 		Name: t.Name(),
