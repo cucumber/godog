@@ -50,6 +50,7 @@ func TestSeparateScenarios(t *testing.T) {
 
 			// test runs only selected features/scenarios
 			opts.Paths = test.paths
+			opts.Format = "cucumber"
 			opts.Output = outputCollector.NewOutput()
 
 			gts := godog.TestSuite{
