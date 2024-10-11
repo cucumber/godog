@@ -13,27 +13,26 @@ Example:
 
 ```shell
 $ cd ~/repos/godog/_examples/dupsteps
-$ go run cmd/stepchecker/main.go tests
+$ go run cmd/stepchecker/main.go -- demo/*.go features/*.feature
 Found 5 feature step(s):
-1. "I ran over a nail and got a flat tire"
-2. "I fixed it"
+1. "I can continue on my way"
+2. "I accidentally poured concrete down my drain and clogged the sewer line"
+3. "I fixed it"
   - 2 matching godog step(s) found:
-    from: tests/features/dupsteps.feature:7
-    from: tests/features/dupsteps.feature:13
-      to: tests/dupsteps_test.go:93:11
-      to: tests/dupsteps_test.go:125:11
-3. "I can continue on my way"
-4. "I accidentally poured concrete down my drain and clogged the sewer line"
-5. "I can once again use my sink"
+    from: features/cloggedDrain.feature:7
+    from: features/flatTire.feature:7
+      to: demo/dupsteps_test.go:93:11
+      to: demo/dupsteps_test.go:125:11
+4. "I can once again use my sink"
+5. "I ran over a nail and got a flat tire"
 
 Found 5 godog step(s):
-1. "^I fixed it$"
-2. "^I can once again use my sink$"
-3. "^I ran over a nail and got a flat tire$"
-4. "^I can continue on my way$"
-5. "^I accidentally poured concrete down my drain and clogged the sewer line$"
+1. "^I can continue on my way$"
+2. "^I accidentally poured concrete down my drain and clogged the sewer line$"
+3. "^I fixed it$"
+4. "^I can once again use my sink$"
+5. "^I ran over a nail and got a flat tire$"
 
-2024/10/06 15:38:50 1 issue(s) found
+2024/10/10 20:18:57 1 issue(s) found
 exit status 1
-$ _
 ```

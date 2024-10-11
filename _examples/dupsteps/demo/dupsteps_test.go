@@ -17,7 +17,7 @@ import (
 //
 //	The tests "pass" by demonstrating the "problem statement" discussed in this `dupsteps`
 // 	example; i.e., they are expected to "fail" when the problem is fixed, or can be fixed
-//	through a supported `godog` configuration option / enhancement.
+//	by using a `godog` configuration option / enhancement which becomes available.
 //
 //  What's being demonstrated is how godog's use of a global list of steps defined across
 //  all configured scenarios allows for indeterminate results, based upon the order in
@@ -34,7 +34,7 @@ func TestFlatTireFirst(t *testing.T) {
 			(&flatTire{}).addFlatTireSteps(ctx)
 			(&cloggedDrain{}).addCloggedDrainSteps(ctx)
 		},
-		"drain is clogged",
+		"the drain is still clogged",
 	)
 }
 
@@ -89,9 +89,9 @@ type cloggedDrain struct {
 }
 
 func (cd *cloggedDrain) addCloggedDrainSteps(ctx *godog.ScenarioContext) {
-	ctx.Step(`^I accidentally poured concrete down my drain and clogged the sewer line$`, cd.clogSewerLine)
-	ctx.Step(`^I fixed it$`, cd.iFixedIt)
-	ctx.Step(`^I can once again use my sink$`, cd.useTheSink)
+	ctx.Given(`^I accidentally poured concrete down my drain and clogged the sewer line$`, cd.clogSewerLine)
+	ctx.Then(`^I fixed it$`, cd.iFixedIt)
+	ctx.Then(`^I can once again use my sink$`, cd.useTheSink)
 }
 
 func (cd *cloggedDrain) clogSewerLine() error {
@@ -108,7 +108,7 @@ func (cd *cloggedDrain) iFixedIt() error {
 
 func (cd *cloggedDrain) useTheSink() error {
 	if cd.drainIsClogged {
-		return fmt.Errorf("drain is clogged")
+		return fmt.Errorf("the drain is still clogged")
 	}
 
 	return nil
@@ -121,9 +121,9 @@ type flatTire struct {
 }
 
 func (ft *flatTire) addFlatTireSteps(ctx *godog.ScenarioContext) {
-	ctx.Step(`^I ran over a nail and got a flat tire$`, ft.gotFlatTire)
-	ctx.Step(`^I fixed it$`, ft.iFixedIt)
-	ctx.Step(`^I can continue on my way$`, ft.continueOnMyWay)
+	ctx.Given(`^I ran over a nail and got a flat tire$`, ft.gotFlatTire)
+	ctx.Then(`^I fixed it$`, ft.iFixedIt)
+	ctx.Then(`^I can continue on my way$`, ft.continueOnMyWay)
 }
 
 func (ft *flatTire) gotFlatTire() error {

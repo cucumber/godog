@@ -6,10 +6,8 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"io/fs"
 	"log"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -21,52 +19,44 @@ import (
 //
 
 func main() {
-	if len(os.Args) != 2 {
-		log.Printf("Usage: main.go <rootPath>\n")
+	if len(os.Args) < 3 {
+		log.Printf("Usage: main.go [go-file(s)] [feature-file(s)]\n")
 
 		os.Exit(RC_USER)
 	}
-
-	rootPath := os.Args[1]
 
 	// Structures into which to collect step patterns found in Go and feature files
 	godogSteps := make(map[string]*StepMatch)
 	featureSteps := make(map[string]*StepMatch)
 
-	// Walk through all files in the directory
-	errWalk := filepath.WalkDir(rootPath, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
+	// collect input files (must have at least one of each kind (e.g., *.go, *.feature)
+	for _, filePath := range os.Args[1:] {
+		if strings.HasSuffix(filePath, ".go") {
+			if err := collectGoSteps(filePath, godogSteps); err != nil {
+				fmt.Printf("error collecting `go` steps: %s\n", err)
+
+				os.Exit(RC_ISSUES)
+			}
 		}
 
-		if d.IsDir() {
-			return nil
+		if strings.HasSuffix(filePath, ".feature") {
+			if err := collectFeatureSteps(filePath, featureSteps); err != nil {
+				fmt.Printf("error collecting `feature` steps: %s\n", err)
+
+				os.Exit(RC_ISSUES)
+			}
 		}
-
-		if strings.HasSuffix(path, ".go") {
-			return collectGoSteps(path, godogSteps)
-		}
-
-		if strings.HasSuffix(path, ".feature") {
-			return collectFeatureSteps(path, featureSteps)
-		}
-
-		return nil
-	})
-
-	if errWalk != nil {
-		log.Printf("error walking directory: %v\n", errWalk)
-
-		os.Exit(RC_SYSTEM)
 	}
 
 	if len(godogSteps) == 0 {
 		log.Printf("no godog step definition(s) found")
+
 		os.Exit(RC_USER)
 	}
 
 	if len(featureSteps) == 0 {
 		log.Printf("no feature step invocation(s) found")
+
 		os.Exit(RC_USER)
 	}
 
@@ -131,12 +121,12 @@ func main() {
 	}
 }
 
-func collectGoSteps(filePath string, steps map[string]*StepMatch) error {
+func collectGoSteps(goFilePath string, steps map[string]*StepMatch) error {
 	fset := token.NewFileSet()
 
-	node, errParse := parser.ParseFile(fset, filePath, nil, parser.ParseComments)
+	node, errParse := parser.ParseFile(fset, goFilePath, nil, parser.ParseComments)
 	if errParse != nil {
-		return fmt.Errorf("error parsing Go file %s: %w", filePath, errParse)
+		return fmt.Errorf("error parsing Go file %s: %w", goFilePath, errParse)
 	}
 
 	stepDefPattern := regexp.MustCompile(`^godog.ScenarioContext.(Given|When|Then|And|Step)$`)
@@ -190,14 +180,14 @@ func collectGoSteps(filePath string, steps map[string]*StepMatch) error {
 	})
 
 	if errInspect != nil {
-		return fmt.Errorf("error encountered while inspecting %q: %w", filePath, errInspect)
+		return fmt.Errorf("error encountered while inspecting %q: %w", goFilePath, errInspect)
 	}
 
 	return nil
 }
 
-func collectFeatureSteps(filePath string, steps map[string]*StepMatch) error {
-	file, errOpen := os.Open(filePath)
+func collectFeatureSteps(featureFilePath string, steps map[string]*StepMatch) error {
+	file, errOpen := os.Open(featureFilePath)
 	if errOpen != nil {
 		return errOpen
 	}
@@ -216,7 +206,7 @@ func collectFeatureSteps(filePath string, steps map[string]*StepMatch) error {
 		}
 
 		if len(matches) != 3 {
-			return fmt.Errorf("unexpected number of matches at %s:%d: %d for %q\n", filePath, lineNo, len(matches), line)
+			return fmt.Errorf("unexpected number of matches at %s:%d: %d for %q\n", featureFilePath, lineNo, len(matches), line)
 		}
 
 		stepText := matches[2]
@@ -227,7 +217,7 @@ func collectFeatureSteps(filePath string, steps map[string]*StepMatch) error {
 			steps[stepText] = sm
 		}
 
-		sm.source = append(sm.source, sourceRef(fmt.Sprintf("%s:%d", filePath, lineNo)))
+		sm.source = append(sm.source, sourceRef(fmt.Sprintf("%s:%d", featureFilePath, lineNo)))
 	}
 
 	return nil
@@ -303,4 +293,3 @@ type StepMatch struct {
 
 const RC_ISSUES = 1
 const RC_USER = 2
-const RC_SYSTEM = 3
