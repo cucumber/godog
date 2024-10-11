@@ -292,9 +292,17 @@ func TestShouldSupportIntTypes(t *testing.T) {
 	_, err = def.Run(context.Background())
 	assert.Equal(t, `cannot convert argument 3: "128" to int8: strconv.ParseInt: parsing "128": value out of range`, err.(error).Error())
 
-	def.Args = []interface{}{"hello", "2", "3", "128"}
+	def.Args = []interface{}{"1", "2", "99999", "4"}
 	_, err = def.Run(context.Background())
-	assert.Equal(t, `cannot convert argument 0: "hello" to int64: strconv.ParseInt: parsing "hello": invalid syntax`, err.(error).Error())
+	assert.Equal(t, `cannot convert argument 2: "99999" to int16: strconv.ParseInt: parsing "99999": value out of range`, err.(error).Error())
+
+	def.Args = []interface{}{"1", strings.Repeat("2", 32), "3", "4"}
+	_, err = def.Run(context.Background())
+	assert.Equal(t, `cannot convert argument 1: "22222222222222222222222222222222" to int32: strconv.ParseInt: parsing "22222222222222222222222222222222": value out of range`, err.(error).Error())
+
+	def.Args = []interface{}{strings.Repeat("1", 32), "2", "3", "4"}
+	_, err = def.Run(context.Background())
+	assert.Equal(t, `cannot convert argument 0: "11111111111111111111111111111111" to int64: strconv.ParseInt: parsing "11111111111111111111111111111111": value out of range`, err.(error).Error())
 }
 
 func TestShouldSupportFloatTypes(t *testing.T) {
@@ -321,11 +329,6 @@ func TestShouldSupportFloatTypes(t *testing.T) {
 	def.Args = []interface{}{"1.1", strings.Repeat("2", 65) + ".22"}
 	_, err = def.Run(context.Background())
 	assert.Equal(t, `cannot convert argument 1: "22222222222222222222222222222222222222222222222222222222222222222.22" to float32: strconv.ParseFloat: parsing "22222222222222222222222222222222222222222222222222222222222222222.22": value out of range`, err.(error).Error())
-
-	def.Args = []interface{}{"hello", "2.2"}
-	_, err = def.Run(context.Background())
-	assert.Equal(t, `cannot convert argument 0: "hello" to float64: strconv.ParseFloat: parsing "hello": invalid syntax`, err.(error).Error())
-
 }
 
 func TestShouldSupportGherkinDocstring(t *testing.T) {
@@ -370,7 +373,9 @@ func TestShouldSupportGherkinTable(t *testing.T) {
 }
 
 func TestShouldNotSupportOtherPointerTypes(t *testing.T) {
-	fn1 := func(a *int) {}
+	fn1 := func(a *int) {
+		assert.Fail(t, "shound not be called")
+	}
 
 	def := &models.StepDefinition{
 		StepDefinition: formatters.StepDefinition{
@@ -420,7 +425,7 @@ func TestShouldSupportOnlyByteSlice(t *testing.T) {
 }
 
 // this test is superficial compared to the ones above where the actual error messages the user woudl see are verified
-func TestStepDefinition_Run_StepShouldBeString(t *testing.T) {
+func TestStepDefinition_Run_StepArgsShouldBeString(t *testing.T) {
 	test := func(t *testing.T, fn interface{}, expectedError string) {
 		def := &models.StepDefinition{
 			StepDefinition: formatters.StepDefinition{
@@ -429,6 +434,7 @@ func TestStepDefinition_Run_StepShouldBeString(t *testing.T) {
 			HandlerValue: reflect.ValueOf(fn),
 		}
 
+		// some value that is not a string
 		def.Args = []interface{}{12}
 
 		_, res := def.Run(context.Background())
@@ -451,17 +457,18 @@ func TestStepDefinition_Run_StepShouldBeString(t *testing.T) {
 	// Ensure step type error if step argument is not a string
 	// for all supported types.
 	const toStringError = `cannot convert argument 0: "12" of type "int" to string`
-	test(t, func(a int) {}, toStringError)
-	test(t, func(a int64) {}, toStringError)
-	test(t, func(a int32) {}, toStringError)
-	test(t, func(a int16) {}, toStringError)
-	test(t, func(a int8) {}, toStringError)
-	test(t, func(a string) {}, toStringError)
-	test(t, func(a float64) {}, toStringError)
-	test(t, func(a float32) {}, toStringError)
-	test(t, func(a *godog.Table) {}, `cannot convert argument 0: "12" of type "int" to *messages.PickleTable`)
-	test(t, func(a *godog.DocString) {}, `cannot convert argument 0: "12" of type "int" to *messages.PickleDocString`)
-	test(t, func(a []byte) {}, toStringError)
+	shouldNotBeCalled := func() { assert.Fail(t, "shound not be called") }
+	test(t, func(a int) { shouldNotBeCalled() }, toStringError)
+	test(t, func(a int64) { shouldNotBeCalled() }, toStringError)
+	test(t, func(a int32) { shouldNotBeCalled() }, toStringError)
+	test(t, func(a int16) { shouldNotBeCalled() }, toStringError)
+	test(t, func(a int8) { shouldNotBeCalled() }, toStringError)
+	test(t, func(a string) { shouldNotBeCalled() }, toStringError)
+	test(t, func(a float64) { shouldNotBeCalled() }, toStringError)
+	test(t, func(a float32) { shouldNotBeCalled() }, toStringError)
+	test(t, func(a *godog.Table) { shouldNotBeCalled() }, `cannot convert argument 0: "12" of type "int" to *messages.PickleTable`)
+	test(t, func(a *godog.DocString) { shouldNotBeCalled() }, `cannot convert argument 0: "12" of type "int" to *messages.PickleDocString`)
+	test(t, func(a []byte) { shouldNotBeCalled() }, toStringError)
 
 }
 
@@ -494,34 +501,36 @@ func TestStepDefinition_Run_InvalidHandlerParamConversion(t *testing.T) {
 		assert.Equal(t, expectedError, err.Error())
 	}
 
+	shouldNotBeCalled := func() { assert.Fail(t, "shound not be called") }
+
 	// Lists some unsupported argument types for step handler.
 
 	// Pointers should work only for godog.Table/godog.DocString
-	test(t, func(a *int) {}, "func has unsupported parameter type: the data type of parameter 0 type *int is not supported")
-	test(t, func(a *int64) {}, "func has unsupported parameter type: the data type of parameter 0 type *int64 is not supported")
-	test(t, func(a *int32) {}, "func has unsupported parameter type: the data type of parameter 0 type *int32 is not supported")
-	test(t, func(a *int16) {}, "func has unsupported parameter type: the data type of parameter 0 type *int16 is not supported")
-	test(t, func(a *int8) {}, "func has unsupported parameter type: the data type of parameter 0 type *int8 is not supported")
-	test(t, func(a *string) {}, "func has unsupported parameter type: the data type of parameter 0 type *string is not supported")
-	test(t, func(a *float64) {}, "func has unsupported parameter type: the data type of parameter 0 type *float64 is not supported")
-	test(t, func(a *float32) {}, "func has unsupported parameter type: the data type of parameter 0 type *float32 is not supported")
+	test(t, func(a *int) { shouldNotBeCalled() }, "func has unsupported parameter type: the data type of parameter 0 type *int is not supported")
+	test(t, func(a *int64) { shouldNotBeCalled() }, "func has unsupported parameter type: the data type of parameter 0 type *int64 is not supported")
+	test(t, func(a *int32) { shouldNotBeCalled() }, "func has unsupported parameter type: the data type of parameter 0 type *int32 is not supported")
+	test(t, func(a *int16) { shouldNotBeCalled() }, "func has unsupported parameter type: the data type of parameter 0 type *int16 is not supported")
+	test(t, func(a *int8) { shouldNotBeCalled() }, "func has unsupported parameter type: the data type of parameter 0 type *int8 is not supported")
+	test(t, func(a *string) { shouldNotBeCalled() }, "func has unsupported parameter type: the data type of parameter 0 type *string is not supported")
+	test(t, func(a *float64) { shouldNotBeCalled() }, "func has unsupported parameter type: the data type of parameter 0 type *float64 is not supported")
+	test(t, func(a *float32) { shouldNotBeCalled() }, "func has unsupported parameter type: the data type of parameter 0 type *float32 is not supported")
 
 	// I cannot pass structures
-	test(t, func(a godog.Table) {}, "func has unsupported parameter type: the struct parameter 0 type messages.PickleTable is not supported")
-	test(t, func(a godog.DocString) {}, "func has unsupported parameter type: the struct parameter 0 type messages.PickleDocString is not supported")
-	test(t, func(a testStruct) {}, "func has unsupported parameter type: the struct parameter 0 type models_test.testStruct is not supported")
+	test(t, func(a godog.Table) { shouldNotBeCalled() }, "func has unsupported parameter type: the struct parameter 0 type messages.PickleTable is not supported")
+	test(t, func(a godog.DocString) { shouldNotBeCalled() }, "func has unsupported parameter type: the struct parameter 0 type messages.PickleDocString is not supported")
+	test(t, func(a testStruct) { shouldNotBeCalled() }, "func has unsupported parameter type: the struct parameter 0 type models_test.testStruct is not supported")
 
 	// // I cannot use maps
-	test(t, func(a map[string]interface{}) {}, "func has unsupported parameter type: the parameter 0 type map is not supported")
-	test(t, func(a map[string]int) {}, "func has unsupported parameter type: the parameter 0 type map is not supported")
+	test(t, func(a map[string]interface{ body() }) { shouldNotBeCalled() }, "func has unsupported parameter type: the parameter 0 type map is not supported")
+	test(t, func(a map[string]int) { shouldNotBeCalled() }, "func has unsupported parameter type: the parameter 0 type map is not supported")
 
 	// // Slice works only for byte
-	test(t, func(a []int) {}, "func has unsupported parameter type: the slice parameter 0 type []int is not supported")
-	test(t, func(a []string) {}, "func has unsupported parameter type: the slice parameter 0 type []string is not supported")
-	test(t, func(a []bool) {}, "func has unsupported parameter type: the slice parameter 0 type []bool is not supported")
+	test(t, func(a []int) { shouldNotBeCalled() }, "func has unsupported parameter type: the slice parameter 0 type []int is not supported")
+	test(t, func(a []string) { shouldNotBeCalled() }, "func has unsupported parameter type: the slice parameter 0 type []string is not supported")
+	test(t, func(a []bool) { shouldNotBeCalled() }, "func has unsupported parameter type: the slice parameter 0 type []bool is not supported")
 
 	// // I cannot use bool
-	test(t, func(a bool) {}, "func has unsupported parameter type: the parameter 0 type bool is not supported")
+	test(t, func(a bool) { shouldNotBeCalled() }, "func has unsupported parameter type: the parameter 0 type bool is not supported")
 
 }
 
@@ -552,24 +561,26 @@ func TestStepDefinition_Run_StringConversionToFunctionType(t *testing.T) {
 		assert.Equal(t, expectedError, err.Error())
 	}
 
+	shouldNotBeCalled := func() { assert.Fail(t, "shound not be called") }
+
 	// Lists some unsupported argument types for step handler.
 
 	// Cannot convert invalid int
-	test(t, func(a int) { }, []interface{}{"a"}, `cannot convert argument 0: "a" to int: strconv.ParseInt: parsing "a": invalid syntax`)
-	test(t, func(a int64) { }, []interface{}{"a"}, `cannot convert argument 0: "a" to int64: strconv.ParseInt: parsing "a": invalid syntax`)
-	test(t, func(a int32) { }, []interface{}{"a"}, `cannot convert argument 0: "a" to int32: strconv.ParseInt: parsing "a": invalid syntax`)
-	test(t, func(a int16) { }, []interface{}{"a"}, `cannot convert argument 0: "a" to int16: strconv.ParseInt: parsing "a": invalid syntax`)
-	test(t, func(a int8) { }, []interface{}{"a"}, `cannot convert argument 0: "a" to int8: strconv.ParseInt: parsing "a": invalid syntax`)
+	test(t, func(a int) { shouldNotBeCalled() }, []interface{}{"a"}, `cannot convert argument 0: "a" to int: strconv.ParseInt: parsing "a": invalid syntax`)
+	test(t, func(a int64) { shouldNotBeCalled() }, []interface{}{"a"}, `cannot convert argument 0: "a" to int64: strconv.ParseInt: parsing "a": invalid syntax`)
+	test(t, func(a int32) { shouldNotBeCalled() }, []interface{}{"a"}, `cannot convert argument 0: "a" to int32: strconv.ParseInt: parsing "a": invalid syntax`)
+	test(t, func(a int16) { shouldNotBeCalled() }, []interface{}{"a"}, `cannot convert argument 0: "a" to int16: strconv.ParseInt: parsing "a": invalid syntax`)
+	test(t, func(a int8) { shouldNotBeCalled() }, []interface{}{"a"}, `cannot convert argument 0: "a" to int8: strconv.ParseInt: parsing "a": invalid syntax`)
 
 	// Cannot convert invalid float
-	test(t, func(a float32) { }, []interface{}{"a"}, `cannot convert argument 0: "a" to float32: strconv.ParseFloat: parsing "a": invalid syntax`)
-	test(t, func(a float64) { }, []interface{}{"a"}, `cannot convert argument 0: "a" to float64: strconv.ParseFloat: parsing "a": invalid syntax`)
+	test(t, func(a float32) { shouldNotBeCalled() }, []interface{}{"a"}, `cannot convert argument 0: "a" to float32: strconv.ParseFloat: parsing "a": invalid syntax`)
+	test(t, func(a float64) { shouldNotBeCalled() }, []interface{}{"a"}, `cannot convert argument 0: "a" to float64: strconv.ParseFloat: parsing "a": invalid syntax`)
 
 	// Cannot convert to DataArg
-	test(t, func(a *godog.Table) { }, []interface{}{"194"}, `cannot convert argument 0: "194" of type "string" to *messages.PickleTable`)
+	test(t, func(a *godog.Table) { shouldNotBeCalled() }, []interface{}{"194"}, `cannot convert argument 0: "194" of type "string" to *messages.PickleTable`)
 
 	// Cannot convert to DocString ?
-	test(t, func(a *godog.DocString) { }, []interface{}{"194"}, `cannot convert argument 0: "194" of type "string" to *messages.PickleDocString`)
+	test(t, func(a *godog.DocString) { shouldNotBeCalled() }, []interface{}{"194"}, `cannot convert argument 0: "194" of type "string" to *messages.PickleDocString`)
 
 }
 
