@@ -215,11 +215,19 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 		return ctx, res[1].Interface()
 	}
 
-	if result0 == nil {
-		panic("step definitions with return type (context.Context, error) must not return <nil> for the context.Context value")
+	result1 := res[1].Interface()
+	errMsg := ""
+	if result1 != nil {
+		errMsg = fmt.Sprintf(", step def also returned an error: %v", result1)
 	}
 
-	panic(fmt.Errorf("step definition has return type (context.Context, error), but found %v rather than a context.Context value", result0))
+	text := sd.StepDefinition.Expr.String()
+
+	if result0 == nil {
+		panic(fmt.Sprintf("step definition '%v' with return type (context.Context, error) must not return <nil> for the context.Context value%s", text, errMsg))
+	}
+
+	panic(fmt.Errorf("step definition '%v' has return type (context.Context, error), but found %v rather than a context.Context value%s", text, result0, errMsg))
 }
 
 func (sd *StepDefinition) shouldBeString(idx int) (string, error) {

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -201,19 +202,18 @@ func TestShouldSupportContextAndNilErrorReturn(t *testing.T) {
 func TestShouldRejectNilContextWhenMultiValueReturn(t *testing.T) {
 
 	ctx := context.WithValue(context.Background(), ctxKey("original"), 123)
-	ignoredErr := fmt.Errorf("expected error")
 
 	fn := func(ctx context.Context) (context.Context, error) {
 		assert.Equal(t, 123, ctx.Value(ctxKey("original")))
 
 		// nil context is illegal.
-		// because context is nil a runtime error overrides the error returned from the handler
-		return nil, ignoredErr
+		return nil, fmt.Errorf("expected error")
 	}
 
 	def := &models.StepDefinition{
 		StepDefinition: formatters.StepDefinition{
 			Handler: fn,
+			Expr:    regexp.MustCompile("some regex string"),
 		},
 		HandlerValue: reflect.ValueOf(fn),
 	}
@@ -223,7 +223,7 @@ func TestShouldRejectNilContextWhenMultiValueReturn(t *testing.T) {
 	defer func() {
 		if e := recover(); e != nil {
 			pe := e.(string)
-			assert.Equal(t, "step definitions with return type (context.Context, error) must not return <nil> for the context.Context value", pe)
+			assert.Equal(t, "step definition 'some regex string' with return type (context.Context, error) must not return <nil> for the context.Context value, step def also returned an error: expected error", pe)
 		}
 	}()
 
