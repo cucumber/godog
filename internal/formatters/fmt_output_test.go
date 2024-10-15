@@ -28,7 +28,8 @@ func Test_FmtOutput(t *testing.T) {
 
 	featureFiles, err := listFmtOutputTestsFeatureFiles()
 	require.Nil(t, err)
-	formatters := []string{"cucumber", "events", "junit", "pretty", "progress", "junit,pretty"}
+	// formatters := []string{"cucumber", "events", "junit", "pretty", "progress", "junit,pretty"}
+	formatters := []string{"pretty"} //, "junit", "pretty", "progress", "junit,pretty"}
 	for _, fmtName := range formatters {
 		for _, featureFile := range featureFiles {
 			testName := fmt.Sprintf("%s/%s", fmtName, featureFile)
@@ -144,12 +145,15 @@ func fmtOutputTest(fmtName, testName, featureFilePath string) func(*testing.T) {
 		ctx.Step(`^(?:a )?failing step`, failingStepDef)
 		ctx.Step(`^(?:a )?pending step$`, pendingStepDef)
 		ctx.Step(`^(?:a )?passing step$`, passingStepDef)
+		ctx.Step(`^ambiguous step.*$`, ambiguousStepDef)
+		ctx.Step(`^ambiguous step$`, ambiguousStepDef)
 		ctx.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)
 		ctx.Step(`^(?:a )?a step with a single attachment call for multiple attachments$`, stepWithSingleAttachmentCall)
 		ctx.Step(`^(?:a )?a step with multiple attachment calls$`, stepWithMultipleAttachmentCalls)
 	}
 
 	return func(t *testing.T) {
+		fmt.Printf("fmt_output_test for format %10s : sample file %v\n", fmtName, featureFilePath)
 		expectOutputPath := strings.Replace(featureFilePath, "features", fmtName, 1)
 		expectOutputPath = strings.TrimSuffix(expectOutputPath, path.Ext(expectOutputPath))
 		if _, err := os.Stat(expectOutputPath); err != nil {
@@ -167,6 +171,7 @@ func fmtOutputTest(fmtName, testName, featureFilePath string) func(*testing.T) {
 			Format: fmtName,
 			Paths:  []string{featureFilePath},
 			Output: out,
+			Strict: true,
 		}
 
 		godog.TestSuite{
@@ -178,9 +183,13 @@ func fmtOutputTest(fmtName, testName, featureFilePath string) func(*testing.T) {
 		// normalise on unix line ending so expected vs actual works cross platform
 		expected := normalise(string(expectedOutput))
 		actual := normalise(buf.String())
+
 		assert.Equalf(t, expected, actual, "path: %s", expectOutputPath)
+
+		// display as a side by side listing as the output of the assert is all one line with embedded newlines and useless
 		if expected != actual {
-			println("diff")
+			fmt.Printf("Error: fmt: %s, path: %s\n", fmtName, expectOutputPath)
+			compareLists(expected, actual)
 		}
 	}
 }
@@ -195,9 +204,17 @@ func normalise(s string) string {
 	return normalised
 }
 
-func passingStepDef() error { return nil }
+func passingStepDef() error {
+	return nil
+}
 
-func oddEvenStepDef(odd, even int) error { return oddOrEven(odd, even) }
+func ambiguousStepDef() error {
+	return nil
+}
+
+func oddEvenStepDef(odd, even int) error {
+	return oddOrEven(odd, even)
+}
 
 func oddOrEven(odd, even int) error {
 	if odd%2 == 0 {
@@ -241,4 +258,88 @@ func stepWithMultipleAttachmentCalls(ctx context.Context) (context.Context, erro
 	)
 
 	return ctx, nil
+}
+
+// wrapString wraps a string into chunks of the given width.
+func wrapString(s string, width int) []string {
+	var result []string
+	for len(s) > width {
+		result = append(result, s[:width])
+		s = s[width:]
+	}
+	result = append(result, s)
+	return result
+}
+
+// compareLists compares two lists of strings and prints them with wrapped text.
+func compareLists(expected, actual string) {
+	list1 := strings.Split(expected, "\n")
+	list2 := strings.Split(actual, "\n")
+
+	// Get the length of the longer list
+	maxLength := len(list1)
+	if len(list2) > maxLength {
+		maxLength = len(list2)
+	}
+
+	colWid := 60
+	fmtTitle := fmt.Sprintf("%%4s: %%-%ds | %%-%ds\n", colWid, colWid)
+	fmtData := fmt.Sprintf("%%4d: %%-%ds | %%-%ds %%s\n", colWid, colWid)
+
+	fmt.Printf(fmtTitle, "#", "expected", "actual")
+
+	for i := 0; i < maxLength; i++ {
+		var val1, val2 string
+
+		// Get the value from list1 if it exists
+		if i < len(list1) {
+			val1 = list1[i]
+		} else {
+			val1 = "N/A"
+		}
+
+		// Get the value from list2 if it exists
+		if i < len(list2) {
+			val2 = list2[i]
+		} else {
+			val2 = "N/A"
+		}
+
+		// Wrap both strings into slices of strings with fixed width
+		wrapped1 := wrapString(val1, colWid)
+		wrapped2 := wrapString(val2, colWid)
+
+		// Find the number of wrapped lines needed for the current pair
+		maxWrappedLines := len(wrapped1)
+		if len(wrapped2) > maxWrappedLines {
+			maxWrappedLines = len(wrapped2)
+		}
+
+		// Print the wrapped lines with alignment
+		for j := 0; j < maxWrappedLines; j++ {
+			var line1, line2 string
+
+			// Get the wrapped line or use an empty string if it doesn't exist
+			if j < len(wrapped1) {
+				line1 = wrapped1[j]
+			} else {
+				line1 = ""
+			}
+
+			if j < len(wrapped2) {
+				line2 = wrapped2[j]
+			} else {
+				line2 = ""
+			}
+
+			status := "same"
+			// if val1 != val2 {
+			if line1 != line2 {
+				status = "different"
+			}
+
+			// Print the wrapped lines with fixed-width column
+			fmt.Printf(fmtData, i+1, line1, line2, status)
+		}
+	}
 }

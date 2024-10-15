@@ -15,6 +15,14 @@
     <yellow>When</yellow> <yellow>undefined</yellow>
     <cyan>Then</cyan> <cyan>passing step</cyan> <bold-black># fmt_output_test.go:101 -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
 
+  <bold-white>Scenario:</bold-white> ambiguous   <bold-black># formatter-tests/features/some_scenarions_including_failing.feature:16</bold-black>
+    <yellow>When</yellow> <yellow>ambiguous step</yellow>
+    <bold-red>ambiguous step definition, step text: ambiguous step
+	matches:
+		^ambiguous step.*$
+		^ambiguous step$</bold-red>
+    <cyan>Then</cyan> <cyan>passing step</cyan>   <bold-black># fmt_output_test.go:XXX -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
+
 --- <red>Failed steps:</red>
 
   <red>Scenario: failing</red> <bold-black># formatter-tests/features/some_scenarions_including_failing.feature:3</bold-black>
@@ -22,8 +30,8 @@
       <red>Error: </red><bold-red>step failed</bold-red>
 
 
-3 scenarios (<red>1 failed</red>, <yellow>1 pending</yellow>, <yellow>1 undefined</yellow>)
-7 steps (<green>1 passed</green>, <red>1 failed</red>, <yellow>1 pending</yellow>, <yellow>1 undefined</yellow>, <cyan>3 skipped</cyan>)
+4 scenarios (<red>1 failed</red>, <yellow>1 pending</yellow>, <yellow>1 ambiguous</yellow>, <yellow>1 undefined</yellow>)
+9 steps (<green>1 passed</green>, <red>1 failed</red>, <yellow>1 pending</yellow>, <yellow>1 ambiguous</yellow>, <yellow>1 undefined</yellow>, <cyan>4 skipped</cyan>)
 0s
 
 <yellow>You can implement step definitions for undefined steps with these snippets:</yellow>

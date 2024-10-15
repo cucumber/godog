@@ -116,6 +116,39 @@
                         }
                     }
                 ]
+            },
+            {
+                "id": "some-scenarios;ambiguous",
+                "keyword": "Scenario",
+                "name": "ambiguous",
+                "description": "",
+                "line": 16,
+                "type": "scenario",
+                "steps": [
+                    {
+                        "keyword": "When ",
+                        "name": "ambiguous step",
+                        "line": 17,
+                        "match": {
+                            "location": "formatter-tests/features/some_scenarions_including_failing.feature:17"
+                        },
+                        "result": {
+                            "status": "ambiguous",
+                            "error_message": "ambiguous step definition, step text: ambiguous step\n\tmatches:\n\t\t^ambiguous step.*$\n\t\t^ambiguous step$"
+                        }
+                    },
+                    {
+                        "keyword": "Then ",
+                        "name": "passing step",
+                        "line": 18,
+                        "match": {
+                            "location": "fmt_output_test.go:XXX"
+                        },
+                        "result": {
+                            "status": "skipped"
+                        }
+                    }
+                ]
             }
         ]
     }

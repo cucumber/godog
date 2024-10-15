@@ -12,3 +12,7 @@ Feature: some scenarios
   Scenario: undefined
     When undefined
     Then passing step
+
+  Scenario: ambiguous
+    When ambiguous step
+    Then passing step
