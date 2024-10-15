@@ -1,6 +1,6 @@
 [
     {
-        "uri": "formatter-tests/features/some_scenarions_including_failing.feature",
+        "uri": "formatter-tests/features/some_scenarios_including_failing.feature",
         "id": "some-scenarios",
         "keyword": "Feature",
         "name": "some scenarios",
@@ -66,7 +66,7 @@
                         "name": "pending step",
                         "line": 9,
                         "match": {
-                            "location": "formatter-tests/features/some_scenarions_including_failing.feature:9"
+                            "location": "formatter-tests/features/some_scenarios_including_failing.feature:9"
                         },
                         "result": {
                             "status": "pending"
@@ -98,7 +98,7 @@
                         "name": "undefined",
                         "line": 13,
                         "match": {
-                            "location": "formatter-tests/features/some_scenarions_including_failing.feature:13"
+                            "location": "formatter-tests/features/some_scenarios_including_failing.feature:13"
                         },
                         "result": {
                             "status": "undefined"
@@ -130,7 +130,7 @@
                         "name": "ambiguous step",
                         "line": 17,
                         "match": {
-                            "location": "formatter-tests/features/some_scenarions_including_failing.feature:17"
+                            "location": "formatter-tests/features/some_scenarios_including_failing.feature:17"
                         },
                         "result": {
                             "status": "ambiguous",
