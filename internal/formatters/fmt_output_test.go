@@ -29,7 +29,7 @@ func Test_FmtOutput(t *testing.T) {
 	featureFiles, err := listFmtOutputTestsFeatureFiles()
 	require.Nil(t, err)
 	// formatters := []string{"cucumber", "events", "junit", "pretty", "progress", "junit,pretty"}
-	formatters := []string{"pretty"} //, "junit", "pretty", "progress", "junit,pretty"}
+	formatters := []string{"junit,pretty"}
 	for _, fmtName := range formatters {
 		for _, featureFile := range featureFiles {
 			testName := fmt.Sprintf("%s/%s", fmtName, featureFile)
