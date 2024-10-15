@@ -18,9 +18,9 @@
   <bold-white>Scenario:</bold-white> ambiguous   <bold-black># formatter-tests/features/some_scenarions_including_failing.feature:16</bold-black>
     <yellow>When</yellow> <yellow>ambiguous step</yellow>
     <bold-red>ambiguous step definition, step text: ambiguous step
-	matches:
-		^ambiguous step.*$
-		^ambiguous step$</bold-red>
+    matches:
+        ^ambiguous step.*$
+        ^ambiguous step$</bold-red>
     <cyan>Then</cyan> <cyan>passing step</cyan>   <bold-black># fmt_output_test.go:XXX -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
 
 --- <red>Failed steps:</red>

@@ -134,7 +134,7 @@
                         },
                         "result": {
                             "status": "ambiguous",
-                            "error_message": "ambiguous step definition, step text: ambiguous step\n\tmatches:\n\t\t^ambiguous step.*$\n\t\t^ambiguous step$"
+                            "error_message": "ambiguous step definition, step text: ambiguous step\n    matches:\n        ^ambiguous step.*$\n        ^ambiguous step$"
                         }
                     },
                     {

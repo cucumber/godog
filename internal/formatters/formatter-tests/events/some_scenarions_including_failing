@@ -28,7 +28,7 @@
 {"event":"TestCaseFinished","location":"formatter-tests/features/some_scenarions_including_failing.feature:12","timestamp":-6795364578871,"status":"undefined"}
 {"event":"TestCaseStarted","location":"formatter-tests/features/some_scenarions_including_failing.feature:16","timestamp":-6795364578871}
 {"event":"TestStepStarted","location":"formatter-tests/features/some_scenarions_including_failing.feature:17","timestamp":-6795364578871}
-{"event":"TestStepFinished","location":"formatter-tests/features/some_scenarions_including_failing.feature:17","timestamp":-6795364578871,"status":"ambiguous","summary":"ambiguous step definition, step text: ambiguous step\n\tmatches:\n\t\t^ambiguous step.*$\n\t\t^ambiguous step$"}
+{"event":"TestStepFinished","location":"formatter-tests/features/some_scenarions_including_failing.feature:17","timestamp":-6795364578871,"status":"ambiguous","summary":"ambiguous step definition, step text: ambiguous step\n    matches:\n        ^ambiguous step.*$\n        ^ambiguous step$"}
 {"event":"StepDefinitionFound","location":"formatter-tests/features/some_scenarions_including_failing.feature:18","definition_id":"fmt_output_test.go:101 -\u003e github.com/cucumber/godog/internal/formatters_test.passingStepDef","arguments":[]}
 {"event":"TestStepStarted","location":"formatter-tests/features/some_scenarions_including_failing.feature:18","timestamp":-6795364578871}
 {"event":"TestStepFinished","location":"formatter-tests/features/some_scenarions_including_failing.feature:18","timestamp":-6795364578871,"status":"skipped"}

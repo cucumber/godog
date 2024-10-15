@@ -28,8 +28,7 @@ func Test_FmtOutput(t *testing.T) {
 
 	featureFiles, err := listFmtOutputTestsFeatureFiles()
 	require.Nil(t, err)
-	// formatters := []string{"cucumber", "events", "junit", "pretty", "progress", "junit,pretty"}
-	formatters := []string{"junit,pretty"}
+	formatters := []string{"cucumber", "events", "junit", "pretty", "progress", "junit,pretty"}
 	for _, fmtName := range formatters {
 		for _, featureFile := range featureFiles {
 			testName := fmt.Sprintf("%s/%s", fmtName, featureFile)
@@ -86,7 +85,7 @@ func fmtOutputTest(fmtName, testName, featureFilePath string) func(*testing.T) {
 				att := godog.Attachments(ctx)
 				attCount := len(att)
 				if attCount != 4 {
-					assert.FailNow(tT, "Unexpected attachements: "+sc.Name, "expected 4, found %d", attCount)
+					assert.FailNow(tT, "Unexpected attachments: "+sc.Name, "expected 4, found %d", attCount)
 				}
 				ctx = godog.Attach(ctx,
 					godog.Attachment{Body: []byte("AfterScenarioAttachment"), FileName: "After Scenario Attachment 2", MediaType: "text/plain"},
@@ -283,8 +282,8 @@ func compareLists(expected, actual string) {
 	}
 
 	colWid := 60
-	fmtTitle := fmt.Sprintf("%%4s: %%-%ds | %%-%ds\n", colWid, colWid)
-	fmtData := fmt.Sprintf("%%4d: %%-%ds | %%-%ds %%s\n", colWid, colWid)
+	fmtTitle := fmt.Sprintf("%%4s: %%-%ds | %%-%ds\n", colWid+2, colWid+2)
+	fmtData := fmt.Sprintf("%%4d: %%-%ds | %%-%ds   %%s\n", colWid+2, colWid+2)
 
 	fmt.Printf(fmtTitle, "#", "expected", "actual")
 
@@ -338,8 +337,9 @@ func compareLists(expected, actual string) {
 				status = "different"
 			}
 
+			delim := "¬"
 			// Print the wrapped lines with fixed-width column
-			fmt.Printf(fmtData, i+1, line1, line2, status)
+			fmt.Printf(fmtData, i+1, delim+line1+delim, delim+line2+delim, status)
 		}
 	}
 }
