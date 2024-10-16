@@ -1,15 +1,15 @@
-<green>.</green><red>F</red><cyan>-</cyan><yellow>P</yellow><cyan>-</cyan><yellow>U</yellow><cyan>-</cyan> 7
+<green>.</green><red>F</red><cyan>-</cyan><yellow>P</yellow><cyan>-</cyan><yellow>U</yellow><cyan>-</cyan><yellow>A</yellow><cyan>-</cyan> 9
 
 
 --- <red>Failed steps:</red>
 
-  <red>Scenario: failing</red><bold-black> # formatter-tests/features/some_scenarions_including_failing.feature:3</bold-black>
-    <red>When failing step</red><bold-black> # formatter-tests/features/some_scenarions_including_failing.feature:5</bold-black>
+  <red>Scenario: failing</red><bold-black> # formatter-tests/features/some_scenarios_including_failing.feature:3</bold-black>
+    <red>When failing step</red><bold-black> # formatter-tests/features/some_scenarios_including_failing.feature:5</bold-black>
       <red>Error: </red><bold-red>step failed</bold-red>
 
 
-3 scenarios (<red>1 failed</red>, <yellow>1 pending</yellow>, <yellow>1 undefined</yellow>)
-7 steps (<green>1 passed</green>, <red>1 failed</red>, <yellow>1 pending</yellow>, <yellow>1 undefined</yellow>, <cyan>3 skipped</cyan>)
+4 scenarios (<red>1 failed</red>, <yellow>1 pending</yellow>, <yellow>1 ambiguous</yellow>, <yellow>1 undefined</yellow>)
+9 steps (<green>1 passed</green>, <red>1 failed</red>, <yellow>1 pending</yellow>, <yellow>1 ambiguous</yellow>, <yellow>1 undefined</yellow>, <cyan>4 skipped</cyan>)
 0s
 
 <yellow>You can implement step definitions for undefined steps with these snippets:</yellow>

@@ -1,6 +1,6 @@
 [
     {
-        "uri": "formatter-tests/features/some_scenarions_including_failing.feature",
+        "uri": "formatter-tests/features/some_scenarios_including_failing.feature",
         "id": "some-scenarios",
         "keyword": "Feature",
         "name": "some scenarios",
@@ -66,7 +66,7 @@
                         "name": "pending step",
                         "line": 9,
                         "match": {
-                            "location": "formatter-tests/features/some_scenarions_including_failing.feature:9"
+                            "location": "formatter-tests/features/some_scenarios_including_failing.feature:9"
                         },
                         "result": {
                             "status": "pending"
@@ -98,7 +98,7 @@
                         "name": "undefined",
                         "line": 13,
                         "match": {
-                            "location": "formatter-tests/features/some_scenarions_including_failing.feature:13"
+                            "location": "formatter-tests/features/some_scenarios_including_failing.feature:13"
                         },
                         "result": {
                             "status": "undefined"
@@ -110,6 +110,39 @@
                         "line": 14,
                         "match": {
                             "location": "fmt_output_test.go:101"
+                        },
+                        "result": {
+                            "status": "skipped"
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "some-scenarios;ambiguous",
+                "keyword": "Scenario",
+                "name": "ambiguous",
+                "description": "",
+                "line": 16,
+                "type": "scenario",
+                "steps": [
+                    {
+                        "keyword": "When ",
+                        "name": "ambiguous step",
+                        "line": 17,
+                        "match": {
+                            "location": "formatter-tests/features/some_scenarios_including_failing.feature:17"
+                        },
+                        "result": {
+                            "status": "ambiguous",
+                            "error_message": "ambiguous step definition, step text: ambiguous step\n    matches:\n        ^ambiguous step.*$\n        ^ambiguous step$"
+                        }
+                    },
+                    {
+                        "keyword": "Then ",
+                        "name": "passing step",
+                        "line": 18,
+                        "match": {
+                            "location": "fmt_output_test.go:XXX"
                         },
                         "result": {
                             "status": "skipped"

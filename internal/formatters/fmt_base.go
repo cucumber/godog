@@ -92,7 +92,7 @@ func (f *Base) Ambiguous(*messages.Pickle, *messages.PickleStep, *formatters.Ste
 // Summary renders summary information.
 func (f *Base) Summary() {
 	var totalSc, passedSc, undefinedSc int
-	var totalSt, passedSt, failedSt, skippedSt, pendingSt, undefinedSt int
+	var totalSt, passedSt, failedSt, skippedSt, pendingSt, undefinedSt, ambiguousSt int
 
 	pickleResults := f.Storage.MustGetPickleResults()
 	for _, pr := range pickleResults {
@@ -114,6 +114,9 @@ func (f *Base) Summary() {
 			case failed:
 				prStatus = failed
 				failedSt++
+			case ambiguous:
+				prStatus = ambiguous
+				ambiguousSt++
 			case skipped:
 				skippedSt++
 			case undefined:
@@ -143,6 +146,10 @@ func (f *Base) Summary() {
 	if pendingSt > 0 {
 		parts = append(parts, yellow(fmt.Sprintf("%d pending", pendingSt)))
 		steps = append(steps, yellow(fmt.Sprintf("%d pending", pendingSt)))
+	}
+	if ambiguousSt > 0 {
+		parts = append(parts, yellow(fmt.Sprintf("%d ambiguous", ambiguousSt)))
+		steps = append(steps, yellow(fmt.Sprintf("%d ambiguous", ambiguousSt)))
 	}
 	if undefinedSt > 0 {
 		parts = append(parts, yellow(fmt.Sprintf("%d undefined", undefinedSc)))
