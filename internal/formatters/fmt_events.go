@@ -198,7 +198,7 @@ func (f *Events) step(pickle *messages.Pickle, pickleStep *messages.PickleStep) 
 		pickleStepResults := f.Storage.MustGetPickleStepResultsByPickleID(pickle.Id)
 		for _, stepResult := range pickleStepResults {
 			switch stepResult.Status {
-			case passed, failed, undefined, pending:
+			case passed, failed, undefined, pending, ambiguous:
 				status = stepResult.Status.String()
 			}
 		}
@@ -311,6 +311,16 @@ func (f *Events) Failed(pickle *messages.Pickle, step *messages.PickleStep, matc
 // Pending captures pending step.
 func (f *Events) Pending(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition) {
 	f.Base.Pending(pickle, step, match)
+
+	f.Lock.Lock()
+	defer f.Lock.Unlock()
+
+	f.step(pickle, step)
+}
+
+// Ambiguous captures ambiguous step.
+func (f *Events) Ambiguous(pickle *messages.Pickle, step *messages.PickleStep, match *formatters.StepDefinition, err error) {
+	f.Base.Ambiguous(pickle, step, match, err)
 
 	f.Lock.Lock()
 	defer f.Lock.Unlock()

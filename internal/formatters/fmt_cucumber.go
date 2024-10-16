@@ -299,7 +299,7 @@ func (f *Cuke) buildCukeStep(pickle *messages.Pickle, stepResult models.PickleSt
 		cukeStep.Result.Error = stepResult.Err.Error()
 	}
 
-	if stepResult.Status == undefined || stepResult.Status == pending {
+	if stepResult.Status == undefined || stepResult.Status == pending || stepResult.Status == ambiguous {
 		cukeStep.Match.Location = fmt.Sprintf("%s:%d", pickle.Uri, step.Location.Line)
 	}
 
