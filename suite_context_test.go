@@ -7,17 +7,15 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	gherkin "github.com/cucumber/gherkin/go/v26"
+	messages "github.com/cucumber/messages/go/v21"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 	"testing"
-	"time"
-
-	gherkin "github.com/cucumber/gherkin/go/v26"
-	messages "github.com/cucumber/messages/go/v21"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/cucumber/godog/colors"
 	"github.com/cucumber/godog/internal/formatters"
@@ -910,347 +908,68 @@ func trimAllLines(s string) string {
 	return strings.Join(lines, "\n")
 }
 
-func TestScenarioContext_After_cancelled(t *testing.T) {
-	ctxDone := make(chan struct{})
-	suite := TestSuite{
-		ScenarioInitializer: func(scenarioContext *ScenarioContext) {
-			scenarioContext.When(`^foo$`, func() {})
-			scenarioContext.After(func(ctx context.Context, sc *Scenario, err error) (context.Context, error) {
-				go func() {
-					<-ctx.Done()
-					close(ctxDone)
-				}()
+// TODO how is this any different to Test_AllFeaturesRunAsSubtests
+func Test_AllFeaturesRun(t *testing.T) {
+	const concurrency = 100
+	const noRandomFlag = 0
+	const format = "progress"
 
-				return ctx, nil
-			})
-		},
-		Options: &Options{
-			Format:   "pretty",
-			TestingT: t,
-			FeatureContents: []Feature{
-				{
-					Name: "Scenario Context Cancellation",
-					Contents: []byte(`
-Feature: dummy
-  Scenario: Context should be cancelled by the end of scenario
-    When foo
-`),
-				},
-			},
-		},
-	}
+	const expected = `...................................................................... 70
+...................................................................... 140
+...................................................................... 210
+...................................................................... 280
+...................................................................... 350
+...................................................................... 420
+...                                                                    423
 
-	require.Equal(t, 0, suite.Run(), "non-zero status returned, failed to run feature tests")
 
-	select {
-	case <-ctxDone:
-		return
-	case <-time.After(5 * time.Second):
-		assert.Fail(t, "failed to wait for context cancellation")
-	}
+108 scenarios (108 passed)
+423 steps (423 passed)
+0s
+`
+
+	actualStatus, actualOutput := testRun(t,
+		InitializeScenario,
+		format, concurrency,
+		noRandomFlag, []string{"features"},
+	)
+
+	assert.Equal(t, exitSuccess, actualStatus)
+	assert.Equal(t, expected, actualOutput)
 }
 
-func TestTestSuite_Run(t *testing.T) {
-	for _, tc := range []struct {
-		name          string
-		body          string
-		afterStepCnt  int
-		beforeStepCnt int
-		log           string
-		noStrict      bool
-		suitePasses   bool
-	}{
-		{
-			name: "fail_then_pass_fails_scenario", afterStepCnt: 2, beforeStepCnt: 2,
-			body: `
-					When step fails
-					Then step passes`,
-			log: `
-					>>>> Before suite
-					>> Before scenario "test"
-					Before step "step fails"
-					After step "step fails", error: oops, status: failed
-					<< After scenario "test", error: oops
-					Before step "step passes"
-					After step "step passes", error: <nil>, status: skipped
-					<<<< After suite`,
+// TODO how is this any different to Test_AllFeaturesRun
+func Test_AllFeaturesRunAsSubtests(t *testing.T) {
+	const concurrency = 100
+	const noRandomFlag = 0
+	const format = "progress"
+
+	const expected = `...................................................................... 70
+...................................................................... 140
+...................................................................... 210
+...................................................................... 280
+...................................................................... 350
+...................................................................... 420
+...                                                                    423
+
+
+108 scenarios (108 passed)
+423 steps (423 passed)
+0s
+`
+
+	actualStatus, actualOutput := testRunWithOptions(
+		t,
+		Options{
+			Format:      format,
+			Concurrency: concurrency,
+			Paths:       []string{"features"},
+			Randomize:   noRandomFlag,
+			TestingT:    t,
 		},
-		{
-			name: "pending_then_pass_fails_scenario", afterStepCnt: 2, beforeStepCnt: 2,
-			body: `
-					When step is pending
-					Then step passes`,
-			log: `
-					>>>> Before suite
-					>> Before scenario "test"
-					Before step "step is pending"
-					After step "step is pending", error: step implementation is pending, status: pending
-					<< After scenario "test", error: step implementation is pending
-					Before step "step passes"
-					After step "step passes", error: <nil>, status: skipped
-					<<<< After suite`,
-		},
-		{
-			name: "pending_then_pass_no_strict_doesnt_fail_scenario", afterStepCnt: 2, beforeStepCnt: 2, noStrict: true, suitePasses: true,
-			body: `
-					When step is pending
-					Then step passes`,
-			log: `
-					>>>> Before suite
-					>> Before scenario "test"
-					Before step "step is pending"
-					After step "step is pending", error: step implementation is pending, status: pending
-					Before step "step passes"
-					After step "step passes", error: <nil>, status: skipped
-					<< After scenario "test", error: <nil>
-					<<<< After suite`,
-		},
-		{
-			name: "undefined_then_pass_no_strict_doesnt_fail_scenario", afterStepCnt: 2, beforeStepCnt: 2, noStrict: true, suitePasses: true,
-			body: `
-					When step is undefined
-					Then step passes`,
-			log: `
-					>>>> Before suite
-					>> Before scenario "test"
-					Before step "step is undefined"
-					After step "step is undefined", error: step is undefined, status: undefined
-					Before step "step passes"
-					After step "step passes", error: <nil>, status: skipped
-					<< After scenario "test", error: <nil>
-					<<<< After suite`,
-		},
-		{
-			name: "undefined_then_pass_fails_scenario", afterStepCnt: 2, beforeStepCnt: 2,
-			body: `
-					When step is undefined
-					Then step passes`,
-			log: `
-					>>>> Before suite
-					>> Before scenario "test"
-					Before step "step is undefined"
-					After step "step is undefined", error: step is undefined, status: undefined
-					<< After scenario "test", error: step is undefined
-					Before step "step passes"
-					After step "step passes", error: <nil>, status: skipped
-					<<<< After suite`,
-		},
-		{
-			name: "fail_then_undefined_fails_scenario", afterStepCnt: 2, beforeStepCnt: 2,
-			body: `
-					When step fails
-					Then step is undefined`,
-			log: `
-					>>>> Before suite
-					>> Before scenario "test"
-					Before step "step fails"
-					After step "step fails", error: oops, status: failed
-					<< After scenario "test", error: oops
-					Before step "step is undefined"
-					After step "step is undefined", error: step is undefined, status: undefined
-					<<<< After suite`,
-		},
-		{
-			name: "passes", afterStepCnt: 2, beforeStepCnt: 2,
-			body: `
-					When step passes
-					Then step passes`,
-			suitePasses: true,
-			log: `
-					>>>> Before suite
-					>> Before scenario "test"
-					Before step "step passes"
-					<step action>
-					After step "step passes", error: <nil>, status: passed
-					Before step "step passes"
-					<step action>
-					After step "step passes", error: <nil>, status: passed
-					<< After scenario "test", error: <nil>
-					<<<< After suite`,
-		},
-		{
-			name: "skip_does_not_fail_scenario", afterStepCnt: 2, beforeStepCnt: 2,
-			body: `
-					When step skips scenario
-					Then step fails`,
-			suitePasses: true,
-			log: `
-					>>>> Before suite
-					>> Before scenario "test"
-					Before step "step skips scenario"
-					After step "step skips scenario", error: skipped, status: skipped
-					Before step "step fails"
-					After step "step fails", error: <nil>, status: skipped
-					<< After scenario "test", error: <nil>
-					<<<< After suite`,
-		},
-		{
-			name: "multistep_passes", afterStepCnt: 6, beforeStepCnt: 6,
-			body: `
-					When multistep passes
-					Then multistep passes`,
-			suitePasses: true,
-			log: `
-					>>>> Before suite
-					>> Before scenario "test"
-					Before step "multistep passes"
-					Before step "step passes"
-					<step action>
-					After step "step passes", error: <nil>, status: passed
-					Before step "step passes"
-					<step action>
-					After step "step passes", error: <nil>, status: passed
-					After step "multistep passes", error: <nil>, status: passed
-					Before step "multistep passes"
-					Before step "step passes"
-					<step action>
-					After step "step passes", error: <nil>, status: passed
-					Before step "step passes"
-					<step action>
-					After step "step passes", error: <nil>, status: passed
-					After step "multistep passes", error: <nil>, status: passed
-					<< After scenario "test", error: <nil>
-					<<<< After suite`,
-		},
-		{
-			name: "ambiguous", afterStepCnt: 1, beforeStepCnt: 1,
-			body: `
-					Then step is ambiguous`,
-			log: `
-					>>>> Before suite
-					>> Before scenario "test"
-					Before step "step is ambiguous"
-					After step "step is ambiguous", error: ambiguous step definition, step text: step is ambiguous
-		        	            		matches:
-		        	            			^step is ambiguous$
-		        	            			^step is ambiguous$, status: ambiguous
-					<< After scenario "test", error: ambiguous step definition, step text: step is ambiguous
-		        	            		matches:
-		        	            			^step is ambiguous$
-		        	            			^step is ambiguous$
-					<<<< After suite`,
-		},
-		{
-			name: "ambiguous nested steps", afterStepCnt: 1, beforeStepCnt: 1,
-			body: `
-				Then multistep has ambiguous`,
-			log: `
-				>>>> Before suite
-				>> Before scenario "test"
-				Before step "multistep has ambiguous"
-				After step "multistep has ambiguous", error: ambiguous step definition, step text: step is ambiguous
-            	            		matches:
-            	            			^step is ambiguous$
-            	            			^step is ambiguous$, status: ambiguous
-				<< After scenario "test", error: ambiguous step definition, step text: step is ambiguous
-            	            		matches:
-            	            			^step is ambiguous$
-            	            			^step is ambiguous$
-				<<<< After suite`,
-		},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			afterScenarioCnt := 0
-			beforeScenarioCnt := 0
+		InitializeScenario,
+	)
 
-			afterStepCnt := 0
-			beforeStepCnt := 0
-
-			var log string
-
-			suite := TestSuite{
-				TestSuiteInitializer: func(suiteContext *TestSuiteContext) {
-					suiteContext.BeforeSuite(func() {
-						log += fmt.Sprintln(">>>> Before suite")
-					})
-
-					suiteContext.AfterSuite(func() {
-						log += fmt.Sprintln("<<<< After suite")
-					})
-				},
-				ScenarioInitializer: func(s *ScenarioContext) {
-					s.Before(func(ctx context.Context, sc *Scenario) (context.Context, error) {
-						log += fmt.Sprintf(">> Before scenario %q\n", sc.Name)
-						beforeScenarioCnt++
-
-						return ctx, nil
-					})
-
-					s.After(func(ctx context.Context, sc *Scenario, err error) (context.Context, error) {
-						log += fmt.Sprintf("<< After scenario %q, error: %v\n", sc.Name, err)
-						afterScenarioCnt++
-
-						return ctx, nil
-					})
-
-					s.StepContext().Before(func(ctx context.Context, st *Step) (context.Context, error) {
-						log += fmt.Sprintf("Before step %q\n", st.Text)
-						beforeStepCnt++
-
-						return ctx, nil
-					})
-
-					s.StepContext().After(func(ctx context.Context, st *Step, status StepResultStatus, err error) (context.Context, error) {
-						log += fmt.Sprintf("After step %q, error: %v, status: %s\n", st.Text, err, status.String())
-						afterStepCnt++
-
-						return ctx, nil
-					})
-
-					s.Step("^step fails$", func() error {
-						return errors.New("oops")
-					})
-
-					s.Step("^step skips scenario$", func() error {
-						return ErrSkip
-					})
-
-					s.Step("^step passes$", func() {
-						log += "<step action>\n"
-					})
-
-					s.Step("^multistep passes$", func() Steps {
-						return Steps{"step passes", "step passes"}
-					})
-
-					s.Step("pending", func() error {
-						return ErrPending
-					})
-
-					s.Step("^step is ambiguous$", func() {
-						log += "<step action>\n"
-					})
-					s.Step("^step is ambiguous$", func() {
-						log += "<step action>\n"
-					})
-					s.Step("^multistep has ambiguous$", func() Steps {
-						return Steps{"step is ambiguous"}
-					})
-
-				},
-				Options: &Options{
-					Format:   "pretty",
-					Strict:   !tc.noStrict,
-					NoColors: true,
-					FeatureContents: []Feature{
-						{
-							Name: tc.name,
-							Contents: []byte(trimAllLines(`
-								Feature: test
-								Scenario: test
-								` + tc.body)),
-						},
-					},
-				},
-			}
-
-			suitePasses := suite.Run() == 0
-			assert.Equal(t, tc.suitePasses, suitePasses)
-			assert.Equal(t, 1, afterScenarioCnt)
-			assert.Equal(t, 1, beforeScenarioCnt)
-			assert.Equal(t, tc.afterStepCnt, afterStepCnt)
-			assert.Equal(t, tc.beforeStepCnt, beforeStepCnt)
-			assert.Equal(t, trimAllLines(tc.log), trimAllLines(log), log)
-		})
-	}
+	assert.Equal(t, exitSuccess, actualStatus)
+	assert.Equal(t, expected, actualOutput)
 }
