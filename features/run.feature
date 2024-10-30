@@ -54,6 +54,103 @@ Feature: sequencing of steps and hooks
     AfterSuite
     """
 
+    # FIXME JOHN STEP ORDERING ISSUE
+  Scenario: should fail if undefined steps in Strict mode
+    Given a feature "normal.feature" file:
+      """
+    Feature: the feature
+      Scenario: passing scenario
+        When passing step
+        And an undefined step
+        And another undefined step
+        And second passing step
+      """
+    When I run feature suite in Strict mode
+
+    Then the suite should have failed
+    And the following events should be fired:
+    """
+    BeforeSuite
+    BeforeScenario [passing scenario]
+    BeforeStep [passing step]
+    AfterStep [passing step] [passed]
+    BeforeStep [an undefined step]
+    AfterStep [an undefined step] [undefined] [step is undefined]
+    AfterScenario [passing scenario] [step is undefined]
+    BeforeStep [another undefined step]
+    AfterStep [another undefined step] [undefined] [step is undefined]
+    BeforeStep [second passing step]
+    AfterStep [second passing step] [skipped]
+    AfterSuite
+    """
+
+  Scenario: should skip steps after ambiguous
+    Given a feature "normal.feature" file:
+      """
+    Feature: the feature
+      Scenario: passing scenario
+        When passing step
+        And an ambiguous step
+        And another ambiguous step
+        And second passing step
+      """
+    When I run feature suite
+
+    Then the suite should have passed
+    And the following events should be fired:
+    """
+    BeforeSuite
+    BeforeScenario [passing scenario]
+    BeforeStep [passing step]
+    AfterStep [passing step] [passed]
+    BeforeStep [an ambiguous step]
+    AfterStep [an ambiguous step] [passed]
+    BeforeStep [another ambiguous step]
+    AfterStep [another ambiguous step] [passed]
+    BeforeStep [second passing step]
+    AfterStep [second passing step] [passed]
+    AfterScenario [passing scenario]
+    AfterSuite
+    """
+
+  Scenario: should fail steps after ambiguous steps in Strict mode
+    Given a feature "normal.feature" file:
+      """
+    Feature: the feature
+      Scenario: passing scenario
+        When passing step
+        And an ambiguous step
+        And another ambiguous step
+        And second passing step
+      """
+    When I run feature suite in Strict mode
+
+    Then the suite should have failed
+    And the following events should be fired:
+    """
+    BeforeSuite
+    BeforeScenario [passing scenario]
+    BeforeStep [passing step]
+    AfterStep [passing step] [passed]
+    BeforeStep [an ambiguous step]
+    AfterStep [an ambiguous step] [ambiguous] [ambiguous step definition, step text: an ambiguous step
+        matches:
+            ^.*ambiguous step$
+            ^..*ambiguous step$]
+    AfterScenario [passing scenario] [ambiguous step definition, step text: an ambiguous step
+        matches:
+            ^.*ambiguous step$
+            ^..*ambiguous step$]
+    BeforeStep [another ambiguous step]
+    AfterStep [another ambiguous step] [ambiguous] [ambiguous step definition, step text: another ambiguous step
+        matches:
+            ^.*ambiguous step$
+            ^..*ambiguous step$]
+    BeforeStep [second passing step]
+    AfterStep [second passing step] [skipped]
+    AfterSuite
+    """
+
   Scenario: should skip existing steps and detect undefined steps after pending
     Given a feature "normal.feature" file:
       """

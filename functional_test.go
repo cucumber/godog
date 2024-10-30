@@ -50,11 +50,11 @@ func runOptionalSubtest(t *testing.T, subtest bool) {
 ...................................................................... 210
 ...................................................................... 280
 ...................................................................... 350
-........                                                               358
+....................                                                   370
 
 
-93 scenarios (93 passed)
-358 steps (358 passed)
+96 scenarios (96 passed)
+370 steps (370 passed)
 0s
 `
 	t.Helper()
@@ -379,18 +379,18 @@ func InitializeScenarioInner(parent *godogFeaturesScenarioOuter) func(ctx *godog
 		ctx.Step(`^step '(.*)' should have been executed`, tc.stepShouldHaveBeenExecuted)
 		ctx.Step(`^(?:I )(allow|disable) variable injection`, tc.iSetVariableInjectionTo)
 		ctx.Step(`^value2 is twice value1:$`, tc.twiceAsBig)
-		//
+
+		ctx.Step(`^.*ambiguous step$`, func() {})
+		ctx.Step(`^..*ambiguous step$`, func() {})
+
 		ctx.Step(`^(?:a )?failing step`, tc.aFailingStep)
 		ctx.Step(`^(.*should not be called)`, tc.aStepThatShouldNotHaveBeenCalled)
 		ctx.Step(`^(?:a )?pending step$`, func() error {
 			return godog.ErrPending
 		})
-		ctx.Step(`^(?:(a|other|second|third|fourth) )?passing step$`, func() error {
-			return nil
-		})
-		ctx.Step(`^(.*passing step that fires an event)$`, func(name string) error {
+		ctx.Step(`^(?:(a|other|second|third|fourth) )?passing step$`, func() {})
+		ctx.Step(`^(.*passing step that fires an event)$`, func(name string) {
 			parent.events = append(parent.events, &firedEvent{"Step", []interface{}{name}})
-			return nil
 		})
 		ctx.Given(`^(?:a )?given step$`, func() error {
 			return nil
@@ -587,12 +587,11 @@ func (tc *godogFeaturesScenarioOuter) runFeatureSuite(tags string, fmtFunc godog
 
 func (tc *godogFeaturesScenarioOuter) thereShouldBeEventsFired(doc *godog.DocString) error {
 	actual := tc.events.ToStrings()
-	expect := strings.Split(strings.TrimSpace(doc.Content), "\n")
+	actualLine := strings.Join(actual, "\n")
 
-	same := utils.SlicesCompare(expect, actual)
-	if !same {
-		utils.VDiffLists(expect, actual)
-		return fmt.Errorf("expected %v events, but got %v", expect, actual)
+	if doc.Content != actualLine {
+		utils.VDiffString(doc.Content, actualLine)
+		return fmt.Errorf("expected events:\n%v\nbut got:\n%v\n", doc.Content, actualLine)
 	}
 
 	return nil
