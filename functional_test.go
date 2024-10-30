@@ -69,10 +69,8 @@ func runOptionalSubtest(t *testing.T, subtest bool) {
 		Name:                "succeed",
 		ScenarioInitializer: InitializeScenarioOuter,
 		Options: &godog.Options{
-			Strict: true,
-			Format: format,
-			//Tags:   "@john && ~@ignore",
-			Tags:        "~@ignore",
+			Strict:      true,
+			Format:      format,
 			Concurrency: concurrency,
 			Paths:       []string{"features"},
 			Randomize:   noRandomFlag,
@@ -194,11 +192,6 @@ func Test_RunsWithFeatureContentsAndPathsOptions(t *testing.T) {
 	assert.Equal(t, godog.ExitSuccess, status)
 	assert.True(t, contentStepCalled, "step in content was not called")
 	assert.True(t, fileStepCalled, "step in file was not called")
-}
-
-// This function has to exist to make the CLI part of the build work: go  run ./cmd/godog -f progress
-func InitializeScenario(ctx *godog.ScenarioContext) {
-	InitializeScenarioOuter(ctx)
 }
 
 // InitializeScenario provides steps for godog suite execution and
