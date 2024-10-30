@@ -1,4 +1,3 @@
-@john3
 Feature: undefined step snippets
   In order to implement step definitions faster
   As a test suite user

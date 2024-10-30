@@ -267,7 +267,6 @@ Feature: cucumber json formatter
         ]
     """
 
-  @john7
   Scenario: Support of Feature Plus Scenario With Steps
     Given a feature "features/simple.feature" file:
     """

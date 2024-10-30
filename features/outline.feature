@@ -90,7 +90,6 @@ Feature: run outline
       value2 is twice value1:
       """
 
-  @john
   Scenario Outline: docstring should be injected with example values
     Given a feature "normal.feature" file:
       """
@@ -112,7 +111,6 @@ Feature: run outline
       | other passing |
 
 
-    @john
   Scenario: scenario title may be injected with example values
     Given a feature "normal.feature" file:
       """

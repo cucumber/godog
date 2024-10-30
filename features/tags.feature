@@ -1,4 +1,3 @@
-@john
 Feature: tag filters
   In order to test application behavior
   As a test suite

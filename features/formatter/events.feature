@@ -2,7 +2,6 @@ Feature: event stream formatter
   Smoke test of events formatter.
   Comprehensive tests at internal/formatters.
 
-  @john7
   Scenario: check formatter is available
 
     Given a feature "test.feature" file:

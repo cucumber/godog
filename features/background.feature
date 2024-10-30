@@ -1,4 +1,3 @@
-@john
 Feature: run background
   In order to test application behavior
   As a test suite

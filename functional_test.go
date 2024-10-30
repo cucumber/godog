@@ -72,7 +72,7 @@ func runOptionalSubtest(t *testing.T, subtest bool) {
 		Options: &godog.Options{
 			Strict: true,
 			Format: format,
-			//Tags:   "@john7 && ~@ignore",
+			//Tags:   "@john && ~@ignore",
 			Tags:        "~@ignore",
 			Concurrency: concurrency,
 			Paths:       []string{"features"},
@@ -609,17 +609,14 @@ func (tc *godogFeaturesScenarioOuter) cleanupSnippet(snip string) string {
 
 func (tc *godogFeaturesScenarioOuter) theUndefinedStepSnippetsShouldBe(body *godog.DocString) error {
 
-	// fixme john - this should be collected from the output not a formatter call
-	f := tc.formatter
-	if f == nil {
-		return errors.New("formatter has not been set on this test's scenario state, so cannot obtain the Snippets")
-	}
-
-	actual := tc.cleanupSnippet(f.Snippets())
 	expected := tc.cleanupSnippet(body.Content)
 
+	re := regexp.MustCompile("(?s).*You can implement step definitions for undefined steps with these snippets:")
+
+	actual := re.ReplaceAllString(tc.out.String(), "")
+	actual = tc.cleanupSnippet(actual)
 	if actual != expected {
-		return fmt.Errorf("snippets do not match actual: %s", f.Snippets())
+		return fmt.Errorf("snippets do not match, expected:\n%s\nactual:\n%s\n", expected, actual)
 	}
 
 	return nil

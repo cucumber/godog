@@ -1,6 +1,5 @@
 # language: lt
 @lang
-@john
 Savybė: lietuvis
 
   Raktiniai žodžiai gali būti keliomis kalbomis.
