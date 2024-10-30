@@ -139,8 +139,8 @@ Feature: pretty formatter
       simple feature description
 
       Scenario: simple scenario # features/simple.feature:4
-        Given passing step      # feature_test.go:0 -> SuiteContext.func2
-        Then a failing step     # feature_test.go:1 -> *godogFeaturesScenarioInner
+        Given passing step      # functional_test.go:0 -> SuiteContext.func2
+        Then a failing step     # functional_test.go:1 -> *godogFeaturesScenarioInner
         intentional failure
 
     --- Failed steps:
@@ -180,7 +180,7 @@ Feature: pretty formatter
       simple feature description
 
       Scenario Outline: simple scenario # features/simple.feature:4
-        Given <status> step             # feature_test.go:1 -> SuiteContext.func2
+        Given <status> step             # functional_test.go:1 -> SuiteContext.func2
 
         Examples: simple examples
           | status  |
@@ -248,7 +248,7 @@ Feature: pretty formatter
       simple description
 
       Scenario: simple scenario # features/simple.feature:4
-        Given passing step      # feature_test.go:0 -> SuiteContext.func2
+        Given passing step      # functional_test.go:0 -> SuiteContext.func2
           \"\"\"  content type
           step doc string
           \"\"\"
@@ -287,8 +287,8 @@ Feature: pretty formatter
       simple feature description
 
       Scenario: simple scenario  # features/simple.feature:4
-        Given passing step       # feature_test.go:0 -> SuiteContext.func2
-        And pending step         # feature_test.go:0 -> SuiteContext.func1
+        Given passing step       # functional_test.go:0 -> SuiteContext.func2
+        And pending step         # functional_test.go:0 -> SuiteContext.func1
           TODO: write pending definition
         And undefined doc string
           \"\"\"
@@ -297,7 +297,7 @@ Feature: pretty formatter
         And undefined table
           | a | b | c |
           | 1 | 2 | 3 |
-        And passing step         # feature_test.go:0 -> SuiteContext.func2
+        And passing step         # functional_test.go:0 -> SuiteContext.func2
 
     1 scenarios (1 pending, 0 undefined)
     5 steps (1 passed, 1 pending, 2 undefined, 1 skipped)
@@ -389,7 +389,7 @@ Feature: pretty formatter
       simple feature description
 
       Example: simple scenario # features/simple.feature:5
-        Given passing step     # feature_test.go:0 -> SuiteContext.func2
+        Given passing step     # functional_test.go:0 -> SuiteContext.func2
 
     1 scenarios (1 passed)
     1 steps (1 passed)
@@ -417,10 +417,10 @@ Feature: pretty formatter
       simple feature description
 
       Background:
-        Given passing step     # feature_test.go:0 -> SuiteContext.func2
+        Given passing step     # functional_test.go:0 -> SuiteContext.func2
 
       Example: simple scenario # features/simple.feature:7
-        Given passing step     # feature_test.go:0 -> SuiteContext.func2
+        Given passing step     # functional_test.go:0 -> SuiteContext.func2
 
     1 scenarios (1 passed)
     2 steps (2 passed)
@@ -452,7 +452,7 @@ Feature: pretty formatter
       simple feature description
 
       Scenario Outline: simple scenario # features/simple.feature:5
-        Given <status> step             # feature_test.go:0 -> SuiteContext.func2
+        Given <status> step             # functional_test.go:0 -> SuiteContext.func2
 
         Examples: simple examples
           | status  |
@@ -605,10 +605,10 @@ Feature: pretty formatter
       simple feature description
 
       Example: simple scenario # features/simple.feature:5
-        Given a given step     # feature_test.go:0 -> InitializeScenario.func3
-        When a when step       # feature_test.go:0 -> InitializeScenario.func4
-        Then a then step       # feature_test.go:0 -> InitializeScenario.func5
-        And a then step        # feature_test.go:0 -> InitializeScenario.func5
+        Given a given step     # functional_test.go:0 -> InitializeScenario.func3
+        When a when step       # functional_test.go:0 -> InitializeScenario.func4
+        Then a then step       # functional_test.go:0 -> InitializeScenario.func5
+        And a then step        # functional_test.go:0 -> InitializeScenario.func5
 
     1 scenarios (1 passed)
     4 steps (4 passed)

@@ -221,132 +221,27 @@ func InitializeScenarioOuter(ctx *godog.ScenarioContext) {
 
 	tc := &godogFeaturesScenarioOuter{
 		tempDir: tempDir + "/",
-		//scenarioContext: ctx,
-		//out1: out,
 	}
 
-	//ctx.Before(tc.ResetBeforeEachScenario)
-
-	//ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
-	//	fmt.Printf("%-2s HOOK BEFORE SCENARIO: %v\n", strings.Repeat(">", depth), sc.Name)
-	//	depth++
-	//
-	//	return ctx, nil
-	//})
-	//
-	//ctx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
-	//	depth--
-	//	fmt.Printf("%-2s HOOK AFTER SCENARIO: %v\n", strings.Repeat("<", depth), sc.Name)
-	//	if err != nil {
-	//		fmt.Printf("%-2s    ERROR: %v\n", strings.Repeat("!", depth), err.Error())
-	//	}
-	//
-	//	return ctx, nil
-	//})
-
-	//ctx.StepContext().Before(func(ctx context.Context, st *godog.Step) (context.Context, error) {
-	//	fmt.Printf("%-2s HOOK BEFORE STEP: %v\n", strings.Repeat(">", depth), st.Text)
-	//	depth++
-	//	return ctx, nil
-	//})
-	//
-	//ctx.StepContext().After(func(ctx context.Context, st *godog.Step, status godog.StepResultStatus, err error) (context.Context, error) {
-	//	depth--
-	//	fmt.Printf("%-2s HOOK AFTER STEP: %v\n", strings.Repeat("<", depth), st.Text)
-	//	if err != nil {
-	//		fmt.Printf("%-2s ERROR: %v\n", strings.Repeat("!", depth), err.Error())
-	//	}
-	//	return ctx, nil
-	//})
-
-	//ctx.Step(`^(a background step is defined)$`, tc.backgroundStepIsDefined)
-	//ctx.Step(`^step '(.*)' should have been executed`, tc.stepShouldHaveBeenExecuted)
-	//
 	ctx.Step(`^a feature file at "([^"]*)":$`, tc.writeFeatureFile)
 	ctx.Step(`^(?:a )?feature path "([^"]*)"$`, tc.featurePath)
-	//ctx.Step(`^I parse features$`, tc.parseFeatures)
-	//ctx.Step(`^I'm listening to suite events$`, tc.iAmListeningToSuiteEvents) // DOES NOT MAKE SENSE??
 	ctx.Step(`^I run feature suite$`, tc.iRunFeatureSuite)
 	ctx.Step(`^I run feature suite in Strict mode$`, tc.iRunFeatureSuiteStrict) // FIXME - use this
 	ctx.Step(`^I run feature suite with tags "([^"]*)"$`, tc.iRunFeatureSuiteWithTags)
 	ctx.Step(`^I run feature suite with formatter "([^"]*)"$`, tc.iRunFeatureSuiteWithFormatter)
-	//ctx.Step(`^(?:I )(allow|disable) variable injection`, tc.iSetVariableInjectionTo)
 	ctx.Step(`^(?:a )?feature "([^"]*)"(?: file)?:$`, tc.aFeatureFile)
 	ctx.Step(`^the suite should have (passed|failed)$`, tc.theSuiteShouldHave)
-	//
-	//ctx.Step(`^I should have ([\d]+) features? files?:$`, tc.iShouldHaveNumFeatureFiles)
-	//ctx.Step(`^I should have ([\d]+) scenarios? registered$`, tc.numScenariosRegistered)
-	//ctx.Step(`^there (was|were) ([\d]+) "([^"]*)" events? fired$`, tc.thereWereNumEventsFired)
-	//ctx.Step(`^there was event triggered before scenario "([^"]*)"$`, tc.thereWasEventTriggeredBeforeScenario)
-	//ctx.Step(`^these events had to be fired for a number of times:$`, tc.theseEventsHadToBeFiredForNumberOfTimes)
-	//
-	//ctx.Step(`^(?:a )?failing step`, tc.aFailingStep)
-	//ctx.Step(`^(.*should not be called)`, tc.aStepThatShouldNotHaveBeenCalled)
-	//ctx.Step(`^this step should fail`, tc.aFailingStep)
 	ctx.Step(`^the following steps? should be (passed|failed|skipped|undefined|pending):`, tc.followingStepsShouldHave)
 	ctx.Step(`^only the following steps? should have run and should be (passed|failed|skipped|undefined|pending):`, tc.onlyFollowingStepsShouldHave)
 
 	ctx.Step(`^the trace should be:$`, tc.theTraceShouldBe)
 
 	ctx.Step(`^the undefined step snippets should be:$`, tc.theUndefinedStepSnippetsShouldBe)
-	//
-	//// event stream
 	ctx.Step(`^the following events should be fired:$`, tc.thereShouldBeEventsFired)
-	//
-	//// lt
-	//ctx.Step(`^savybių aplankas "([^"]*)"$`, tc.featurePath)
-	//ctx.Step(`^aš išskaitau savybes$`, tc.parseFeatures)
-	//ctx.Step(`^aš turėčiau turėti ([\d]+) savybių failus:$`, tc.iShouldHaveNumFeatureFiles)
-	//
-	//ctx.Step(`^(?:a )?pending step$`, func() error {
-	//	return godog.ErrPending
-	//})
-	//ctx.Step(`^(?:a )?passing step$`, func() error {
-	//	return nil
-	//})
-	//ctx.Given(`^(?:a )?given step$`, func() error {
-	//	return nil
-	//})
-	//ctx.When(`^(?:a )?when step$`, func() error {
-	//	return nil
-	//})
-	//ctx.Then(`^(?:a )?then step$`, func() error {
-	//	return nil
-	//})
 	ctx.Step(`^the rendered json will be as follows:$`, tc.theRenderedJSONWillBe)
 	ctx.Step(`^the rendered events will be as follows:$`, tc.theRenderedEventsWillBe)
 	ctx.Step(`^the rendered xml will be as follows:$`, tc.theRenderedXMLWillBe)
 	ctx.Step(`^the rendered output will be as follows:$`, tc.theRenderedOutputWillBe)
-	//
-
-	//ctx.Step(`^(?:a )?failing multistep$`, func() godog.Steps {
-	//	return godog.Steps{"passing step", "failing step"}
-	//})
-	//
-	//ctx.Step(`^(?:a |an )?undefined multistep$`, func() godog.Steps {
-	//	return godog.Steps{"passing step", "undefined step", "passing step"}
-	//})
-	//
-	//ctx.Then(`^(?:a |an )?undefined multistep using 'then' function$`, func() godog.Steps {
-	//	return godog.Steps{"given step", "undefined step", "then step"}
-	//})
-	//
-	//ctx.Step(`^(?:a )?passing multistep$`, func() godog.Steps {
-	//	return godog.Steps{"passing step", "passing step", "passing step"}
-	//})
-	//
-	//ctx.Then(`^(?:a )?passing multistep using 'then' function$`, func() godog.Steps {
-	//	return godog.Steps{"given step", "when step", "then step"}
-	//})
-	//
-	//ctx.Step(`^(?:a )?failing nested multistep$`, func() godog.Steps {
-	//	return godog.Steps{"passing step", "passing multistep", "failing multistep"}
-	//})
-	//// Default recovery step
-	//ctx.Step(`Ignore.*`, func() error {
-	//	return nil
-	//})
-	//
 	ctx.Step(`^call func\(\*godog\.DocString\) with '(.*)':$`, func(str string, docstring *godog.DocString) error {
 		if docstring.Content != str {
 			return fmt.Errorf("expected %q, got %q", str, docstring.Content)
@@ -359,53 +254,12 @@ func InitializeScenarioOuter(ctx *godog.ScenarioContext) {
 		}
 		return nil
 	})
-	//
-	//ctx.Step(`^passing step without return$`, func() {})
-	//
-	//ctx.Step(`^having correct context$`, func(ctx context.Context) (context.Context, error) {
-	//	if ctx.Value(ctxKey("BeforeScenario")) == nil {
-	//		return ctx, errors.New("missing BeforeScenario in context")
-	//	}
-	//
-	//	if ctx.Value(ctxKey("BeforeStep")) == nil {
-	//		return ctx, errors.New("missing BeforeStep in context")
-	//	}
-	//
-	//	if ctx.Value(ctxKey("StepState")) == nil {
-	//		return ctx, errors.New("missing StepState in context")
-	//	}
-	//
-	//	return context.WithValue(ctx, ctxKey("Step"), true), nil
-	//})
-	//
-	//ctx.Step(`^adding step state to context$`, func(ctx context.Context) context.Context {
-	//	return context.WithValue(ctx, ctxKey("StepState"), true)
-	//})
-	//
-	//ctx.Step(`^I return a context from a step$`, tc.iReturnAContextFromAStep)
-	//ctx.Step(`^I should see the context in the next step$`, tc.iShouldSeeTheContextInTheNextStep)
-	//ctx.Step(`^I can see contexts passed in multisteps$`, func() godog.Steps {
-	//	return godog.Steps{
-	//		"I return a context from a step",
-	//		"I should see the context in the next step",
-	//	}
-	//})
-	//
-	//// introduced to test testingT
 	ctx.Step(`^testing T (should have|should not have) failed$`, tc.testingTShouldBe)
-	//ctx.Step(`^my step (?:fails|skips) the test by calling (FailNow|Fail|SkipNow|Skip) on testing T$`, tc.myStepCallsTFailErrorSkip)
-	//ctx.Step(`^my step fails the test by calling (Fatal|Error) on testing T with message "([^"]*)"$`, tc.myStepCallsTErrorFatal)
-	//ctx.Step(`^my step fails the test by calling (Fatalf|Errorf) on testing T with message "([^"]*)" and argument "([^"]*)"$`, tc.myStepCallsTErrorfFatalf)
 	ctx.Step(`^my step calls Log on testing T with message "([^"]*)"$`, tc.myStepCallsTLog)
 	ctx.Step(`^my step calls Logf on testing T with message "([^"]*)" and argument "([^"]*)"$`, tc.myStepCallsTLogf)
-	//ctx.Step(`^my step calls testify's assert.Equal with expected "([^"]*)" and actual "([^"]*)"$`, tc.myStepCallsTestifyAssertEqual)
-	//ctx.Step(`^my step calls testify's require.Equal with expected "([^"]*)" and actual "([^"]*)"$`, tc.myStepCallsTestifyRequireEqual)
-	//ctx.Step(`^my step calls testify's assert.Equal ([0-9]+) times(| with match)$`, tc.myStepCallsTestifyAssertEqualMultipleTimes)
 	ctx.Step(`^my step calls godog.Log with message "([^"]*)"$`, tc.myStepCallsDogLog)
 	ctx.Step(`^my step calls godog.Logf with message "([^"]*)" and argument "([^"]*)"$`, tc.myStepCallsDogLogf)
 	ctx.Step(`^the logged messages should include "([^"]*)"$`, tc.theLoggedMessagesShouldInclude)
-	//
-	//ctx.StepContext().Before(tc.inject)
 }
 
 func InitializeTestSuiteInner(parent *godogFeaturesScenarioOuter) func(ctx *godog.TestSuiteContext) {
@@ -424,9 +278,6 @@ func InitializeTestSuiteInner(parent *godogFeaturesScenarioOuter) func(ctx *godo
 func InitializeScenarioInner(parent *godogFeaturesScenarioOuter) func(ctx *godog.ScenarioContext) {
 
 	return func(ctx *godog.ScenarioContext) {
-
-		//var depth = 1
-
 		tc := &godogFeaturesScenarioInner{
 			scenarioContext: ctx,
 		}
@@ -524,72 +375,13 @@ func InitializeScenarioInner(parent *godogFeaturesScenarioOuter) func(ctx *godog
 			return context.WithValue(ctx, ctxKey("AfterStep"), step.Text), nil
 		})
 
-		//
-		//ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
-		//	fmt.Printf("%-2s SCENARIO: %v\n", strings.Repeat(">", depth), sc.Name)
-		//	depth++
-		//
-		//	return ctx, nil
-		//})
-		//
-		//ctx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
-		//	depth--
-		//	fmt.Printf("%-2s SCENARIO: %v\n", strings.Repeat("<", depth), sc.Name)
-		//	if err != nil {
-		//		fmt.Printf("%-2s    SCENARIO ERROR: %v\n", strings.Repeat("!", depth), err.Error())
-		//	}
-		//
-		//	return ctx, nil
-		//})
-		//ctx.StepContext().Before(func(ctx context.Context, st *godog.Step) (context.Context, error) {
-		//	fmt.Printf("%-2s BEFORE STEP HOOK: %v\n", strings.Repeat(">", depth), st.Text)
-		//	depth++
-		//	return ctx, nil
-		//})
-		//
-		//ctx.StepContext().After(func(ctx context.Context, st *godog.Step, status godog.StepResultStatus, err error) (context.Context, error) {
-		//	depth--
-		//	fmt.Printf("%-2s AFTER STEP HOOK: %v\n", strings.Repeat("<", depth), st.Text)
-		//	if err != nil {
-		//		fmt.Printf("%-2s STEP ERROR: %v\n", strings.Repeat("!", depth), err.Error())
-		//	}
-		//	return ctx, nil
-		//})
-		//
 		ctx.Step(`^(a background step is defined)$`, tc.backgroundStepIsDefined)
 		ctx.Step(`^step '(.*)' should have been executed`, tc.stepShouldHaveBeenExecuted)
-		//
-		//ctx.Step(`^(?:a )?feature path "([^"]*)"$`, tc.featurePath)
-		//ctx.Step(`^I parse features$`, tc.parseFeatures)
-		//ctx.Step(`^I'm listening to suite events$`, tc.iAmListeningToSuiteEvents)
-		//ctx.Step(`^I run feature suite$`, tc.iRunFeatureSuite)
-		//ctx.Step(`^I run feature suite with tags "([^"]*)"$`, tc.iRunFeatureSuiteWithTags)
-		//ctx.Step(`^I run feature suite with formatter "([^"]*)"$`, tc.iRunFeatureSuiteWithFormatter)
 		ctx.Step(`^(?:I )(allow|disable) variable injection`, tc.iSetVariableInjectionTo)
-		//ctx.Step(`^(?:a )?feature "([^"]*)"(?: file)?:$`, tc.aFeatureFile)
-		//ctx.Step(`^the suite should have (passed|failed)$`, tc.theSuiteShouldHave)
-		//
-		//ctx.Step(`^I should have ([\d]+) features? files?:$`, tc.iShouldHaveNumFeatureFiles)
-		//ctx.Step(`^I should have ([\d]+) scenarios? registered$`, tc.numScenariosRegistered)
-		//ctx.Step(`^there (was|were) ([\d]+) "([^"]*)" events? fired$`, tc.thereWereNumEventsFired)
-		//ctx.Step(`^there was event triggered before scenario "([^"]*)"$`, tc.thereWasEventTriggeredBeforeScenario)
-		//ctx.Step(`^these events had to be fired for a number of times:$`, tc.theseEventsHadToBeFiredForNumberOfTimes)
 		ctx.Step(`^value2 is twice value1:$`, tc.twiceAsBig)
 		//
 		ctx.Step(`^(?:a )?failing step`, tc.aFailingStep)
 		ctx.Step(`^(.*should not be called)`, tc.aStepThatShouldNotHaveBeenCalled)
-		//ctx.Step(`^this step should fail`, tc.aFailingStep)
-		//ctx.Step(`^the following steps? should be (passed|failed|skipped|undefined|pending):`, tc.followingStepsShouldHave)
-		//ctx.Step(`^the undefined step snippets should be:$`, tc.theUndefinedStepSnippetsShouldBe)
-		//
-		//// event stream
-		//ctx.Step(`^the following events should be fired:$`, tc.thereShouldBeEventsFired)
-		//
-		//// lt
-		//ctx.Step(`^savybių aplankas "([^"]*)"$`, tc.featurePath)
-		//ctx.Step(`^aš išskaitau savybes$`, tc.parseFeatures)
-		//ctx.Step(`^aš turėčiau turėti ([\d]+) savybių failus:$`, tc.iShouldHaveNumFeatureFiles)
-		//
 		ctx.Step(`^(?:a )?pending step$`, func() error {
 			return godog.ErrPending
 		})
@@ -609,94 +401,32 @@ func InitializeScenarioInner(parent *godogFeaturesScenarioOuter) func(ctx *godog
 		ctx.Then(`^(?:a )?then step$`, func() error {
 			return nil
 		})
-		//
-		//// Introduced to test formatter/cucumber.feature
-		//ctx.Step(`^the rendered json will be as follows:$`, tc.theRenderedJSONWillBe)
-		//
-		//// Introduced to test formatter/pretty.feature
-		//ctx.Step(`^the rendered output will be as follows:$`, tc.theRenderOutputWillBe)
-		//
-		//// Introduced to test formatter/junit.feature
-		//ctx.Step(`^the rendered xml will be as follows:$`, tc.theRenderedXMLWillBe)
-		//
 		ctx.Step(`^(?:a )?failing multistep$`, func() godog.Steps {
 			return godog.Steps{"passing step", "failing step"}
 		})
-		//
 		ctx.Step(`^(?:a |an )?undefined multistep$`, func() godog.Steps {
 			return godog.Steps{"passing step", "undefined step", "passing step"}
 		})
-		//
-		//ctx.Then(`^(?:a |an )?undefined multistep using 'then' function$`, func() godog.Steps {
-		//	return godog.Steps{"given step", "undefined step", "then step"}
-		//})
-		//
 		ctx.Step(`^(?:a )?passing multistep$`, func() godog.Steps {
 			return godog.Steps{"passing step", "passing step", "passing step"}
 		})
-		//
 		ctx.Then(`^(?:a )?passing multistep using 'then' function$`, func() godog.Steps {
 			return godog.Steps{"given step", "when step", "then step"}
 		})
-		//
 		ctx.Step(`^(?:a )?failing nested multistep$`, func() godog.Steps {
 			return godog.Steps{"passing step", "passing multistep", "failing multistep"}
 		})
 		ctx.Step(`IgnoredStep: .*`, func() error {
 			return nil
 		})
-		//
-		//ctx.Step(`^call func\(\*godog\.DocString\) with:$`, func(arg *godog.DocString) error {
-		//	return nil
-		//})
-		//ctx.Step(`^call func\(string\) with:$`, func(arg string) error {
-		//	return nil
-		//})
-		//
-		//ctx.Step(`^passing step without return$`, func() {})
-		//
-		//ctx.Step(`^having correct context$`, func(ctx context.Context) (context.Context, error) {
-		//	if ctx.Value(ctxKey("BeforeScenario")) == nil {
-		//		return ctx, errors.New("missing BeforeScenario in context")
-		//	}
-		//
-		//	if ctx.Value(ctxKey("BeforeStep")) == nil {
-		//		return ctx, errors.New("missing BeforeStep in context")
-		//	}
-		//
-		//	if ctx.Value(ctxKey("StepState")) == nil {
-		//		return ctx, errors.New("missing StepState in context")
-		//	}
-		//
-		//	return context.WithValue(ctx, ctxKey("Step"), true), nil
-		//})
-		//
-		//ctx.Step(`^adding step state to context$`, func(ctx context.Context) context.Context {
-		//	return context.WithValue(ctx, ctxKey("StepState"), true)
-		//})
-		//
 		ctx.Step(`^I return a context from a step$`, tc.iReturnAContextFromAStep)
 		ctx.Step(`^I should see the context in the next step$`, tc.iShouldSeeTheContextInTheNextStep)
-		//ctx.Step(`^I can see contexts passed in multisteps$`, func() godog.Steps {
-		//	return godog.Steps{
-		//		"I return a context from a step",
-		//		"I should see the context in the next step",
-		//	}
-		//})
-		//
-		//// introduced to test testingT
 		ctx.Step(`^my step (?:fails|skips) the test by calling (FailNow|Fail|SkipNow|Skip) on testing T$`, tc.myStepCallsTFailErrorSkip)
 		ctx.Step(`^my step fails the test by calling (Fatal|Error) on testing T with message "([^"]*)"$`, tc.myStepCallsTErrorFatal)
 		ctx.Step(`^my step fails the test by calling (Fatalf|Errorf) on testing T with message "([^"]*)" and argument "([^"]*)"$`, tc.myStepCallsTErrorfFatalf)
-		//ctx.Step(`^my step calls Log on testing T with message "([^"]*)"$`, tc.myStepCallsTLog)
-		//ctx.Step(`^my step calls Logf on testing T with message "([^"]*)" and argument "([^"]*)"$`, tc.myStepCallsTLogf)
 		ctx.Step(`^my step calls testify's assert.Equal with expected "([^"]*)" and actual "([^"]*)"$`, tc.myStepCallsTestifyAssertEqual)
 		ctx.Step(`^my step calls testify's require.Equal with expected "([^"]*)" and actual "([^"]*)"$`, tc.myStepCallsTestifyRequireEqual)
 		ctx.Step(`^my step calls testify's assert.Equal ([0-9]+) times(| with match)$`, tc.myStepCallsTestifyAssertEqualMultipleTimes)
-		//ctx.Step(`^my step calls godog.Log with message "([^"]*)"$`, tc.myStepCallsDogLog)
-		//ctx.Step(`^my step calls godog.Logf with message "([^"]*)" and argument "([^"]*)"$`, tc.myStepCallsDogLogf)
-		//ctx.Step(`^the logged messages should include "([^"]*)"$`, tc.theLoggedMessagesShouldInclude)
-		//
 		ctx.StepContext().Before(tc.inject)
 	}
 }
@@ -786,22 +516,9 @@ type godogFeaturesScenarioInner struct {
 // TODO why is this needed ?
 // A new instance is created in the scenario initialiser
 func (tc *godogFeaturesScenarioInner) ResetBeforeEachScenario(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
-	// reset whole suite with the state
-	//tc.out.Reset()
-	//tc.paths = []string{}
-
 	tc.features = []*models.Feature{}
-
-	//tc.testedSuite = &godog.suite{}
-	//tc.testSuiteContext = godog.TestSuiteContext{}
-
-	// DO NOT RESET tc.scenarioContext = nil as it wipes out the istalled value
-
-	// reset all fired events
 	tc.allowInjection = false
-
 	tc.stepsExecuted = []string{}
-
 	return ctx, nil
 }
 
@@ -942,7 +659,7 @@ func (tc *godogFeaturesScenarioInner) myStepCallsTFailErrorSkip(ctx context.Cont
 }
 
 func (tc *godogFeaturesScenarioOuter) testingTShouldBe(state string) error {
-	// FIXME john - canpt detect godog interaction with testing.T unless we switch it to rely on the interfate
+	// FIXME john - cannot detect godog interaction with testing.T unless we switch it to rely on the interfate
 	//if !tc.testingT.Failed() && state == "should have" {
 	//	return fmt.Errorf("testing.T should have recorded a failure, but none were recorded")
 	//}
@@ -1176,11 +893,6 @@ func prt(storage *storage.Storage, psrs models.StepResultStatus) []string {
 	return r
 }
 
-//
-//func (tc *godogFeaturesScenarioInner) iAmListeningToSuiteEvents() error {
-//	return nil
-//}
-
 func (tc *godogFeaturesScenarioInner) aFailingStep() error {
 	return fmt.Errorf("intentional failure")
 }
@@ -1196,14 +908,9 @@ func (tc *godogFeaturesScenarioOuter) aFeatureFile(path string, body *godog.DocS
 		Contents: []byte(body.Content),
 	})
 
-	// permit the use of escaped """ docstrings inside this docstring
+	// validate before continuing
 	contents := strings.ReplaceAll(body.Content, "\\\"", "\"")
-
 	_, err := gherkin.ParseGherkinDocument(strings.NewReader(contents), (&messages.Incrementing{}).NewId)
-	//gd.Uri = path
-	//
-	//pickles := gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
-	//tc.features = append(tc.features, &models.Feature{GherkinDocument: gd, Pickles: pickles})
 
 	return err
 }
@@ -1256,18 +963,6 @@ func (tc *godogFeaturesScenarioOuter) featurePath(path string) {
 	tc.paths = append(tc.paths, filepath.Join(tc.tempDir, path))
 }
 
-//
-//func (tc *godogFeaturesScenarioInner) parseFeatures() error {
-//	//	fts, err := parser.ParseFeatures(storage.FS{}, "", tc.paths)
-//	//if err != nil {
-//	//	return err
-//	//}
-//	//
-//	//tc.features = append(tc.features, fts...)
-//
-//	return errors.New("parseFeatures shouldn't be used as parsing tests should be done in the parsing model unit tests")
-//}
-
 func (tc *godogFeaturesScenarioOuter) theSuiteShouldHave(state string) error {
 	if tc.failed && state == "passed" {
 		return fmt.Errorf("the feature suite has failed but should have passed")
@@ -1319,88 +1014,6 @@ func (tc *godogFeaturesScenarioInner) iShouldHaveNumFeatureFiles(num int, files 
 
 	return nil
 }
-
-//
-//func (tc *godogFeaturesScenarioInner) numScenariosRegistered(expected int) (err error) {
-//	var num int
-//	for _, ft := range tc.features {
-//		num += len(ft.Pickles)
-//	}
-//
-//	if num != expected {
-//		err = fmt.Errorf("expected %d scenarios to be registered, but got %d", expected, num)
-//	}
-//
-//	return
-//}
-//
-//func (tc *godogFeaturesScenarioInner) thereWereNumEventsFired(_ string, expected int, typ string) error {
-//
-//	var num int
-//	for _, event := range tc.events {
-//		if event.name == typ {
-//			num++
-//		}
-//	}
-//
-//	if num != expected {
-//		if typ == "BeforeFeature" || typ == "AfterFeature" {
-//			return nil
-//		}
-//
-//		return fmt.Errorf("expected %d %s events to be fired, but got %d", expected, typ, num)
-//	}
-//
-//	return nil
-//}
-
-//
-//func (tc *godogFeaturesScenarioInner) thereWasEventTriggeredBeforeScenario(expected string) error {
-//	var found []string
-//	for _, event := range tc.events {
-//		if event.name != "BeforeScenario" {
-//			continue
-//		}
-//
-//		var name string
-//		switch t := event.args[0].(type) {
-//		case *godog.Scenario:
-//			name = t.Name
-//		}
-//
-//		if name == expected {
-//			return nil
-//		}
-//
-//		found = append(found, name)
-//	}
-//
-//	if len(found) == 0 {
-//		return fmt.Errorf("before scenario event was never triggered or listened")
-//	}
-//
-//	return fmt.Errorf(`expected "%s" scenario, but got these fired %s`, expected, `"`+strings.Join(found, `", "`)+`"`)
-//
-//}
-//
-//func (tc *godogFeaturesScenarioInner) theseEventsHadToBeFiredForNumberOfTimes(tbl *godog.Table) error {
-//	if len(tbl.Rows[0].Cells) != 2 {
-//		return fmt.Errorf("expected two columns for event table row, got: %d", len(tbl.Rows[0].Cells))
-//	}
-//
-//	for _, row := range tbl.Rows {
-//		num, err := strconv.ParseInt(row.Cells[1].Value, 10, 0)
-//		if err != nil {
-//			return err
-//		}
-//
-//		if err := tc.thereWereNumEventsFired("", int(num), row.Cells[0].Value); err != nil {
-//			return err
-//		}
-//	}
-//
-//	return nil
-//}
 
 func (tc *godogFeaturesScenarioInner) twiceAsBig(tbl *godog.Table) error {
 	if len(tbl.Rows[0].Cells) != 2 {
@@ -1473,7 +1086,7 @@ func (tc *godogFeaturesScenarioOuter) showJsonComparison(expected []interface{},
 func (tc *godogFeaturesScenarioOuter) theRenderedOutputWillBe(docstring *godog.DocString) error {
 
 	durationRegex := regexp.MustCompile(`[\d.]+?(s|ms|µs)`)
-	stepHandlerRegex := regexp.MustCompile(`(<autogenerated>|feature_test.go):([\S]+) -> .*`)
+	stepHandlerRegex := regexp.MustCompile(`(<autogenerated>|functional_test.go):([\S]+) -> .*`)
 
 	expected := docstring.Content
 	expected = durationRegex.ReplaceAllString(expected, "9.99s")
@@ -1497,9 +1110,9 @@ func (tc *godogFeaturesScenarioOuter) theRenderedEventsWillBe(docstring *godog.D
 	timeStampRegex := regexp.MustCompile(`"timestamp":-?\d+`)
 
 	// the file location looks different depending on running vs debugging
-	definitionIdDebug := regexp.MustCompile(`"definition_id":"feature_test.go:\d+ -\\u003e [^"]+"`)
+	definitionIdDebug := regexp.MustCompile(`"definition_id":"functional_test.go:\d+ -\\u003e [^"]+"`)
 
-	definitionIdRepl := `"definition_id":"feature_test.go:<autogenerated> -\u003e <autogenerated>"`
+	definitionIdRepl := `"definition_id":"functional_test.go:<autogenerated> -\u003e <autogenerated>"`
 
 	expected := docstring.Content
 	expected = utils.TrimAllLines(expected)
