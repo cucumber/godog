@@ -1,3 +1,4 @@
+@john
 Feature: tag filters
   In order to test application behavior
   As a test suite
@@ -8,120 +9,100 @@ Feature: tag filters
       """
       Feature: outline
 
-        Background:
+        Scenario Outline: only tagged examples should run
+          Given <status> step
+
+          Examples:
+            | status |
+            | passing |
+
+          @run_these_examples_only
+          Examples:
+            | status |
+            | other passing |
+      """
+    When I run feature suite with tags "@run_these_examples_only"
+    Then the suite should have passed
+    And only the following steps should have run and should be passed:
+      """
+      other passing step
+      """
+
+  Scenario: should filter scenarios by single tag
+    Given a feature "normal.feature" file:
+      """
+      Feature: outline
+
+        @run_these_examples_only
+        Scenario Outline: only tagged examples should run
           Given passing step
-          And passing step without return
 
-        Scenario Outline: parse a scenario
-          Given a feature path "<path>"
-          When I parse features
-          Then I should have <num> scenario registered
+        @some_other_tag
+        Scenario Outline: only tagged examples should run
+          Given second passing step
 
-          Examples:
-            | path                    | num |
-            | features/load.feature:3 | 0   |
+        @some_other_tag
+        @run_these_examples_only
+        Scenario Outline: only tagged examples should run
+          Given third passing step
 
-          @used
-          Examples:
-            | path                    | num |
-            | features/load.feature:6 | 1   |
       """
-    When I run feature suite with tags "@used"
+    When I run feature suite with tags "@run_these_examples_only"
     Then the suite should have passed
-    And the following steps should be passed:
+    And only the following steps should have run and should be passed:
       """
-      I parse features
-      a feature path "features/load.feature:6"
-      I should have 1 scenario registered
+      passing step
+      third passing step
       """
-    And I should have 1 scenario registered
 
-  Scenario: should filter scenarios by X tag
+  Scenario: should filter scenarios by And-Not tag expression
     Given a feature "normal.feature" file:
       """
-      Feature: tagged
+      Feature: outline
 
-        @x
-        Scenario: one
-          Given a feature path "one"
+        @run_these_examples_only
+        Scenario Outline: only tagged examples should run
+          Given passing step
 
-        @x
-        Scenario: two
-          Given a feature path "two"
+        @some_other_tag
+        Scenario Outline: only tagged examples should run
+          Given second passing step
 
-        @x @y
-        Scenario: three
-          Given a feature path "three"
+        @some_other_tag
+        @run_these_examples_only
+        Scenario Outline: only tagged examples should run
+          Given third passing step
 
-        @y
-        Scenario: four
-          Given a feature path "four"
       """
-    When I run feature suite with tags "@x"
+    When I run feature suite with tags "@run_these_examples_only && ~@some_other_tag"
     Then the suite should have passed
-    And I should have 3 scenario registered
-    And the following steps should be passed:
+    And only the following steps should have run and should be passed:
       """
-      a feature path "one"
-      a feature path "two"
-      a feature path "three"
+      passing step
       """
 
-  Scenario: should filter scenarios by X tag not having Y
+  Scenario: should filter scenarios by And tag expression
     Given a feature "normal.feature" file:
       """
-      Feature: tagged
+      Feature: outline
 
-        @x
-        Scenario: one
-          Given a feature path "one"
+        @run_these_examples_only
+        Scenario Outline: only tagged examples should run
+          Given passing step
 
-        @x
-        Scenario: two
-          Given a feature path "two"
+        @some_other_tag
+        Scenario Outline: only tagged examples should run
+          Given second passing step
 
-        @x @y
-        Scenario: three
-          Given a feature path "three"
+        @some_other_tag
+        @run_these_examples_only
+        Scenario Outline: only tagged examples should run
+          Given third passing step
 
-        @y @z
-        Scenario: four
-          Given a feature path "four"
       """
-    When I run feature suite with tags "@x && ~@y"
+    When I run feature suite with tags "@run_these_examples_only && @some_other_tag"
     Then the suite should have passed
-    And I should have 2 scenario registered
-    And the following steps should be passed:
+    And only the following steps should have run and should be passed:
       """
-      a feature path "one"
-      a feature path "two"
-      """
-
-  Scenario: should filter scenarios having Y and Z tags
-    Given a feature "normal.feature" file:
-      """
-      Feature: tagged
-
-        @x
-        Scenario: one
-          Given a feature path "one"
-
-        @x
-        Scenario: two
-          Given a feature path "two"
-
-        @x @y
-        Scenario: three
-          Given a feature path "three"
-
-        @y @z
-        Scenario: four
-          Given a feature path "four"
-      """
-    When I run feature suite with tags "@y && @z"
-    Then the suite should have passed
-    And I should have 1 scenario registered
-    And the following steps should be passed:
-      """
-      a feature path "four"
+      third passing step
       """

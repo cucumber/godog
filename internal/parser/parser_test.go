@@ -13,6 +13,48 @@ import (
 	"github.com/cucumber/godog/internal/parser"
 )
 
+const fakeFeature = `
+		Feature: the feature
+			Some feature text 
+
+			Scenario: the scenario
+				Some scenario text 
+				
+				Given some step 
+				When other step
+				Then final step
+
+			Scenario Outline: the outline
+				Given some <value>
+
+				Examples:
+					| value |
+					| 1     |
+					| 2     |
+`
+
+const fakeFeatureOther = `
+		Feature: the other feature
+			Some feature other text 
+
+			Background:
+				Given some background step
+
+			Scenario: the other scenario
+				Some other scenario text 
+				
+				Given some other step
+				When other other step
+				Then final other step
+            
+			Scenario: the final scenario
+				Some other scenario text 
+				
+				Given some other step
+				When other other step
+				Then final other step
+            `
+
 func Test_FeatureFilePathParser(t *testing.T) {
 	type Case struct {
 		input string
@@ -39,19 +81,11 @@ func Test_FeatureFilePathParser(t *testing.T) {
 }
 
 func Test_ParseFromBytes_FromMultipleFeatures_DuplicateNames(t *testing.T) {
-	eatGodogContents := `
-Feature: eat godogs
-  In order to be happy
-  As a hungry gopher
-  I need to be able to eat godogs
 
-  Scenario: Eat 5 out of 12
-    Given there are 12 godogs
-    When I eat 5
-    Then there should be 7 remaining`
+	// FIXME - is thos really desirable - same name but different contents and one gets ignored???
 	input := []parser.FeatureContent{
-		{Name: "MyCoolDuplicatedFeature", Contents: []byte(eatGodogContents)},
-		{Name: "MyCoolDuplicatedFeature", Contents: []byte(eatGodogContents)},
+		{Name: "MyCoolDuplicatedFeature", Contents: []byte(fakeFeature)},
+		{Name: "MyCoolDuplicatedFeature", Contents: []byte(fakeFeatureOther)},
 	}
 
 	featureFromBytes, err := parser.ParseFromBytes("", input)
@@ -59,23 +93,13 @@ Feature: eat godogs
 	require.Len(t, featureFromBytes, 1)
 }
 
-func Test_ParseFromBytes_FromMultipleFeatures(t *testing.T) {
+func Test_ParseFromBytes_SinglePath(t *testing.T) {
 	featureFileName := "godogs.feature"
-	eatGodogContents := `
-Feature: eat godogs
-  In order to be happy
-  As a hungry gopher
-  I need to be able to eat godogs
-
-  Scenario: Eat 5 out of 12
-    Given there are 12 godogs
-    When I eat 5
-    Then there should be 7 remaining`
 
 	baseDir := "base"
 	fsys := fstest.MapFS{
 		filepath.Join(baseDir, featureFileName): {
-			Data: []byte(eatGodogContents),
+			Data: []byte(fakeFeature),
 			Mode: fs.FileMode(0644),
 		},
 	}
@@ -85,7 +109,7 @@ Feature: eat godogs
 	require.Len(t, featureFromFile, 1)
 
 	input := []parser.FeatureContent{
-		{Name: filepath.Join(baseDir, featureFileName), Contents: []byte(eatGodogContents)},
+		{Name: filepath.Join(baseDir, featureFileName), Contents: []byte(fakeFeature)},
 	}
 
 	featureFromBytes, err := parser.ParseFromBytes("", input)
@@ -97,61 +121,61 @@ Feature: eat godogs
 
 func Test_ParseFeatures_FromMultiplePaths(t *testing.T) {
 	const (
-		defaultFeatureFile     = "godogs.feature"
-		defaultFeatureContents = `Feature: eat godogs
-  In order to be happy
-  As a hungry gopher
-  I need to be able to eat godogs
-
-  Scenario: Eat 5 out of 12
-    Given there are 12 godogs
-    When I eat 5
-		Then there should be 7 remaining`
+		testFeatureFile = "godogs.feature"
 	)
 
 	tests := map[string]struct {
 		fsys  fs.FS
 		paths []string
 
-		expFeatures int
-		expError    error
+		expFeatures  int
+		expScenarios int
+		expSteps     int
+		expError     error
 	}{
-		"feature directories can be parsed": {
+		"directories with multiple feature files can be parsed": {
 			paths: []string{"base/a", "base/b"},
 			fsys: fstest.MapFS{
-				filepath.Join("base/a", defaultFeatureFile): {
-					Data: []byte(defaultFeatureContents),
+				filepath.Join("base/a", testFeatureFile): {
+					Data: []byte(fakeFeature),
 				},
-				filepath.Join("base/b", defaultFeatureFile): {
-					Data: []byte(defaultFeatureContents),
+				filepath.Join("base/b", testFeatureFile): {
+					Data: []byte(fakeFeatureOther),
 				},
 			},
-			expFeatures: 2,
+			expFeatures:  2,
+			expScenarios: 5,
+			expSteps:     13,
 		},
 		"path not found errors": {
 			fsys:     fstest.MapFS{},
 			paths:    []string{"base/a", "base/b"},
 			expError: errors.New(`feature path "base/a" is not available`),
 		},
-		"feature files can be parsed": {
+		"feature files can be parsed from multiple paths": {
 			paths: []string{
-				filepath.Join("base/a/", defaultFeatureFile),
-				filepath.Join("base/b/", defaultFeatureFile),
+				filepath.Join("base/a/", testFeatureFile),
+				filepath.Join("base/b/", testFeatureFile),
 			},
 			fsys: fstest.MapFS{
-				filepath.Join("base/a", defaultFeatureFile): {
-					Data: []byte(defaultFeatureContents),
+				filepath.Join("base/a", testFeatureFile): {
+					Data: []byte(fakeFeature),
 				},
-				filepath.Join("base/b", defaultFeatureFile): {
-					Data: []byte(defaultFeatureContents),
+				filepath.Join("base/b", testFeatureFile): {
+					Data: []byte(fakeFeatureOther),
 				},
 			},
-			expFeatures: 2,
+			expFeatures:  2,
+			expScenarios: 5,
+			expSteps:     13,
 		},
 	}
 
-	for name, test := range tests {
-		test := test
+	for testName, testCase := range tests {
+
+		test := testCase // avoids bug: "loop variable test captured by func literal"
+		name := testName // avoids bug: "loop variable test captured by func literal"
+
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
@@ -175,6 +199,20 @@ func Test_ParseFeatures_FromMultiplePaths(t *testing.T) {
 					pickleIDs[p.Id] = true
 				}
 			}
+
+			scenarioCount := 0
+			stepCount := 0
+			for _, feature := range features {
+				scenarioCount += len(feature.Pickles)
+
+				for _, pickle := range feature.Pickles {
+					stepCount += len(pickle.Steps)
+				}
+			}
+
+			require.Equal(t, test.expScenarios, scenarioCount, name+" : scenarios")
+			require.Equal(t, test.expSteps, stepCount, name+" : steps")
+
 		})
 	}
 }

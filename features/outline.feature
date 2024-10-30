@@ -3,70 +3,39 @@ Feature: run outline
   As a test suite
   I need to be able to run outline scenarios
 
-  Scenario: should run a normal outline
+  Scenario: should continue through other examples even if some examples fail
     Given a feature "normal.feature" file:
       """
       Feature: outline
 
         Background:
-          Given passing step
+          Given second passing step
 
-        Scenario Outline: parse a scenario
-          Given a feature path "<path>"
-          When I parse features
-          Then I should have <num> scenario registered
+        Scenario Outline: continue execution despite failing examples
+          Then <status> step
 
           Examples:
-            | path                    | num |
-            | features/load.feature:6 | 1   |
-            | features/load.feature:3 | 0   |
-      """
-    When I run feature suite
-    Then the suite should have passed
-    And the following steps should be passed:
-      """
-      a passing step
-      I parse features
-      a feature path "features/load.feature:6"
-      a feature path "features/load.feature:3"
-      I should have 1 scenario registered
-      I should have 0 scenario registered
-      """
-
-  Scenario: should continue through examples on failure
-    Given a feature "normal.feature" file:
-      """
-      Feature: outline
-
-        Background:
-          Given passing step
-
-        Scenario Outline: parse a scenario
-          Given a feature path "<path>"
-          When I parse features
-          Then I should have <num> scenario registered
-
-          Examples:
-            | path                    | num |
-            | features/load.feature:6 | 5   |
-            | features/load.feature:3 | 0   |
+            | status  |
+            | passing |
+            | failing |
+            | other passing |
       """
     When I run feature suite
     Then the suite should have failed
     And the following steps should be passed:
       """
-      a passing step
-      I parse features
-      a feature path "features/load.feature:6"
-      a feature path "features/load.feature:3"
-      I should have 0 scenario registered
+     second passing step
+     second passing step
+     second passing step
+     passing step
+     other passing step
       """
     And the following steps should be failed:
       """
-      I should have 5 scenario registered
+      failing step
       """
 
-  Scenario: should skip examples on background failure
+  Scenario: should skip scenario examples if background fails
     Given a feature "normal.feature" file:
       """
       Feature: outline
@@ -75,79 +44,100 @@ Feature: run outline
           Given a failing step
 
         Scenario Outline: parse a scenario
-          Given a feature path "<path>"
-          When I parse features
-          Then I should have <num> scenario registered
+          Given <status> step
 
           Examples:
-            | path                    | num |
-            | features/load.feature:6 | 1   |
-            | features/load.feature:3 | 0   |
+            | status  |
+            | passing |
+            | other passing |
       """
     When I run feature suite
     Then the suite should have failed
     And the following steps should be skipped:
       """
-      I parse features
-      a feature path "features/load.feature:6"
-      a feature path "features/load.feature:3"
-      I should have 0 scenario registered
-      I should have 1 scenario registered
+      passing step
+      other passing step
       """
     And the following steps should be failed:
       """
       a failing step
+      a failing step
       """
 
-  Scenario: should translate step table body
+  Scenario: table should be injected with example values
     Given a feature "normal.feature" file:
       """
       Feature: outline
 
-        Background:
-          Given I'm listening to suite events
-
         Scenario Outline: run with events
-          Given a feature path "<path>"
-          When I run feature suite
-          Then these events had to be fired for a number of times:
-            | BeforeScenario | <scen> |
-            | BeforeStep     | <step> |
+          Given <status> step
+          Then value2 is twice value1:
+            | Value1 | <value1> |
+            | Value2 | <value2> |
 
           Examples:
-            | path                    | scen | step |
-            | features/load.feature:6 | 1    | 3    |
-            | features/load.feature   | 6    | 19   |
+            | status   | value1 | value2 |
+            | passing  | 2      | 4    |
+            | passing  | 11     | 22   |
       """
     When I run feature suite
     Then the suite should have passed
     And the following steps should be passed:
       """
-      I'm listening to suite events
-      I run feature suite
-      a feature path "features/load.feature:6"
-      a feature path "features/load.feature"
+      passing step
+      value2 is twice value1:
+      passing step
+      value2 is twice value1:
       """
 
-  Scenario Outline: should translate step doc string argument
+  @john
+  Scenario Outline: docstring should be injected with example values
     Given a feature "normal.feature" file:
       """
       Feature: scenario events
 
-        Background:
-          Given I'm listening to suite events
-
-        Scenario: run with events
-          Given a feature path "<path>"
-          When I run feature suite
-          Then these events had to be fired for a number of times:
-            | BeforeScenario | <scen> |
-      """
+        Scenario: run <status> params
+          Given <status> step
+     """
     When I run feature suite
     Then the suite should have passed
+    And the following steps should be passed:
+      """
+      <status> step
+      """
 
     Examples:
-      | path                    | scen |
-      | features/load.feature:6 | 1    |
-      | features/load.feature   | 6    |
+      | status        |
+      | passing       |
+      | other passing |
 
+
+    @john
+  Scenario: scenario title may be injected with example values
+    Given a feature "normal.feature" file:
+      """
+    Feature: the feature
+      Scenario Outline: scenario with <param> in title
+        When <param> step
+
+        Examples:
+          | param     |
+          | passing   |
+          | failing   |
+      """
+    When I run feature suite
+
+    Then the suite should have failed
+    And the following events should be fired:
+    """
+    BeforeSuite
+    BeforeScenario [scenario with passing in title]
+    BeforeStep [passing step]
+    AfterStep [passing step] [passed]
+    AfterScenario [scenario with passing in title]
+    BeforeScenario [scenario with failing in title]
+    BeforeStep [failing step]
+    AfterStep [failing step] [failed] [intentional failure]
+    AfterScenario [scenario with failing in title] [intentional failure]
+    AfterSuite
+    """

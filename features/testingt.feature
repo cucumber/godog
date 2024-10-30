@@ -14,6 +14,8 @@ Feature: providing testingT compatibility
       """
     When I run feature suite
     Then the suite should have failed
+      #YODO WRITE ME ...
+    Then testing T should have failed
     And the following steps should be passed:
       """
       passing step
@@ -76,6 +78,7 @@ Feature: providing testingT compatibility
       | Errorf |
       | Fatalf |
 
+
   Scenario: should pass test when testify assertions pass
     Given a feature "testify.feature" file:
       """
@@ -119,6 +122,7 @@ Feature: providing testingT compatibility
       """
       my step calls testify's assert.Equal with expected "exp2" and actual "not"
       """
+
 
   Scenario: should fail test when multiple testify assertions are used in a step
     Given a feature "testify.feature" file:

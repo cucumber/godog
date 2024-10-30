@@ -58,10 +58,11 @@ type suite struct {
 	fmt     Formatter
 	storage *storage.Storage
 
-	failed        bool
-	randomSeed    int64
-	stopOnFailure bool
-	strict        bool
+	//failed bool // TODO Used only for testing
+
+	randomSeed int64
+	//stopOnFailure bool // used only in test
+	strict bool
 
 	defaultContext context.Context
 	testingT       *testing.T
@@ -284,7 +285,9 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 		return ctx, nil
 	}
 
-	ctx, err = s.maybeSubSteps(match.Run(ctx))
+	ctx, errorOrSteps := match.Run(ctx)
+
+	ctx, err = s.maybeSubSteps(ctx, errorOrSteps)
 
 	return ctx, err
 }
@@ -565,20 +568,53 @@ func keywordMatches(k formatters.Keyword, stepType messages.PickleStepType) bool
 	}
 }
 
+//var depth = 0
+
 func (s *suite) runSteps(ctx context.Context, pickle *Scenario, steps []*Step) (context.Context, error) {
+	//depth++
+	//fmt.Printf("%d %-2s SCENARIO: %v <- %s\n", depth, strings.Repeat(">", depth), pickle.Name, pickle.Uri)
+
 	var (
 		stepErr, scenarioErr error
 	)
 
+	//errf := func(e error) string {
+	//	if e == nil {
+	//		return "ok"
+	//	}
+	//	return e.Error()
+	//}
+
 	for i, step := range steps {
+		//depth++
+
 		isLast := i == len(steps)-1
 		isFirst := i == 0
+
+		//fmt.Printf("%d %-2s STEP: %v\n", depth, strings.Repeat(">", depth), step.Text)
+
 		ctx, stepErr = s.runStep(ctx, pickle, step, scenarioErr, isFirst, isLast)
+
+		//mark := "<"
+		//if stepErr != nil {
+		//	mark = "!"
+		//}
+		//fmt.Printf("%d %-2s STEP: %v - %s\n", depth, strings.Repeat(mark, depth), step.Text, errf(stepErr))
+
 		if scenarioErr == nil || s.shouldFail(stepErr) {
 			scenarioErr = stepErr
 		}
+		//depth--
 	}
 
+	//mark := "<"
+	//if scenarioErr != nil {
+	//	mark = "!"
+	//}
+	//
+	//fmt.Printf("%d %-2s SCENARIO: %v <- %s- %s\n", depth, strings.Repeat(mark, depth), pickle.Name, pickle.Uri, errf(scenarioErr))
+	//depth--
+	//
 	return ctx, scenarioErr
 }
 
@@ -609,6 +645,9 @@ func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 		s.storage.MustInsertPickleResult(pr)
 
 		s.fmt.Pickle(pickle)
+
+		// TODO - not really the right response - len(pickle.Steps)=0 mean the scenario is empty
+		// that's a little different to saying there are undefined steps.
 		return ErrUndefined
 	}
 
@@ -627,13 +666,15 @@ func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 	// scenario
 	if s.testingT != nil {
 		// Running scenario as a subtest.
-		s.testingT.Run(pickle.Name, func(t *testing.T) {
+		godogRunner := func(t *testing.T) {
 			dt.t = t
 			ctx, err = s.runSteps(ctx, pickle, pickle.Steps)
 			if s.shouldFail(err) {
 				t.Errorf("%+v", err)
 			}
-		})
+		}
+
+		s.testingT.Run(pickle.Name+":"+pickle.Uri, godogRunner)
 	} else {
 		ctx, err = s.runSteps(ctx, pickle, pickle.Steps)
 	}

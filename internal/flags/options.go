@@ -2,6 +2,7 @@ package flags
 
 import (
 	"context"
+	"github.com/cucumber/godog/formatters"
 	"io"
 	"io/fs"
 	"testing"
@@ -49,7 +50,8 @@ type Options struct {
 	Tags string
 
 	// The formatter name
-	Format string
+	Format    string
+	Formatter formatters.FormatterFunc
 
 	// Concurrency rate, not all formatters accepts this
 	Concurrency int
@@ -58,7 +60,7 @@ type Options struct {
 	Paths []string
 
 	// Where it should print formatter output
-	Output io.Writer
+	Output io.WriteCloser
 
 	// DefaultContext is used as initial context instead of context.Background().
 	DefaultContext context.Context

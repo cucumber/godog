@@ -20,14 +20,21 @@ check-go-version:
 		exit 1; \
 	fi
 
-test: check-go-version
+test: check-go-version checks gotest clitest
+
+checks:
 	@echo checks
 	go fmt ./...
 	go run honnef.co/go/tools/cmd/staticcheck@v0.5.1 github.com/cucumber/godog
 	go run honnef.co/go/tools/cmd/staticcheck@v0.5.1 github.com/cucumber/godog/cmd/godog
 	go vet ./...
+
+gotest:
 	@echo "running all tests"
 	go test -race ./...
+
+clitest:
+	@echo "running all tests via cli"
 	go run ./cmd/godog -f progress -c 4
 
 gherkin:

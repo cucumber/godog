@@ -28,9 +28,9 @@ import (
 )
 
 const (
-	exitSuccess int = iota
-	exitFailure
-	exitOptionError
+	ExitSuccess = iota
+	ExitFailure
+	ExitOptionError
 )
 
 type testSuiteInitializer func(*TestSuiteContext)
@@ -122,6 +122,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 				}
 
 				err := suite.runPickle(pickle)
+
 				if suite.shouldFail(err) {
 					copyLock.Lock()
 					*fail = true
@@ -156,55 +157,19 @@ func (r *runner) concurrent(rate int) (failed bool) {
 	return
 }
 
-func runWithOptions(suiteName string, runner runner, opt Options) int {
-	var output io.Writer = os.Stdout
-	if nil != opt.Output {
-		output = opt.Output
+func runWithOptions(suiteName string,
+	opt Options,
+	testSuiteInitializer testSuiteInitializer,
+	scenarioInitializer scenarioInitializer) int {
+
+	runner := runner{
+		testSuiteInitializer: testSuiteInitializer,
+		scenarioInitializer:  scenarioInitializer,
 	}
 
-	multiFmt := ifmt.MultiFormatter{}
-
-	for _, formatter := range strings.Split(opt.Format, ",") {
-		out := output
-		formatterParts := strings.SplitN(formatter, ":", 2)
-
-		if len(formatterParts) > 1 {
-			f, err := os.Create(formatterParts[1])
-			if err != nil {
-				err = fmt.Errorf(
-					`couldn't create file with name: "%s", error: %s`,
-					formatterParts[1], err.Error(),
-				)
-				fmt.Fprintln(os.Stderr, err)
-
-				return exitOptionError
-			}
-
-			defer f.Close()
-
-			out = f
-		}
-
-		if opt.NoColors {
-			out = colors.Uncolored(out)
-		} else {
-			out = colors.Colored(out)
-		}
-
-		if nil == formatters.FindFmt(formatterParts[0]) {
-			var names []string
-			for name := range formatters.AvailableFormatters() {
-				names = append(names, name)
-			}
-			fmt.Fprintln(os.Stderr, fmt.Errorf(
-				`unregistered formatter name: "%s", use one of: %s`,
-				opt.Format,
-				strings.Join(names, ", "),
-			))
-			return exitOptionError
-		}
-
-		multiFmt.Add(formatterParts[0], out)
+	var output io.WriteCloser = NopCloser(os.Stdout)
+	if nil != opt.Output {
+		output = opt.Output
 	}
 
 	if opt.ShowStepDefinitions {
@@ -212,13 +177,14 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 		sc := ScenarioContext{suite: &s}
 		runner.scenarioInitializer(&sc)
 		printStepDefinitions(s.steps, output)
-		return exitOptionError
+		return ExitOptionError
 	}
 
 	if len(opt.Paths) == 0 && len(opt.FeatureContents) == 0 {
 		inf, err := func() (fs.FileInfo, error) {
 			file, err := opt.FS.Open("features")
 			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
 				return nil, err
 			}
 			defer file.Close()
@@ -234,14 +200,23 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 		opt.Concurrency = 1
 	}
 
-	runner.fmt = multiFmt.FormatterFunc(suiteName, output)
+	var err error
+	runner.fmt, err = configureFormatter(opt, suiteName, output)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return ExitOptionError
+	}
+	defer func() {
+		runner.fmt.Close()
+	}()
+
 	opt.FS = storage.FS{FS: opt.FS}
 
 	if len(opt.FeatureContents) > 0 {
 		features, err := parser.ParseFromBytes(opt.Tags, opt.FeatureContents)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			return exitOptionError
+			fmt.Fprintf(os.Stderr, "Options.FeatureContents contains an error: %s\n", err.Error())
+			return ExitOptionError
 		}
 		runner.features = append(runner.features, features...)
 	}
@@ -250,7 +225,7 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 		features, err := parser.ParseFeatures(opt.FS, opt.Tags, opt.Paths)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
-			return exitOptionError
+			return ExitOptionError
 		}
 		runner.features = append(runner.features, features...)
 	}
@@ -270,11 +245,13 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 		runner.randomSeed = makeRandomSeed()
 	}
 
+	// TOD - move all these up to the initializer at top of func
 	runner.stopOnFailure = opt.StopOnFailure
 	runner.strict = opt.Strict
 	runner.defaultContext = opt.DefaultContext
 	runner.testingT = opt.TestingT
 
+	// TODO using env vars to pass args to formatter instead of traditional arg passing seems less that ideal
 	// store chosen seed in environment, so it could be seen in formatter summary report
 	os.Setenv("GODOG_SEED", strconv.FormatInt(runner.randomSeed, 10))
 	// determine tested package
@@ -287,9 +264,68 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 	os.Setenv("GODOG_SEED", "")
 	os.Setenv("GODOG_TESTED_PACKAGE", "")
 	if failed && opt.Format != "events" {
-		return exitFailure
+		return ExitFailure
 	}
-	return exitSuccess
+	return ExitSuccess
+}
+
+func configureFormatter(opt Options, suiteName string, output io.WriteCloser) (Formatter, error) {
+	if opt.Formatter != nil {
+		fm := opt.Formatter(suiteName, output)
+		if fm != nil {
+			return fm, nil
+		}
+	}
+
+	multiFmt, err := configureMultiFormatter(opt, output)
+	if err != nil {
+		return nil, err
+	}
+
+	return multiFmt.FormatterFunc(suiteName, output), nil
+}
+
+func configureMultiFormatter(opt Options, output io.WriteCloser) (multiFmt ifmt.MultiFormatter, err error) {
+
+	for _, formatter := range strings.Split(opt.Format, ",") {
+		out := output
+		formatterParts := strings.SplitN(formatter, ":", 2)
+
+		if len(formatterParts) > 1 {
+			f, err := os.Create(formatterParts[1])
+			if err != nil {
+				err = fmt.Errorf(
+					`couldn't create file with name: "%s", error: %s`,
+					formatterParts[1], err.Error(),
+				)
+				return ifmt.MultiFormatter{}, err
+			}
+
+			out = f
+		}
+
+		if opt.NoColors {
+			out = colors.Uncolored(out)
+		} else {
+			out = colors.Colored(out)
+		}
+
+		if nil == formatters.FindFmt(formatterParts[0]) {
+			var names []string
+			for name := range formatters.AvailableFormatters() {
+				names = append(names, name)
+			}
+			err := fmt.Errorf(
+				`unregistered formatter name: "%s", use one of: %s`,
+				opt.Format,
+				strings.Join(names, ", "),
+			)
+			return ifmt.MultiFormatter{}, err
+		}
+
+		multiFmt.Add(formatterParts[0], out)
+	}
+	return multiFmt, nil
 }
 
 func runsFromPackage(fp string) string {
@@ -332,7 +368,7 @@ func (ts TestSuite) Run() int {
 		var err error
 		ts.Options, err = getDefaultOptions()
 		if err != nil {
-			return exitOptionError
+			return ExitOptionError
 		}
 	}
 	if ts.Options.FS == nil {
@@ -344,8 +380,7 @@ func (ts TestSuite) Run() int {
 		return 0
 	}
 
-	r := runner{testSuiteInitializer: ts.TestSuiteInitializer, scenarioInitializer: ts.ScenarioInitializer}
-	return runWithOptions(ts.Name, r, *ts.Options)
+	return runWithOptions(ts.Name, *ts.Options, ts.TestSuiteInitializer, ts.ScenarioInitializer)
 }
 
 // RetrieveFeatures will parse and return the features based on test suite option
@@ -397,4 +432,19 @@ func getDefaultOptions() (*Options, error) {
 	opt.FS = storage.FS{}
 
 	return opt, nil
+}
+
+type noopCloser struct {
+	out io.Writer
+}
+
+func (*noopCloser) Close() error { return nil }
+
+func (n *noopCloser) Write(p []byte) (int, error) {
+	return n.out.Write(p)
+}
+
+// NopCloser will return an io.WriteCloser that ignores Close() calls
+func NopCloser(file io.Writer) io.WriteCloser {
+	return &noopCloser{out: file}
 }

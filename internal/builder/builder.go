@@ -64,7 +64,7 @@ func main() {
 		},
 	}.Run()
 
-	os.Exit(status)
+	os.Exit(int(status))
 }`))
 
 	// temp file for import

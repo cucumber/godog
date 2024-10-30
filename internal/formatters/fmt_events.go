@@ -18,7 +18,7 @@ func init() {
 }
 
 // EventsFormatterFunc implements the FormatterFunc for the events formatter
-func EventsFormatterFunc(suite string, out io.Writer) formatters.Formatter {
+func EventsFormatterFunc(suite string, out io.WriteCloser) formatters.Formatter {
 	return &Events{Base: NewBase(suite, out)}
 }
 

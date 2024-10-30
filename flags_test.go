@@ -59,7 +59,7 @@ func TestFlagsShouldParseFormat(t *testing.T) {
 
 func TestFlagsUsageShouldIncludeFormatDescriptons(t *testing.T) {
 	var buf bytes.Buffer
-	output := colors.Uncolored(&buf)
+	output := colors.Uncolored(NopCloser(&buf))
 
 	// register some custom formatter
 	Format("custom", "custom format description", formatters.JUnitFormatterFunc)

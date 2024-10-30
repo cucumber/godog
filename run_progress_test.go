@@ -36,7 +36,7 @@ func Test_ProgressFormatterWhenStepPanics(t *testing.T) {
 	ft.Pickles = gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
 
 	var buf bytes.Buffer
-	w := colors.Uncolored(&buf)
+	w := colors.Uncolored(NopCloser(&buf))
 	r := runner{
 		fmt:      formatters.ProgressFormatterFunc("progress", w),
 		features: []*models.Feature{&ft},
@@ -70,7 +70,7 @@ func Test_ProgressFormatterWithPanicInMultistep(t *testing.T) {
 	ft.Pickles = gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
 
 	var buf bytes.Buffer
-	w := colors.Uncolored(&buf)
+	w := colors.Uncolored(NopCloser(&buf))
 	r := runner{
 		fmt:      formatters.ProgressFormatterFunc("progress", w),
 		features: []*models.Feature{&ft},
@@ -104,7 +104,7 @@ func Test_ProgressFormatterMultistepTemplates(t *testing.T) {
 	ft.Pickles = gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
 
 	var buf bytes.Buffer
-	w := colors.Uncolored(&buf)
+	w := colors.Uncolored(NopCloser(&buf))
 	r := runner{
 		fmt:      formatters.ProgressFormatterFunc("progress", w),
 		features: []*models.Feature{&ft},
@@ -180,7 +180,7 @@ Feature: basic
 	ft.Pickles = gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
 
 	var buf bytes.Buffer
-	w := colors.Uncolored(&buf)
+	w := colors.Uncolored(NopCloser(&buf))
 	r := runner{
 		fmt:      formatters.ProgressFormatterFunc("progress", w),
 		features: []*models.Feature{&ft},
@@ -224,7 +224,7 @@ Feature: basic
 	"""`
 
 	var buf bytes.Buffer
-	w := colors.Uncolored(&buf)
+	w := colors.Uncolored(NopCloser(&buf))
 	r := runner{
 		fmt:      formatters.ProgressFormatterFunc("progress", w),
 		features: []*models.Feature{&ft},

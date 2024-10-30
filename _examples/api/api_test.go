@@ -82,7 +82,7 @@ func TestFeatures(t *testing.T) {
 		},
 	}
 
-	if suite.Run() != 0 {
+	if suite.Run() != godog.ExitSuccess {
 		t.Fatal("non-zero status returned, failed to run feature tests")
 	}
 }

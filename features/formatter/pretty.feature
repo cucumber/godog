@@ -1,6 +1,7 @@
+
 Feature: pretty formatter
-  In order to support tools that import pretty output
-  I need to be able to support pretty formatted output
+  Smoke test of pretty formatter.
+  Comprehensive tests at internal/formatters.
 
   Scenario: Support of Feature Plus Scenario Node
     Given a feature "features/simple.feature" file:
@@ -13,14 +14,15 @@ Feature: pretty formatter
     When I run feature suite with formatter "pretty"
     Then the rendered output will be as follows:
     """
-      Feature: simple feature
-        simple feature description
+    Feature: simple feature
+      simple feature description
 
-        Scenario: simple scenario # features/simple.feature:3
+      Scenario: simple scenario # features/simple.feature:3
 
-      1 scenarios (1 undefined)
-      No steps
-      0s
+    1 scenarios (1 undefined)
+    No steps
+    9.99s
+
     """
 
   Scenario: Support of Feature Plus Scenario Node With Tags
@@ -36,14 +38,15 @@ Feature: pretty formatter
     When I run feature suite with formatter "pretty"
     Then the rendered output will be as follows:
     """
-      Feature: simple feature
-        simple feature description
+    Feature: simple feature
+      simple feature description
 
-        Scenario: simple scenario # features/simple.feature:5
+      Scenario: simple scenario # features/simple.feature:5
 
-      1 scenarios (1 undefined)
-      No steps
-      0s
+    1 scenarios (1 undefined)
+    No steps
+    9.99s
+
     """
 
   Scenario: Support of Feature Plus Scenario Outline
@@ -63,19 +66,20 @@ Feature: pretty formatter
     When I run feature suite with formatter "pretty"
     Then the rendered output will be as follows:
     """
-      Feature: simple feature
-        simple feature description
+    Feature: simple feature
+      simple feature description
 
-        Scenario Outline: simple scenario # features/simple.feature:4
+      Scenario Outline: simple scenario # features/simple.feature:4
 
-          Examples: simple examples
-            | status |
-            | pass   |
-            | fail   |
+        Examples: simple examples
+          | status |
+          | pass   |
+          | fail   |
 
-      2 scenarios (2 undefined)
-      No steps
-      0s
+    2 scenarios (2 undefined)
+    No steps
+    9.99s
+
     """
 
   Scenario: Support of Feature Plus Scenario Outline With Tags
@@ -98,20 +102,22 @@ Feature: pretty formatter
     When I run feature suite with formatter "pretty"
     Then the rendered output will be as follows:
     """
-      Feature: simple feature
-        simple feature description
+    Feature: simple feature
+      simple feature description
 
-        Scenario Outline: simple scenario # features/simple.feature:6
+      Scenario Outline: simple scenario # features/simple.feature:6
 
-          Examples: simple examples
-            | status |
-            | pass   |
-            | fail   |
+        Examples: simple examples
+          | status |
+          | pass   |
+          | fail   |
 
-      2 scenarios (2 undefined)
-      No steps
-      0s
+    2 scenarios (2 undefined)
+    No steps
+    9.99s
+
     """
+
 
   Scenario: Support of Feature Plus Scenario With Steps
     Given a feature "features/simple.feature" file:
@@ -129,24 +135,25 @@ Feature: pretty formatter
     When I run feature suite with formatter "pretty"
     Then the rendered output will be as follows:
     """
-      Feature: simple feature
-        simple feature description
+    Feature: simple feature
+      simple feature description
 
-        Scenario: simple scenario # features/simple.feature:4
-          Given passing step      # suite_context.go:0 -> SuiteContext.func2
-          Then a failing step     # suite_context.go:0 -> *suiteContext
-          intentional failure
+      Scenario: simple scenario # features/simple.feature:4
+        Given passing step      # feature_test.go:0 -> SuiteContext.func2
+        Then a failing step     # feature_test.go:1 -> *godogFeaturesScenarioInner
+        intentional failure
 
-      --- Failed steps:
+    --- Failed steps:
 
-        Scenario: simple scenario # features/simple.feature:4
-          Then a failing step # features/simple.feature:8
-            Error: intentional failure
+      Scenario: simple scenario # features/simple.feature:4
+        Then a failing step # features/simple.feature:8
+          Error: intentional failure
 
 
-      1 scenarios (1 failed)
-      2 steps (1 passed, 1 failed)
-      0s
+    1 scenarios (1 failed)
+    2 steps (1 passed, 1 failed)
+    9.99s
+
     """
 
   Scenario: Support of Feature Plus Scenario Outline With Steps
@@ -169,28 +176,29 @@ Feature: pretty formatter
     When I run feature suite with formatter "pretty"
     Then the rendered output will be as follows:
     """
-      Feature: simple feature
-        simple feature description
+    Feature: simple feature
+      simple feature description
 
-        Scenario Outline: simple scenario # features/simple.feature:4
-          Given <status> step             # suite_context.go:0 -> SuiteContext.func2
+      Scenario Outline: simple scenario # features/simple.feature:4
+        Given <status> step             # feature_test.go:1 -> SuiteContext.func2
 
-          Examples: simple examples
-            | status  |
-            | passing |
-            | failing |
-              intentional failure
+        Examples: simple examples
+          | status  |
+          | passing |
+          | failing |
+            intentional failure
 
-      --- Failed steps:
+    --- Failed steps:
 
-        Scenario Outline: simple scenario # features/simple.feature:4
-          Given failing step # features/simple.feature:7
-            Error: intentional failure
+      Scenario Outline: simple scenario # features/simple.feature:4
+        Given failing step # features/simple.feature:7
+          Error: intentional failure
 
 
-      2 scenarios (1 passed, 1 failed)
-      2 steps (1 passed, 1 failed)
-      0s
+    2 scenarios (1 passed, 1 failed)
+    2 steps (1 passed, 1 failed)
+    9.99s
+
     """
 
   # Currently godog only supports comments on Feature and not
@@ -208,14 +216,15 @@ Feature: pretty formatter
     When I run feature suite with formatter "pretty"
     Then the rendered output will be as follows:
     """
-      Feature: simple feature
-        simple description
+    Feature: simple feature
+      simple description
 
-        Scenario: simple scenario # features/simple.feature:5
+      Scenario: simple scenario # features/simple.feature:5
 
-      1 scenarios (1 undefined)
-      No steps
-      0s
+    1 scenarios (1 undefined)
+    No steps
+    9.99s
+
     """
 
   Scenario: Support of Docstrings
@@ -235,18 +244,19 @@ Feature: pretty formatter
     When I run feature suite with formatter "pretty"
     Then the rendered output will be as follows:
     """
-      Feature: simple feature
-        simple description
+    Feature: simple feature
+      simple description
 
-        Scenario: simple scenario # features/simple.feature:4
-          Given passing step      # suite_context.go:0 -> SuiteContext.func2
-            \"\"\"  content type
-            step doc string
-            \"\"\"
+      Scenario: simple scenario # features/simple.feature:4
+        Given passing step      # feature_test.go:0 -> SuiteContext.func2
+          \"\"\"  content type
+          step doc string
+          \"\"\"
 
-      1 scenarios (1 passed)
-      1 steps (1 passed)
-      0s
+    1 scenarios (1 passed)
+    1 steps (1 passed)
+    9.99s
+
     """
 
   Scenario: Support of Undefined, Pending and Skipped status
@@ -261,9 +271,9 @@ Feature: pretty formatter
         Given passing step
         And pending step
         And undefined doc string
-        \"\"\"
-        abc
-        \"\"\"
+          \"\"\"
+          abc
+          \"\"\"
         And undefined table
         | a | b | c |
         | 1 | 2 | 3 |
@@ -273,183 +283,93 @@ Feature: pretty formatter
     When I run feature suite with formatter "pretty"
     Then the rendered output will be as follows:
     """
-      Feature: simple feature
-        simple feature description
+    Feature: simple feature
+      simple feature description
 
-        Scenario: simple scenario  # features/simple.feature:4
-          Given passing step       # suite_context.go:0 -> SuiteContext.func2
-          And pending step         # suite_context.go:0 -> SuiteContext.func1
-            TODO: write pending definition
-          And undefined doc string
+      Scenario: simple scenario  # features/simple.feature:4
+        Given passing step       # feature_test.go:0 -> SuiteContext.func2
+        And pending step         # feature_test.go:0 -> SuiteContext.func1
+          TODO: write pending definition
+        And undefined doc string
           \"\"\"
           abc
           \"\"\"
-          And undefined table
+        And undefined table
           | a | b | c |
           | 1 | 2 | 3 |
-          And passing step         # suite_context.go:0 -> SuiteContext.func2
+        And passing step         # feature_test.go:0 -> SuiteContext.func2
 
-      1 scenarios (1 pending, 1 undefined)
-      5 steps (1 passed, 1 pending, 2 undefined, 1 skipped)
-      0s
+    1 scenarios (1 pending, 0 undefined)
+    5 steps (1 passed, 1 pending, 2 undefined, 1 skipped)
+    9.99s
 
-      You can implement step definitions for undefined steps with these snippets:
+    You can implement step definitions for undefined steps with these snippets:
 
-      func undefinedDocString(arg1 *godog.DocString) error {
-        return godog.ErrPending
-      }
+    func undefinedDocString(arg1 *godog.DocString) error {
+    	return godog.ErrPending
+    }
 
-      func undefinedTable(arg1 *godog.Table) error {
-        return godog.ErrPending
-      }
+    func undefinedTable(arg1 *godog.Table) error {
+    	return godog.ErrPending
+    }
 
-      func InitializeScenario(ctx *godog.ScenarioContext) {
-        ctx.Step(`^undefined doc string$`, undefinedDocString)
-        ctx.Step(`^undefined table$`, undefinedTable)
-      }
+    func InitializeScenario(ctx *godog.ScenarioContext) {
+    	ctx.Step(`^undefined doc string$`, undefinedDocString)
+    	ctx.Step(`^undefined table$`, undefinedTable)
+    }
+
+
     """
 
-  # Ensure s will not break when injecting data from BeforeStep
-  Scenario: Support data injection in BeforeStep
-    Given a feature "features/inject.feature" file:
-    """
-      Feature: inject long value
-
-      Scenario: test scenario
-        Given Ignore I save some value X under key Y
-        And I allow variable injection
-        When Ignore I use value {{Y}}
-        Then Ignore Godog rendering should not break
-        And Ignore test
-          | key | val |
-          | 1   | 2   |
-          | 3   | 4   |
-        And I disable variable injection
-    """
-    When I run feature suite with formatter "pretty"
-    Then the rendered output will be as follows:
-    """
-      Feature: inject long value
-
-        Scenario: test scenario                        # features/inject.feature:3
-          Given Ignore I save some value X under key Y # suite_context.go:0 -> SuiteContext.func12
-          And I allow variable injection               # suite_context.go:0 -> *suiteContext
-          When Ignore I use value someverylonginjectionsoweacanbesureitsurpasstheinitiallongeststeplenghtanditwillhelptestsmethodsafety # suite_context.go:0 -> SuiteContext.func12
-          Then Ignore Godog rendering should not break # suite_context.go:0 -> SuiteContext.func12
-          And Ignore test                              # suite_context.go:0 -> SuiteContext.func12
-            | key | val |
-            | 1   | 2   |
-            | 3   | 4   |
-          And I disable variable injection             # suite_context.go:0 -> *suiteContext
-
-      1 scenarios (1 passed)
-      6 steps (6 passed)
-      0s
-    """
 
   Scenario: Should scenarios identified with path:line and preserve the order.
-    Given a feature path "features/load.feature:6"
-    And a feature path "features/multistep.feature:6"
-    And a feature path "features/load.feature:27"
-    And a feature path "features/multistep.feature:23"
+    Given a feature file at "features/simple1.feature":
+    """
+        Feature: feature 1
+          Scenario: scenario 1a
+            Given passing step
+          Scenario: scenario 1b
+            Given passing step
+    """
+    And a feature file at "features/simple2.feature":
+        """
+        Feature: feature 2
+          Scenario: scenario 2a
+            Given passing step
+        """
+    And a feature file at "features/simple3.feature":
+        """
+        Feature: feature 3
+          Scenario: scenario 3a
+            Given passing step
+        """
+    Given a feature path "features/simple2.feature:2"
+    Given a feature path "features/simple1.feature:4"
+    Given a feature path "features/simple3.feature:2"
     When I run feature suite with formatter "pretty"
     Then the rendered output will be as follows:
     """
-    Feature: load features
-      In order to run features
-      As a test suite
-      I need to be able to load features
+    Feature: feature 2
 
-      Scenario: load features within path    # features/load.feature:6
-        Given a feature path "features"      # suite_context_test.go:0 -> *godogFeaturesScenario
-        When I parse features                # suite_context_test.go:0 -> *godogFeaturesScenario
-        Then I should have 14 feature files: # suite_context_test.go:0 -> *godogFeaturesScenario
-          \"\"\"
-          features/background.feature
-          features/events.feature
-          features/formatter/cucumber.feature
-          features/formatter/events.feature
-          features/formatter/junit.feature
-          features/formatter/pretty.feature
-          features/lang.feature
-          features/load.feature
-          features/multistep.feature
-          features/outline.feature
-          features/run.feature
-          features/snippets.feature
-          features/tags.feature
-          features/testingt.feature
-          \"\"\"
+      Scenario: scenario 2a # features/simple2.feature:2
+        Given passing step  # <gofile>:<lineno> -> <gofunc>
 
-    Feature: run features with nested steps
-      In order to test multisteps
-      As a test suite
-      I need to be able to execute multisteps
+    Feature: feature 1
 
-      Scenario: should run passing multistep successfully # features/multistep.feature:6
-        Given a feature "normal.feature" file:            # suite_context_test.go:0 -> *godogFeaturesScenario
-          \"\"\"
-          Feature: normal feature
+      Scenario: scenario 1b # features/simple1.feature:4
+        Given passing step  # <gofile>:<lineno> -> <gofunc>
 
-            Scenario: run passing multistep
-              Given passing step
-              Then passing multistep
-          \"\"\"
-        When I run feature suite                          # suite_context_test.go:0 -> *godogFeaturesScenario
-        Then the suite should have passed                 # suite_context_test.go:0 -> *godogFeaturesScenario
-        And the following steps should be passed:         # suite_context_test.go:0 -> *godogFeaturesScenario
-          \"\"\"
-          passing step
-          passing multistep
-          \"\"\"
+    Feature: feature 3
 
-    Feature: load features
-      In order to run features
-      As a test suite
-      I need to be able to load features
+      Scenario: scenario 3a # features/simple3.feature:2
+        Given passing step  # <gofile>:<lineno> -> <gofunc>
 
-      Scenario: load a specific feature file         # features/load.feature:27
-        Given a feature path "features/load.feature" # suite_context_test.go:0 -> *godogFeaturesScenario
-        When I parse features                        # suite_context_test.go:0 -> *godogFeaturesScenario
-        Then I should have 1 feature file:           # suite_context_test.go:0 -> *godogFeaturesScenario
-          \"\"\"
-          features/load.feature
-          \"\"\"
+    3 scenarios (3 passed)
+    3 steps (3 passed)
+    9.99s
 
-    Feature: run features with nested steps
-      In order to test multisteps
-      As a test suite
-      I need to be able to execute multisteps
-
-      Scenario: should fail multistep              # features/multistep.feature:23
-        Given a feature "failed.feature" file:     # suite_context_test.go:0 -> *godogFeaturesScenario
-          \"\"\"
-          Feature: failed feature
-
-            Scenario: run failing multistep
-              Given passing step
-              When failing multistep
-              Then I should have 1 scenario registered
-          \"\"\"
-        When I run feature suite                   # suite_context_test.go:0 -> *godogFeaturesScenario
-        Then the suite should have failed          # suite_context_test.go:0 -> *godogFeaturesScenario
-        And the following step should be failed:   # suite_context_test.go:0 -> *godogFeaturesScenario
-          \"\"\"
-          failing multistep
-          \"\"\"
-        And the following steps should be skipped: # suite_context_test.go:0 -> *godogFeaturesScenario
-          \"\"\"
-          I should have 1 scenario registered
-          \"\"\"
-        And the following steps should be passed:  # suite_context_test.go:0 -> *godogFeaturesScenario
-          \"\"\"
-          passing step
-          \"\"\"
-
-    4 scenarios (4 passed)
-    16 steps (16 passed)
-    0s
     """
+
 
   Scenario: Support of Feature Plus Rule
     Given a feature "features/simple.feature" file:
@@ -465,15 +385,16 @@ Feature: pretty formatter
     When I run feature suite with formatter "pretty"
     Then the rendered output will be as follows:
     """
-      Feature: simple feature with a rule
-        simple feature description
+    Feature: simple feature with a rule
+      simple feature description
 
-        Example: simple scenario # features/simple.feature:5
-          Given passing step     # suite_context.go:0 -> SuiteContext.func2
+      Example: simple scenario # features/simple.feature:5
+        Given passing step     # feature_test.go:0 -> SuiteContext.func2
 
-      1 scenarios (1 passed)
-      1 steps (1 passed)
-      0s
+    1 scenarios (1 passed)
+    1 steps (1 passed)
+    9.99s
+
     """
 
   Scenario: Support of Feature Plus Rule with Background
@@ -492,18 +413,19 @@ Feature: pretty formatter
     When I run feature suite with formatter "pretty"
     Then the rendered output will be as follows:
     """
-      Feature: simple feature with a rule with Background
-        simple feature description
+    Feature: simple feature with a rule with Background
+      simple feature description
 
-        Background:
-          Given passing step     # suite_context.go:0 -> SuiteContext.func2
+      Background:
+        Given passing step     # feature_test.go:0 -> SuiteContext.func2
 
-        Example: simple scenario # features/simple.feature:7
-          Given passing step     # suite_context.go:0 -> SuiteContext.func2
+      Example: simple scenario # features/simple.feature:7
+        Given passing step     # feature_test.go:0 -> SuiteContext.func2
 
-      1 scenarios (1 passed)
-      2 steps (2 passed)
-      0s
+    1 scenarios (1 passed)
+    2 steps (2 passed)
+    9.99s
+
     """
 
   Scenario: Support of Feature Plus Rule with Scenario Outline
@@ -526,28 +448,29 @@ Feature: pretty formatter
     When I run feature suite with formatter "pretty"
     Then the rendered output will be as follows:
     """
-      Feature: simple feature with a rule with Scenario Outline
-        simple feature description
+    Feature: simple feature with a rule with Scenario Outline
+      simple feature description
 
-        Scenario Outline: simple scenario # features/simple.feature:5
-          Given <status> step             # suite_context.go:0 -> SuiteContext.func2
+      Scenario Outline: simple scenario # features/simple.feature:5
+        Given <status> step             # feature_test.go:0 -> SuiteContext.func2
 
-          Examples: simple examples
-            | status  |
-            | passing |
-            | failing |
-              intentional failure
+        Examples: simple examples
+          | status  |
+          | passing |
+          | failing |
+            intentional failure
 
-      --- Failed steps:
+    --- Failed steps:
 
-        Scenario Outline: simple scenario # features/simple.feature:5
-          Given failing step # features/simple.feature:8
+      Scenario Outline: simple scenario # features/simple.feature:5
+        Given failing step # features/simple.feature:8
           Error: intentional failure
 
 
-      2 scenarios (1 passed, 1 failed)
-      2 steps (1 passed, 1 failed)
-      0s
+    2 scenarios (1 passed, 1 failed)
+    2 steps (1 passed, 1 failed)
+    9.99s
+
     """
 
   Scenario: Use 'given' keyword on a declared 'when' step
@@ -564,25 +487,27 @@ Feature: pretty formatter
     When I run feature suite with formatter "pretty"
     Then the rendered output will be as follows:
     """
-      Feature: simple feature with a rule
-        simple feature description
+    Feature: simple feature with a rule
+      simple feature description
 
-        Example: simple scenario # features/simple.feature:5
-          Given a when step
+      Example: simple scenario # features/simple.feature:5
+        Given a when step
 
-      1 scenarios (1 undefined)
-      1 steps (1 undefined)
-      0s
+    1 scenarios (1 undefined)
+    1 steps (1 undefined)
+    9.99s
 
-      You can implement step definitions for undefined steps with these snippets:
+    You can implement step definitions for undefined steps with these snippets:
 
-      func aWhenStep() error {
-        return godog.ErrPending
-      }
+    func aWhenStep() error {
+    	return godog.ErrPending
+    }
 
-      func InitializeScenario(ctx *godog.ScenarioContext) {
-        ctx.Step(`^a when step$`, aWhenStep)
-      }
+    func InitializeScenario(ctx *godog.ScenarioContext) {
+    	ctx.Step(`^a when step$`, aWhenStep)
+    }
+
+
     """
 
   Scenario: Use 'when' keyword on a declared 'then' step
@@ -599,25 +524,27 @@ Feature: pretty formatter
     When I run feature suite with formatter "pretty"
     Then the rendered output will be as follows:
     """
-      Feature: simple feature with a rule
-        simple feature description
+    Feature: simple feature with a rule
+      simple feature description
 
-        Example: simple scenario # features/simple.feature:5
-          When a then step
+      Example: simple scenario # features/simple.feature:5
+        When a then step
 
-      1 scenarios (1 undefined)
-      1 steps (1 undefined)
-      0s
+    1 scenarios (1 undefined)
+    1 steps (1 undefined)
+    9.99s
 
-      You can implement step definitions for undefined steps with these snippets:
+    You can implement step definitions for undefined steps with these snippets:
 
-      func aThenStep() error {
-        return godog.ErrPending
-      }
+    func aThenStep() error {
+    	return godog.ErrPending
+    }
 
-      func InitializeScenario(ctx *godog.ScenarioContext) {
-        ctx.Step(`^a then step$`, aThenStep)
-      }
+    func InitializeScenario(ctx *godog.ScenarioContext) {
+    	ctx.Step(`^a then step$`, aThenStep)
+    }
+
+
     """
 
   Scenario: Use 'then' keyword on a declared 'given' step
@@ -634,25 +561,27 @@ Feature: pretty formatter
     When I run feature suite with formatter "pretty"
     Then the rendered output will be as follows:
     """
-      Feature: simple feature with a rule
-        simple feature description
+    Feature: simple feature with a rule
+      simple feature description
 
-        Example: simple scenario # features/simple.feature:5
-          Then a given step
+      Example: simple scenario # features/simple.feature:5
+        Then a given step
 
-      1 scenarios (1 undefined)
-      1 steps (1 undefined)
-      0s
+    1 scenarios (1 undefined)
+    1 steps (1 undefined)
+    9.99s
 
-      You can implement step definitions for undefined steps with these snippets:
+    You can implement step definitions for undefined steps with these snippets:
 
-      func aGivenStep() error {
-        return godog.ErrPending
-      }
+    func aGivenStep() error {
+    	return godog.ErrPending
+    }
 
-      func InitializeScenario(ctx *godog.ScenarioContext) {
-        ctx.Step(`^a given step$`, aGivenStep)
-      }
+    func InitializeScenario(ctx *godog.ScenarioContext) {
+    	ctx.Step(`^a given step$`, aGivenStep)
+    }
+
+
     """
 
   Scenario: Match keyword functions correctly
@@ -672,16 +601,17 @@ Feature: pretty formatter
     When I run feature suite with formatter "pretty"
     Then the rendered output will be as follows:
     """
-      Feature: simple feature with a rule
-        simple feature description
+    Feature: simple feature with a rule
+      simple feature description
 
-	    Example: simple scenario # features/simple.feature:5
-	      Given a given step     # suite_context_test.go:0 -> InitializeScenario.func3
-	      When a when step       # suite_context_test.go:0 -> InitializeScenario.func4
-	      Then a then step       # suite_context_test.go:0 -> InitializeScenario.func5
-	      And a then step        # suite_context_test.go:0 -> InitializeScenario.func5
+      Example: simple scenario # features/simple.feature:5
+        Given a given step     # feature_test.go:0 -> InitializeScenario.func3
+        When a when step       # feature_test.go:0 -> InitializeScenario.func4
+        Then a then step       # feature_test.go:0 -> InitializeScenario.func5
+        And a then step        # feature_test.go:0 -> InitializeScenario.func5
 
-      1 scenarios (1 passed)
-      4 steps (4 passed)
-      0s
+    1 scenarios (1 passed)
+    4 steps (4 passed)
+    9.99s
+
     """

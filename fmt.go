@@ -76,32 +76,32 @@ func printStepDefinitions(steps []*models.StepDefinition, w io.Writer) {
 }
 
 // NewBaseFmt creates a new base formatter.
-func NewBaseFmt(suite string, out io.Writer) *BaseFmt {
+func NewBaseFmt(suite string, out io.WriteCloser) *BaseFmt {
 	return internal_fmt.NewBase(suite, out)
 }
 
 // NewProgressFmt creates a new progress formatter.
-func NewProgressFmt(suite string, out io.Writer) *ProgressFmt {
+func NewProgressFmt(suite string, out io.WriteCloser) *ProgressFmt {
 	return internal_fmt.NewProgress(suite, out)
 }
 
 // NewPrettyFmt creates a new pretty formatter.
-func NewPrettyFmt(suite string, out io.Writer) *PrettyFmt {
+func NewPrettyFmt(suite string, out io.WriteCloser) *PrettyFmt {
 	return &PrettyFmt{Base: NewBaseFmt(suite, out)}
 }
 
 // NewEventsFmt creates a new event streaming formatter.
-func NewEventsFmt(suite string, out io.Writer) *EventsFmt {
+func NewEventsFmt(suite string, out io.WriteCloser) *EventsFmt {
 	return &EventsFmt{Base: NewBaseFmt(suite, out)}
 }
 
 // NewCukeFmt creates a new Cucumber JSON formatter.
-func NewCukeFmt(suite string, out io.Writer) *CukeFmt {
+func NewCukeFmt(suite string, out io.WriteCloser) *CukeFmt {
 	return &CukeFmt{Base: NewBaseFmt(suite, out)}
 }
 
 // NewJUnitFmt creates a new JUnit formatter.
-func NewJUnitFmt(suite string, out io.Writer) *JUnitFmt {
+func NewJUnitFmt(suite string, out io.WriteCloser) *JUnitFmt {
 	return &JUnitFmt{Base: NewBaseFmt(suite, out)}
 }
 

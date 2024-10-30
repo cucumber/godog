@@ -7,14 +7,18 @@ import (
 )
 
 type noColors struct {
-	out     io.Writer
+	out     io.WriteCloser
 	lastbuf bytes.Buffer
 }
 
 // Uncolored will accept and io.Writer and return a
 // new io.Writer that won't include colors.
-func Uncolored(w io.Writer) io.Writer {
+func Uncolored(w io.WriteCloser) io.WriteCloser {
 	return &noColors{out: w}
+}
+
+func (w *noColors) Close() error {
+	return w.out.Close()
 }
 
 func (w *noColors) Write(data []byte) (n int, err error) {

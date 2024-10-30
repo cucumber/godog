@@ -296,7 +296,7 @@ func (ctx ScenarioContext) stepWithKeyword(expr interface{}, stepFunc interface{
 	// Validate that the handler is a function.
 	handlerType := reflect.TypeOf(stepFunc)
 	if handlerType.Kind() != reflect.Func {
-		panic(fmt.Sprintf("expected handler to be func, but got: %T", stepFunc))
+		panic(fmt.Sprintf("expected handler for %q to be func, but got: %T", expr, stepFunc))
 	}
 
 	// FIXME = Validate the handler function param types here so
@@ -304,7 +304,7 @@ func (ctx ScenarioContext) stepWithKeyword(expr interface{}, stepFunc interface{
 	// StepDefinition.Run defines the supported types but fails at run time not registration time
 
 	// Validate the function's return types.
-	helpPrefix := "expected handler to return one of error or context.Context or godog.Steps or (context.Context, error)"
+	helpPrefix := fmt.Sprintf("expected handler for %q to return one of error or context.Context or godog.Steps or (context.Context, error)", expr)
 	isNested := false
 
 	numOut := handlerType.NumOut()
@@ -328,7 +328,7 @@ func (ctx ScenarioContext) stepWithKeyword(expr interface{}, stepFunc interface{
 		}
 	default:
 		// More than two return values.
-		panic(fmt.Sprintf("expected handler to return either zero, one or two values, but it has: %d", numOut))
+		panic(fmt.Sprintf("expected handler for %q to return either zero, one or two values, but it has: %d", expr, numOut))
 	}
 
 	// Register the handler

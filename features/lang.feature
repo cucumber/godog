@@ -1,27 +1,19 @@
 # language: lt
 @lang
-Savybė: užkrauti savybes
-  Kad būtų galima paleisti savybių testus
-  Kaip testavimo įrankis
-  Aš turiu galėti užregistruoti savybes
+@john
+Savybė: lietuvis
 
-  Scenarijus: savybių užkrovimas iš aplanko
-    Duota savybių aplankas "features"
-    Kai aš išskaitau savybes
-    Tada aš turėčiau turėti 14 savybių failus:
-      """
-      features/background.feature
-      features/events.feature
-      features/formatter/cucumber.feature
-      features/formatter/events.feature
-      features/formatter/junit.feature
-      features/formatter/pretty.feature
-      features/lang.feature
-      features/load.feature
-      features/multistep.feature
-      features/outline.feature
-      features/run.feature
-      features/snippets.feature
-      features/tags.feature
-      features/testingt.feature
-      """
+  Raktiniai žodžiai gali būti keliomis kalbomis.
+
+  Scenarijus: no errors event check
+    Duota a feature "normal.feature" file:
+    """
+    Feature: the feature
+      Scenario: passing scenario
+        When passing step
+     """
+    Kai I run feature suite
+
+    Tada the suite should have passed
+    Ir the suite should have passed
+    Bet the suite should have passed
