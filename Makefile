@@ -38,7 +38,7 @@ gotest:
 
 clitest:
 	@echo "running all tests via cli"
-	go run ./cmd/godog -f progress -c 4
+	go run ./cmd/godog -f progress -c 4 --strict
 
 gherkin:
 	@if [ -z "$(VERS)" ]; then echo "Provide gherkin version like: 'VERS=commit-hash'"; exit 1; fi
