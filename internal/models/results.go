@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
 	"time"
 
 	"github.com/cucumber/godog/colors"
@@ -126,6 +126,6 @@ func ToStepResultStatus(status string) (StepResultStatus, error) {
 	case "ambiguous":
 		return Ambiguous, nil
 	default:
-		return Failed, errors.Errorf("value %q is not a valid StepResultStatus", status)
+		return Failed, fmt.Errorf("value %q is not a valid StepResultStatus", status)
 	}
 }

@@ -27,7 +27,6 @@ import (
 
 	"github.com/cucumber/godog/internal/formatters"
 	"github.com/cucumber/godog/internal/models"
-	perr "github.com/pkg/errors"
 )
 
 func Test_AllFeaturesRun_AsSubtests(t *testing.T) {
@@ -736,13 +735,13 @@ func (tc *godogFeaturesScenarioOuter) checkStoredSteps(status string, steps *god
 	sort.Strings(expected)
 
 	if len(actual) != len(expected) {
-		return perr.Errorf("expected %d %s steps: %q, but got %d %s steps: %q",
+		return fmt.Errorf("expected %d %s steps: %q, but got %d %s steps: %q",
 			len(expected), status, expected, len(actual), status, actual)
 	}
 
 	for i, a := range actual {
 		if a != expected[i] {
-			return perr.Errorf("%s step %d doesn't match, expected: %s, but got: %s", status, i, expected, actual)
+			return fmt.Errorf("%s step %d doesn't match, expected: %s, but got: %s", status, i, expected, actual)
 		}
 	}
 
@@ -953,12 +952,12 @@ func (tc *godogFeaturesScenarioOuter) theRenderedJSONWillBe(docstring *godog.Doc
 
 	var expected []interface{}
 	if err := json.Unmarshal([]byte(expectedString), &expected); err != nil {
-		return perr.Wrapf(err, "unmarshalling expected value: %s", expectedString)
+		return fmt.Errorf("unmarshalling error %q for expected value: %s", err.Error(), expectedString)
 	}
 
 	var actual []interface{}
 	if err := json.Unmarshal([]byte(actualString), &actual); err != nil {
-		return perr.Wrapf(err, "unmarshalling actual value: %s", actualString)
+		return fmt.Errorf("unmarshalling error %q for actual value: %s", err.Error(), actualString)
 	}
 
 	err := assertExpectedAndActual(assert.Equal, expected, actual)
@@ -976,11 +975,11 @@ func (tc *godogFeaturesScenarioOuter) theRenderedJSONWillBe(docstring *godog.Doc
 func (tc *godogFeaturesScenarioOuter) showJsonComparison(expected []interface{}, expectedString string, actual []interface{}, actualString string) error {
 	vexpected, err := json.MarshalIndent(&expected, "", "  ")
 	if err != nil {
-		return perr.Wrapf(err, "marshalling expected value: %s", expectedString)
+		return fmt.Errorf("%q marshalling expected value: %s", err.Error(), expectedString)
 	}
 	vactual, err := json.MarshalIndent(&actual, "", "  ")
 	if err != nil {
-		return perr.Wrapf(err, "marshalling actual value: %s", actualString)
+		return fmt.Errorf("%q marshalling actual value: %s", err.Error(), actualString)
 	}
 
 	utils.VDiffString(string(vexpected), string(vactual))
@@ -1045,12 +1044,12 @@ func (tc *godogFeaturesScenarioOuter) theRenderedXMLWillBe(docstring *godog.DocS
 
 	var expected formatters.JunitPackageSuite
 	if err := xml.Unmarshal([]byte(expectedString), &expected); err != nil {
-		return perr.Wrapf(err, "unmarshalling expected value: %s", actualString)
+		return fmt.Errorf("%q unmarshalling expected value", err.Error())
 	}
 
 	var actual formatters.JunitPackageSuite
 	if err := xml.Unmarshal([]byte(actualString), &actual); err != nil {
-		return perr.Wrapf(err, "unmarshalling actual value: %s", actualString)
+		return fmt.Errorf("%q unmarshalling actual value", err.Error())
 	}
 
 	return assertExpectedAndActual(assert.Equal, expected, actual)
