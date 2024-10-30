@@ -82,7 +82,6 @@ func Test_FeatureFilePathParser(t *testing.T) {
 
 func Test_ParseFromBytes_FromMultipleFeatures_DuplicateNames(t *testing.T) {
 
-	// FIXME - is thos really desirable - same name but different contents and one gets ignored???
 	input := []parser.FeatureContent{
 		{Name: "MyCoolDuplicatedFeature", Contents: []byte(fakeFeature)},
 		{Name: "MyCoolDuplicatedFeature", Contents: []byte(fakeFeatureOther)},

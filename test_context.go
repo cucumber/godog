@@ -301,7 +301,7 @@ func (ctx ScenarioContext) stepWithKeyword(expr interface{}, stepFunc interface{
 
 	// FIXME = Validate the handler function param types here so
 	// that any errors are discovered early.
-	// StepDefinition.Run defines the supported types but fails at run time not registration time
+	// StepDefinition.Run defines the supported types but fails at run time instead of registration time
 
 	// Validate the function's return types.
 	helpPrefix := fmt.Sprintf("expected handler for %q to return one of error or context.Context or godog.Steps or (context.Context, error)", expr)
