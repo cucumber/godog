@@ -476,7 +476,6 @@ func TestStepDefinition_Run_InvalidHandlerParamConversion(t *testing.T) {
 		}
 
 		if !errors.Is(err, models.ErrUnsupportedParameterType) {
-			// FIXME JL - check logic as the error message was wrong
 			t.Fatalf("expected an unsupported argument type error, but got '%v' instead", err)
 		}
 

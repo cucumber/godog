@@ -50,11 +50,11 @@ func runOptionalSubtest(t *testing.T, subtest bool) {
 ...................................................................... 210
 ...................................................................... 280
 ...................................................................... 350
-....................                                                   370
+..................                                                     368
 
 
 96 scenarios (96 passed)
-370 steps (370 passed)
+368 steps (368 passed)
 0s
 `
 	t.Helper()
@@ -225,10 +225,12 @@ func InitializeScenarioOuter(ctx *godog.ScenarioContext) {
 
 	ctx.Step(`^a feature file at "([^"]*)":$`, tc.writeFeatureFile)
 	ctx.Step(`^(?:a )?feature path "([^"]*)"$`, tc.featurePath)
+
 	ctx.Step(`^I run feature suite$`, tc.iRunFeatureSuite)
-	ctx.Step(`^I run feature suite in Strict mode$`, tc.iRunFeatureSuiteStrict) // FIXME - use this
+	ctx.Step(`^I run feature suite in Strict mode$`, tc.iRunFeatureSuiteStrict)
 	ctx.Step(`^I run feature suite with tags "([^"]*)"$`, tc.iRunFeatureSuiteWithTags)
 	ctx.Step(`^I run feature suite with formatter "([^"]*)"$`, tc.iRunFeatureSuiteWithFormatter)
+
 	ctx.Step(`^(?:a )?feature "([^"]*)"(?: file)?:$`, tc.aFeatureFile)
 	ctx.Step(`^the suite should have (passed|failed)$`, tc.theSuiteShouldHave)
 	ctx.Step(`^the following steps? should be (passed|failed|skipped|undefined|pending):`, tc.followingStepsShouldHave)
@@ -254,7 +256,6 @@ func InitializeScenarioOuter(ctx *godog.ScenarioContext) {
 		}
 		return nil
 	})
-	ctx.Step(`^testing T (should have|should not have) failed$`, tc.testingTShouldBe)
 	ctx.Step(`^my step calls Log on testing T with message "([^"]*)"$`, tc.myStepCallsTLog)
 	ctx.Step(`^my step calls Logf on testing T with message "([^"]*)" and argument "([^"]*)"$`, tc.myStepCallsTLogf)
 	ctx.Step(`^my step calls godog.Log with message "([^"]*)"$`, tc.myStepCallsDogLog)
@@ -278,11 +279,8 @@ func InitializeTestSuiteInner(parent *godogFeaturesScenarioOuter) func(ctx *godo
 func InitializeScenarioInner(parent *godogFeaturesScenarioOuter) func(ctx *godog.ScenarioContext) {
 
 	return func(ctx *godog.ScenarioContext) {
-		tc := &godogFeaturesScenarioInner{
-			scenarioContext: ctx,
-		}
+		tc := &godogFeaturesScenarioInner{}
 
-		ctx.Before(tc.ResetBeforeEachScenario)
 		ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 			if tagged(sc.Tags, "@fail_before_scenario") {
 				return ctx, fmt.Errorf("failed in before scenario hook")
@@ -474,7 +472,7 @@ type firedEvents []*firedEvent
 
 func (f firedEvent) String() string {
 	if len(f.args) == 0 {
-		return fmt.Sprintf("%s", f.name)
+		return fmt.Sprintf(f.name)
 	}
 
 	args := []string{}
@@ -497,29 +495,14 @@ type godogFeaturesScenarioOuter struct {
 	paths           []string
 	events          firedEvents
 	out             *bytes.Buffer
-	formatter       *formatters.Base
 	failed          bool
 	featureContents []godog.Feature
+	storage         *storage.Storage
 }
 
 type godogFeaturesScenarioInner struct {
-	//paths    []string
-	features []*models.Feature
-
 	allowInjection bool
-
-	stepsExecuted   []string // ok
-	scenarioContext *godog.ScenarioContext
-	featureContents []godog.Feature
-}
-
-// TODO why is this needed ?
-// A new instance is created in the scenario initialiser
-func (tc *godogFeaturesScenarioInner) ResetBeforeEachScenario(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
-	tc.features = []*models.Feature{}
-	tc.allowInjection = false
-	tc.stepsExecuted = []string{}
-	return ctx, nil
+	stepsExecuted  []string // ok
 }
 
 func (tc *godogFeaturesScenarioInner) iSetVariableInjectionTo(state string) error {
@@ -527,41 +510,29 @@ func (tc *godogFeaturesScenarioInner) iSetVariableInjectionTo(state string) erro
 	return nil
 }
 
-var defaultFormatterFunc = formatters.BaseFormatterFunc
-
 func (tc *godogFeaturesScenarioOuter) iRunFeatureSuite() error {
-	return tc.runFeatureSuite("", defaultFormatterFunc, false)
+	return tc.runFeatureSuite("", "", false)
 }
 func (tc *godogFeaturesScenarioOuter) iRunFeatureSuiteStrict() error {
-	return tc.runFeatureSuite("", defaultFormatterFunc, true)
+	return tc.runFeatureSuite("", "", true)
 }
 
 func (tc *godogFeaturesScenarioOuter) iRunFeatureSuiteWithFormatter(name string) error {
-	f := godog.FindFmt(name)
-	if f == nil {
-		return fmt.Errorf(`formatter "%s" is not available`, name)
-	}
-
-	return tc.runFeatureSuite("", f, false)
+	return tc.runFeatureSuite("", name, false)
 }
 
 func (tc *godogFeaturesScenarioOuter) iRunFeatureSuiteWithTags(tags string) error {
-	return tc.runFeatureSuite(tags, defaultFormatterFunc, false)
+	return tc.runFeatureSuite(tags, "", false)
 }
 
-func (tc *godogFeaturesScenarioOuter) runFeatureSuite(tags string, fmtFunc godog.FormatterFunc, strictMode bool) error {
+func (tc *godogFeaturesScenarioOuter) runFeatureSuite(tags string, format string, strictMode bool) error {
+	if format == "" {
+		format = "base"
+
+		godog.Format(format, "test formatter", formatters.BaseFormatterFunc)
+	}
 
 	tc.out = new(bytes.Buffer)
-
-	formatterFuncInterceptor := func(suiteName string, out io.WriteCloser) godog.Formatter {
-		formatter := fmtFunc(suiteName, out)
-
-		base, ok := formatter.(*formatters.Base)
-		if ok {
-			tc.formatter = base
-		}
-		return formatter
-	}
 
 	features := tc.featureContents
 
@@ -570,17 +541,19 @@ func (tc *godogFeaturesScenarioOuter) runFeatureSuite(tags string, fmtFunc godog
 		TestSuiteInitializer: InitializeTestSuiteInner(tc),
 		ScenarioInitializer:  InitializeScenarioInner(tc),
 		Options: &godog.Options{
-			Formatter:       formatterFuncInterceptor,
 			FeatureContents: features,
 			Paths:           tc.paths,
 			Tags:            tags,
 			Strict:          strictMode,
+			Format:          format,
 			Output:          colors.Uncolored(godog.NopCloser(io.Writer(tc.out))),
 		},
 	}
 
-	runResult := suite.Run()
-	tc.failed = runResult != godog.ExitSuccess
+	runResult := suite.RunWithResult()
+
+	tc.failed = runResult.ExitCode() != godog.ExitSuccess
+	tc.storage = runResult.Storage()
 
 	return nil
 }
@@ -651,18 +624,6 @@ func (tc *godogFeaturesScenarioInner) myStepCallsTFailErrorSkip(ctx context.Cont
 	default:
 		return fmt.Errorf("operation %s not supported by myStepCallsTFailErrorSkip", op)
 	}
-	return nil
-}
-
-func (tc *godogFeaturesScenarioOuter) testingTShouldBe(state string) error {
-	// FIXME john - cannot detect godog interaction with testing.T unless we switch it to rely on the interfate
-	//if !tc.testingT.Failed() && state == "should have" {
-	//	return fmt.Errorf("testing.T should have recorded a failure, but none were recorded")
-	//}
-	//if tc.testingT.Failed() && state == "should not have" {
-	//	return fmt.Errorf("testing.T should not have recorded a failure, but errors were recorded")
-	//}
-
 	return nil
 }
 
@@ -759,16 +720,14 @@ func (tc *godogFeaturesScenarioOuter) onlyFollowingStepsShouldHave(status string
 func (tc *godogFeaturesScenarioOuter) checkStoredSteps(status string, steps *godog.DocString, noOtherSteps bool) error {
 	var expected = strings.Split(steps.Content, "\n")
 
-	f := tc.formatter
-	if f == nil {
-		return errors.New("formatter has not been set on this test's scenario state, so cannot obtain the Storage")
-	}
-
-	store := f.GetStorage()
-
 	stepStatus, err := models.ToStepResultStatus(status)
 	if err != nil {
 		return err
+	}
+
+	store := tc.storage
+	if store == nil {
+		return errors.New("storage not defined on test state object - run a test first")
 	}
 
 	actual := tc.getStepsByStatus(store, stepStatus)
@@ -844,12 +803,10 @@ func (tc *godogFeaturesScenarioOuter) getSteps(storage *storage.Storage) []stepR
 
 func (tc *godogFeaturesScenarioOuter) theTraceShouldBe(steps *godog.DocString) error {
 
-	f := tc.formatter
-	if f == nil {
-		return errors.New("formatter has not been set on this test's scenario state, so cannot obtain the Storage")
+	storage := tc.storage
+	if storage == nil {
+		return errors.New("storage not defined on test state object - run a test first")
 	}
-
-	storage := f.GetStorage()
 
 	trace := []string{}
 
@@ -878,15 +835,6 @@ func (tc *godogFeaturesScenarioOuter) theTraceShouldBe(steps *godog.DocString) e
 	}
 
 	return assertExpectedAndActual(assert.Equal, expected, actual, actual)
-}
-
-func prt(storage *storage.Storage, psrs models.StepResultStatus) []string {
-	var r []string
-	for _, p := range storage.MustGetPickleStepResultsByStatus(psrs) {
-		pickleStep := storage.MustGetPickleStep(p.PickleStepID)
-		r = append(r, fmt.Sprintf("[%s: %s]", p.Status, pickleStep.Text))
-	}
-	return r
 }
 
 func (tc *godogFeaturesScenarioInner) aFailingStep() error {
@@ -966,46 +914,6 @@ func (tc *godogFeaturesScenarioOuter) theSuiteShouldHave(state string) error {
 
 	if !tc.failed && state == "failed" {
 		return fmt.Errorf("the feature suite has passed but should have failed")
-	}
-
-	return nil
-}
-
-func (tc *godogFeaturesScenarioInner) iShouldHaveNumFeatureFiles(num int, files *godog.DocString) error {
-	if len(tc.features) != num {
-		return fmt.Errorf("expected %d features to be parsed, but have %d", num, len(tc.features))
-	}
-
-	expected := strings.Split(files.Content, "\n")
-
-	var actual []string
-
-	for _, ft := range tc.features {
-		actual = append(actual, ft.Uri)
-	}
-
-	if len(expected) != len(actual) {
-		return fmt.Errorf("expected %d feature paths to be parsed, but have %d", len(expected), len(actual))
-	}
-
-	for i := 0; i < len(expected); i++ {
-		var matched bool
-		split := strings.Split(expected[i], "/")
-		exp := filepath.Join(split...)
-
-		for j := 0; j < len(actual); j++ {
-			split = strings.Split(actual[j], "/")
-			act := filepath.Join(split...)
-
-			if exp == act {
-				matched = true
-				break
-			}
-		}
-
-		if !matched {
-			return fmt.Errorf(`expected feature path "%s" at position: %d, was not parsed, actual are %+v`, exp, i, actual)
-		}
 	}
 
 	return nil

@@ -25,8 +25,7 @@ test: check-go-version checks gotest clitest
 checks:
 	@echo checks
 	go fmt ./...
-	go run honnef.co/go/tools/cmd/staticcheck@v0.5.1 github.com/cucumber/godog
-	go run honnef.co/go/tools/cmd/staticcheck@v0.5.1 github.com/cucumber/godog/cmd/godog
+	go run honnef.co/go/tools/cmd/staticcheck@v0.5.1 ./...
 	go vet ./...
 
 gotest:

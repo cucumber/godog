@@ -53,11 +53,6 @@ func (f *Base) SetStorage(st *storage.Storage) {
 	f.Storage = st
 }
 
-// FIXME JOHN used only by tests is there a better way?
-func (f *Base) GetStorage() *storage.Storage {
-	return f.Storage
-}
-
 // Close should be called once reporting is complete.
 func (f *Base) Close() error {
 	return f.out.Close()

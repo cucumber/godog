@@ -14,8 +14,6 @@ Feature: providing testingT compatibility
       """
     When I run feature suite
     Then the suite should have failed
-      #YODO WRITE ME ...
-    Then testing T should have failed
     And the following steps should be passed:
       """
       passing step

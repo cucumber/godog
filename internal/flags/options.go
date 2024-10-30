@@ -2,7 +2,6 @@ package flags
 
 import (
 	"context"
-	"github.com/cucumber/godog/formatters"
 	"io"
 	"io/fs"
 	"testing"
@@ -50,8 +49,7 @@ type Options struct {
 	Tags string
 
 	// The formatter name
-	Format    string
-	Formatter formatters.FormatterFunc
+	Format string
 
 	// Concurrency rate, not all formatters accepts this
 	Concurrency int

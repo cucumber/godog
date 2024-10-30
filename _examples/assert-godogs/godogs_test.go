@@ -27,7 +27,7 @@ func TestMain(m *testing.M) {
 		Options:             &opts,
 	}.Run()
 
-	os.Exit(int(status))
+	os.Exit(status)
 }
 
 func thereAreGodogs(available int) error {
