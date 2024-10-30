@@ -568,53 +568,23 @@ func keywordMatches(k formatters.Keyword, stepType messages.PickleStepType) bool
 	}
 }
 
-//var depth = 0
-
 func (s *suite) runSteps(ctx context.Context, pickle *Scenario, steps []*Step) (context.Context, error) {
-	//depth++
-	//fmt.Printf("%d %-2s SCENARIO: %v <- %s\n", depth, strings.Repeat(">", depth), pickle.Name, pickle.Uri)
 
 	var (
 		stepErr, scenarioErr error
 	)
 
-	//errf := func(e error) string {
-	//	if e == nil {
-	//		return "ok"
-	//	}
-	//	return e.Error()
-	//}
-
 	for i, step := range steps {
-		//depth++
-
 		isLast := i == len(steps)-1
 		isFirst := i == 0
 
-		//fmt.Printf("%d %-2s STEP: %v\n", depth, strings.Repeat(">", depth), step.Text)
-
 		ctx, stepErr = s.runStep(ctx, pickle, step, scenarioErr, isFirst, isLast)
-
-		//mark := "<"
-		//if stepErr != nil {
-		//	mark = "!"
-		//}
-		//fmt.Printf("%d %-2s STEP: %v - %s\n", depth, strings.Repeat(mark, depth), step.Text, errf(stepErr))
 
 		if scenarioErr == nil || s.shouldFail(stepErr) {
 			scenarioErr = stepErr
 		}
-		//depth--
 	}
 
-	//mark := "<"
-	//if scenarioErr != nil {
-	//	mark = "!"
-	//}
-	//
-	//fmt.Printf("%d %-2s SCENARIO: %v <- %s- %s\n", depth, strings.Repeat(mark, depth), pickle.Name, pickle.Uri, errf(scenarioErr))
-	//depth--
-	//
 	return ctx, scenarioErr
 }
 
