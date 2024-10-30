@@ -774,12 +774,14 @@ func Test_FormatterConcurrencyRun(t *testing.T) {
 		"cucumber",
 	}
 
-	featurePaths := []string{"internal/formatters/features"}
+	featurePaths := []string{"internal/formatters/formatter-tests/features"}
 
 	const concurrency = 100
 	const noRandomFlag = 0
 	const noConcurrency = 1
 
+	// this is just a few dummy handlers to satisfy the needs of a few scenarios.
+	// the real initialiser is in fmt_output_test
 	fmtOutputScenarioInitializer := func(ctx *ScenarioContext) {
 		ctx.Step(`^(?:a )?failing step`, failingStepDef)
 		ctx.Step(`^(?:a )?pending step$`, pendingStepDef)
@@ -788,24 +790,29 @@ func Test_FormatterConcurrencyRun(t *testing.T) {
 	}
 
 	for _, formatter := range formatters {
+
 		t.Run(
 			fmt.Sprintf("%s/concurrency/%d", formatter, concurrency),
 			func(t *testing.T) {
-				expectedStatus, expectedOutput := testRun(t,
+				expectedStatus, expectedOutput := runWithResults(t,
 					fmtOutputScenarioInitializer,
 					formatter, noConcurrency,
 					noRandomFlag, featurePaths, nil,
 				)
-				actualStatus, actualOutput := testRun(t,
+				actualStatus, actualOutput := runWithResults(t,
 					fmtOutputScenarioInitializer,
 					formatter, concurrency,
 					noRandomFlag, featurePaths, nil,
 				)
 
-				assert.Equal(t, expectedStatus, actualStatus)
-				if 1 == 2 {
-					assertOutput(t, formatter, expectedOutput, actualOutput)
+				passes := countResultsByStatus(expectedStatus.storage, StepPassed)
+				fails := countResultsByStatus(expectedStatus.storage, StepFailed)
+				if passes == 0 {
+					t.Errorf("for this test to be valid then some scenarios need at least some pass, but got %v passes and %v fails", passes, fails)
 				}
+
+				assert.Equal(t, expectedStatus.exitCode, actualStatus.exitCode)
+				assertOutput(t, formatter, expectedOutput, actualOutput)
 			},
 		)
 	}
@@ -820,6 +827,14 @@ func testRun(
 	featurePaths []string,
 	features []Feature,
 ) (int, string) {
+	result, actualOutput := runWithResults(t, scenarioInitializer, format, concurrency, randomSeed, featurePaths, features)
+	return result.exitCode, actualOutput
+}
+
+func runWithResults(t *testing.T,
+	scenarioInitializer func(*ScenarioContext),
+	format string, concurrency int, randomSeed int64, featurePaths []string, features []Feature) (RunResult, string) {
+
 	t.Helper()
 
 	opts := Options{
@@ -830,15 +845,25 @@ func testRun(
 		Randomize:       randomSeed,
 	}
 
-	exitCode, actualOutput := testRunWithOptions(t, opts, scenarioInitializer)
-	return exitCode, actualOutput
+	result, actualOutput := testRunWithOptions(t, opts, scenarioInitializer)
+	return result, actualOutput
+}
+
+func countResultsByStatus(storage *storage.Storage, status models.StepResultStatus) int {
+	actual := []string{}
+
+	for _, st := range storage.MustGetPickleStepResultsByStatus(status) {
+		pickleStep := storage.MustGetPickleStep(st.PickleStepID)
+		actual = append(actual, pickleStep.Text)
+	}
+	return len(actual)
 }
 
 func testRunWithOptions(
 	t *testing.T,
 	opts Options,
 	scenarioInitializer func(*ScenarioContext),
-) (int, string) {
+) (RunResult, string) {
 	t.Helper()
 
 	output := new(bytes.Buffer)
@@ -852,12 +877,12 @@ func testRunWithOptions(
 		Options:             &opts,
 	}
 
-	status := testSuite.Run()
+	result := testSuite.RunWithResult()
 
 	actual, err := ioutil.ReadAll(output)
 	require.NoError(t, err)
 
-	return status, string(actual)
+	return result, string(actual)
 }
 
 func assertOutput(t *testing.T, formatter string, expected, actual string) {
