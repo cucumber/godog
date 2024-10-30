@@ -1,0 +1,38 @@
+{"event":"TestRunStarted","version":"0.1.0","timestamp":-6795364578871,"suite":"events"}
+{"event":"TestSource","location":"formatter-tests/features/hook_errors.feature:1","source":"Feature: scenario hook errors\r\n\r\n  Scenario: ok scenario\r\n    When passing step\r\n\r\n  @fail_before_scenario\r\n  Scenario: failing before scenario\r\n    When passing step\r\n\r\n  @fail_after_scenario\r\n  Scenario: failing after scenario\r\n    And passing step\r\n\r\n  @fail_before_scenario\r\n  @fail_after_scenario\r\n  Scenario: failing before and after scenario\r\n    When passing step\r\n\r\n  @fail_before_scenario\r\n  Scenario: failing before scenario with failing step\r\n    When failing step\r\n\r\n  @fail_after_scenario\r\n  Scenario: failing after scenario with failing step\r\n    And failing step\r\n\r\n  @fail_before_scenario\r\n  @fail_after_scenario\r\n  Scenario: failing before and after scenario with failing step\r\n    When failing step\r\n"}
+{"event":"TestCaseStarted","location":"formatter-tests/features/hook_errors.feature:3","timestamp":-6795364578871}
+{"event":"StepDefinitionFound","location":"formatter-tests/features/hook_errors.feature:4","definition_id":"fmt_output_test.go:266 -\u003e github.com/cucumber/godog/internal/formatters_test.passingStepDef","arguments":[]}
+{"event":"TestStepStarted","location":"formatter-tests/features/hook_errors.feature:4","timestamp":-6795364578871}
+{"event":"TestStepFinished","location":"formatter-tests/features/hook_errors.feature:4","timestamp":-6795364578871,"status":"passed"}
+{"event":"TestCaseFinished","location":"formatter-tests/features/hook_errors.feature:3","timestamp":-6795364578871,"status":"passed"}
+{"event":"TestCaseStarted","location":"formatter-tests/features/hook_errors.feature:7","timestamp":-6795364578871}
+{"event":"StepDefinitionFound","location":"formatter-tests/features/hook_errors.feature:8","definition_id":"fmt_output_test.go:266 -\u003e github.com/cucumber/godog/internal/formatters_test.passingStepDef","arguments":[]}
+{"event":"TestStepStarted","location":"formatter-tests/features/hook_errors.feature:8","timestamp":-6795364578871}
+{"event":"TestStepFinished","location":"formatter-tests/features/hook_errors.feature:8","timestamp":-6795364578871,"status":"failed","summary":"before scenario hook failed: failed in before scenario hook"}
+{"event":"TestCaseFinished","location":"formatter-tests/features/hook_errors.feature:7","timestamp":-6795364578871,"status":"failed"}
+{"event":"TestCaseStarted","location":"formatter-tests/features/hook_errors.feature:11","timestamp":-6795364578871}
+{"event":"StepDefinitionFound","location":"formatter-tests/features/hook_errors.feature:12","definition_id":"fmt_output_test.go:266 -\u003e github.com/cucumber/godog/internal/formatters_test.passingStepDef","arguments":[]}
+{"event":"TestStepStarted","location":"formatter-tests/features/hook_errors.feature:12","timestamp":-6795364578871}
+{"event":"TestStepFinished","location":"formatter-tests/features/hook_errors.feature:12","timestamp":-6795364578871,"status":"failed","summary":"after scenario hook failed: failed in after scenario hook"}
+{"event":"TestCaseFinished","location":"formatter-tests/features/hook_errors.feature:11","timestamp":-6795364578871,"status":"failed"}
+{"event":"TestCaseStarted","location":"formatter-tests/features/hook_errors.feature:16","timestamp":-6795364578871}
+{"event":"StepDefinitionFound","location":"formatter-tests/features/hook_errors.feature:17","definition_id":"fmt_output_test.go:266 -\u003e github.com/cucumber/godog/internal/formatters_test.passingStepDef","arguments":[]}
+{"event":"TestStepStarted","location":"formatter-tests/features/hook_errors.feature:17","timestamp":-6795364578871}
+{"event":"TestStepFinished","location":"formatter-tests/features/hook_errors.feature:17","timestamp":-6795364578871,"status":"failed","summary":"after scenario hook failed: failed in after scenario hook, step error: before scenario hook failed: failed in before scenario hook"}
+{"event":"TestCaseFinished","location":"formatter-tests/features/hook_errors.feature:16","timestamp":-6795364578871,"status":"failed"}
+{"event":"TestCaseStarted","location":"formatter-tests/features/hook_errors.feature:20","timestamp":-6795364578871}
+{"event":"StepDefinitionFound","location":"formatter-tests/features/hook_errors.feature:21","definition_id":"fmt_output_test.go:289 -\u003e github.com/cucumber/godog/internal/formatters_test.failingStepDef","arguments":[]}
+{"event":"TestStepStarted","location":"formatter-tests/features/hook_errors.feature:21","timestamp":-6795364578871}
+{"event":"TestStepFinished","location":"formatter-tests/features/hook_errors.feature:21","timestamp":-6795364578871,"status":"failed","summary":"before scenario hook failed: failed in before scenario hook"}
+{"event":"TestCaseFinished","location":"formatter-tests/features/hook_errors.feature:20","timestamp":-6795364578871,"status":"failed"}
+{"event":"TestCaseStarted","location":"formatter-tests/features/hook_errors.feature:24","timestamp":-6795364578871}
+{"event":"StepDefinitionFound","location":"formatter-tests/features/hook_errors.feature:25","definition_id":"fmt_output_test.go:289 -\u003e github.com/cucumber/godog/internal/formatters_test.failingStepDef","arguments":[]}
+{"event":"TestStepStarted","location":"formatter-tests/features/hook_errors.feature:25","timestamp":-6795364578871}
+{"event":"TestStepFinished","location":"formatter-tests/features/hook_errors.feature:25","timestamp":-6795364578871,"status":"failed","summary":"after scenario hook failed: failed in after scenario hook, step error: step failed"}
+{"event":"TestCaseFinished","location":"formatter-tests/features/hook_errors.feature:24","timestamp":-6795364578871,"status":"failed"}
+{"event":"TestCaseStarted","location":"formatter-tests/features/hook_errors.feature:29","timestamp":-6795364578871}
+{"event":"StepDefinitionFound","location":"formatter-tests/features/hook_errors.feature:30","definition_id":"fmt_output_test.go:289 -\u003e github.com/cucumber/godog/internal/formatters_test.failingStepDef","arguments":[]}
+{"event":"TestStepStarted","location":"formatter-tests/features/hook_errors.feature:30","timestamp":-6795364578871}
+{"event":"TestStepFinished","location":"formatter-tests/features/hook_errors.feature:30","timestamp":-6795364578871,"status":"failed","summary":"after scenario hook failed: failed in after scenario hook, step error: before scenario hook failed: failed in before scenario hook"}
+{"event":"TestCaseFinished","location":"formatter-tests/features/hook_errors.feature:29","timestamp":-6795364578871,"status":"failed"}
+{"event":"TestRunFinished","status":"failed","timestamp":-6795364578871,"snippets":"","memory":""}

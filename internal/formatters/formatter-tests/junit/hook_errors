@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="junit" tests="7" skipped="0" failures="6" errors="0" time="0">
+  <testsuite name="scenario hook errors" tests="7" skipped="0" failures="6" errors="0" time="0">
+    <testcase name="ok scenario" status="passed" time="0"></testcase>
+    <testcase name="failing before scenario" status="failed" time="0">
+      <failure message="Step passing step: before scenario hook failed: failed in before scenario hook"></failure>
+    </testcase>
+    <testcase name="failing after scenario" status="failed" time="0">
+      <failure message="Step passing step: after scenario hook failed: failed in after scenario hook"></failure>
+    </testcase>
+    <testcase name="failing before and after scenario" status="failed" time="0">
+      <failure message="Step passing step: after scenario hook failed: failed in after scenario hook, step error: before scenario hook failed: failed in before scenario hook"></failure>
+    </testcase>
+    <testcase name="failing before scenario with failing step" status="failed" time="0">
+      <failure message="Step failing step: before scenario hook failed: failed in before scenario hook"></failure>
+    </testcase>
+    <testcase name="failing after scenario with failing step" status="failed" time="0">
+      <failure message="Step failing step: after scenario hook failed: failed in after scenario hook, step error: step failed"></failure>
+    </testcase>
+    <testcase name="failing before and after scenario with failing step" status="failed" time="0">
+      <failure message="Step failing step: after scenario hook failed: failed in after scenario hook, step error: before scenario hook failed: failed in before scenario hook"></failure>
+    </testcase>
+  </testsuite>
+</testsuites>

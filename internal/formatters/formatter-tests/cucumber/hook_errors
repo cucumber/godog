@@ -1,0 +1,216 @@
+[
+    {
+        "uri": "formatter-tests/features/hook_errors.feature",
+        "id": "scenario-hook-errors",
+        "keyword": "Feature",
+        "name": "scenario hook errors",
+        "description": "",
+        "line": 1,
+        "elements": [
+            {
+                "id": "scenario-hook-errors;ok-scenario",
+                "keyword": "Scenario",
+                "name": "ok scenario",
+                "description": "",
+                "line": 3,
+                "type": "scenario",
+                "steps": [
+                    {
+                        "keyword": "When ",
+                        "name": "passing step",
+                        "line": 4,
+                        "match": {
+                            "location": "fmt_output_test.go:266"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "scenario-hook-errors;failing-before-scenario",
+                "keyword": "Scenario",
+                "name": "failing before scenario",
+                "description": "",
+                "line": 7,
+                "type": "scenario",
+                "tags": [
+                    {
+                        "name": "@fail_before_scenario",
+                        "line": 6
+                    }
+                ],
+                "steps": [
+                    {
+                        "keyword": "When ",
+                        "name": "passing step",
+                        "line": 8,
+                        "match": {
+                            "location": "fmt_output_test.go:266"
+                        },
+                        "result": {
+                            "status": "failed",
+                            "error_message": "before scenario hook failed: failed in before scenario hook",
+                            "duration": 0
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "scenario-hook-errors;failing-after-scenario",
+                "keyword": "Scenario",
+                "name": "failing after scenario",
+                "description": "",
+                "line": 11,
+                "type": "scenario",
+                "tags": [
+                    {
+                        "name": "@fail_after_scenario",
+                        "line": 10
+                    }
+                ],
+                "steps": [
+                    {
+                        "keyword": "And ",
+                        "name": "passing step",
+                        "line": 12,
+                        "match": {
+                            "location": "fmt_output_test.go:266"
+                        },
+                        "result": {
+                            "status": "failed",
+                            "error_message": "after scenario hook failed: failed in after scenario hook",
+                            "duration": 0
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "scenario-hook-errors;failing-before-and-after-scenario",
+                "keyword": "Scenario",
+                "name": "failing before and after scenario",
+                "description": "",
+                "line": 16,
+                "type": "scenario",
+                "tags": [
+                    {
+                        "name": "@fail_before_scenario",
+                        "line": 14
+                    },
+                    {
+                        "name": "@fail_after_scenario",
+                        "line": 15
+                    }
+                ],
+                "steps": [
+                    {
+                        "keyword": "When ",
+                        "name": "passing step",
+                        "line": 17,
+                        "match": {
+                            "location": "fmt_output_test.go:266"
+                        },
+                        "result": {
+                            "status": "failed",
+                            "error_message": "after scenario hook failed: failed in after scenario hook, step error: before scenario hook failed: failed in before scenario hook",
+                            "duration": 0
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "scenario-hook-errors;failing-before-scenario-with-failing-step",
+                "keyword": "Scenario",
+                "name": "failing before scenario with failing step",
+                "description": "",
+                "line": 20,
+                "type": "scenario",
+                "tags": [
+                    {
+                        "name": "@fail_before_scenario",
+                        "line": 19
+                    }
+                ],
+                "steps": [
+                    {
+                        "keyword": "When ",
+                        "name": "failing step",
+                        "line": 21,
+                        "match": {
+                            "location": "fmt_output_test.go:289"
+                        },
+                        "result": {
+                            "status": "failed",
+                            "error_message": "before scenario hook failed: failed in before scenario hook",
+                            "duration": 0
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "scenario-hook-errors;failing-after-scenario-with-failing-step",
+                "keyword": "Scenario",
+                "name": "failing after scenario with failing step",
+                "description": "",
+                "line": 24,
+                "type": "scenario",
+                "tags": [
+                    {
+                        "name": "@fail_after_scenario",
+                        "line": 23
+                    }
+                ],
+                "steps": [
+                    {
+                        "keyword": "And ",
+                        "name": "failing step",
+                        "line": 25,
+                        "match": {
+                            "location": "fmt_output_test.go:289"
+                        },
+                        "result": {
+                            "status": "failed",
+                            "error_message": "after scenario hook failed: failed in after scenario hook, step error: step failed",
+                            "duration": 0
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "scenario-hook-errors;failing-before-and-after-scenario-with-failing-step",
+                "keyword": "Scenario",
+                "name": "failing before and after scenario with failing step",
+                "description": "",
+                "line": 29,
+                "type": "scenario",
+                "tags": [
+                    {
+                        "name": "@fail_before_scenario",
+                        "line": 27
+                    },
+                    {
+                        "name": "@fail_after_scenario",
+                        "line": 28
+                    }
+                ],
+                "steps": [
+                    {
+                        "keyword": "When ",
+                        "name": "failing step",
+                        "line": 30,
+                        "match": {
+                            "location": "fmt_output_test.go:289"
+                        },
+                        "result": {
+                            "status": "failed",
+                            "error_message": "after scenario hook failed: failed in after scenario hook, step error: before scenario hook failed: failed in before scenario hook",
+                            "duration": 0
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+]
