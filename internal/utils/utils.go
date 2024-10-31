@@ -110,18 +110,6 @@ func VDiffLists(list1 []string, list2 []string) {
 	}
 }
 
-func SlicesCompare(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
-}
-
 func TrimAllLines(s string) string {
 	var lines []string
 	for _, ln := range strings.Split(strings.TrimSpace(s), "\n") {

@@ -10,6 +10,8 @@ import (
 	gherkin "github.com/cucumber/gherkin/go/v26"
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
+	"github.com/cucumber/godog/internal/formatters"
+	"github.com/cucumber/godog/internal/models"
 	"github.com/cucumber/godog/internal/storage"
 	"github.com/cucumber/godog/internal/utils"
 	messages "github.com/cucumber/messages/go/v21"
@@ -24,10 +26,18 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-
-	"github.com/cucumber/godog/internal/formatters"
-	"github.com/cucumber/godog/internal/models"
 )
+
+/*
+This file contains some functional tests for the godog library.
+This is the glue code that can be run against features/*feature
+and those feature files are written to use godog features to test godod.
+
+The general pattern is the feature files have top level or "outer" steps with
+that carry mini-features in docstrings and also expected outputs
+also in docstrings.
+The glue code for the "inner" features is separated below into "inner" and "outer" steps.
+*/
 
 func Test_AllFeaturesRun_AsSubtests(t *testing.T) {
 	runOptionalSubtest(t, true)
@@ -135,7 +145,6 @@ Feature: simple undefined feature
 	assert.Equal(t, godog.ExitSuccess, status)
 }
 
-// FIXED ME - NO LONGER DEPENDENT ON HUMONGOUS STEPS AND STILL COMPLETELY VALID !!
 func Test_RunsWithFeatureContentsAndPathsOptions(t *testing.T) {
 
 	tempFeatureDir := filepath.Join(os.TempDir(), "features")
@@ -248,10 +257,12 @@ func InitializeScenarioOuter(ctx *godog.ScenarioContext) {
 		}
 		return nil
 	})
+
 	ctx.Step(`^my step calls Log on testing T with message "([^"]*)"$`, tc.myStepCallsTLog)
 	ctx.Step(`^my step calls Logf on testing T with message "([^"]*)" and argument "([^"]*)"$`, tc.myStepCallsTLogf)
 	ctx.Step(`^my step calls godog.Log with message "([^"]*)"$`, tc.myStepCallsDogLog)
 	ctx.Step(`^my step calls godog.Logf with message "([^"]*)" and argument "([^"]*)"$`, tc.myStepCallsDogLogf)
+
 	ctx.Step(`^the logged messages should include "([^"]*)"$`, tc.theLoggedMessagesShouldInclude)
 }
 
@@ -367,6 +378,7 @@ func InitializeScenarioInner(parent *godogFeaturesScenarioOuter) func(ctx *godog
 
 		ctx.Step(`^(a background step is defined)$`, tc.backgroundStepIsDefined)
 		ctx.Step(`^step '(.*)' should have been executed`, tc.stepShouldHaveBeenExecuted)
+
 		ctx.Step(`^(?:I )(allow|disable) variable injection`, tc.iSetVariableInjectionTo)
 		ctx.Step(`^value2 is twice value1:$`, tc.twiceAsBig)
 
@@ -417,6 +429,7 @@ func InitializeScenarioInner(parent *godogFeaturesScenarioOuter) func(ctx *godog
 		ctx.Step(`^my step calls testify's assert.Equal with expected "([^"]*)" and actual "([^"]*)"$`, tc.myStepCallsTestifyAssertEqual)
 		ctx.Step(`^my step calls testify's require.Equal with expected "([^"]*)" and actual "([^"]*)"$`, tc.myStepCallsTestifyRequireEqual)
 		ctx.Step(`^my step calls testify's assert.Equal ([0-9]+) times(| with match)$`, tc.myStepCallsTestifyAssertEqualMultipleTimes)
+
 		ctx.StepContext().Before(tc.inject)
 	}
 }
@@ -521,7 +534,13 @@ func (tc *godogFeaturesScenarioOuter) runFeatureSuite(tags string, format string
 	if format == "" {
 		format = "base"
 
-		godog.Format(format, "test formatter", formatters.BaseFormatterFunc)
+		wrapper := func(suiteName string, out io.WriteCloser) godog.Formatter {
+			base := formatters.BaseFormatterFunc(suiteName, out)
+			//Uncomment to get some additional console logging of the step
+			//return testutils.StdoutTeeFormatter{Out: base}
+			return base
+		}
+		godog.Format(format, "test formatter", wrapper)
 	}
 
 	tc.out = new(bytes.Buffer)
@@ -675,16 +694,6 @@ func (tc *godogFeaturesScenarioOuter) myStepCallsTLog(ctx context.Context, messa
 
 func (tc *godogFeaturesScenarioOuter) myStepCallsTLogf(ctx context.Context, message string, arg string) error {
 	godog.T(ctx).Logf(message, arg)
-	return nil
-}
-
-func (tc *godogFeaturesScenarioOuter) myStepCallsDogLog(ctx context.Context, message string) error {
-	godog.Log(ctx, message)
-	return nil
-}
-
-func (tc *godogFeaturesScenarioOuter) myStepCallsDogLogf(ctx context.Context, message string, arg string) error {
-	godog.Logf(ctx, message, arg)
 	return nil
 }
 
@@ -1046,6 +1055,16 @@ func (tc *godogFeaturesScenarioOuter) theRenderedXMLWillBe(docstring *godog.DocS
 	}
 
 	return assertExpectedAndActual(assert.Equal, expected, actual)
+}
+
+func (tc *godogFeaturesScenarioOuter) myStepCallsDogLog(ctx context.Context, message string) error {
+	godog.Log(ctx, message)
+	return nil
+}
+
+func (tc *godogFeaturesScenarioOuter) myStepCallsDogLogf(ctx context.Context, message string, arg string) error {
+	godog.Logf(ctx, message, arg)
+	return nil
 }
 
 func assertExpectedAndActual(a expectedAndActualAssertion, expected, actual interface{}, msgAndArgs ...interface{}) error {
