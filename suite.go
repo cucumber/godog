@@ -163,7 +163,8 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 		// Run after step handlers.
 		rctx, err = s.runAfterStepHooks(ctx, step, err, scenarioErr)
 
-		// Trigger after scenario on failing or last step to attach possible hook error to step.
+		// TODO THIS STATEMENT IS STILL THE SOURCE OF A BUG - godog should not run after scenario hooks until AFTER the scenario is done
+		// and that means after all the steps and step hooks have completed for good or for bad.
 		if !s.shouldFail(scenarioErr) && (isLast || s.shouldFail(err)) {
 			rctx, err = s.runAfterScenarioHooks(rctx, pickle, err)
 		}
