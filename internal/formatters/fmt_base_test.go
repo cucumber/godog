@@ -17,11 +17,11 @@ func TestBase_Summary(t *testing.T) {
 
 	features = append(features,
 		flags.Feature{Name: "f1", Contents: []byte(`
-		Feature: f1
-		
-		Scenario: f1s1
-		When step passed f1s1:1
-		Then step failed f1s1:2
+Feature: f1
+
+Scenario: f1s1
+When step passed f1s1:1
+Then step failed f1s1:2
 		`)},
 		flags.Feature{Name: "f2", Contents: []byte(`
 Feature: f2
