@@ -131,10 +131,10 @@ func (s *suite) matchStep(step *messages.PickleStep) (*models.StepDefinition, er
 func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scenarioErr error, isFirst, isLast bool) (rctx context.Context, err error) {
 	var match *models.StepDefinition
 
-	rctx = ctx
-
 	// user multistep definitions may panic
 	defer func() {
+		rctx = ctx
+
 		if e := recover(); e != nil {
 			pe, isErr := e.(error)
 			switch {
@@ -157,11 +157,11 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 
 		// Check for any calls to Fail on dogT
 		if err == nil {
-			err = getTestingT(ctx).isFailed()
+			err = getTestingT(rctx).isFailed()
 		}
 
 		// Run after step handlers.
-		rctx, err = s.runAfterStepHooks(ctx, step, err, scenarioErr)
+		rctx, err = s.runAfterStepHooks(rctx, step, err, scenarioErr)
 
 		// TODO THIS STATEMENT IS STILL THE SOURCE OF A BUG - godog should not run after scenario hooks until AFTER the scenario is done
 		// and that means after all the steps and step hooks have completed for good or for bad.
