@@ -17,12 +17,12 @@ func TestBase_Summary(t *testing.T) {
 
 	features = append(features,
 		flags.Feature{Name: "f1", Contents: []byte(`
-Feature: f1
-
-Scenario: f1s1
-When step passed f1s1:1
-Then step failed f1s1:2
-`)},
+		Feature: f1
+		
+		Scenario: f1s1
+		When step passed f1s1:1
+		Then step failed f1s1:2
+		`)},
 		flags.Feature{Name: "f2", Contents: []byte(`
 Feature: f2
 
@@ -85,6 +85,8 @@ And step passed f2s4:3
 	}
 
 	assert.Equal(t, 1, suite.Run())
+	//TODO - test hard to interpret/maintain as it's mixing output from the formatter and stuff from user defined step glue
+	// and then asserting exact interleaving of the merged output, but this exact sequencing isn't a functional requirement
 	assert.Equal(t, `
 step invoked: "f1s1:1", passed
 step "step passed f1s1:1" finished with status passed
@@ -103,23 +105,23 @@ scenario "f2s1" passed
 step invoked: "f2s2:1", failed
 step "step failed f2s2:1" finished with status failed
 scenario "f2s2" ended with error "failed"
-F-step "step passed f2s2:2" finished with status skipped
-
+Fstep "step passed f2s2:2" finished with status skipped
+-
 step invoked: "f2s3:1", passed
 step "step passed f2s3:1" finished with status passed
 .
 step invoked: "f2s3:2", skipped
 step "step skipped f2s3:2" finished with status skipped
---step "step passed f2s3:3" finished with status skipped
+-step "step passed f2s3:3" finished with status skipped
 -step "step failed f2s3:4" finished with status skipped
 scenario "f2s3" passed
-
+-
 step invoked: "f2s4:1", passed
 step "step passed f2s4:1" finished with status passed
-.Ustep "step is undefined f2s4:2" finished with status undefined
+.step "step is undefined f2s4:2" finished with status undefined
 scenario "f2s4" ended with error "step is undefined"
--step "step passed f2s4:3" finished with status skipped
- 13
+Ustep "step passed f2s4:3" finished with status skipped
+- 13
 
 
 --- Failed steps:

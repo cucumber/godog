@@ -42,6 +42,8 @@ type Storage struct {
 
 	testRunStarted     models.TestRunStarted
 	testRunStartedLock *sync.Mutex
+
+	enableTrace bool
 }
 
 // NewStorage will create an in-mem storage that
@@ -135,9 +137,19 @@ func NewStorage() *Storage {
 	return &Storage{db: db, testRunStartedLock: new(sync.Mutex)}
 }
 
+func NewStorageWithTrace() *Storage {
+	store := NewStorage()
+	store.enableTrace = true
+	return store
+}
+
 // MustInsertPickle will insert a pickle and it's steps,
 // will panic on error.
 func (s *Storage) MustInsertPickle(p *messages.Pickle) {
+	if s.enableTrace {
+		fmt.Printf("Storage: MustInsertPickle\n")
+	}
+
 	txn := s.db.Txn(writeMode)
 
 	if err := txn.Insert(tablePickle, p); err != nil {
@@ -177,6 +189,9 @@ func (s *Storage) MustGetPickleStep(id string) *messages.PickleStep {
 
 // MustInsertTestRunStarted will set the test run started event and panic on error.
 func (s *Storage) MustInsertTestRunStarted(trs models.TestRunStarted) {
+	if s.enableTrace {
+		fmt.Printf("Storage: MustInsertTestRunStarted\n")
+	}
 	s.testRunStartedLock.Lock()
 	defer s.testRunStartedLock.Unlock()
 
@@ -193,11 +208,23 @@ func (s *Storage) MustGetTestRunStarted() models.TestRunStarted {
 
 // MustInsertPickleResult will instert a pickle result and panic on error.
 func (s *Storage) MustInsertPickleResult(pr models.PickleResult) {
+	if s.enableTrace {
+		fmt.Printf("Storage: MustInsertPickleResult\n")
+	}
 	s.mustInsert(tablePickleResult, pr)
 }
 
 // MustInsertPickleStepResult will insert a pickle step result and panic on error.
 func (s *Storage) MustInsertPickleStepResult(psr models.PickleStepResult) {
+	if s.enableTrace {
+		expr := ""
+		if psr.Def != nil {
+			if psr.Def.Expr != nil {
+				expr = fmt.Sprintf("%q", psr.Def.Expr.String())
+			}
+		}
+		fmt.Printf("Storage: MustInsertPickleStepResult %q %q %s\n", psr.Status, psr.Err, expr)
+	}
 	s.mustInsert(tablePickleStepResult, psr)
 }
 
@@ -245,6 +272,9 @@ func (s *Storage) MustGetPickleStepResultsByStatus(status models.StepResultStatu
 
 // MustInsertFeature will insert a feature and panic on error.
 func (s *Storage) MustInsertFeature(f *models.Feature) {
+	if s.enableTrace {
+		fmt.Printf("Storage: MustInsertFeature\n")
+	}
 	s.mustInsert(tableFeature, f)
 }
 
@@ -271,6 +301,16 @@ type stepDefinitionMatch struct {
 
 // MustInsertStepDefintionMatch will insert the matched StepDefintion for the step ID and panic on error.
 func (s *Storage) MustInsertStepDefintionMatch(stepID string, match *models.StepDefinition) {
+	if s.enableTrace {
+		m := ""
+		if match != nil {
+			if match.Expr != nil {
+				m = match.Expr.String()
+			}
+		}
+		fmt.Printf("Storage: MustInsertStepDefintionMatch %q\n", m)
+	}
+
 	d := stepDefinitionMatch{
 		StepID:         stepID,
 		StepDefinition: match,

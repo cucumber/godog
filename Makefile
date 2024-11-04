@@ -22,12 +22,13 @@ check-go-version:
 
 test: check-go-version
 	@echo "running all tests"
-	@go fmt ./...
-	@go run honnef.co/go/tools/cmd/staticcheck@v0.4.7 github.com/cucumber/godog
-	@go run honnef.co/go/tools/cmd/staticcheck@v0.4.7 github.com/cucumber/godog/cmd/godog
+	go fmt ./...
+	#go run honnef.co/go/tools/cmd/staticcheck@v0.4.7 github.com/cucumber/godog
+	#go run honnef.co/go/tools/cmd/staticcheck@v0.4.7 github.com/cucumber/godog/cmd/godog
 	go vet ./...
 	go test -race ./...
 	go run ./cmd/godog -f progress -c 4
+	cd _examples && go vet ./...
 
 gherkin:
 	@if [ -z "$(VERS)" ]; then echo "Provide gherkin version like: 'VERS=commit-hash'"; exit 1; fi

@@ -479,73 +479,73 @@ Feature: cucumber json formatter
     When I run feature suite with formatter "cucumber"
     Then the rendered json will be as follows:
     """
-      [
-        {
-          "uri": "features/simple.feature",
-          "id": "simple-feature",
-          "keyword": "Feature",
-          "name": "simple feature",
-          "description": "  simple feature description",
-          "line": 1,
-          "elements": [
-            {
-              "id": "simple-feature;simple-scenario",
-              "keyword": "Scenario",
-              "name": "simple scenario",
-              "description": "  simple scenario description",
-              "line": 4,
-              "type": "scenario",
-              "steps": [
-                {
-                  "keyword": "Given ",
-                  "name": "passing step",
-                  "line": 7,
-                  "match": {
-                    "location": "suite_context.go:64"
-                  },
-                  "result": {
-                    "status": "passed",
-                    "duration": 0
-                  }
+    [
+      {
+        "uri": "features/simple.feature",
+        "id": "simple-feature",
+        "keyword": "Feature",
+        "name": "simple feature",
+        "description": "  simple feature description",
+        "line": 1,
+        "elements": [
+          {
+            "id": "simple-feature;simple-scenario",
+            "keyword": "Scenario",
+            "name": "simple scenario",
+            "description": "  simple scenario description",
+            "line": 4,
+            "type": "scenario",
+            "steps": [
+              {
+                "keyword": "Given ",
+                "name": "passing step",
+                "line": 7,
+                "match": {
+                  "location": "suite_context.go:64"
                 },
-                {
-                  "keyword": "And ",
-                  "name": "pending step",
-                  "line": 8,
-                  "match": {
-                    "location": "features/simple.feature:8"
-                  },
-                  "result": {
-                    "status": "pending"
-                  }
-                },
-                {
-                  "keyword": "And ",
-                  "name": "undefined",
-                  "line": 9,
-                  "match": {
-                    "location": "features/simple.feature:9"
-                  },
-                  "result": {
-                    "status": "undefined"
-                  }
-                },
-                {
-                  "keyword": "And ",
-                  "name": "passing step",
-                  "line": 10,
-                  "match": {
-                    "location": "suite_context.go:64"
-                  },
-                  "result": {
-                    "status": "skipped"
-                  }
+                "result": {
+                  "status": "passed",
+                  "duration": 0
                 }
-              ]
-            }
-          ]
-        }
-      ]
+              },
+              {
+                "keyword": "And ",
+                "name": "pending step",
+                "line": 8,
+                "match": {
+                  "location": "features/simple.feature:8"
+                },
+                "result": {
+                  "status": "pending"
+                }
+              },
+              {
+                "keyword": "And ",
+                "name": "undefined",
+                "line": 9,
+                "match": {
+                  "location": "features/simple.feature:9"
+                },
+                "result": {
+                  "status": "undefined"
+                }
+              },
+              {
+                "keyword": "And ",
+                "name": "passing step",
+                "line": 10,
+                "match": {
+                  "location": "suite_context.go:64"
+                },
+                "result": {
+                  "status": "skipped"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
     """
 
 

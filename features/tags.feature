@@ -31,8 +31,10 @@ Feature: tag filters
     And the following steps should be passed:
       """
       I parse features
-      a feature path "features/load.feature:6"
       I should have 1 scenario registered
+      a feature path "features/load.feature:6"
+      passing step
+      passing step without return
       """
     And I should have 1 scenario registered
 

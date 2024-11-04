@@ -127,7 +127,7 @@ Feature: undefined step snippets
               ctx.Step(`^there is a "([^"]*)", which costs £(\d+)$`, thereIsAWhichCosts)
       }
       """
-
+    
   Scenario: should handle arguments in the beggining or end of the step
     Given a feature "undefined.feature" file:
       """

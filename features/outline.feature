@@ -25,12 +25,14 @@ Feature: run outline
     Then the suite should have passed
     And the following steps should be passed:
       """
-      a passing step
       I parse features
-      a feature path "features/load.feature:6"
-      a feature path "features/load.feature:3"
+      I parse features
+      passing step
+      passing step
       I should have 1 scenario registered
       I should have 0 scenario registered
+      a feature path "features/load.feature:6"
+      a feature path "features/load.feature:3"
       """
 
   Scenario: should continue through examples on failure
@@ -55,11 +57,13 @@ Feature: run outline
     Then the suite should have failed
     And the following steps should be passed:
       """
-      a passing step
       I parse features
-      a feature path "features/load.feature:6"
-      a feature path "features/load.feature:3"
+      I parse features
       I should have 0 scenario registered
+      a feature path "features/load.feature:3"
+      a feature path "features/load.feature:6"
+      passing step
+      passing step
       """
     And the following steps should be failed:
       """
@@ -89,6 +93,7 @@ Feature: run outline
     And the following steps should be skipped:
       """
       I parse features
+      I parse features
       a feature path "features/load.feature:6"
       a feature path "features/load.feature:3"
       I should have 0 scenario registered
@@ -96,6 +101,7 @@ Feature: run outline
       """
     And the following steps should be failed:
       """
+      a failing step
       a failing step
       """
 
@@ -123,10 +129,14 @@ Feature: run outline
     Then the suite should have passed
     And the following steps should be passed:
       """
-      I'm listening to suite events
       I run feature suite
-      a feature path "features/load.feature:6"
+      I run feature suite
+      I'm listening to suite events
+      I'm listening to suite events
       a feature path "features/load.feature"
+      a feature path "features/load.feature:6"
+      these events had to be fired for a number of times:
+      these events had to be fired for a number of times:
       """
 
   Scenario Outline: should translate step doc string argument
