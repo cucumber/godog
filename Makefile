@@ -5,7 +5,7 @@ VERS ?= $(shell git symbolic-ref -q --short HEAD || git describe --tags --exact-
 GO_MAJOR_VERSION = $(shell go version | cut -c 14- | cut -d' ' -f1 | cut -d'.' -f1)
 GO_MINOR_VERSION = $(shell go version | cut -c 14- | cut -d' ' -f1 | cut -d'.' -f2)
 MINIMUM_SUPPORTED_GO_MAJOR_VERSION = 1
-MINIMUM_SUPPORTED_GO_MINOR_VERSION = 16
+MINIMUM_SUPPORTED_GO_MINOR_VERSION = 19
 GO_VERSION_VALIDATION_ERR_MSG = Go version $(GO_MAJOR_VERSION).$(GO_MINOR_VERSION) is not supported, please update to at least $(MINIMUM_SUPPORTED_GO_MAJOR_VERSION).$(MINIMUM_SUPPORTED_GO_MINOR_VERSION)
 
 .PHONY: check-go-version
@@ -23,8 +23,8 @@ check-go-version:
 test: check-go-version
 	@echo "running all tests"
 	go fmt ./...
-	#go run honnef.co/go/tools/cmd/staticcheck@v0.4.7 github.com/cucumber/godog
-	#go run honnef.co/go/tools/cmd/staticcheck@v0.4.7 github.com/cucumber/godog/cmd/godog
+	go run honnef.co/go/tools/cmd/staticcheck@v0.4.7 github.com/cucumber/godog
+	go run honnef.co/go/tools/cmd/staticcheck@v0.4.7 github.com/cucumber/godog/cmd/godog
 	go vet ./...
 	go test -race ./...
 	go run ./cmd/godog -f progress -c 4
