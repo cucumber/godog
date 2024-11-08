@@ -33,8 +33,10 @@ const (
 	exitOptionError
 )
 
-type testSuiteInitializer func(*TestSuiteContext)
-type scenarioInitializer func(*ScenarioContext)
+type (
+	testSuiteInitializer func(*TestSuiteContext)
+	scenarioInitializer  func(*ScenarioContext)
+)
 
 type runner struct {
 	randomSeed            int64
@@ -115,6 +117,13 @@ func (r *runner) concurrent(rate int) (failed bool) {
 
 				// Copy base suite.
 				suite := *testSuiteContext.suite
+				if rate > 1 {
+					// if running concurrently, only print at end of scenario to keep
+					// scenario logs segregated
+					ffmt := ifmt.WrapOnFlush(testSuiteContext.suite.fmt)
+					suite.fmt = ffmt
+					defer ffmt.Flush()
+				}
 
 				if r.scenarioInitializer != nil {
 					sc := ScenarioContext{suite: &suite}

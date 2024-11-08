@@ -8,6 +8,8 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ## Unreleased
 
+- fix(formatter): On concurrent execution, execute formatter at end of Scenario - ([645](https://github.com/cucumber/godog/pull/645) - [tigh-latte](https://github.com/tigh-latte))
+
 ## [v0.15.0]
 
 ### Added
@@ -39,7 +41,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Changed
 - Update test.yml ([583](https://github.com/cucumber/godog/pull/583) - [vearutop](https://github.com/vearutop))
-  
+
 ## [v0.13.0]
 ### Added
 - Support for reading feature files from an `fs.FS` ([550](https://github.com/cucumber/godog/pull/550) - [tigh-latte](https://github.com/tigh-latte))
