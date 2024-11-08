@@ -9,33 +9,31 @@ Feature: run background
       Feature: with background
 
         Background:
-          Given a feature path "features/load.feature:6"
+          Given a background step is defined
 
         Scenario: parse a scenario
-          When I parse features
-          Then I should have 1 scenario registered
+          Then step 'a background step is defined' should have been executed
       """
     When I run feature suite
     Then the suite should have passed
     And the following steps should be passed:
       """
-      a feature path "features/load.feature:6"
-      I parse features
-      I should have 1 scenario registered
+      a background step is defined
+      step 'a background step is defined' should have been executed
       """
 
-  Scenario: should skip all consequent steps on failure
+  Scenario: should skip all subsequent steps on failure
     Given a feature "normal.feature" file:
       """
       Feature: with background
 
         Background:
           Given a failing step
-          And a feature path "features/load.feature:6"
+          Then this step should not be called
 
         Scenario: parse a scenario
-          When I parse features
-          Then I should have 1 scenario registered
+          And this other step should not be called
+          And this last step should not be called
       """
     When I run feature suite
     Then the suite should have failed
@@ -45,9 +43,9 @@ Feature: run background
       """
     And the following steps should be skipped:
       """
-      a feature path "features/load.feature:6"
-      I parse features
-      I should have 1 scenario registered
+      this step should not be called
+      this other step should not be called
+      this last step should not be called
       """
 
   Scenario: should continue undefined steps
@@ -59,17 +57,17 @@ Feature: run background
           Given an undefined step
 
         Scenario: parse a scenario
-          When I do undefined action
-          Then I should have 1 scenario registered
+          When some other undefined step
+          Then this step should not be called
       """
     When I run feature suite
     Then the suite should have passed
     And the following steps should be undefined:
       """
       an undefined step
-      I do undefined action
+      some other undefined step
       """
     And the following steps should be skipped:
       """
-      I should have 1 scenario registered
+      this step should not be called
       """

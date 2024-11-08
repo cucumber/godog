@@ -20,14 +20,25 @@ check-go-version:
 		exit 1; \
 	fi
 
-test: check-go-version
-	@echo "running all tests"
-	@go fmt ./...
-	@go run honnef.co/go/tools/cmd/staticcheck@v0.4.7 github.com/cucumber/godog
-	@go run honnef.co/go/tools/cmd/staticcheck@v0.4.7 github.com/cucumber/godog/cmd/godog
+test: check-go-version checks gotest clitest
+
+checks:
+	@echo check godog
+	go fmt ./...
+	go run honnef.co/go/tools/cmd/staticcheck@v0.5.1 ./...
 	go vet ./...
+	@echo check examples
+	cd _examples && go vet ./...
+	cd _examples && go test -v ./...
+
+
+gotest:
+	@echo "running all tests"
 	go test -race ./...
-	go run ./cmd/godog -f progress -c 4
+
+clitest:
+	@echo "running all tests via cli"
+	go run ./cmd/godog -f progress -c 4 --strict
 
 gherkin:
 	@if [ -z "$(VERS)" ]; then echo "Provide gherkin version like: 'VERS=commit-hash'"; exit 1; fi

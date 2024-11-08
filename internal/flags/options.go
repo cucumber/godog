@@ -58,7 +58,7 @@ type Options struct {
 	Paths []string
 
 	// Where it should print formatter output
-	Output io.Writer
+	Output io.WriteCloser
 
 	// DefaultContext is used as initial context instead of context.Background().
 	DefaultContext context.Context

@@ -28,7 +28,7 @@ Feature: run features with nested steps
         Scenario: run failing multistep
           Given passing step
           When failing multistep
-          Then I should have 1 scenario registered
+          Then other passing step
       """
     When I run feature suite
     Then the suite should have failed
@@ -38,7 +38,7 @@ Feature: run features with nested steps
       """
     And the following steps should be skipped:
       """
-      I should have 1 scenario registered
+      other passing step
       """
     And the following steps should be passed:
       """
@@ -98,7 +98,7 @@ Feature: run features with nested steps
         Scenario: parse a scenario
           Given undefined step
           When undefined multistep
-          Then I should have 1 scenario registered
+          Then passing step
       """
     When I run feature suite
     Then the suite should have passed
@@ -109,7 +109,7 @@ Feature: run features with nested steps
       """
     And the following step should be skipped:
       """
-      I should have 1 scenario registered
+      passing step
       """
 
   Scenario: should mark undefined steps after pending
@@ -121,7 +121,7 @@ Feature: run features with nested steps
           Given pending step
           When undefined step
           Then undefined multistep
-          And I should have 1 scenario registered
+          And other passing step
       """
     When I run feature suite
     Then the suite should have passed
@@ -136,8 +136,9 @@ Feature: run features with nested steps
       """
     And the following step should be skipped:
       """
-      I should have 1 scenario registered
+      other passing step
       """
+
 
   Scenario: context passed between steps
     Given a feature "normal.feature" file:

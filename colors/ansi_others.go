@@ -10,10 +10,13 @@ package colors
 import "io"
 
 type ansiColorWriter struct {
-	w    io.Writer
+	w    io.WriteCloser
 	mode outputMode
 }
 
 func (cw *ansiColorWriter) Write(p []byte) (int, error) {
 	return cw.w.Write(p)
+}
+func (cw *ansiColorWriter) Close() error {
+	return cw.w.Close()
 }

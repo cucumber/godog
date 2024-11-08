@@ -4,22 +4,35 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
 
+	"github.com/cucumber/godog"
+	"github.com/cucumber/godog/internal/utils"
+
+	messages "github.com/cucumber/messages/go/v21"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/cucumber/godog"
 )
 
-const fmtOutputTestsFeatureDir = "formatter-tests/features"
+const inputFeatureFilesDir = "formatter-tests/features"
+const expectedOutputFilesDir = "formatter-tests"
 
 var tT *testing.T
+
+// Set this to true to generate output files for new tests or to refresh old ones.
+// You MUST then manually verify the generated file before committing.
+// Leave this as false for normal testing.
+const regenerateOutputs = false
+
+// Set to true to generate output containing ansi colour sequences as opposed to tags like '<red>'.
+// this useful for confirming what the end user would see.
+// Leave this as false for normal testing.
+const generateRawOutput = false
 
 func Test_FmtOutput(t *testing.T) {
 	tT = t
@@ -28,12 +41,15 @@ func Test_FmtOutput(t *testing.T) {
 
 	featureFiles, err := listFmtOutputTestsFeatureFiles()
 	require.Nil(t, err)
+
 	formatters := []string{"cucumber", "events", "junit", "pretty", "progress", "junit,pretty"}
 	for _, fmtName := range formatters {
 		for _, featureFile := range featureFiles {
 			testName := fmt.Sprintf("%s/%s", fmtName, featureFile)
-			featureFilePath := fmt.Sprintf("%s/%s", fmtOutputTestsFeatureDir, featureFile)
-			t.Run(testName, fmtOutputTest(fmtName, testName, featureFilePath))
+			featureFilePath := fmt.Sprintf("%s/%s", inputFeatureFilesDir, featureFile)
+
+			testSuite := fmtOutputTest(fmtName, featureFilePath)
+			t.Run(testName, testSuite)
 		}
 	}
 
@@ -41,7 +57,8 @@ func Test_FmtOutput(t *testing.T) {
 }
 
 func listFmtOutputTestsFeatureFiles() (featureFiles []string, err error) {
-	err = filepath.Walk(fmtOutputTestsFeatureDir, func(path string, info os.FileInfo, err error) error {
+
+	err = filepath.Walk(inputFeatureFilesDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -51,20 +68,20 @@ func listFmtOutputTestsFeatureFiles() (featureFiles []string, err error) {
 			return nil
 		}
 
-		if info.Name() == "features" {
-			return nil
-		}
-
-		return filepath.SkipDir
+		return nil
 	})
 
 	return
 }
 
-func fmtOutputTest(fmtName, testName, featureFilePath string) func(*testing.T) {
+func fmtOutputTest(fmtName, featureFilePath string) func(*testing.T) {
 	fmtOutputScenarioInitializer := func(ctx *godog.ScenarioContext) {
 		stepIndex := 0
 		ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
+			if tagged(sc.Tags, "@fail_before_scenario") {
+				return ctx, fmt.Errorf("failed in before scenario hook")
+			}
+
 			if strings.Contains(sc.Name, "attachment") {
 				att := godog.Attachments(ctx)
 				attCount := len(att)
@@ -80,6 +97,9 @@ func fmtOutputTest(fmtName, testName, featureFilePath string) func(*testing.T) {
 		})
 
 		ctx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
+			if tagged(sc.Tags, "@fail_after_scenario") {
+				return ctx, fmt.Errorf("failed in after scenario hook")
+			}
 
 			if strings.Contains(sc.Name, "attachment") {
 				att := godog.Attachments(ctx)
@@ -152,24 +172,24 @@ func fmtOutputTest(fmtName, testName, featureFilePath string) func(*testing.T) {
 	}
 
 	return func(t *testing.T) {
-		fmt.Printf("fmt_output_test for format %10s : sample file %v\n", fmtName, featureFilePath)
-		expectOutputPath := strings.Replace(featureFilePath, "features", fmtName, 1)
-		expectOutputPath = strings.TrimSuffix(expectOutputPath, path.Ext(expectOutputPath))
-		if _, err := os.Stat(expectOutputPath); err != nil {
-			// the test author needs to write an "expected output" file for any formats they want the test feature to be verified against
-			t.Skipf("Skipping test for feature '%v' for format '%v', because no 'expected output' file %q", featureFilePath, fmtName, expectOutputPath)
+		expectOutputPath := strings.Replace(featureFilePath, inputFeatureFilesDir, expectedOutputFilesDir+"/"+fmtName, 1)
+		expectOutputPath = strings.TrimSuffix(expectOutputPath, ".feature")
+		fmt.Printf("fmt_output_test for format %10s : feature file %v\n", fmtName, featureFilePath)
+
+		//goland:noinspection
+		if !regenerateOutputs {
+			if _, err := os.Stat(expectOutputPath); err != nil {
+				// the test author needs to write an "expected output" file for any formats they want the test feature to be verified against
+				t.Skipf("Skipping test for feature %q for format %q, because no 'expected output' file %q", featureFilePath, fmtName, expectOutputPath)
+			}
 		}
 
-		expectedOutput, err := os.ReadFile(expectOutputPath)
-		require.NoError(t, err)
-
 		var buf bytes.Buffer
-		out := &tagColorWriter{w: &buf}
 
 		opts := godog.Options{
 			Format: fmtName,
 			Paths:  []string{featureFilePath},
-			Output: out,
+			Output: godog.NopCloser(io.Writer(&buf)),
 			Strict: true,
 		}
 
@@ -179,18 +199,56 @@ func fmtOutputTest(fmtName, testName, featureFilePath string) func(*testing.T) {
 			Options:             &opts,
 		}.Run()
 
-		// normalise on unix line ending so expected vs actual works cross platform
-		expected := normalise(string(expectedOutput))
-		actual := normalise(buf.String())
+		out := translateAnsiEscapeToTags(t, buf)
 
-		assert.Equalf(t, expected, actual, "path: %s", expectOutputPath)
+		//goland:noinspection
+		if regenerateOutputs {
+			data := []byte(out)
+			if generateRawOutput {
+				data = buf.Bytes()
+			}
+			err := os.WriteFile(expectOutputPath, data, 0644)
+			require.NoError(t, err)
+		} else {
+			// normalise on unix line ending so expected vs actual works cross-platform
+			actual := normalise(out)
 
-		// display as a side by side listing as the output of the assert is all one line with embedded newlines and useless
-		if expected != actual {
-			fmt.Printf("Error: fmt: %s, path: %s\n", fmtName, expectOutputPath)
-			compareLists(expected, actual)
+			expectedOutput, err := os.ReadFile(expectOutputPath)
+			require.NoError(t, err)
+
+			expected := normalise(string(expectedOutput))
+
+			assert.Equalf(t, expected, actual, "path: %s", expectOutputPath)
+
+			// display as a side by side listing as the output of the assert is all one line with embedded newlines and useless
+			if expected != actual {
+				fmt.Printf("Error: fmt: %s, path: %s\n", fmtName, expectOutputPath)
+				utils.VDiffString(expected, actual)
+			}
 		}
 	}
+}
+
+func translateAnsiEscapeToTags(t *testing.T, buf bytes.Buffer) string {
+	var bufTagged bytes.Buffer
+
+	outTagged := &tagColorWriter{w: &bufTagged}
+
+	_, err := outTagged.Write(buf.Bytes())
+	require.NoError(t, err)
+
+	colourTagged := bufTagged.String()
+	return colourTagged
+}
+
+func tagged(tags []*messages.PickleTag, tagName string) bool {
+	for _, tag := range tags {
+		if tag.Name == tagName {
+			return true
+		}
+	}
+	return false
+
 }
 
 func normalise(s string) string {
@@ -257,89 +315,4 @@ func stepWithMultipleAttachmentCalls(ctx context.Context) (context.Context, erro
 	)
 
 	return ctx, nil
-}
-
-// wrapString wraps a string into chunks of the given width.
-func wrapString(s string, width int) []string {
-	var result []string
-	for len(s) > width {
-		result = append(result, s[:width])
-		s = s[width:]
-	}
-	result = append(result, s)
-	return result
-}
-
-// compareLists compares two lists of strings and prints them with wrapped text.
-func compareLists(expected, actual string) {
-	list1 := strings.Split(expected, "\n")
-	list2 := strings.Split(actual, "\n")
-
-	// Get the length of the longer list
-	maxLength := len(list1)
-	if len(list2) > maxLength {
-		maxLength = len(list2)
-	}
-
-	colWid := 60
-	fmtTitle := fmt.Sprintf("%%4s: %%-%ds | %%-%ds\n", colWid+2, colWid+2)
-	fmtData := fmt.Sprintf("%%4d: %%-%ds | %%-%ds   %%s\n", colWid+2, colWid+2)
-
-	fmt.Printf(fmtTitle, "#", "expected", "actual")
-
-	for i := 0; i < maxLength; i++ {
-		var val1, val2 string
-
-		// Get the value from list1 if it exists
-		if i < len(list1) {
-			val1 = list1[i]
-		} else {
-			val1 = "N/A"
-		}
-
-		// Get the value from list2 if it exists
-		if i < len(list2) {
-			val2 = list2[i]
-		} else {
-			val2 = "N/A"
-		}
-
-		// Wrap both strings into slices of strings with fixed width
-		wrapped1 := wrapString(val1, colWid)
-		wrapped2 := wrapString(val2, colWid)
-
-		// Find the number of wrapped lines needed for the current pair
-		maxWrappedLines := len(wrapped1)
-		if len(wrapped2) > maxWrappedLines {
-			maxWrappedLines = len(wrapped2)
-		}
-
-		// Print the wrapped lines with alignment
-		for j := 0; j < maxWrappedLines; j++ {
-			var line1, line2 string
-
-			// Get the wrapped line or use an empty string if it doesn't exist
-			if j < len(wrapped1) {
-				line1 = wrapped1[j]
-			} else {
-				line1 = ""
-			}
-
-			if j < len(wrapped2) {
-				line2 = wrapped2[j]
-			} else {
-				line2 = ""
-			}
-
-			status := "same"
-			// if val1 != val2 {
-			if line1 != line2 {
-				status = "different"
-			}
-
-			delim := "¬"
-			// Print the wrapped lines with fixed-width column
-			fmt.Printf(fmtData, i+1, delim+line1+delim, delim+line2+delim, status)
-		}
-	}
 }

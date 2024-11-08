@@ -20,7 +20,7 @@ func init() {
 }
 
 // PrettyFormatterFunc implements the FormatterFunc for the pretty formatter
-func PrettyFormatterFunc(suite string, out io.Writer) formatters.Formatter {
+func PrettyFormatterFunc(suite string, out io.WriteCloser) formatters.Formatter {
 	return &Pretty{Base: NewBase(suite, out)}
 }
 

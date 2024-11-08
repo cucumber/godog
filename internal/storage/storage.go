@@ -40,6 +40,9 @@ const (
 type Storage struct {
 	db *memdb.MemDB
 
+	// sync is needed because for the usual reasons ...
+	// - independent threads may not see each other's changes otherwise
+	// - testRunStarted is a struct so fields are updated incrementally and a reader would see partial updates
 	testRunStarted     models.TestRunStarted
 	testRunStartedLock *sync.Mutex
 }

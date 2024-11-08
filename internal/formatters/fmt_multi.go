@@ -16,7 +16,7 @@ type MultiFormatter struct {
 
 type formatter struct {
 	fmt formatters.FormatterFunc
-	out io.Writer
+	out io.WriteCloser
 }
 
 type repeater []formatters.Formatter
@@ -32,6 +32,18 @@ func (r repeater) SetStorage(s *storage.Storage) {
 			ss.SetStorage(s)
 		}
 	}
+}
+
+// TestRunStarted triggers TestRunStarted for all added formatters.
+func (r repeater) Close() error {
+	var err error
+	for _, f := range r {
+		e := f.Close()
+		if e != nil {
+			err = e
+		}
+	}
+	return err
 }
 
 // TestRunStarted triggers TestRunStarted for all added formatters.
@@ -112,7 +124,7 @@ func (r repeater) Summary() {
 }
 
 // Add adds formatter with output writer.
-func (m *MultiFormatter) Add(name string, out io.Writer) {
+func (m *MultiFormatter) Add(name string, out io.WriteCloser) {
 	f := formatters.FindFmt(name)
 	if f == nil {
 		panic("formatter not found: " + name)
@@ -125,7 +137,7 @@ func (m *MultiFormatter) Add(name string, out io.Writer) {
 }
 
 // FormatterFunc implements the FormatterFunc for the multi formatter.
-func (m *MultiFormatter) FormatterFunc(suite string, out io.Writer) formatters.Formatter {
+func (m *MultiFormatter) FormatterFunc(suite string, out io.WriteCloser) formatters.Formatter {
 	for _, f := range m.formatters {
 		out := out
 		if f.out != nil {

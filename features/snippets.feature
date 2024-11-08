@@ -7,31 +7,48 @@ Feature: undefined step snippets
     Given a feature "undefined.feature" file:
       """
       Feature: undefined steps
-
-        Scenario: get version number from api
-          When I send "GET" request to "/version"
-          Then the response code should be 200
+        Scenario: has undefined
+          When some "undefined" step
+          And another undefined step
+          And a table:
+            | col1 | val1 |
+          And a docstring:
+            \"\"\"
+            Hello World
+            \"\"\"
       """
     When I run feature suite
     Then the following steps should be undefined:
       """
-      I send "GET" request to "/version"
-      the response code should be 200
+      a docstring:
+      a table:
+      another undefined step
+      some "undefined" step
       """
     And the undefined step snippets should be:
       """
-      func iSendRequestTo(arg1, arg2 string) error {
-              return godog.ErrPending
-      }
+        func aDocstring(arg1 *godog.DocString) error {
+        	return godog.ErrPending
+        }
 
-      func theResponseCodeShouldBe(arg1 int) error {
-              return godog.ErrPending
-      }
+        func aTable(arg1 *godog.Table) error {
+        	return godog.ErrPending
+        }
 
-      func InitializeScenario(ctx *godog.ScenarioContext) {
-              ctx.Step(`^I send "([^"]*)" request to "([^"]*)"$`, iSendRequestTo)
-              ctx.Step(`^the response code should be (\d+)$`, theResponseCodeShouldBe)
-      }
+        func anotherUndefinedStep() error {
+        	return godog.ErrPending
+        }
+
+        func someStep(arg1 string) error {
+        	return godog.ErrPending
+        }
+
+        func InitializeScenario(ctx *godog.ScenarioContext) {
+        	ctx.Step(`^a docstring:$`, aDocstring)
+        	ctx.Step(`^a table:$`, aTable)
+        	ctx.Step(`^another undefined step$`, anotherUndefinedStep)
+        	ctx.Step(`^some "([^"]*)" step$`, someStep)
+        }
       """
 
   Scenario: should generate snippets with more arguments

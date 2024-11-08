@@ -28,9 +28,9 @@ import (
 )
 
 const (
-	exitSuccess int = iota
-	exitFailure
-	exitOptionError
+	ExitSuccess = iota
+	ExitFailure
+	ExitOptionError
 )
 
 type (
@@ -131,6 +131,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 				}
 
 				err := suite.runPickle(pickle)
+
 				if suite.shouldFail(err) {
 					copyLock.Lock()
 					*fail = true
@@ -165,13 +166,16 @@ func (r *runner) concurrent(rate int) (failed bool) {
 	return
 }
 
-func runWithOptions(suiteName string, runner runner, opt Options) int {
-	var output io.Writer = os.Stdout
-	if nil != opt.Output {
-		output = opt.Output
+func configureFormatter(opt Options, suiteName string, output io.WriteCloser) (Formatter, error) {
+	multiFmt, err := configureMultiFormatter(opt, output)
+	if err != nil {
+		return nil, err
 	}
 
-	multiFmt := ifmt.MultiFormatter{}
+	return multiFmt.FormatterFunc(suiteName, output), nil
+}
+
+func configureMultiFormatter(opt Options, output io.WriteCloser) (multiFmt ifmt.MultiFormatter, err error) {
 
 	for _, formatter := range strings.Split(opt.Format, ",") {
 		out := output
@@ -184,12 +188,8 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 					`couldn't create file with name: "%s", error: %s`,
 					formatterParts[1], err.Error(),
 				)
-				fmt.Fprintln(os.Stderr, err)
-
-				return exitOptionError
+				return ifmt.MultiFormatter{}, err
 			}
-
-			defer f.Close()
 
 			out = f
 		}
@@ -205,100 +205,17 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 			for name := range formatters.AvailableFormatters() {
 				names = append(names, name)
 			}
-			fmt.Fprintln(os.Stderr, fmt.Errorf(
+			err := fmt.Errorf(
 				`unregistered formatter name: "%s", use one of: %s`,
 				opt.Format,
 				strings.Join(names, ", "),
-			))
-			return exitOptionError
+			)
+			return ifmt.MultiFormatter{}, err
 		}
 
 		multiFmt.Add(formatterParts[0], out)
 	}
-
-	if opt.ShowStepDefinitions {
-		s := suite{}
-		sc := ScenarioContext{suite: &s}
-		runner.scenarioInitializer(&sc)
-		printStepDefinitions(s.steps, output)
-		return exitOptionError
-	}
-
-	if len(opt.Paths) == 0 && len(opt.FeatureContents) == 0 {
-		inf, err := func() (fs.FileInfo, error) {
-			file, err := opt.FS.Open("features")
-			if err != nil {
-				return nil, err
-			}
-			defer file.Close()
-
-			return file.Stat()
-		}()
-		if err == nil && inf.IsDir() {
-			opt.Paths = []string{"features"}
-		}
-	}
-
-	if opt.Concurrency < 1 {
-		opt.Concurrency = 1
-	}
-
-	runner.fmt = multiFmt.FormatterFunc(suiteName, output)
-	opt.FS = storage.FS{FS: opt.FS}
-
-	if len(opt.FeatureContents) > 0 {
-		features, err := parser.ParseFromBytes(opt.Tags, opt.FeatureContents)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			return exitOptionError
-		}
-		runner.features = append(runner.features, features...)
-	}
-
-	if len(opt.Paths) > 0 {
-		features, err := parser.ParseFeatures(opt.FS, opt.Tags, opt.Paths)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			return exitOptionError
-		}
-		runner.features = append(runner.features, features...)
-	}
-
-	runner.storage = storage.NewStorage()
-	for _, feat := range runner.features {
-		runner.storage.MustInsertFeature(feat)
-
-		for _, pickle := range feat.Pickles {
-			runner.storage.MustInsertPickle(pickle)
-		}
-	}
-
-	// user may have specified -1 option to create random seed
-	runner.randomSeed = opt.Randomize
-	if runner.randomSeed == -1 {
-		runner.randomSeed = makeRandomSeed()
-	}
-
-	runner.stopOnFailure = opt.StopOnFailure
-	runner.strict = opt.Strict
-	runner.defaultContext = opt.DefaultContext
-	runner.testingT = opt.TestingT
-
-	// store chosen seed in environment, so it could be seen in formatter summary report
-	os.Setenv("GODOG_SEED", strconv.FormatInt(runner.randomSeed, 10))
-	// determine tested package
-	_, filename, _, _ := runtime.Caller(1)
-	os.Setenv("GODOG_TESTED_PACKAGE", runsFromPackage(filename))
-
-	failed := runner.concurrent(opt.Concurrency)
-
-	// @TODO: should prevent from having these
-	os.Setenv("GODOG_SEED", "")
-	os.Setenv("GODOG_TESTED_PACKAGE", "")
-	if failed && opt.Format != "events" {
-		return exitFailure
-	}
-	return exitSuccess
+	return multiFmt, nil
 }
 
 func runsFromPackage(fp string) string {
@@ -320,7 +237,7 @@ type TestSuite struct {
 	Name                 string
 	TestSuiteInitializer func(*TestSuiteContext)
 	ScenarioInitializer  func(*ScenarioContext)
-	Options              *Options
+	Options              *Options // TODO mutable value - is this necessary?
 }
 
 // Run will execute the test suite.
@@ -337,11 +254,16 @@ type TestSuite struct {
 //
 // If there are flag related errors they will be directed to os.Stderr
 func (ts TestSuite) Run() int {
+	result := ts.RunWithResult()
+	return result.exitCode
+}
+
+func (ts TestSuite) RunWithResult() RunResult {
 	if ts.Options == nil {
 		var err error
 		ts.Options, err = getDefaultOptions()
 		if err != nil {
-			return exitOptionError
+			return RunResult{ExitOptionError, nil}
 		}
 	}
 	if ts.Options.FS == nil {
@@ -350,11 +272,115 @@ func (ts TestSuite) Run() int {
 	if ts.Options.ShowHelp {
 		flag.CommandLine.Usage()
 
-		return 0
+		return RunResult{0, nil}
 	}
 
-	r := runner{testSuiteInitializer: ts.TestSuiteInitializer, scenarioInitializer: ts.ScenarioInitializer}
-	return runWithOptions(ts.Name, r, *ts.Options)
+	runner := runner{
+		testSuiteInitializer: ts.TestSuiteInitializer,
+		scenarioInitializer:  ts.ScenarioInitializer,
+	}
+
+	var output io.WriteCloser = NopCloser(os.Stdout)
+	if nil != ts.Options.Output {
+		output = ts.Options.Output
+	}
+
+	if ts.Options.ShowStepDefinitions {
+		s := suite{}
+		sc := ScenarioContext{suite: &s}
+		runner.scenarioInitializer(&sc)
+		printStepDefinitions(s.steps, output)
+		return RunResult{ExitOptionError, nil}
+	}
+
+	if len(ts.Options.Paths) == 0 && len(ts.Options.FeatureContents) == 0 {
+		inf, err := func() (fs.FileInfo, error) {
+			file, err := ts.Options.FS.Open("features")
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				return nil, err
+			}
+			defer file.Close()
+
+			return file.Stat()
+		}()
+		if err == nil && inf.IsDir() {
+			ts.Options.Paths = []string{"features"}
+		}
+	}
+
+	if ts.Options.Concurrency < 1 {
+		ts.Options.Concurrency = 1
+	}
+
+	var err error
+	runner.fmt, err = configureFormatter(*ts.Options, ts.Name, output)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return RunResult{ExitOptionError, nil}
+	}
+	defer func() {
+		runner.fmt.Close()
+	}()
+
+	ts.Options.FS = storage.FS{FS: ts.Options.FS}
+
+	if len(ts.Options.FeatureContents) > 0 {
+		features, err := parser.ParseFromBytes(ts.Options.Tags, ts.Options.FeatureContents)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Options.FeatureContents contains an error: %s\n", err.Error())
+			return RunResult{ExitOptionError, nil}
+		}
+		runner.features = append(runner.features, features...)
+	}
+
+	if len(ts.Options.Paths) > 0 {
+		features, err := parser.ParseFeatures(ts.Options.FS, ts.Options.Tags, ts.Options.Paths)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return RunResult{ExitOptionError, nil}
+		}
+		runner.features = append(runner.features, features...)
+	}
+
+	runner.storage = storage.NewStorage()
+	for _, feat := range runner.features {
+		runner.storage.MustInsertFeature(feat)
+
+		for _, pickle := range feat.Pickles {
+			runner.storage.MustInsertPickle(pickle)
+		}
+	}
+
+	// user may have specified -1 option to create random seed
+	runner.randomSeed = ts.Options.Randomize
+	if runner.randomSeed == -1 {
+		runner.randomSeed = makeRandomSeed()
+	}
+
+	// TOD - move all these up to the initializer at top of func
+	runner.stopOnFailure = ts.Options.StopOnFailure
+	runner.strict = ts.Options.Strict
+	runner.defaultContext = ts.Options.DefaultContext
+	runner.testingT = ts.Options.TestingT
+
+	// TODO using env vars to pass args to formatter instead of traditional arg passing seems less that ideal
+	// store chosen seed in environment, so it could be seen in formatter summary report
+	os.Setenv("GODOG_SEED", strconv.FormatInt(runner.randomSeed, 10))
+	// determine tested package
+	_, filename, _, _ := runtime.Caller(1)
+	os.Setenv("GODOG_TESTED_PACKAGE", runsFromPackage(filename))
+
+	failed := runner.concurrent(ts.Options.Concurrency)
+
+	// @TODO: should prevent from having these
+	os.Setenv("GODOG_SEED", "")
+	os.Setenv("GODOG_TESTED_PACKAGE", "")
+	if failed && ts.Options.Format != "events" {
+		return RunResult{ExitFailure, runner.storage}
+
+	}
+	return RunResult{ExitSuccess, runner.storage}
 }
 
 // RetrieveFeatures will parse and return the features based on test suite option
@@ -406,4 +432,32 @@ func getDefaultOptions() (*Options, error) {
 	opt.FS = storage.FS{}
 
 	return opt, nil
+}
+
+type noopCloser struct {
+	out io.Writer
+}
+
+func (*noopCloser) Close() error { return nil }
+
+func (n *noopCloser) Write(p []byte) (int, error) {
+	return n.out.Write(p)
+}
+
+// NopCloser will return an io.WriteCloser that ignores Close() calls
+func NopCloser(file io.Writer) io.WriteCloser {
+	return &noopCloser{out: file}
+}
+
+type RunResult struct {
+	exitCode int
+	storage  *storage.Storage
+}
+
+func (r RunResult) ExitCode() int {
+	return r.exitCode
+}
+
+func (r RunResult) Storage() *storage.Storage {
+	return r.storage
 }

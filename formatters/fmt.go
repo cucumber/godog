@@ -72,6 +72,7 @@ type Formatter interface {
 	Pending(*messages.Pickle, *messages.PickleStep, *StepDefinition)
 	Ambiguous(*messages.Pickle, *messages.PickleStep, *StepDefinition, error)
 	Summary()
+	Close() error
 }
 
 // FlushFormatter is a `Formatter` but can be flushed.
@@ -82,7 +83,7 @@ type FlushFormatter interface {
 
 // FormatterFunc builds a formatter with given
 // suite name and io.Writer to record output
-type FormatterFunc func(string, io.Writer) Formatter
+type FormatterFunc func(string, io.WriteCloser) Formatter
 
 // StepDefinition is a registered step definition
 // contains a StepHandler and regexp which

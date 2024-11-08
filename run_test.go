@@ -3,7 +3,9 @@ package godog
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
+	"github.com/cucumber/godog/internal/utils"
 	"io"
 	"io/fs"
 	"io/ioutil"
@@ -26,13 +28,318 @@ import (
 	"github.com/cucumber/godog/internal/storage"
 )
 
+func Test_TestSuite_Run(t *testing.T) {
+	for _, tc := range []struct {
+		name          string
+		body          string
+		afterStepCnt  int
+		beforeStepCnt int
+		log           string
+		noStrict      bool
+		suitePasses   bool
+	}{
+		{
+			name: "fail_then_pass_fails_scenario", afterStepCnt: 2, beforeStepCnt: 2,
+			body: `
+					When step fails
+					Then step passes`,
+			log: `
+					>>>> Before suite
+					>> Before scenario "test"
+					Before step "step fails"
+					After step "step fails", error: oops, status: failed
+					<< After scenario "test", error: oops
+					Before step "step passes"
+					After step "step passes", error: <nil>, status: skipped
+					<<<< After suite`,
+		},
+		{
+			name: "pending_then_pass_fails_scenario", afterStepCnt: 2, beforeStepCnt: 2,
+			body: `
+					When step is pending
+					Then step passes`,
+			log: `
+					>>>> Before suite
+					>> Before scenario "test"
+					Before step "step is pending"
+					After step "step is pending", error: step implementation is pending, status: pending
+					<< After scenario "test", error: step implementation is pending
+					Before step "step passes"
+					After step "step passes", error: <nil>, status: skipped
+					<<<< After suite`,
+		},
+		{
+			name: "pending_then_pass_no_strict_doesnt_fail_scenario", afterStepCnt: 2, beforeStepCnt: 2, noStrict: true, suitePasses: true,
+			body: `
+					When step is pending
+					Then step passes`,
+			log: `
+					>>>> Before suite
+					>> Before scenario "test"
+					Before step "step is pending"
+					After step "step is pending", error: step implementation is pending, status: pending
+					Before step "step passes"
+					After step "step passes", error: <nil>, status: skipped
+					<< After scenario "test", error: <nil>
+					<<<< After suite`,
+		},
+		{
+			name: "undefined_then_pass_no_strict_doesnt_fail_scenario", afterStepCnt: 2, beforeStepCnt: 2, noStrict: true, suitePasses: true,
+			body: `
+					When step is undefined
+					Then step passes`,
+			log: `
+					>>>> Before suite
+					>> Before scenario "test"
+					Before step "step is undefined"
+					After step "step is undefined", error: step is undefined, status: undefined
+					Before step "step passes"
+					After step "step passes", error: <nil>, status: skipped
+					<< After scenario "test", error: <nil>
+					<<<< After suite`,
+		},
+		{
+			name: "undefined_then_pass_fails_scenario", afterStepCnt: 2, beforeStepCnt: 2,
+			body: `
+					When step is undefined
+					Then step passes`,
+			log: `
+					>>>> Before suite
+					>> Before scenario "test"
+					Before step "step is undefined"
+					After step "step is undefined", error: step is undefined, status: undefined
+					<< After scenario "test", error: step is undefined
+					Before step "step passes"
+					After step "step passes", error: <nil>, status: skipped
+					<<<< After suite`,
+		},
+		{
+			name: "fail_then_undefined_fails_scenario", afterStepCnt: 2, beforeStepCnt: 2,
+			body: `
+					When step fails
+					Then step is undefined`,
+			log: `
+					>>>> Before suite
+					>> Before scenario "test"
+					Before step "step fails"
+					After step "step fails", error: oops, status: failed
+					<< After scenario "test", error: oops
+					Before step "step is undefined"
+					After step "step is undefined", error: step is undefined, status: undefined
+					<<<< After suite`,
+		},
+		{
+			name: "passes", afterStepCnt: 2, beforeStepCnt: 2,
+			body: `
+					When step passes
+					Then step passes`,
+			suitePasses: true,
+			log: `
+					>>>> Before suite
+					>> Before scenario "test"
+					Before step "step passes"
+					<step action>
+					After step "step passes", error: <nil>, status: passed
+					Before step "step passes"
+					<step action>
+					After step "step passes", error: <nil>, status: passed
+					<< After scenario "test", error: <nil>
+					<<<< After suite`,
+		},
+		{
+			name: "skip_does_not_fail_scenario", afterStepCnt: 2, beforeStepCnt: 2,
+			body: `
+					When step skips scenario
+					Then step fails`,
+			suitePasses: true,
+			log: `
+					>>>> Before suite
+					>> Before scenario "test"
+					Before step "step skips scenario"
+					After step "step skips scenario", error: skipped, status: skipped
+					Before step "step fails"
+					After step "step fails", error: <nil>, status: skipped
+					<< After scenario "test", error: <nil>
+					<<<< After suite`,
+		},
+		{
+			name: "multistep_passes", afterStepCnt: 6, beforeStepCnt: 6,
+			body: `
+					When multistep passes
+					Then multistep passes`,
+			suitePasses: true,
+			log: `
+					>>>> Before suite
+					>> Before scenario "test"
+					Before step "multistep passes"
+					Before step "step passes"
+					<step action>
+					After step "step passes", error: <nil>, status: passed
+					Before step "step passes"
+					<step action>
+					After step "step passes", error: <nil>, status: passed
+					After step "multistep passes", error: <nil>, status: passed
+					Before step "multistep passes"
+					Before step "step passes"
+					<step action>
+					After step "step passes", error: <nil>, status: passed
+					Before step "step passes"
+					<step action>
+					After step "step passes", error: <nil>, status: passed
+					After step "multistep passes", error: <nil>, status: passed
+					<< After scenario "test", error: <nil>
+					<<<< After suite`,
+		},
+		{
+			name: "ambiguous", afterStepCnt: 1, beforeStepCnt: 1,
+			body: `
+					Then step is ambiguous`,
+			log: `
+					>>>> Before suite
+					>> Before scenario "test"
+					Before step "step is ambiguous"
+					After step "step is ambiguous", error: ambiguous step definition, step text: step is ambiguous
+		        	            		matches:
+		        	            			^step is ambiguous$
+		        	            			^step is ambiguous$, status: ambiguous
+					<< After scenario "test", error: ambiguous step definition, step text: step is ambiguous
+		        	            		matches:
+		        	            			^step is ambiguous$
+		        	            			^step is ambiguous$
+					<<<< After suite`,
+		},
+		{
+			name: "ambiguous nested steps", afterStepCnt: 1, beforeStepCnt: 1,
+			body: `
+				Then multistep has ambiguous`,
+			log: `
+				>>>> Before suite
+				>> Before scenario "test"
+				Before step "multistep has ambiguous"
+				After step "multistep has ambiguous", error: ambiguous step definition, step text: step is ambiguous
+            	            		matches:
+            	            			^step is ambiguous$
+            	            			^step is ambiguous$, status: ambiguous
+				<< After scenario "test", error: ambiguous step definition, step text: step is ambiguous
+            	            		matches:
+            	            			^step is ambiguous$
+            	            			^step is ambiguous$
+				<<<< After suite`,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			afterScenarioCnt := 0
+			beforeScenarioCnt := 0
+
+			afterStepCnt := 0
+			beforeStepCnt := 0
+
+			var log string
+
+			suite := TestSuite{
+				TestSuiteInitializer: func(suiteContext *TestSuiteContext) {
+					suiteContext.BeforeSuite(func() {
+						log += fmt.Sprintln(">>>> Before suite")
+					})
+
+					suiteContext.AfterSuite(func() {
+						log += fmt.Sprintln("<<<< After suite")
+					})
+				},
+				ScenarioInitializer: func(s *ScenarioContext) {
+					s.Before(func(ctx context.Context, sc *Scenario) (context.Context, error) {
+						log += fmt.Sprintf(">> Before scenario %q\n", sc.Name)
+						beforeScenarioCnt++
+
+						return ctx, nil
+					})
+
+					s.After(func(ctx context.Context, sc *Scenario, err error) (context.Context, error) {
+						log += fmt.Sprintf("<< After scenario %q, error: %v\n", sc.Name, err)
+						afterScenarioCnt++
+
+						return ctx, nil
+					})
+
+					s.StepContext().Before(func(ctx context.Context, st *Step) (context.Context, error) {
+						log += fmt.Sprintf("Before step %q\n", st.Text)
+						beforeStepCnt++
+
+						return ctx, nil
+					})
+
+					s.StepContext().After(func(ctx context.Context, st *Step, status StepResultStatus, err error) (context.Context, error) {
+						log += fmt.Sprintf("After step %q, error: %v, status: %s\n", st.Text, err, status.String())
+						afterStepCnt++
+
+						return ctx, nil
+					})
+
+					s.Step("^step fails$", func() error {
+						return errors.New("oops")
+					})
+
+					s.Step("^step skips scenario$", func() error {
+						return ErrSkip
+					})
+
+					s.Step("^step passes$", func() {
+						log += "<step action>\n"
+					})
+
+					s.Step("^multistep passes$", func() Steps {
+						return Steps{"step passes", "step passes"}
+					})
+
+					s.Step("pending", func() error {
+						return ErrPending
+					})
+
+					s.Step("^step is ambiguous$", func() {
+						log += "<step action>\n"
+					})
+					s.Step("^step is ambiguous$", func() {
+						log += "<step action>\n"
+					})
+					s.Step("^multistep has ambiguous$", func() Steps {
+						return Steps{"step is ambiguous"}
+					})
+
+				},
+				Options: &Options{
+					Format:   "pretty",
+					Strict:   !tc.noStrict,
+					NoColors: true,
+					FeatureContents: []Feature{
+						{
+							Name: tc.name,
+							Contents: []byte(utils.TrimAllLines(`
+								Feature: test
+								Scenario: test
+								` + tc.body)),
+						},
+					},
+				},
+			}
+
+			suitePasses := suite.Run() == ExitSuccess
+			assert.Equal(t, tc.suitePasses, suitePasses)
+			assert.Equal(t, 1, afterScenarioCnt)
+			assert.Equal(t, 1, beforeScenarioCnt)
+			assert.Equal(t, tc.afterStepCnt, afterStepCnt)
+			assert.Equal(t, tc.beforeStepCnt, beforeStepCnt)
+			assert.Equal(t, utils.TrimAllLines(tc.log), utils.TrimAllLines(log), log)
+		})
+	}
+}
+
 func okStep() error {
 	return nil
 }
 
 func TestPrintsStepDefinitions(t *testing.T) {
 	var buf bytes.Buffer
-	w := colors.Uncolored(&buf)
+	w := colors.Uncolored(NopCloser(&buf))
 	s := suite{}
 	ctx := ScenarioContext{suite: &s}
 
@@ -61,7 +368,7 @@ func TestPrintsStepDefinitions(t *testing.T) {
 
 func TestPrintsNoStepDefinitionsIfNoneFound(t *testing.T) {
 	var buf bytes.Buffer
-	w := colors.Uncolored(&buf)
+	w := colors.Uncolored(NopCloser(&buf))
 	s := &suite{}
 
 	printStepDefinitions(s.steps, w)
@@ -83,7 +390,7 @@ func Test_FailsOrPassesBasedOnStrictModeWhenHasPendingSteps(t *testing.T) {
 	var beforeScenarioFired, afterScenarioFired int
 
 	r := runner{
-		fmt:      formatters.ProgressFormatterFunc("progress", ioutil.Discard),
+		fmt:      formatters.ProgressFormatterFunc("progress", NopCloser(ioutil.Discard)),
 		features: []*models.Feature{&ft},
 		testSuiteInitializer: func(ctx *TestSuiteContext) {
 			ctx.ScenarioContext().Before(func(ctx context.Context, sc *Scenario) (context.Context, error) {
@@ -135,7 +442,7 @@ func Test_FailsOrPassesBasedOnStrictModeWhenHasUndefinedSteps(t *testing.T) {
 	ft.Pickles = gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
 
 	r := runner{
-		fmt:      formatters.ProgressFormatterFunc("progress", ioutil.Discard),
+		fmt:      formatters.ProgressFormatterFunc("progress", NopCloser(ioutil.Discard)),
 		features: []*models.Feature{&ft},
 		scenarioInitializer: func(ctx *ScenarioContext) {
 			ctx.Step(`^one$`, func() error { return nil })
@@ -168,7 +475,7 @@ func Test_ShouldFailOnError(t *testing.T) {
 	ft.Pickles = gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
 
 	r := runner{
-		fmt:      formatters.ProgressFormatterFunc("progress", ioutil.Discard),
+		fmt:      formatters.ProgressFormatterFunc("progress", NopCloser(ioutil.Discard)),
 		features: []*models.Feature{&ft},
 		scenarioInitializer: func(ctx *ScenarioContext) {
 			ctx.Step(`^two$`, func() error { return fmt.Errorf("error") })
@@ -194,7 +501,7 @@ func Test_FailsWithUnknownFormatterOptionError(t *testing.T) {
 	opts := Options{
 		Format: "unknown",
 		Paths:  []string{"features/load:6"},
-		Output: ioutil.Discard,
+		Output: NopCloser(ioutil.Discard),
 	}
 
 	status := TestSuite{
@@ -203,7 +510,7 @@ func Test_FailsWithUnknownFormatterOptionError(t *testing.T) {
 		Options:             &opts,
 	}.Run()
 
-	require.Equal(t, exitOptionError, status)
+	require.Equal(t, ExitOptionError, status)
 
 	closer()
 
@@ -222,7 +529,7 @@ func Test_FailsWithOptionErrorWhenLookingForFeaturesInUnavailablePath(t *testing
 	opts := Options{
 		Format: "progress",
 		Paths:  []string{"unavailable"},
-		Output: ioutil.Discard,
+		Output: NopCloser(ioutil.Discard),
 	}
 
 	status := TestSuite{
@@ -231,7 +538,7 @@ func Test_FailsWithOptionErrorWhenLookingForFeaturesInUnavailablePath(t *testing
 		Options:             &opts,
 	}.Run()
 
-	require.Equal(t, exitOptionError, status)
+	require.Equal(t, ExitOptionError, status)
 
 	closer()
 
@@ -245,7 +552,7 @@ func Test_FailsWithOptionErrorWhenLookingForFeaturesInUnavailablePath(t *testing
 func Test_ByDefaultRunsFeaturesPath(t *testing.T) {
 	opts := Options{
 		Format: "progress",
-		Output: ioutil.Discard,
+		Output: NopCloser(ioutil.Discard),
 		Strict: true,
 	}
 
@@ -256,7 +563,7 @@ func Test_ByDefaultRunsFeaturesPath(t *testing.T) {
 	}.Run()
 
 	// should fail in strict mode due to undefined steps
-	assert.Equal(t, exitFailure, status)
+	assert.Equal(t, ExitFailure, status)
 
 	opts.Strict = false
 	status = TestSuite{
@@ -266,93 +573,7 @@ func Test_ByDefaultRunsFeaturesPath(t *testing.T) {
 	}.Run()
 
 	// should succeed in non strict mode due to undefined steps
-	assert.Equal(t, exitSuccess, status)
-}
-
-func Test_RunsWithFeatureContentsOption(t *testing.T) {
-	items, err := ioutil.ReadDir("./features")
-	require.NoError(t, err)
-
-	var featureContents []Feature
-	for _, item := range items {
-		if !item.IsDir() && strings.Contains(item.Name(), ".feature") {
-			contents, err := os.ReadFile("./features/" + item.Name())
-			require.NoError(t, err)
-			featureContents = append(featureContents, Feature{
-				Name:     item.Name(),
-				Contents: contents,
-			})
-		}
-	}
-
-	opts := Options{
-		Format:          "progress",
-		Output:          ioutil.Discard,
-		Strict:          true,
-		FeatureContents: featureContents,
-	}
-
-	status := TestSuite{
-		Name:                "fails",
-		ScenarioInitializer: func(_ *ScenarioContext) {},
-		Options:             &opts,
-	}.Run()
-
-	// should fail in strict mode due to undefined steps
-	assert.Equal(t, exitFailure, status)
-
-	opts.Strict = false
-	status = TestSuite{
-		Name:                "succeeds",
-		ScenarioInitializer: func(_ *ScenarioContext) {},
-		Options:             &opts,
-	}.Run()
-
-	// should succeed in non strict mode due to undefined steps
-	assert.Equal(t, exitSuccess, status)
-}
-
-func Test_RunsWithFeatureContentsAndPathsOptions(t *testing.T) {
-	featureContents := []Feature{
-		{
-			Name: "MySuperCoolFeature",
-			Contents: []byte(`
-Feature: run features from bytes
-  Scenario: should run a normal feature
-    Given a feature "normal.feature" file:
-      """
-      Feature: normal feature
-
-        Scenario: parse a scenario
-          Given a feature path "features/load.feature:6"
-          When I parse features
-          Then I should have 1 scenario registered
-      """
-    When I run feature suite
-    Then the suite should have passed
-    And the following steps should be passed:
-      """
-      a feature path "features/load.feature:6"
-      I parse features
-      I should have 1 scenario registered
-      """`),
-		},
-	}
-
-	opts := Options{
-		Format:          "progress",
-		Output:          ioutil.Discard,
-		Paths:           []string{"./features"},
-		FeatureContents: featureContents,
-	}
-
-	status := TestSuite{
-		Name:                "succeeds",
-		ScenarioInitializer: func(_ *ScenarioContext) {},
-		Options:             &opts,
-	}.Run()
-
-	assert.Equal(t, exitSuccess, status)
+	assert.Equal(t, ExitSuccess, status)
 }
 
 func bufErrorPipe(t *testing.T) (io.ReadCloser, func()) {
@@ -367,30 +588,50 @@ func bufErrorPipe(t *testing.T) (io.ReadCloser, func()) {
 	}
 }
 
+const sampleFeature = `
+		Feature: scenarios should run in different order if seed is used
+		
+		  Scenario Outline: Some examples
+			# Need enough examples to cause the pseudo-randomness to show up
+
+			Given some step <value>
+		
+			Examples:
+			| value |
+			| hello |
+			| 1 |
+			| 2 |
+			| 3 |
+			| 4 |
+			| 5 |
+		`
+
+var sampleFeatures = []Feature{{Name: "test.feature", Contents: []byte(sampleFeature)}}
+
 func Test_RandomizeRun_WithStaticSeed(t *testing.T) {
 	const noRandomFlag = 0
 	const noConcurrencyFlag = 1
 	const formatter = "pretty"
-	const featurePath = "internal/formatters/formatter-tests/features/with_few_empty_scenarios.feature"
 
 	fmtOutputScenarioInitializer := func(ctx *ScenarioContext) {
-		ctx.Step(`^(?:a )?failing step`, failingStepDef)
-		ctx.Step(`^(?:a )?pending step$`, pendingStepDef)
-		ctx.Step(`^(?:a )?passing step$`, passingStepDef)
-		ctx.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)
+		ctx.Step(`^.*`, func() {})
 	}
 
 	expectedStatus, expectedOutput := testRun(t,
 		fmtOutputScenarioInitializer,
 		formatter, noConcurrencyFlag,
-		noRandomFlag, []string{featurePath},
+		noRandomFlag,
+		nil,
+		sampleFeatures,
 	)
 
 	const staticSeed int64 = 1
 	actualStatus, actualOutput := testRun(t,
 		fmtOutputScenarioInitializer,
 		formatter, noConcurrencyFlag,
-		staticSeed, []string{featurePath},
+		staticSeed,
+		nil,
+		sampleFeatures,
 	)
 
 	actualSeed := parseSeed(actualOutput)
@@ -402,7 +643,8 @@ func Test_RandomizeRun_WithStaticSeed(t *testing.T) {
 	actualOutputReduced := strings.Join(actualOutputSplit, "\n")
 
 	assert.Equal(t, expectedStatus, actualStatus)
-	assert.NotEqual(t, expectedOutput, actualOutputReduced)
+	assert.NotEqual(t, expectedOutput, actualOutputReduced, "expected the natural and seeded order to be different")
+
 	assertOutput(t, formatter, expectedOutput, actualOutputReduced)
 }
 
@@ -410,19 +652,17 @@ func Test_RandomizeRun_RerunWithSeed(t *testing.T) {
 	const createRandomSeedFlag = -1
 	const noConcurrencyFlag = 1
 	const formatter = "pretty"
-	const featurePath = "internal/formatters/formatter-tests/features/with_few_empty_scenarios.feature"
 
 	fmtOutputScenarioInitializer := func(ctx *ScenarioContext) {
-		ctx.Step(`^(?:a )?failing step`, failingStepDef)
-		ctx.Step(`^(?:a )?pending step$`, pendingStepDef)
-		ctx.Step(`^(?:a )?passing step$`, passingStepDef)
-		ctx.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)
+		ctx.Step(`^.*`, func() {})
 	}
 
 	expectedStatus, expectedOutput := testRun(t,
 		fmtOutputScenarioInitializer,
 		formatter, noConcurrencyFlag,
-		createRandomSeedFlag, []string{featurePath},
+		createRandomSeedFlag,
+		nil,
+		sampleFeatures,
 	)
 
 	expectedSeed := parseSeed(expectedOutput)
@@ -431,7 +671,9 @@ func Test_RandomizeRun_RerunWithSeed(t *testing.T) {
 	actualStatus, actualOutput := testRun(t,
 		fmtOutputScenarioInitializer,
 		formatter, noConcurrencyFlag,
-		expectedSeed, []string{featurePath},
+		expectedSeed,
+		nil,
+		sampleFeatures,
 	)
 
 	actualSeed := parseSeed(actualOutput)
@@ -445,21 +687,22 @@ func Test_FormatOutputRun(t *testing.T) {
 	const noRandomFlag = 0
 	const noConcurrencyFlag = 1
 	const formatter = "junit"
-	const featurePath = "internal/formatters/formatter-tests/features/with_few_empty_scenarios.feature"
 
 	fmtOutputScenarioInitializer := func(ctx *ScenarioContext) {
-		ctx.Step(`^(?:a )?failing step`, failingStepDef)
-		ctx.Step(`^(?:a )?pending step$`, pendingStepDef)
-		ctx.Step(`^(?:a )?passing step$`, passingStepDef)
-		ctx.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)
+		ctx.Step(`^.*$`, func() {})
 	}
 
+	//  first collect the output via a memory buffer and use this to verify the file out below
 	expectedStatus, expectedOutput := testRun(t,
 		fmtOutputScenarioInitializer,
-		formatter, noConcurrencyFlag,
-		noRandomFlag, []string{featurePath},
+		formatter,
+		noConcurrencyFlag,
+		noRandomFlag,
+		nil,
+		sampleFeatures,
 	)
 
+	// run again with file output
 	dir := filepath.Join(os.TempDir(), t.Name())
 	err := os.MkdirAll(dir, 0755)
 	require.NoError(t, err)
@@ -471,7 +714,9 @@ func Test_FormatOutputRun(t *testing.T) {
 	actualStatus, actualOutput := testRun(t,
 		fmtOutputScenarioInitializer,
 		formatter+":"+file, noConcurrencyFlag,
-		noRandomFlag, []string{featurePath},
+		noRandomFlag,
+		nil,
+		sampleFeatures,
 	)
 
 	result, err := ioutil.ReadFile(file)
@@ -483,30 +728,34 @@ func Test_FormatOutputRun(t *testing.T) {
 	assert.Equal(t, expectedOutput, actualOutputFromFile)
 }
 
-func Test_FormatOutputRun_Error(t *testing.T) {
+func Test_FormatOutputRun_OutputFileError(t *testing.T) {
 	const noRandomFlag = 0
 	const noConcurrencyFlag = 1
 	const formatter = "junit"
-	const featurePath = "internal/formatters/formatter-tests/features/with_few_empty_scenarios.feature"
 
 	fmtOutputScenarioInitializer := func(ctx *ScenarioContext) {
-		ctx.Step(`^(?:a )?failing step`, failingStepDef)
-		ctx.Step(`^(?:a )?pending step$`, pendingStepDef)
-		ctx.Step(`^(?:a )?passing step$`, passingStepDef)
-		ctx.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)
+		ctx.Step(`^.*$`, func() {})
 	}
 
-	expectedStatus, expectedOutput := exitOptionError, ""
-
+	// locate the output file in a temp dir that we won't actually create
 	dir := filepath.Join(os.TempDir(), t.Name())
 	file := filepath.Join(dir, "result.xml")
 
-	// next test is expected to log: couldn't create file with name: )
+	// !! NOTE !!
+	// This test is intended to verify the fact that the library fails to open the file and should
+	// ideally verify the user error...
+	//   couldn't create file with name: "/tmp/Test_FormatOutputRun_Error/result.xml", error: open /tmp/Test_FormatOutputRun_Error/result.xml: no such file or directory
+	// ... however that error gets sent direct to stdout, so there not much we can verify here that's actually a useful test.
+	// Ideally, this code would capture the error.
+	// Todo - find all the direct stdout/err writes and put them via a Writer that we can mock if needed.
 	actualStatus, actualOutput := testRun(t,
 		fmtOutputScenarioInitializer,
 		formatter+":"+file, noConcurrencyFlag,
-		noRandomFlag, []string{featurePath},
-	)
+		noRandomFlag,
+		nil,
+		sampleFeatures)
+
+	expectedStatus, expectedOutput := ExitOptionError, ""
 
 	assert.Equal(t, expectedStatus, actualStatus)
 	assert.Equal(t, expectedOutput, actualOutput)
@@ -515,70 +764,7 @@ func Test_FormatOutputRun_Error(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func Test_AllFeaturesRun(t *testing.T) {
-	const concurrency = 100
-	const noRandomFlag = 0
-	const format = "progress"
-
-	const expected = `...................................................................... 70
-...................................................................... 140
-...................................................................... 210
-...................................................................... 280
-...................................................................... 350
-...................................................................... 420
-...                                                                    423
-
-
-108 scenarios (108 passed)
-423 steps (423 passed)
-0s
-`
-
-	actualStatus, actualOutput := testRun(t,
-		InitializeScenario,
-		format, concurrency,
-		noRandomFlag, []string{"features"},
-	)
-
-	assert.Equal(t, exitSuccess, actualStatus)
-	assert.Equal(t, expected, actualOutput)
-}
-
-func Test_AllFeaturesRunAsSubtests(t *testing.T) {
-	const concurrency = 100
-	const noRandomFlag = 0
-	const format = "progress"
-
-	const expected = `...................................................................... 70
-...................................................................... 140
-...................................................................... 210
-...................................................................... 280
-...................................................................... 350
-...................................................................... 420
-...                                                                    423
-
-
-108 scenarios (108 passed)
-423 steps (423 passed)
-0s
-`
-
-	actualStatus, actualOutput := testRunWithOptions(
-		t,
-		Options{
-			Format:      format,
-			Concurrency: concurrency,
-			Paths:       []string{"features"},
-			Randomize:   noRandomFlag,
-			TestingT:    t,
-		},
-		InitializeScenario,
-	)
-
-	assert.Equal(t, exitSuccess, actualStatus)
-	assert.Equal(t, expected, actualOutput)
-}
-
+// This test runs the tests sequentially and in parallel, and expects the passing and failing tests to be the same
 func Test_FormatterConcurrencyRun(t *testing.T) {
 	formatters := []string{
 		"progress",
@@ -594,6 +780,8 @@ func Test_FormatterConcurrencyRun(t *testing.T) {
 	const noRandomFlag = 0
 	const noConcurrency = 1
 
+	// this is just a few dummy handlers to satisfy the needs of a few scenarios.
+	// the real initialiser is in fmt_output_test
 	fmtOutputScenarioInitializer := func(ctx *ScenarioContext) {
 		ctx.Step(`^(?:a )?failing step`, failingStepDef)
 		ctx.Step(`^(?:a )?pending step$`, pendingStepDef)
@@ -602,21 +790,28 @@ func Test_FormatterConcurrencyRun(t *testing.T) {
 	}
 
 	for _, formatter := range formatters {
+
 		t.Run(
 			fmt.Sprintf("%s/concurrency/%d", formatter, concurrency),
 			func(t *testing.T) {
-				expectedStatus, expectedOutput := testRun(t,
+				expectedStatus, expectedOutput := runWithResults(t,
 					fmtOutputScenarioInitializer,
 					formatter, noConcurrency,
-					noRandomFlag, featurePaths,
+					noRandomFlag, featurePaths, nil,
 				)
-				actualStatus, actualOutput := testRun(t,
+				actualStatus, actualOutput := runWithResults(t,
 					fmtOutputScenarioInitializer,
 					formatter, concurrency,
-					noRandomFlag, featurePaths,
+					noRandomFlag, featurePaths, nil,
 				)
 
-				assert.Equal(t, expectedStatus, actualStatus)
+				passes := countResultsByStatus(expectedStatus.storage, StepPassed)
+				fails := countResultsByStatus(expectedStatus.storage, StepFailed)
+				if passes == 0 {
+					t.Errorf("for this test to be valid then some scenarios need at least some pass, but got %v passes and %v fails", passes, fails)
+				}
+
+				assert.Equal(t, expectedStatus.exitCode, actualStatus.exitCode)
 				assertOutput(t, formatter, expectedOutput, actualOutput)
 			},
 		)
@@ -630,41 +825,64 @@ func testRun(
 	concurrency int,
 	randomSeed int64,
 	featurePaths []string,
+	features []Feature,
 ) (int, string) {
+	result, actualOutput := runWithResults(t, scenarioInitializer, format, concurrency, randomSeed, featurePaths, features)
+	return result.exitCode, actualOutput
+}
+
+func runWithResults(t *testing.T,
+	scenarioInitializer func(*ScenarioContext),
+	format string, concurrency int, randomSeed int64, featurePaths []string, features []Feature) (RunResult, string) {
+
 	t.Helper()
 
 	opts := Options{
-		Format:      format,
-		Paths:       featurePaths,
-		Concurrency: concurrency,
-		Randomize:   randomSeed,
+		Format:          format,
+		Paths:           featurePaths,
+		FeatureContents: features,
+		Concurrency:     concurrency,
+		Randomize:       randomSeed,
 	}
 
-	return testRunWithOptions(t, opts, scenarioInitializer)
+	result, actualOutput := testRunWithOptions(t, opts, scenarioInitializer)
+	return result, actualOutput
+}
+
+func countResultsByStatus(storage *storage.Storage, status models.StepResultStatus) int {
+	actual := []string{}
+
+	for _, st := range storage.MustGetPickleStepResultsByStatus(status) {
+		pickleStep := storage.MustGetPickleStep(st.PickleStepID)
+		actual = append(actual, pickleStep.Text)
+	}
+	return len(actual)
 }
 
 func testRunWithOptions(
 	t *testing.T,
 	opts Options,
 	scenarioInitializer func(*ScenarioContext),
-) (int, string) {
+) (RunResult, string) {
 	t.Helper()
 
 	output := new(bytes.Buffer)
 
-	opts.Output = output
+	opts.Output = NopCloser(output)
 	opts.NoColors = true
 
-	status := TestSuite{
+	testSuite := TestSuite{
 		Name:                "succeed",
 		ScenarioInitializer: scenarioInitializer,
 		Options:             &opts,
-	}.Run()
+	}
+
+	result := testSuite.RunWithResult()
 
 	actual, err := ioutil.ReadAll(output)
 	require.NoError(t, err)
 
-	return status, string(actual)
+	return result, string(actual)
 }
 
 func assertOutput(t *testing.T, formatter string, expected, actual string) {
@@ -672,7 +890,10 @@ func assertOutput(t *testing.T, formatter string, expected, actual string) {
 	case "cucumber", "junit", "pretty", "events":
 		expectedRows := strings.Split(expected, "\n")
 		actualRows := strings.Split(actual, "\n")
-		assert.ElementsMatch(t, expectedRows, actualRows)
+		ok := assert.ElementsMatch(t, expectedRows, actualRows)
+		if !ok {
+			utils.VDiffLists(expectedRows, actualRows)
+		}
 	case "progress":
 		expectedOutput := parseProgressOutput(expected)
 		actualOutput := parseProgressOutput(actual)
@@ -683,7 +904,12 @@ func assertOutput(t *testing.T, formatter string, expected, actual string) {
 		assert.Equal(t, expectedOutput.undefined, actualOutput.undefined)
 		assert.Equal(t, expectedOutput.pending, actualOutput.pending)
 		assert.Equal(t, expectedOutput.noOfStepsPerRow, actualOutput.noOfStepsPerRow)
-		assert.ElementsMatch(t, expectedOutput.bottomRows, actualOutput.bottomRows)
+		ok := assert.ElementsMatch(t, expectedOutput.bottomRows, actualOutput.bottomRows)
+		if !ok {
+			utils.VDiffLists(expectedOutput.bottomRows, actualOutput.bottomRows)
+		}
+	default:
+		panic("unknown formatter: " + formatter)
 	}
 }
 
@@ -793,5 +1019,104 @@ func Test_TestSuite_RetreiveFeatures(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, test.expFeatures, len(features))
 		})
+	}
+}
+
+// do ctx get cancelled across threads?
+func Test_ContextShouldBeCancelledAfterScenarioCompletion(t *testing.T) {
+	// two scenarios and concurrency is set to 2 so we expect two distinct ctx and cancel events
+	numberOfScenarios := 2
+	capturedCtx := make(chan context.Context, numberOfScenarios)
+
+	suite := TestSuite{
+		ScenarioInitializer: func(scenarioContext *ScenarioContext) {
+			scenarioContext.When(`^foo$`, func() {})
+			scenarioContext.After(func(ctx context.Context, sc *Scenario, err error) (context.Context, error) {
+				// capture the context so the mainline can check it got cancelled
+				capturedCtx <- ctx
+
+				return ctx, nil
+			})
+		},
+		Options: &Options{
+			Format:      "pretty",
+			Concurrency: numberOfScenarios,
+			TestingT:    t,
+			FeatureContents: []Feature{
+				{
+					Name: "Scenario Context Cancellation",
+					Contents: []byte(`
+Feature: dummy
+  Scenario: 1: Context should be cancelled by the end of scenario
+    When foo
+
+  Scenario: 2: Context should be cancelled by the end of scenario
+    When foo
+`),
+				},
+			},
+		},
+	}
+
+	require.Equal(t, ExitSuccess, suite.Run(), "non-zero status returned, failed to run feature tests")
+
+	// the ctx should have been cancelled by the time godog returns so we should be able to check immediately
+	for i := 0; i < numberOfScenarios; i++ {
+		select {
+		case ctx := <-capturedCtx:
+			fmt.Printf("ok: ctx %d found\n", i)
+			// now wait for it to have been cancelled - should be immediate
+			doneFuture := ctx.Done()
+			select {
+			case <-doneFuture:
+				fmt.Printf("ok: ctx %d cancelled\n", i)
+			default:
+				assert.Fail(t, "context was not cancelled")
+			}
+
+		default:
+			assert.Fail(t, fmt.Sprintf("timed out waiting for %d contexts to be captured", numberOfScenarios))
+		}
+
+	}
+}
+
+// does a newly created child ctx wrapper get cancelled when the scenario completes?
+func Test_ChildContextShouldBeCancelledAfterScenarioCompletion(t *testing.T) {
+	var childContext context.Context
+	suite := TestSuite{
+		ScenarioInitializer: func(scenarioContext *ScenarioContext) {
+			scenarioContext.When(`^foo$`, func() {})
+			scenarioContext.After(func(ctx context.Context, sc *Scenario, err error) (context.Context, error) {
+				type ctxKey string
+				childContext = context.WithValue(ctx, ctxKey("child"), true)
+
+				return childContext, nil
+			})
+		},
+		Options: &Options{
+			Format:         "pretty",
+			TestingT:       t,
+			DefaultContext: context.Background(),
+			FeatureContents: []Feature{
+				{
+					Name: "Scenario Context Cancellation",
+					Contents: []byte(`
+Feature: dummy
+  Scenario: Context should be cancelled by the end of scenario
+    When foo
+`),
+				},
+			},
+		},
+	}
+
+	require.Equal(t, ExitSuccess, suite.Run(), "non-zero status returned, failed to run feature tests")
+
+	// the ctx should have been cancelled before godog returns so we should be able to check immediately
+	select {
+	case <-childContext.Done(): // pass
+	default:
+		assert.Fail(t, "child context was not cancelled")
 	}
 }

@@ -21,12 +21,12 @@ import (
 )
 
 // BaseFormatterFunc implements the FormatterFunc for the base formatter.
-func BaseFormatterFunc(suite string, out io.Writer) formatters.Formatter {
+func BaseFormatterFunc(suite string, out io.WriteCloser) formatters.Formatter {
 	return NewBase(suite, out)
 }
 
 // NewBase creates a new base formatter.
-func NewBase(suite string, out io.Writer) *Base {
+func NewBase(suite string, out io.WriteCloser) *Base {
 	return &Base{
 		suiteName: suite,
 		indent:    2,
@@ -38,7 +38,7 @@ func NewBase(suite string, out io.Writer) *Base {
 // Base is a base formatter.
 type Base struct {
 	suiteName string
-	out       io.Writer
+	out       io.WriteCloser
 	indent    int
 
 	Storage *storage.Storage
@@ -51,6 +51,11 @@ func (f *Base) SetStorage(st *storage.Storage) {
 	defer f.Lock.Unlock()
 
 	f.Storage = st
+}
+
+// Close should be called once reporting is complete.
+func (f *Base) Close() error {
+	return f.out.Close()
 }
 
 // TestRunStarted is triggered on test start.

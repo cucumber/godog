@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/cucumber/godog/colors"
@@ -107,5 +108,24 @@ func (st StepResultStatus) String() string {
 		return "ambiguous"
 	default:
 		return "unknown"
+	}
+}
+
+func ToStepResultStatus(status string) (StepResultStatus, error) {
+	switch status {
+	case "passed":
+		return Passed, nil
+	case "failed":
+		return Failed, nil
+	case "skipped":
+		return Skipped, nil
+	case "undefined":
+		return Undefined, nil
+	case "pending":
+		return Pending, nil
+	case "ambiguous":
+		return Ambiguous, nil
+	default:
+		return Failed, fmt.Errorf("value %q is not a valid StepResultStatus", status)
 	}
 }

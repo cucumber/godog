@@ -1,0 +1,59 @@
+<bold-white>Feature:</bold-white> scenario hook errors
+
+  <bold-white>Scenario:</bold-white> ok scenario <bold-black># formatter-tests/features/hook_errors.feature:3</bold-black>
+    <green>When</green> <green>passing step</green>   <bold-black># fmt_output_test.go:266 -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
+
+  <bold-white>Scenario:</bold-white> failing before scenario <bold-black># formatter-tests/features/hook_errors.feature:7</bold-black>
+    <red>When</red> <red>passing step</red>               <bold-black># fmt_output_test.go:266 -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
+    <bold-red>before scenario hook failed: failed in before scenario hook</bold-red>
+
+  <bold-white>Scenario:</bold-white> failing after scenario <bold-black># formatter-tests/features/hook_errors.feature:11</bold-black>
+    <red>And</red> <red>passing step</red>               <bold-black># fmt_output_test.go:266 -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
+    <bold-red>after scenario hook failed: failed in after scenario hook</bold-red>
+
+  <bold-white>Scenario:</bold-white> failing before and after scenario <bold-black># formatter-tests/features/hook_errors.feature:16</bold-black>
+    <red>When</red> <red>passing step</red>                         <bold-black># fmt_output_test.go:266 -> github.com/cucumber/godog/internal/formatters_test.passingStepDef</bold-black>
+    <bold-red>after scenario hook failed: failed in after scenario hook, step error: before scenario hook failed: failed in before scenario hook</bold-red>
+
+  <bold-white>Scenario:</bold-white> failing before scenario with failing step <bold-black># formatter-tests/features/hook_errors.feature:20</bold-black>
+    <red>When</red> <red>failing step</red>                                 <bold-black># fmt_output_test.go:289 -> github.com/cucumber/godog/internal/formatters_test.failingStepDef</bold-black>
+    <bold-red>before scenario hook failed: failed in before scenario hook</bold-red>
+
+  <bold-white>Scenario:</bold-white> failing after scenario with failing step <bold-black># formatter-tests/features/hook_errors.feature:24</bold-black>
+    <red>And</red> <red>failing step</red>                                 <bold-black># fmt_output_test.go:289 -> github.com/cucumber/godog/internal/formatters_test.failingStepDef</bold-black>
+    <bold-red>after scenario hook failed: failed in after scenario hook, step error: step failed</bold-red>
+
+  <bold-white>Scenario:</bold-white> failing before and after scenario with failing step <bold-black># formatter-tests/features/hook_errors.feature:29</bold-black>
+    <red>When</red> <red>failing step</red>                                           <bold-black># fmt_output_test.go:289 -> github.com/cucumber/godog/internal/formatters_test.failingStepDef</bold-black>
+    <bold-red>after scenario hook failed: failed in after scenario hook, step error: before scenario hook failed: failed in before scenario hook</bold-red>
+
+--- <red>Failed steps:</red>
+
+  <red>Scenario: failing before scenario</red> <bold-black># formatter-tests/features/hook_errors.feature:7</bold-black>
+    <red>When passing step</red> <bold-black># formatter-tests/features/hook_errors.feature:8</bold-black>
+      <red>Error: </red><bold-red>before scenario hook failed: failed in before scenario hook</bold-red>
+
+  <red>Scenario: failing after scenario</red> <bold-black># formatter-tests/features/hook_errors.feature:11</bold-black>
+    <red>And passing step</red> <bold-black># formatter-tests/features/hook_errors.feature:12</bold-black>
+      <red>Error: </red><bold-red>after scenario hook failed: failed in after scenario hook</bold-red>
+
+  <red>Scenario: failing before and after scenario</red> <bold-black># formatter-tests/features/hook_errors.feature:16</bold-black>
+    <red>When passing step</red> <bold-black># formatter-tests/features/hook_errors.feature:17</bold-black>
+      <red>Error: </red><bold-red>after scenario hook failed: failed in after scenario hook, step error: before scenario hook failed: failed in before scenario hook</bold-red>
+
+  <red>Scenario: failing before scenario with failing step</red> <bold-black># formatter-tests/features/hook_errors.feature:20</bold-black>
+    <red>When failing step</red> <bold-black># formatter-tests/features/hook_errors.feature:21</bold-black>
+      <red>Error: </red><bold-red>before scenario hook failed: failed in before scenario hook</bold-red>
+
+  <red>Scenario: failing after scenario with failing step</red> <bold-black># formatter-tests/features/hook_errors.feature:24</bold-black>
+    <red>And failing step</red> <bold-black># formatter-tests/features/hook_errors.feature:25</bold-black>
+      <red>Error: </red><bold-red>after scenario hook failed: failed in after scenario hook, step error: step failed</bold-red>
+
+  <red>Scenario: failing before and after scenario with failing step</red> <bold-black># formatter-tests/features/hook_errors.feature:29</bold-black>
+    <red>When failing step</red> <bold-black># formatter-tests/features/hook_errors.feature:30</bold-black>
+      <red>Error: </red><bold-red>after scenario hook failed: failed in after scenario hook, step error: before scenario hook failed: failed in before scenario hook</bold-red>
+
+
+7 scenarios (<green>1 passed</green>, <red>6 failed</red>)
+7 steps (<green>1 passed</green>, <red>6 failed</red>)
+0s

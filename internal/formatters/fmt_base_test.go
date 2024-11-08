@@ -76,7 +76,7 @@ And step passed f2s4:3
 			})
 		},
 		Options: &godog.Options{
-			Output:          out,
+			Output:          godog.NopCloser(out),
 			NoColors:        true,
 			Strict:          true,
 			Format:          "progress",
@@ -84,7 +84,7 @@ And step passed f2s4:3
 		},
 	}
 
-	assert.Equal(t, 1, suite.Run())
+	assert.Equal(t, godog.ExitFailure, suite.Run())
 	assert.Equal(t, `
 step invoked: "f1s1:1", passed
 step "step passed f1s1:1" finished with status passed

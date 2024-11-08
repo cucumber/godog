@@ -18,7 +18,7 @@ func init() {
 }
 
 // JUnitFormatterFunc implements the FormatterFunc for the junit formatter
-func JUnitFormatterFunc(suite string, out io.Writer) formatters.Formatter {
+func JUnitFormatterFunc(suite string, out io.WriteCloser) formatters.Formatter {
 	return &JUnit{Base: NewBase(suite, out)}
 }
 

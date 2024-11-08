@@ -1,6 +1,26 @@
-Feature: JUnit XML formatter
-  In order to support tools that import JUnit XML output
-  I need to be able to support junit formatted output
+Feature: junit formatter
+  Smoke test of junit formatter.
+  Comprehensive tests at internal/formatters.
+
+  Scenario: check formatter is available
+
+    Given a feature "test.feature" file:
+      """
+        Feature: check the formatter is available
+          Scenario: trivial scenario
+            Given a passing step
+      """
+    When I run feature suite with formatter "junit"
+    Then the rendered xml will be as follows:
+    """
+    <?xml version="1.0" encoding="UTF-8"?>
+    <testsuites name="godog" tests="1" skipped="0" failures="0" errors="0" time="9999.9999">
+    <testsuite name="check the formatter is available" tests="1" skipped="0" failures="0" errors="0" time="9999.9999">
+    <testcase name="trivial scenario" status="passed" time="9999.9999"></testcase>
+    </testsuite>
+    </testsuites>
+    """
+
 
   Scenario: Support of Feature Plus Scenario Node
     Given a feature "features/simple.feature" file:
@@ -13,12 +33,12 @@ Feature: JUnit XML formatter
     When I run feature suite with formatter "junit"
     Then the rendered xml will be as follows:
     """ application/xml
-      <?xml version="1.0" encoding="UTF-8"?>
-      <testsuites name="godog" tests="1" skipped="0" failures="0" errors="0" time="0">
-        <testsuite name="simple feature" tests="1" skipped="0" failures="0" errors="0" time="0">
-          <testcase name="simple scenario" status="" time="0"></testcase>
-        </testsuite>
-      </testsuites>
+    <?xml version="1.0" encoding="UTF-8"?>
+    <testsuites name="godog" tests="1" skipped="0" failures="0" errors="0" time="0">
+      <testsuite name="simple feature" tests="1" skipped="0" failures="0" errors="0" time="0">
+        <testcase name="simple scenario" status="" time="0"></testcase>
+      </testsuite>
+    </testsuites>
     """
 
   Scenario: Support of Feature Plus Scenario Node With Tags
