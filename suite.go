@@ -541,9 +541,8 @@ func (s *suite) matchStepTextAndType(text string, stepType messages.PickleStepTy
 
 	if s.strict {
 		if len(matchingExpressions) > 1 {
-			fmt.Printf("IS STRICT=%v\n", len(matchingExpressions))
-			errs := "\n\t\t" + strings.Join(matchingExpressions, "\n\t\t")
-			return nil, fmt.Errorf("%w, step text: %s\n\tmatches:%s", ErrAmbiguous, text, errs)
+			errs := "\n        " + strings.Join(matchingExpressions, "\n        ")
+			return nil, fmt.Errorf("%w, step text: %s\n    matches:%s", ErrAmbiguous, text, errs)
 		}
 	}
 
