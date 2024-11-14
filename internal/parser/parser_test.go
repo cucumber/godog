@@ -54,7 +54,6 @@ Feature: eat godogs
 		{Name: "MyCoolDuplicatedFeature", Contents: []byte(eatGodogContents)},
 	}
 
-	featureFromBytes, err := parser.ParseFromBytes("", input)
 	featureFromBytes, err := parser.ParseFromBytes("", "", input)
 	require.NoError(t, err)
 	require.Len(t, featureFromBytes, 1)
@@ -81,7 +80,6 @@ Feature: eat godogs
 		},
 	}
 
-	featureFromFile, err := parser.ParseFeatures(fsys, "", []string{baseDir})
 	featureFromFile, err := parser.ParseFeatures(fsys, "", "", []string{baseDir})
 	require.NoError(t, err)
 	require.Len(t, featureFromFile, 1)
@@ -90,7 +88,6 @@ Feature: eat godogs
 		{Name: filepath.Join(baseDir, featureFileName), Contents: []byte(eatGodogContents)},
 	}
 
-	featureFromBytes, err := parser.ParseFromBytes("", input)
 	featureFromBytes, err := parser.ParseFromBytes("", "", input)
 	require.NoError(t, err)
 	require.Len(t, featureFromBytes, 1)
@@ -158,7 +155,6 @@ func Test_ParseFeatures_FromMultiplePaths(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			features, err := parser.ParseFeatures(test.fsys, "", test.paths)
 			features, err := parser.ParseFeatures(test.fsys, "", "", test.paths)
 			if test.expError != nil {
 				require.Error(t, err)
@@ -179,6 +175,135 @@ func Test_ParseFeatures_FromMultiplePaths(t *testing.T) {
 					pickleIDs[p.Id] = true
 				}
 			}
+		})
+	}
+}
+
+func Test_ParseFeatures_Localisation(t *testing.T) {
+	tests := map[string]struct {
+		dialect  string
+		contents string
+	}{
+		"english": {
+			dialect: "en",
+			contents: `
+Feature: dummy
+  Rule: dummy
+    Background: dummy
+      Given dummy
+      When dummy
+      Then dummy
+    Scenario: dummy
+      Given dummy
+      When dummy
+      Then dummy
+      And dummy
+      But dummy
+    Example: dummy
+      Given dummy
+      When dummy
+      Then dummy
+    Scenario Outline: dummy
+      Given dummy
+      When dummy
+      Then dummy
+      `,
+		},
+		"afrikaans": {
+			dialect: "af",
+			contents: `
+Funksie: dummy
+  Regel: dummy
+    Agtergrond: dummy
+      Gegewe dummy
+      Wanneer dummy
+      Dan dummy
+    Voorbeeld: dummy
+      Gegewe dummy
+      Wanneer dummy
+      Dan dummy
+      En dummy
+      Maar dummy
+    Voorbeelde: dummy
+      Gegewe dummy
+      Wanneer dummy
+      Dan dummy
+    Situasie Uiteensetting: dummy
+      Gegewe dummy
+      Wanneer dummy
+      Dan dummy
+      `,
+		},
+		"arabic": {
+			dialect: "ar",
+			contents: `
+خاصية: dummy
+  Rule: dummy
+    الخلفية: dummy
+      بفرض  dummy
+      متى  dummy
+      اذاً  dummy
+    مثال: dummy
+      بفرض  dummy
+      متى  dummy
+      اذاً  dummy
+      و dummy
+      لكن dummy
+    امثلة: dummy
+      بفرض  dummy
+      متى  dummy
+      اذاً  dummy
+    سيناريو مخطط: dummy
+      بفرض  dummy
+      متى  dummy
+      اذاً  dummy
+      `,
+		},
+		"chinese simplified": {
+			dialect: "zh-CN",
+			contents: `
+功能: dummy
+  规则: dummy
+    背景: dummy
+      假如 dummy
+      当 dummy
+      那么 dummy
+    场景: dummy
+      假如 dummy
+      当 dummy
+      那么 dummy
+      而且 dummy
+      但是 dummy
+    例子: dummy
+      假如 dummy
+      当 dummy
+      那么 dummy
+    场景大纲: dummy
+      假如 dummy
+      当 dummy
+      那么 dummy
+      `,
+		},
+	}
+
+	featureFileName := "godogs.feature"
+	baseDir := "base"
+
+	for name, test := range tests {
+		test := test
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			fsys := fstest.MapFS{
+				filepath.Join(baseDir, featureFileName): {
+					Data: []byte(test.contents),
+					Mode: fs.FileMode(0o644),
+				},
+			}
+
+			featureTestDialect, err := parser.ParseFeatures(fsys, "", test.dialect, []string{baseDir})
+			require.NoError(t, err)
+			require.Len(t, featureTestDialect, 1)
 		})
 	}
 }
