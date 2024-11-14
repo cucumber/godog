@@ -494,7 +494,7 @@ func (tc *godogFeaturesScenario) theLoggedMessagesShouldInclude(ctx context.Cont
 }
 
 func (tc *godogFeaturesScenario) followingStepsShouldHave(status string, steps *DocString) error {
-	var expected = strings.Split(steps.Content, "\n")
+	expected := strings.Split(steps.Content, "\n")
 	var actual, unmatched, matched []string
 
 	storage := tc.testedSuite.storage
@@ -673,7 +673,7 @@ func (tc *godogFeaturesScenario) featurePath(path string) {
 }
 
 func (tc *godogFeaturesScenario) parseFeatures() error {
-	fts, err := parser.ParseFeatures(storage.FS{}, "", tc.paths)
+	fts, err := parser.ParseFeatures(storage.FS{}, "", "", tc.paths)
 	if err != nil {
 		return err
 	}
@@ -1226,7 +1226,6 @@ func TestTestSuite_Run(t *testing.T) {
 					s.Step("^multistep has ambiguous$", func() Steps {
 						return Steps{"step is ambiguous"}
 					})
-
 				},
 				Options: &Options{
 					Format:   "pretty",

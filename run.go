@@ -247,7 +247,7 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 	opt.FS = storage.FS{FS: opt.FS}
 
 	if len(opt.FeatureContents) > 0 {
-		features, err := parser.ParseFromBytes(opt.Tags, opt.FeatureContents)
+		features, err := parser.ParseFromBytes(opt.Tags, opt.Dialect, opt.FeatureContents)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return exitOptionError
@@ -256,7 +256,7 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 	}
 
 	if len(opt.Paths) > 0 {
-		features, err := parser.ParseFeatures(opt.FS, opt.Tags, opt.Paths)
+		features, err := parser.ParseFeatures(opt.FS, opt.Tags, opt.Dialect, opt.Paths)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return exitOptionError
@@ -389,7 +389,7 @@ func (ts TestSuite) RetrieveFeatures() ([]*models.Feature, error) {
 		}
 	}
 
-	return parser.ParseFeatures(opt.FS, opt.Tags, opt.Paths)
+	return parser.ParseFeatures(opt.FS, opt.Tags, opt.Dialect, opt.Paths)
 }
 
 func getDefaultOptions() (*Options, error) {

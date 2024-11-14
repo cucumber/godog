@@ -55,6 +55,7 @@ Feature: eat godogs
 	}
 
 	featureFromBytes, err := parser.ParseFromBytes("", input)
+	featureFromBytes, err := parser.ParseFromBytes("", "", input)
 	require.NoError(t, err)
 	require.Len(t, featureFromBytes, 1)
 }
@@ -81,6 +82,7 @@ Feature: eat godogs
 	}
 
 	featureFromFile, err := parser.ParseFeatures(fsys, "", []string{baseDir})
+	featureFromFile, err := parser.ParseFeatures(fsys, "", "", []string{baseDir})
 	require.NoError(t, err)
 	require.Len(t, featureFromFile, 1)
 
@@ -89,6 +91,7 @@ Feature: eat godogs
 	}
 
 	featureFromBytes, err := parser.ParseFromBytes("", input)
+	featureFromBytes, err := parser.ParseFromBytes("", "", input)
 	require.NoError(t, err)
 	require.Len(t, featureFromBytes, 1)
 
@@ -156,6 +159,7 @@ func Test_ParseFeatures_FromMultiplePaths(t *testing.T) {
 			t.Parallel()
 
 			features, err := parser.ParseFeatures(test.fsys, "", test.paths)
+			features, err := parser.ParseFeatures(test.fsys, "", "", test.paths)
 			if test.expError != nil {
 				require.Error(t, err)
 				require.EqualError(t, err, test.expError.Error())
