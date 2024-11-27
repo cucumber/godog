@@ -9,6 +9,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ## Unreleased
 
 - fix(formatter): On concurrent execution, execute formatter at end of Scenario - ([645](https://github.com/cucumber/godog/pull/645) - [tigh-latte](https://github.com/tigh-latte))
+- Pretty printing results now prints the line where the step is declared instead of the line where the handler is declared. ([668](https://github.com/cucumber/godog/pull/668) - [spencerc](https://github.com/SpencerC))
 
 ## [v0.15.0]
 
