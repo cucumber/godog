@@ -1008,13 +1008,13 @@ func TestTestSuite_Run(t *testing.T) {
 		{
 			name: "undefined_then_pass_no_strict_doesnt_fail_scenario", afterStepCnt: 2, beforeStepCnt: 2, noStrict: true, suitePasses: true,
 			body: `
-					When step is undefined
+					When something unknown happens
 					Then step passes`,
 			log: `
 					>>>> Before suite
 					>> Before scenario "test"
-					Before step "step is undefined"
-					After step "step is undefined", error: step is undefined, status: undefined
+					Before step "something unknown happens"
+					After step "something unknown happens", error: step is undefined: something unknown happens, status: undefined
 					Before step "step passes"
 					After step "step passes", error: <nil>, status: skipped
 					<< After scenario "test", error: <nil>
@@ -1023,14 +1023,14 @@ func TestTestSuite_Run(t *testing.T) {
 		{
 			name: "undefined_then_pass_fails_scenario", afterStepCnt: 2, beforeStepCnt: 2,
 			body: `
-					When step is undefined
+					When something unknown happens
 					Then step passes`,
 			log: `
 					>>>> Before suite
 					>> Before scenario "test"
-					Before step "step is undefined"
-					After step "step is undefined", error: step is undefined, status: undefined
-					<< After scenario "test", error: step is undefined
+					Before step "something unknown happens"
+					After step "something unknown happens", error: step is undefined: something unknown happens, status: undefined
+					<< After scenario "test", error: step is undefined: something unknown happens
 					Before step "step passes"
 					After step "step passes", error: <nil>, status: skipped
 					<<<< After suite`,
@@ -1039,15 +1039,15 @@ func TestTestSuite_Run(t *testing.T) {
 			name: "fail_then_undefined_fails_scenario", afterStepCnt: 2, beforeStepCnt: 2,
 			body: `
 					When step fails
-					Then step is undefined`,
+					Then something unknown happens`,
 			log: `
 					>>>> Before suite
 					>> Before scenario "test"
 					Before step "step fails"
 					After step "step fails", error: oops, status: failed
 					<< After scenario "test", error: oops
-					Before step "step is undefined"
-					After step "step is undefined", error: step is undefined, status: undefined
+					Before step "something unknown happens"
+					After step "something unknown happens", error: step is undefined: something unknown happens, status: undefined
 					<<<< After suite`,
 		},
 		{

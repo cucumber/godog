@@ -42,7 +42,7 @@ And step failed f2s3:4
 
 Scenario: f2s4
 When step passed f2s4:1
-Then step is undefined f2s4:2
+Then something unknown happens f2s4:2
 And step passed f2s4:3
 `)},
 	)
@@ -116,8 +116,8 @@ scenario "f2s3" passed
 
 step invoked: "f2s4:1", passed
 step "step passed f2s4:1" finished with status passed
-.Ustep "step is undefined f2s4:2" finished with status undefined
-scenario "f2s4" ended with error "step is undefined"
+.Ustep "something unknown happens f2s4:2" finished with status undefined
+scenario "f2s4" ended with error "step is undefined: something unknown happens f2s4:2"
 -step "step passed f2s4:3" finished with status skipped
  13
 
@@ -139,12 +139,12 @@ scenario "f2s4" ended with error "step is undefined"
 
 You can implement step definitions for undefined steps with these snippets:
 
-func stepIsUndefinedFS(arg1, arg2, arg3 int) error {
+func somethingUnknownHappensFS(arg1, arg2, arg3 int) error {
 	return godog.ErrPending
 }
 
 func InitializeScenario(ctx *godog.ScenarioContext) {
-	ctx.Step(`+"`"+`^step is undefined f(\d+)s(\d+):(\d+)$`+"`"+`, stepIsUndefinedFS)
+	ctx.Step(`+"`"+`^something unknown happens f(\d+)s(\d+):(\d+)$`+"`"+`, somethingUnknownHappensFS)
 }
 
 `, out.String())
