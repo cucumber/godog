@@ -91,14 +91,12 @@ type Options struct {
 	// Worker 1: --mod 2 --target 0 # run scenarios 0,2,4,6
 	// Worker 2: --mod 2 --target 1 # run scenarios 1,3,5,7
 	//
-	Mod uint8
+	Mod int
 
-	// Target is used in conjunction with Mod to split scenarios based on a modulus.
+	// Target is used in conjunction with Mod to run a subset of scenarios based on a modulus.
 	// See `Mod`` for more information.
 	//
-	// The default value is 0 which runs every scenario.
-	//
-	Target uint8
+	Target int
 }
 
 type Feature struct {

@@ -46,6 +46,6 @@ built-in formatters are:
 specify SEED to reproduce the shuffling from a previous run
   --random=5738`)
 	flagSet.Lookup(prefix + "random").NoOptDefVal = "-1"
-	flagSet.Uint8Var(&opts.Mod, prefix+"mod", opts.Mod, "split secnarios based on a modulus calculation. Used in conjunction with --target")
-	flagSet.Uint8Var(&opts.Target, prefix+"target", opts.Target, "split secnarios based on a modulus calculation. Used in conjunction with --mod")
+	flagSet.IntVar(&opts.Mod, prefix+"mod", opts.Mod, "split secnarios based on a modulus calculation. Used in conjunction with --target")
+	flagSet.IntVar(&opts.Target, prefix+"target", opts.Target, "split secnarios based on a modulus calculation. Used in conjunction with --mod")
 }

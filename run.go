@@ -52,6 +52,9 @@ type runner struct {
 
 	storage *storage.Storage
 	fmt     Formatter
+
+	mod    int
+	target int
 }
 
 func (r *runner) concurrent(rate int) (failed bool) {
@@ -85,7 +88,12 @@ func (r *runner) concurrent(rate int) (failed bool) {
 	}
 
 	queue := make(chan int, rate)
-	for _, ft := range r.features {
+	for fid, ft := range r.features {
+
+		if r.mod > 0 && fid%r.mod != r.target {
+			continue
+		}
+
 		pickles := make([]*messages.Pickle, len(ft.Pickles))
 		if r.randomSeed != 0 {
 			r := rand.New(rand.NewSource(r.randomSeed))
@@ -283,6 +291,8 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 	runner.strict = opt.Strict
 	runner.defaultContext = opt.DefaultContext
 	runner.testingT = opt.TestingT
+	runner.mod = opt.Mod
+	runner.target = opt.Target
 
 	// store chosen seed in environment, so it could be seen in formatter summary report
 	os.Setenv("GODOG_SEED", strconv.FormatInt(runner.randomSeed, 10))
