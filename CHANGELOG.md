@@ -7,6 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org).
 This document is formatted according to the principles of [Keep A CHANGELOG](http://keepachangelog.com).
 
 ## Unreleased
+- Add parallel worker support - ([678](https://github.com/cucumber/godog/pull/678) - [skiz](https://github.com/skiz))
 
 ### Added
 - Step text is added to "step is undefined" error - ([669](https://github.com/cucumber/godog/pull/669) - [vearutop](https://github.com/vearutop))
