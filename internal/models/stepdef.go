@@ -69,7 +69,7 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 			if err != nil {
 				return ctx, fmt.Errorf(`%w %d: "%s" to int: %s`, ErrCannotConvert, i, s, err)
 			}
-			values = append(values, reflect.ValueOf(int(v)))
+			values = append(values, reflect.ValueOf(int(v)).Convert(param))
 		case reflect.Int64:
 			s, err := sd.shouldBeString(i)
 			if err != nil {
@@ -79,7 +79,7 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 			if err != nil {
 				return ctx, fmt.Errorf(`%w %d: "%s" to int64: %s`, ErrCannotConvert, i, s, err)
 			}
-			values = append(values, reflect.ValueOf(v))
+			values = append(values, reflect.ValueOf(v).Convert(param))
 		case reflect.Int32:
 			s, err := sd.shouldBeString(i)
 			if err != nil {
@@ -89,7 +89,7 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 			if err != nil {
 				return ctx, fmt.Errorf(`%w %d: "%s" to int32: %s`, ErrCannotConvert, i, s, err)
 			}
-			values = append(values, reflect.ValueOf(int32(v)))
+			values = append(values, reflect.ValueOf(int32(v)).Convert(param))
 		case reflect.Int16:
 			s, err := sd.shouldBeString(i)
 			if err != nil {
@@ -99,7 +99,7 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 			if err != nil {
 				return ctx, fmt.Errorf(`%w %d: "%s" to int16: %s`, ErrCannotConvert, i, s, err)
 			}
-			values = append(values, reflect.ValueOf(int16(v)))
+			values = append(values, reflect.ValueOf(int16(v)).Convert(param))
 		case reflect.Int8:
 			s, err := sd.shouldBeString(i)
 			if err != nil {
@@ -109,13 +109,13 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 			if err != nil {
 				return ctx, fmt.Errorf(`%w %d: "%s" to int8: %s`, ErrCannotConvert, i, s, err)
 			}
-			values = append(values, reflect.ValueOf(int8(v)))
+			values = append(values, reflect.ValueOf(int8(v)).Convert(param))
 		case reflect.String:
 			s, err := sd.shouldBeString(i)
 			if err != nil {
 				return ctx, err
 			}
-			values = append(values, reflect.ValueOf(s))
+			values = append(values, reflect.ValueOf(s).Convert(param))
 		case reflect.Float64:
 			s, err := sd.shouldBeString(i)
 			if err != nil {
@@ -125,7 +125,7 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 			if err != nil {
 				return ctx, fmt.Errorf(`%w %d: "%s" to float64: %s`, ErrCannotConvert, i, s, err)
 			}
-			values = append(values, reflect.ValueOf(v))
+			values = append(values, reflect.ValueOf(v).Convert(param))
 		case reflect.Float32:
 			s, err := sd.shouldBeString(i)
 			if err != nil {
@@ -135,7 +135,7 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 			if err != nil {
 				return ctx, fmt.Errorf(`%w %d: "%s" to float32: %s`, ErrCannotConvert, i, s, err)
 			}
-			values = append(values, reflect.ValueOf(float32(v)))
+			values = append(values, reflect.ValueOf(float32(v)).Convert(param))
 		case reflect.Ptr:
 			arg := sd.Args[i]
 			switch param.Elem().String() {

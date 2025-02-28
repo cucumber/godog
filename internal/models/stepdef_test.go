@@ -426,6 +426,129 @@ func TestShouldSupportOnlyByteSlice(t *testing.T) {
 	assert.True(t, errors.Is(err.(error), models.ErrUnsupportedParameterType))
 }
 
+func TestShouldSupportCustomTypes(t *testing.T) {
+	type customString string
+	type customInt64 int64
+	type customInt32 int32
+	type customInt16 int16
+	type customInt8 int8
+	type customInt int
+	type customFloat64 float64
+	type customFloat32 float32
+
+	var (
+		aCustomString  customString
+		aCustomInt64   customInt64
+		aCustomInt32   customInt32
+		aCustomInt16   customInt16
+		aCustomInt8    customInt8
+		aCustomInt     customInt
+		aCustomFloat64 customFloat64
+		aCustomFloat32 customFloat32
+	)
+
+	fn := func(
+		a customString,
+		b customInt64,
+		c customInt32,
+		d customInt16,
+		e customInt8,
+		f customInt,
+		g customFloat64,
+		h customFloat32,
+	) {
+		aCustomString = a
+		aCustomInt64 = b
+		aCustomInt32 = c
+		aCustomInt16 = d
+		aCustomInt8 = e
+		aCustomInt = f
+		aCustomFloat64 = g
+		aCustomFloat32 = h
+	}
+
+	def := &models.StepDefinition{
+		StepDefinition: formatters.StepDefinition{
+			Handler: fn,
+		},
+		HandlerValue: reflect.ValueOf(fn),
+	}
+
+	def.Args = []interface{}{"my cool string", "1", "2", "3", "4", "5", "6.7", "8.9"}
+	_, err := def.Run(context.Background())
+	assert.Nil(t, err)
+	assert.Equal(t, customString("my cool string"), aCustomString)
+	assert.Equal(t, customInt64(1), aCustomInt64)
+	assert.Equal(t, customInt32(2), aCustomInt32)
+	assert.Equal(t, customInt16(3), aCustomInt16)
+	assert.Equal(t, customInt8(4), aCustomInt8)
+	assert.Equal(t, customInt(5), aCustomInt)
+	assert.Equal(t, customFloat64(6.7), aCustomFloat64)
+	assert.Equal(t, customFloat32(8.9), aCustomFloat32)
+}
+
+func TestShouldSupportCustomTypesWithContext(t *testing.T) {
+	type customString string
+	type customInt64 int64
+	type customInt32 int32
+	type customInt16 int16
+	type customInt8 int8
+	type customInt int
+	type customFloat64 float64
+	type customFloat32 float32
+
+	var (
+		aCustomString  customString
+		aCustomInt64   customInt64
+		aCustomInt32   customInt32
+		aCustomInt16   customInt16
+		aCustomInt8    customInt8
+		aCustomInt     customInt
+		aCustomFloat64 customFloat64
+		aCustomFloat32 customFloat32
+	)
+
+	fn := func(
+		ctx context.Context,
+		a customString,
+		b customInt64,
+		c customInt32,
+		d customInt16,
+		e customInt8,
+		f customInt,
+		g customFloat64,
+		h customFloat32,
+	) {
+		aCustomString = a
+		aCustomInt64 = b
+		aCustomInt32 = c
+		aCustomInt16 = d
+		aCustomInt8 = e
+		aCustomInt = f
+		aCustomFloat64 = g
+		aCustomFloat32 = h
+	}
+
+	def := &models.StepDefinition{
+		StepDefinition: formatters.StepDefinition{
+			Handler: fn,
+		},
+		HandlerValue: reflect.ValueOf(fn),
+	}
+
+	def.Args = []interface{}{"my cool string", "1", "2", "3", "4", "5", "6.7", "8.9"}
+	_, err := def.Run(context.Background())
+	assert.Nil(t, err)
+	assert.Equal(t, customString("my cool string"), aCustomString)
+	assert.Equal(t, customInt64(1), aCustomInt64)
+	assert.Equal(t, customInt32(2), aCustomInt32)
+	assert.Equal(t, customInt16(3), aCustomInt16)
+	assert.Equal(t, customInt8(4), aCustomInt8)
+	assert.Equal(t, customInt(5), aCustomInt)
+	assert.Equal(t, customFloat64(6.7), aCustomFloat64)
+	assert.Equal(t, customFloat32(8.9), aCustomFloat32)
+}
+
 // this test is superficial compared to the ones above where the actual error messages the user woudl see are verified
 func TestStepDefinition_Run_StepArgsShouldBeString(t *testing.T) {
 	test := func(t *testing.T, fn interface{}, expectedError string) {
