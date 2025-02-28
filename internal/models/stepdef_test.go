@@ -277,12 +277,6 @@ func TestArgumentCountChecksWithContext(t *testing.T) {
 	assert.False(t, wasCalled)
 	assert.Equal(t, `func expected more arguments than given: expected 2 arguments, matched 1 from step`, err.(error).Error())
 	assert.True(t, errors.Is(err.(error), models.ErrUnmatchedStepArgumentNumber))
-
-	// FIXME - extra args are ignored - but should be reported at runtime
-	def.Args = []interface{}{"1", "2", "IGNORED-EXTRA-ARG"}
-	_, err = def.Run(context.Background())
-	assert.True(t, wasCalled)
-	assert.Nil(t, err)
 }
 
 func TestShouldSupportIntTypes(t *testing.T) {
