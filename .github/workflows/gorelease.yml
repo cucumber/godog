@@ -33,7 +33,7 @@ jobs:
           OUTPUT=$(gorelease 2>&1 || exit 0)
           echo "${OUTPUT}"
           OUTPUT="${OUTPUT//$'\n'/%0A}"
-          echo "::set-output name=report::$OUTPUT"
+          echo "report=$OUTPUT" >> $GITHUB_OUTPUT
       - name: Comment Report
         continue-on-error: true
         uses: marocchino/sticky-pull-request-comment@v2
