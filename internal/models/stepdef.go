@@ -67,8 +67,8 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 		if err != nil {
 			return ctx, err
 		}
-		if m != "" {
-			values = append(values, reflect.ValueOf(m).Convert(param))
+		if m.IsValid() {
+			values = append(values, m)
 			continue
 		}
 
@@ -151,7 +151,9 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 			values = append(values, reflect.ValueOf(float32(v)).Convert(param))
 		case reflect.Ptr:
 			arg := sd.Args[i]
-			switch param.Elem().String() {
+			elem := param.Elem()
+
+			switch elem.String() {
 			case "messages.PickleDocString":
 				if v, ok := arg.(*messages.PickleStepArgument); ok {
 					values = append(values, reflect.ValueOf(v.DocString))
@@ -180,6 +182,7 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 				// the error here is that the declared function has an unsupported param type - really this ought to be trapped at registration ti,e
 				return ctx, fmt.Errorf("%w: the data type of parameter %d type *%s is not supported", ErrUnsupportedParameterType, i, param.Elem().String())
 			}
+
 		case reflect.Slice:
 			switch param {
 			case typeOfBytes:
@@ -243,25 +246,34 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 	panic(fmt.Errorf("step definition '%v' has return type (context.Context, error), but found %v rather than a context.Context value%s", text, result0, errMsg))
 }
 
-func (sd *StepDefinition) tryStepParam(ctx context.Context, param reflect.Type, idx int) (string, error) {
+func (sd *StepDefinition) tryStepParam(ctx context.Context, param reflect.Type, idx int) (reflect.Value, error) {
+	var val reflect.Value
 	if !param.Implements(typeOfTextStepParam) {
-		return "", nil
+		return val, nil
 	}
 
 	s, err := sd.shouldBeString(idx)
 	if err != nil {
-		return "", err
+		return val, err
 	}
 
-	v := reflect.ValueOf(s).Convert(param)
-	tm := v.Interface().(StepParam)
+	if param.Kind() == reflect.Ptr {
+		val = reflect.ValueOf(&s).Convert(param)
+	} else {
+		val = reflect.ValueOf(s).Convert(param)
+	}
+
+	tm := val.Interface().(StepParam)
 
 	text, err := tm.LoadParam(ctx)
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal text for arg %d: %w", idx, err)
+		return val, fmt.Errorf("failed to marshal text for arg %d: %w", idx, err)
 	}
 
-	return text, nil
+	if param.Kind() == reflect.Ptr {
+		return reflect.ValueOf(&text).Convert(param), nil
+	}
+	return reflect.ValueOf(text).Convert(param), nil
 }
 
 func (sd *StepDefinition) shouldBeString(idx int) (string, error) {
