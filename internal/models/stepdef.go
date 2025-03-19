@@ -12,7 +12,10 @@ import (
 	"github.com/cucumber/godog/formatters"
 )
 
-var typeOfBytes = reflect.TypeOf([]byte(nil))
+var (
+	typeOfBytes         = reflect.TypeOf([]byte(nil))
+	typeOfTextStepParam = reflect.TypeOf((*StepParam)(nil)).Elem()
+)
 
 // matchable errors
 var (
@@ -59,6 +62,16 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 
 	for i := 0; i < numIn; i++ {
 		param := typ.In(i + ctxOffset)
+
+		m, err := sd.tryStepParam(ctx, param, i)
+		if err != nil {
+			return ctx, err
+		}
+		if m != "" {
+			values = append(values, reflect.ValueOf(m).Convert(param))
+			continue
+		}
+
 		switch param.Kind() {
 		case reflect.Int:
 			s, err := sd.shouldBeString(i)
@@ -228,6 +241,27 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 	}
 
 	panic(fmt.Errorf("step definition '%v' has return type (context.Context, error), but found %v rather than a context.Context value%s", text, result0, errMsg))
+}
+
+func (sd *StepDefinition) tryStepParam(ctx context.Context, param reflect.Type, idx int) (string, error) {
+	if !param.Implements(typeOfTextStepParam) {
+		return "", nil
+	}
+
+	s, err := sd.shouldBeString(idx)
+	if err != nil {
+		return "", err
+	}
+
+	v := reflect.ValueOf(s).Convert(param)
+	tm := v.Interface().(StepParam)
+
+	text, err := tm.LoadParam(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal text for arg %d: %w", idx, err)
+	}
+
+	return text, nil
 }
 
 func (sd *StepDefinition) shouldBeString(idx int) (string, error) {
