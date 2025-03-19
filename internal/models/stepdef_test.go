@@ -549,7 +549,7 @@ func (s sparam) LoadParam(ctx context.Context) (string, error) {
 	return string(s) + " world!", nil
 }
 
-func TestShouldSupportTextMarshaller(t *testing.T) {
+func TestShouldSupportStepParam(t *testing.T) {
 	var marshaller sparam
 
 	fn := func(
@@ -570,6 +570,35 @@ func TestShouldSupportTextMarshaller(t *testing.T) {
 	_, err := def.Run(context.Background())
 	assert.Nil(t, err)
 	assert.Equal(t, sparam("hello world!"), marshaller)
+}
+
+type sparamptr string
+
+func (s *sparamptr) LoadParam(ctx context.Context) (string, error) {
+	return string(*s) + " world!", nil
+}
+
+func TestShouldSupportStepParamPointerReceiver(t *testing.T) {
+	var marshaller sparamptr
+
+	fn := func(
+		ctx context.Context,
+		a *sparamptr,
+	) {
+		marshaller = *a
+	}
+
+	def := &models.StepDefinition{
+		StepDefinition: formatters.StepDefinition{
+			Handler: fn,
+		},
+		HandlerValue: reflect.ValueOf(fn),
+	}
+
+	def.Args = []interface{}{"hello"}
+	_, err := def.Run(context.Background())
+	assert.Nil(t, err)
+	assert.Equal(t, sparamptr("hello world!"), marshaller)
 }
 
 // this test is superficial compared to the ones above where the actual error messages the user woudl see are verified
