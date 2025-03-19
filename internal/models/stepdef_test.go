@@ -42,7 +42,6 @@ func TestShouldSupportVoidHandlerReturn(t *testing.T) {
 	// ctx is passed thru
 	assert.Equal(t, initialCtx, ctx)
 	assert.Nil(t, err)
-
 }
 
 func TestShouldSupportNilContextReturn(t *testing.T) {
@@ -149,7 +148,6 @@ func TestShouldSupportErrorReturn(t *testing.T) {
 }
 
 func TestShouldSupportContextAndErrorReturn(t *testing.T) {
-
 	ctx := context.WithValue(context.Background(), ctxKey("original"), 123)
 	expectedErr := fmt.Errorf("expected error")
 
@@ -175,7 +173,6 @@ func TestShouldSupportContextAndErrorReturn(t *testing.T) {
 }
 
 func TestShouldSupportContextAndNilErrorReturn(t *testing.T) {
-
 	ctx := context.WithValue(context.Background(), ctxKey("original"), 123)
 
 	fn := func(ctx context.Context) (context.Context, error) {
@@ -200,7 +197,6 @@ func TestShouldSupportContextAndNilErrorReturn(t *testing.T) {
 }
 
 func TestShouldRejectNilContextWhenMultiValueReturn(t *testing.T) {
-
 	ctx := context.WithValue(context.Background(), ctxKey("original"), 123)
 
 	fn := func(ctx context.Context) (context.Context, error) {
@@ -233,7 +229,6 @@ func TestShouldRejectNilContextWhenMultiValueReturn(t *testing.T) {
 }
 
 func TestArgumentCountChecks(t *testing.T) {
-
 	wasCalled := false
 	fn := func(a int, b int) {
 		wasCalled = true
@@ -372,7 +367,6 @@ func TestShouldSupportGherkinDocstring(t *testing.T) {
 }
 
 func TestShouldSupportGherkinTable(t *testing.T) {
-
 	var actualTable *messages.PickleTable
 	fnTable := func(a *messages.PickleTable) {
 		actualTable = a
@@ -549,6 +543,35 @@ func TestShouldSupportCustomTypesWithContext(t *testing.T) {
 	assert.Equal(t, customFloat32(8.9), aCustomFloat32)
 }
 
+type sparam string
+
+func (s sparam) LoadParam(ctx context.Context) (string, error) {
+	return string(s) + " world!", nil
+}
+
+func TestShouldSupportTextMarshaller(t *testing.T) {
+	var marshaller sparam
+
+	fn := func(
+		ctx context.Context,
+		a sparam,
+	) {
+		marshaller = a
+	}
+
+	def := &models.StepDefinition{
+		StepDefinition: formatters.StepDefinition{
+			Handler: fn,
+		},
+		HandlerValue: reflect.ValueOf(fn),
+	}
+
+	def.Args = []interface{}{"hello"}
+	_, err := def.Run(context.Background())
+	assert.Nil(t, err)
+	assert.Equal(t, sparam("hello world!"), marshaller)
+}
+
 // this test is superficial compared to the ones above where the actual error messages the user woudl see are verified
 func TestStepDefinition_Run_StepArgsShouldBeString(t *testing.T) {
 	test := func(t *testing.T, fn interface{}, expectedError string) {
@@ -594,7 +617,6 @@ func TestStepDefinition_Run_StepArgsShouldBeString(t *testing.T) {
 	test(t, func(a *godog.Table) { shouldNotBeCalled() }, `cannot convert argument 0: "12" of type "int" to *messages.PickleTable`)
 	test(t, func(a *godog.DocString) { shouldNotBeCalled() }, `cannot convert argument 0: "12" of type "int" to *messages.PickleDocString`)
 	test(t, func(a []byte) { shouldNotBeCalled() }, toStringError)
-
 }
 
 func TestStepDefinition_Run_InvalidHandlerParamConversion(t *testing.T) {
@@ -656,7 +678,6 @@ func TestStepDefinition_Run_InvalidHandlerParamConversion(t *testing.T) {
 
 	// // I cannot use bool
 	test(t, func(a bool) { shouldNotBeCalled() }, "func has unsupported parameter type: the parameter 0 type bool is not supported")
-
 }
 
 func TestStepDefinition_Run_StringConversionToFunctionType(t *testing.T) {
@@ -706,7 +727,6 @@ func TestStepDefinition_Run_StringConversionToFunctionType(t *testing.T) {
 
 	// Cannot convert to DocString ?
 	test(t, func(a *godog.DocString) { shouldNotBeCalled() }, []interface{}{"194"}, `cannot convert argument 0: "194" of type "string" to *messages.PickleDocString`)
-
 }
 
 // @TODO maybe we should support duration
