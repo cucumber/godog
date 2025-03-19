@@ -54,7 +54,7 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 	}
 
 	if len(sd.Args) < numIn {
-		return ctx, fmt.Errorf("%w: expected %d arguments, matched %d from step", ErrUnmatchedStepArgumentNumber, typ.NumIn(), len(sd.Args))
+		return ctx, fmt.Errorf("%w: expected %d arguments, matched %d from step", ErrUnmatchedStepArgumentNumber, numIn, len(sd.Args))
 	}
 
 	for i := 0; i < numIn; i++ {
