@@ -267,7 +267,7 @@ func (sd *StepDefinition) tryStepParam(ctx context.Context, param reflect.Type, 
 
 	text, err := tm.LoadParam(ctx)
 	if err != nil {
-		return val, fmt.Errorf("failed to marshal text for arg %d: %w", idx, err)
+		return val, fmt.Errorf("failed to load param for arg[%d]: %w", idx, err)
 	}
 
 	if param.Kind() == reflect.Ptr {

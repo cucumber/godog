@@ -550,13 +550,13 @@ func (s sparam) LoadParam(ctx context.Context) (string, error) {
 }
 
 func TestShouldSupportStepParam(t *testing.T) {
-	var marshaller sparam
+	var sp sparam
 
 	fn := func(
 		ctx context.Context,
 		a sparam,
 	) {
-		marshaller = a
+		sp = a
 	}
 
 	def := &models.StepDefinition{
@@ -569,7 +569,7 @@ func TestShouldSupportStepParam(t *testing.T) {
 	def.Args = []interface{}{"hello"}
 	_, err := def.Run(context.Background())
 	assert.Nil(t, err)
-	assert.Equal(t, sparam("hello world!"), marshaller)
+	assert.Equal(t, sparam("hello world!"), sp)
 }
 
 type sparamptr string
@@ -579,13 +579,13 @@ func (s *sparamptr) LoadParam(ctx context.Context) (string, error) {
 }
 
 func TestShouldSupportStepParamPointerReceiver(t *testing.T) {
-	var marshaller sparamptr
+	var spptr sparamptr
 
 	fn := func(
 		ctx context.Context,
 		a *sparamptr,
 	) {
-		marshaller = *a
+		spptr = *a
 	}
 
 	def := &models.StepDefinition{
@@ -598,7 +598,30 @@ func TestShouldSupportStepParamPointerReceiver(t *testing.T) {
 	def.Args = []interface{}{"hello"}
 	_, err := def.Run(context.Background())
 	assert.Nil(t, err)
-	assert.Equal(t, sparamptr("hello world!"), marshaller)
+	assert.Equal(t, sparamptr("hello world!"), spptr)
+}
+
+type sparamerr string
+
+func (s sparamerr) LoadParam(context.Context) (string, error) {
+	return "", errors.New("oh no")
+}
+
+func TestShouldSupportStepParamErrorOnLoad(t *testing.T) {
+	expectedError := errors.New("failed to load param for arg[0]: oh no")
+
+	fn := func(ctx context.Context, s sparamerr) {}
+
+	def := &models.StepDefinition{
+		StepDefinition: formatters.StepDefinition{
+			Handler: fn,
+		},
+		HandlerValue: reflect.ValueOf(fn),
+	}
+
+	def.Args = []interface{}{"hello"}
+	_, err := def.Run(context.Background())
+	assert.Equal(t, expectedError.Error(), err.(error).Error())
 }
 
 // this test is superficial compared to the ones above where the actual error messages the user woudl see are verified
