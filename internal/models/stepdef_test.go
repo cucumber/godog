@@ -42,7 +42,6 @@ func TestShouldSupportVoidHandlerReturn(t *testing.T) {
 	// ctx is passed thru
 	assert.Equal(t, initialCtx, ctx)
 	assert.Nil(t, err)
-
 }
 
 func TestShouldSupportNilContextReturn(t *testing.T) {
@@ -149,7 +148,6 @@ func TestShouldSupportErrorReturn(t *testing.T) {
 }
 
 func TestShouldSupportContextAndErrorReturn(t *testing.T) {
-
 	ctx := context.WithValue(context.Background(), ctxKey("original"), 123)
 	expectedErr := fmt.Errorf("expected error")
 
@@ -175,7 +173,6 @@ func TestShouldSupportContextAndErrorReturn(t *testing.T) {
 }
 
 func TestShouldSupportContextAndNilErrorReturn(t *testing.T) {
-
 	ctx := context.WithValue(context.Background(), ctxKey("original"), 123)
 
 	fn := func(ctx context.Context) (context.Context, error) {
@@ -200,7 +197,6 @@ func TestShouldSupportContextAndNilErrorReturn(t *testing.T) {
 }
 
 func TestShouldRejectNilContextWhenMultiValueReturn(t *testing.T) {
-
 	ctx := context.WithValue(context.Background(), ctxKey("original"), 123)
 
 	fn := func(ctx context.Context) (context.Context, error) {
@@ -233,7 +229,6 @@ func TestShouldRejectNilContextWhenMultiValueReturn(t *testing.T) {
 }
 
 func TestArgumentCountChecks(t *testing.T) {
-
 	wasCalled := false
 	fn := func(a int, b int) {
 		wasCalled = true
@@ -372,7 +367,6 @@ func TestShouldSupportGherkinDocstring(t *testing.T) {
 }
 
 func TestShouldSupportGherkinTable(t *testing.T) {
-
 	var actualTable *messages.PickleTable
 	fnTable := func(a *messages.PickleTable) {
 		actualTable = a
@@ -426,6 +420,210 @@ func TestShouldSupportOnlyByteSlice(t *testing.T) {
 	assert.True(t, errors.Is(err.(error), models.ErrUnsupportedParameterType))
 }
 
+func TestShouldSupportCustomTypes(t *testing.T) {
+	type customString string
+	type customInt64 int64
+	type customInt32 int32
+	type customInt16 int16
+	type customInt8 int8
+	type customInt int
+	type customFloat64 float64
+	type customFloat32 float32
+
+	var (
+		aCustomString  customString
+		aCustomInt64   customInt64
+		aCustomInt32   customInt32
+		aCustomInt16   customInt16
+		aCustomInt8    customInt8
+		aCustomInt     customInt
+		aCustomFloat64 customFloat64
+		aCustomFloat32 customFloat32
+	)
+
+	fn := func(
+		a customString,
+		b customInt64,
+		c customInt32,
+		d customInt16,
+		e customInt8,
+		f customInt,
+		g customFloat64,
+		h customFloat32,
+	) {
+		aCustomString = a
+		aCustomInt64 = b
+		aCustomInt32 = c
+		aCustomInt16 = d
+		aCustomInt8 = e
+		aCustomInt = f
+		aCustomFloat64 = g
+		aCustomFloat32 = h
+	}
+
+	def := &models.StepDefinition{
+		StepDefinition: formatters.StepDefinition{
+			Handler: fn,
+		},
+		HandlerValue: reflect.ValueOf(fn),
+	}
+
+	def.Args = []interface{}{"my cool string", "1", "2", "3", "4", "5", "6.7", "8.9"}
+	_, err := def.Run(context.Background())
+	assert.Nil(t, err)
+	assert.Equal(t, customString("my cool string"), aCustomString)
+	assert.Equal(t, customInt64(1), aCustomInt64)
+	assert.Equal(t, customInt32(2), aCustomInt32)
+	assert.Equal(t, customInt16(3), aCustomInt16)
+	assert.Equal(t, customInt8(4), aCustomInt8)
+	assert.Equal(t, customInt(5), aCustomInt)
+	assert.Equal(t, customFloat64(6.7), aCustomFloat64)
+	assert.Equal(t, customFloat32(8.9), aCustomFloat32)
+}
+
+func TestShouldSupportCustomTypesWithContext(t *testing.T) {
+	type customString string
+	type customInt64 int64
+	type customInt32 int32
+	type customInt16 int16
+	type customInt8 int8
+	type customInt int
+	type customFloat64 float64
+	type customFloat32 float32
+
+	var (
+		aCustomString  customString
+		aCustomInt64   customInt64
+		aCustomInt32   customInt32
+		aCustomInt16   customInt16
+		aCustomInt8    customInt8
+		aCustomInt     customInt
+		aCustomFloat64 customFloat64
+		aCustomFloat32 customFloat32
+	)
+
+	fn := func(
+		ctx context.Context,
+		a customString,
+		b customInt64,
+		c customInt32,
+		d customInt16,
+		e customInt8,
+		f customInt,
+		g customFloat64,
+		h customFloat32,
+	) {
+		aCustomString = a
+		aCustomInt64 = b
+		aCustomInt32 = c
+		aCustomInt16 = d
+		aCustomInt8 = e
+		aCustomInt = f
+		aCustomFloat64 = g
+		aCustomFloat32 = h
+	}
+
+	def := &models.StepDefinition{
+		StepDefinition: formatters.StepDefinition{
+			Handler: fn,
+		},
+		HandlerValue: reflect.ValueOf(fn),
+	}
+
+	def.Args = []interface{}{"my cool string", "1", "2", "3", "4", "5", "6.7", "8.9"}
+	_, err := def.Run(context.Background())
+	assert.Nil(t, err)
+	assert.Equal(t, customString("my cool string"), aCustomString)
+	assert.Equal(t, customInt64(1), aCustomInt64)
+	assert.Equal(t, customInt32(2), aCustomInt32)
+	assert.Equal(t, customInt16(3), aCustomInt16)
+	assert.Equal(t, customInt8(4), aCustomInt8)
+	assert.Equal(t, customInt(5), aCustomInt)
+	assert.Equal(t, customFloat64(6.7), aCustomFloat64)
+	assert.Equal(t, customFloat32(8.9), aCustomFloat32)
+}
+
+type sparam string
+
+func (s sparam) LoadParam(ctx context.Context) (string, error) {
+	return string(s) + " world!", nil
+}
+
+func TestShouldSupportStepParam(t *testing.T) {
+	var sp sparam
+
+	fn := func(
+		ctx context.Context,
+		a sparam,
+	) {
+		sp = a
+	}
+
+	def := &models.StepDefinition{
+		StepDefinition: formatters.StepDefinition{
+			Handler: fn,
+		},
+		HandlerValue: reflect.ValueOf(fn),
+	}
+
+	def.Args = []interface{}{"hello"}
+	_, err := def.Run(context.Background())
+	assert.Nil(t, err)
+	assert.Equal(t, sparam("hello world!"), sp)
+}
+
+type sparamptr string
+
+func (s *sparamptr) LoadParam(ctx context.Context) (string, error) {
+	return string(*s) + " world!", nil
+}
+
+func TestShouldSupportStepParamPointerReceiver(t *testing.T) {
+	var spptr sparamptr
+
+	fn := func(
+		ctx context.Context,
+		a *sparamptr,
+	) {
+		spptr = *a
+	}
+
+	def := &models.StepDefinition{
+		StepDefinition: formatters.StepDefinition{
+			Handler: fn,
+		},
+		HandlerValue: reflect.ValueOf(fn),
+	}
+
+	def.Args = []interface{}{"hello"}
+	_, err := def.Run(context.Background())
+	assert.Nil(t, err)
+	assert.Equal(t, sparamptr("hello world!"), spptr)
+}
+
+type sparamerr string
+
+func (s sparamerr) LoadParam(context.Context) (string, error) {
+	return "", errors.New("oh no")
+}
+
+func TestShouldSupportStepParamErrorOnLoad(t *testing.T) {
+	expectedError := errors.New("failed to load param for arg[0]: oh no")
+
+	fn := func(ctx context.Context, s sparamerr) {}
+
+	def := &models.StepDefinition{
+		StepDefinition: formatters.StepDefinition{
+			Handler: fn,
+		},
+		HandlerValue: reflect.ValueOf(fn),
+	}
+
+	def.Args = []interface{}{"hello"}
+	_, err := def.Run(context.Background())
+	assert.Equal(t, expectedError.Error(), err.(error).Error())
+}
+
 // this test is superficial compared to the ones above where the actual error messages the user woudl see are verified
 func TestStepDefinition_Run_StepArgsShouldBeString(t *testing.T) {
 	test := func(t *testing.T, fn interface{}, expectedError string) {
@@ -471,7 +669,6 @@ func TestStepDefinition_Run_StepArgsShouldBeString(t *testing.T) {
 	test(t, func(a *godog.Table) { shouldNotBeCalled() }, `cannot convert argument 0: "12" of type "int" to *messages.PickleTable`)
 	test(t, func(a *godog.DocString) { shouldNotBeCalled() }, `cannot convert argument 0: "12" of type "int" to *messages.PickleDocString`)
 	test(t, func(a []byte) { shouldNotBeCalled() }, toStringError)
-
 }
 
 func TestStepDefinition_Run_InvalidHandlerParamConversion(t *testing.T) {
@@ -533,7 +730,6 @@ func TestStepDefinition_Run_InvalidHandlerParamConversion(t *testing.T) {
 
 	// // I cannot use bool
 	test(t, func(a bool) { shouldNotBeCalled() }, "func has unsupported parameter type: the parameter 0 type bool is not supported")
-
 }
 
 func TestStepDefinition_Run_StringConversionToFunctionType(t *testing.T) {
@@ -583,7 +779,6 @@ func TestStepDefinition_Run_StringConversionToFunctionType(t *testing.T) {
 
 	// Cannot convert to DocString ?
 	test(t, func(a *godog.DocString) { shouldNotBeCalled() }, []interface{}{"194"}, `cannot convert argument 0: "194" of type "string" to *messages.PickleDocString`)
-
 }
 
 // @TODO maybe we should support duration

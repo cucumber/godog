@@ -528,6 +528,58 @@ Now, the test binary can be compiled with all feature files embedded, and can be
 
 **NOTE:** `godog.Options.FS` is as `fs.FS`, so custom filesystem loaders can be used.
 
+### Step Params
+
+As well as accepting `string`, `int`, etc, as parameters to step functions, godog accepts any type which implements `models.StepParam`:
+
+```go
+type StepParam interface {
+	LoadParam(ctx context.Context) (string, error)
+}
+```
+
+Let's say we have the file `expected.txt`:
+```
+hello world!
+```
+
+And the type, `TestData`:
+
+```go
+type TestData string
+
+func (t TestData) LoadParam(ctx context.Context) (string, error) {
+	data, err := os.ReadFile(string(t))
+	if err != nil {
+		return "", fmt.Errorf("failed to load file: %w", err)
+	}
+
+	return string(data), nil
+}
+```
+
+And the following step:
+
+```go
+ctx.Step(`^the file "([^"]+)" should contain "([^"]+)"$`, theFileShouldContain)
+
+// ...
+
+func theFileShouldContain(ctx context.Context, data TestData, exp string) error {
+	// assert that `string(data)` == `exp`
+}
+```
+
+Then, once this step is used in a `.feature` file:
+
+```gherkin
+Then the file "expected.txt" should contain "hello world!"
+```
+
+The `TestFile` param is noticed to implement `models.StepParam`, and `LoadParam` is called. The value of the receive is the value defined in the step function (so, in this case `expected.txt`), and whatever is returned (in this case `hello world!`) is what is ultimately provided to as a parameter to the step's function.
+
+The param loading occurs _after_ the before scenario and before step hooks are called, so all user defined setup will have already taken place.
+
 ## CLI Mode
 
 **NOTE:** The [`godog` CLI has been deprecated](https://github.com/cucumber/godog/discussions/478). It is recommended to use `go test` instead.  
