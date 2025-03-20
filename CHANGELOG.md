@@ -11,6 +11,9 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ### Added
 - Step text is added to "step is undefined" error - ([669](https://github.com/cucumber/godog/pull/669) - [vearutop](https://github.com/vearutop))
 
+### Changed
+- Replace deprecated `::set-output` - ([681](https://github.com/cucumber/godog/pull/681) - [nodeg](https://github.com/nodeg))
+
 ### Fixed
 - fix(errors): fix(errors): Fix expected Step argument count for steps with `context.Context` ([679](https://github.com/cucumber/godog/pull/679) - [tigh-latte](https://github.com/tigh-latte))
 - fix(formatter): On concurrent execution, execute formatter at end of Scenario - ([645](https://github.com/cucumber/godog/pull/645) - [tigh-latte](https://github.com/tigh-latte))
