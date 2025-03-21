@@ -355,6 +355,39 @@ Feature: run features from bytes
 	assert.Equal(t, exitSuccess, status)
 }
 
+func Test_RunsWithModTargetOptions(t *testing.T) {
+	type ModTest struct {
+		Mod               int
+		Target            int
+		ExpectedScenarios int
+	}
+
+	blockTest := []*ModTest{
+		{Mod: 0, Target: 0, ExpectedScenarios: 108},
+		{Mod: 3, Target: 0, ExpectedScenarios: 17},
+		{Mod: 3, Target: 1, ExpectedScenarios: 49},
+		{Mod: 3, Target: 2, ExpectedScenarios: 42},
+		{Mod: 5, Target: 4, ExpectedScenarios: 15},
+	}
+
+	for _, bt := range blockTest {
+		actualStatus, actualOutput := testRunWithOptions(
+			t,
+			Options{
+				Format:   "progress",
+				Paths:    []string{"features"},
+				Mod:      bt.Mod,
+				Target:   bt.Target,
+				TestingT: t,
+			},
+			InitializeScenario,
+		)
+
+		assert.Equal(t, exitSuccess, actualStatus)
+		assert.Contains(t, actualOutput, fmt.Sprintf("scenarios (%d passed)", bt.ExpectedScenarios))
+	}
+}
+
 func bufErrorPipe(t *testing.T) (io.ReadCloser, func()) {
 	stderr := os.Stderr
 	r, w, err := os.Pipe()

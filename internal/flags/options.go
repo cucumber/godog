@@ -80,6 +80,23 @@ type Options struct {
 
 	// ShowHelp enables suite to show CLI flags usage help and exit.
 	ShowHelp bool
+
+	// Mod is used to split secnarios based on a modulus calculation to enable running
+	// the suite across concurrent worker nodes.
+	//
+	// This feature is compatible with random seeds when all workers use the same seed.
+	//
+	// The default value is 0 which runs every scenario.
+	//
+	// Worker 1: --mod 2 --target 0 # run scenarios 0,2,4,6
+	// Worker 2: --mod 2 --target 1 # run scenarios 1,3,5,7
+	//
+	Mod int
+
+	// Target is used in conjunction with Mod to run a subset of scenarios based on a modulus.
+	// See `Mod`` for more information.
+	//
+	Target int
 }
 
 type Feature struct {
