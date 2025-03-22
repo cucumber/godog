@@ -27,6 +27,8 @@ type StepDefinition struct {
 
 	Args         []interface{}
 	HandlerValue reflect.Value
+	File         string
+	Line         int
 
 	// multistep related
 	Nested    bool
