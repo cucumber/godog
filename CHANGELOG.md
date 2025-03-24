@@ -9,6 +9,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ## Unreleased
 
 ### Added
+- Enhancement: Support for custom types + StepParam - ([682](https://github.com/cucumber/godog/pull/682) - [tigh-latte](https://github.com/tigh-latte))
 - Step text is added to "step is undefined" error - ([669](https://github.com/cucumber/godog/pull/669) - [vearutop](https://github.com/vearutop))
 
 ### Changed
