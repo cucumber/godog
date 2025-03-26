@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="junit" tests="2" skipped="0" failures="1" errors="0" time="0">
+  <testsuite name="Stop on first failure" tests="2" skipped="0" failures="1" errors="0" time="0">
+    <testcase name="First scenario - should run and fail" status="failed" time="0">
+      <failure message="Step a failing step: step failed"></failure>
+      <error message="Step a passing step" type="skipped"></error>
+    </testcase>
+    <testcase name="Second scenario - should be skipped" status="passed" time="0"></testcase>
+  </testsuite>
+</testsuites>
