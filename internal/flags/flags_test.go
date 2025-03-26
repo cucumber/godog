@@ -25,6 +25,8 @@ func Test_BindFlagsShouldRespectFlagDefaults(t *testing.T) {
 	assert.False(t, opts.Strict)
 	assert.False(t, opts.NoColors)
 	assert.Equal(t, int64(0), opts.Randomize)
+	assert.Equal(t, uint8(0), opts.Mod)
+	assert.Equal(t, uint8(0), opts.Target)
 }
 
 func Test_BindFlagsShouldRespectFlagOverrides(t *testing.T) {
@@ -51,6 +53,8 @@ func Test_BindFlagsShouldRespectFlagOverrides(t *testing.T) {
 		"--optOverrides.strict=false",
 		"--optOverrides.no-colors=false",
 		"--optOverrides.random=2",
+		"--optOverrides.mod=5",
+		"--optOverrides.target=2",
 	})
 
 	assert.Equal(t, "junit", opts.Format)
@@ -61,4 +65,6 @@ func Test_BindFlagsShouldRespectFlagOverrides(t *testing.T) {
 	assert.False(t, opts.Strict)
 	assert.False(t, opts.NoColors)
 	assert.Equal(t, int64(2), opts.Randomize)
+	assert.Equal(t, uint8(5), opts.Mod)
+	assert.Equal(t, uint8(2), opts.Target)
 }
