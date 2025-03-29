@@ -80,6 +80,9 @@ type Options struct {
 
 	// ShowHelp enables suite to show CLI flags usage help and exit.
 	ShowHelp bool
+
+	// MaxRetries is used to retry the number of time when a step is failed. Default is 0 retry.
+	MaxRetries int
 }
 
 type Feature struct {
