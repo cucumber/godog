@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"testing"
 
 	"github.com/cucumber/godog"
@@ -20,7 +20,8 @@ func Test_RetryFlaky(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, 0, suite.Run())
+	// expect it to fail
+	assert.Equal(t, 1, suite.Run())
 }
 
 func InitializeScenario(sc *godog.ScenarioContext) {
@@ -32,7 +33,7 @@ func InitializeScenario(sc *godog.ScenarioContext) {
 	sc.Step(`^a step that passes the second time`, func(ctx context.Context) (context.Context, error) {
 		secondTimePass++
 		if secondTimePass < 2 {
-			return ctx, fmt.Errorf("unexpected network connection, %w", godog.ErrRetry)
+			return ctx, godog.ErrRetry
 		}
 		return ctx, nil
 	})
@@ -41,17 +42,12 @@ func InitializeScenario(sc *godog.ScenarioContext) {
 	sc.Step(`^a step that passes the third time`, func(ctx context.Context) (context.Context, error) {
 		thirdTimePass++
 		if thirdTimePass < 3 {
-			return ctx, fmt.Errorf("unexpected network connection, %w", godog.ErrRetry)
+			return ctx, godog.ErrRetry
 		}
 		return ctx, nil
 	})
 
-	fifthTimePass := 0
 	sc.Step(`^a step that always fails`, func(ctx context.Context) (context.Context, error) {
-		fifthTimePass++
-		if fifthTimePass < 5 {
-			return ctx, fmt.Errorf("must fail, %w", godog.ErrRetry)
-		}
-		return ctx, nil
+		return ctx, errors.New("must fail")
 	})
 }
