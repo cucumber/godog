@@ -3,7 +3,6 @@ package builder_test
 import (
 	"bytes"
 	"go/build"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -151,7 +150,7 @@ func buildTestPackage(dir string, files map[string]string) error {
 	}
 
 	for name, content := range files {
-		if err := ioutil.WriteFile(filepath.Join(dir, name), []byte(content), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0644); err != nil {
 			return err
 		}
 	}

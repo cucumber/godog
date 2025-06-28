@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -83,7 +82,7 @@ func Test_FailsOrPassesBasedOnStrictModeWhenHasPendingSteps(t *testing.T) {
 	var beforeScenarioFired, afterScenarioFired int
 
 	r := runner{
-		fmt:      formatters.ProgressFormatterFunc("progress", ioutil.Discard),
+		fmt:      formatters.ProgressFormatterFunc("progress", io.Discard),
 		features: []*models.Feature{&ft},
 		testSuiteInitializer: func(ctx *TestSuiteContext) {
 			ctx.ScenarioContext().Before(func(ctx context.Context, sc *Scenario) (context.Context, error) {
@@ -135,7 +134,7 @@ func Test_FailsOrPassesBasedOnStrictModeWhenHasUndefinedSteps(t *testing.T) {
 	ft.Pickles = gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
 
 	r := runner{
-		fmt:      formatters.ProgressFormatterFunc("progress", ioutil.Discard),
+		fmt:      formatters.ProgressFormatterFunc("progress", io.Discard),
 		features: []*models.Feature{&ft},
 		scenarioInitializer: func(ctx *ScenarioContext) {
 			ctx.Step(`^one$`, func() error { return nil })
@@ -168,7 +167,7 @@ func Test_ShouldFailOnError(t *testing.T) {
 	ft.Pickles = gherkin.Pickles(*gd, path, (&messages.Incrementing{}).NewId)
 
 	r := runner{
-		fmt:      formatters.ProgressFormatterFunc("progress", ioutil.Discard),
+		fmt:      formatters.ProgressFormatterFunc("progress", io.Discard),
 		features: []*models.Feature{&ft},
 		scenarioInitializer: func(ctx *ScenarioContext) {
 			ctx.Step(`^two$`, func() error { return fmt.Errorf("error") })
@@ -194,7 +193,7 @@ func Test_FailsWithUnknownFormatterOptionError(t *testing.T) {
 	opts := Options{
 		Format: "unknown",
 		Paths:  []string{"features/load:6"},
-		Output: ioutil.Discard,
+		Output: io.Discard,
 	}
 
 	status := TestSuite{
@@ -207,7 +206,7 @@ func Test_FailsWithUnknownFormatterOptionError(t *testing.T) {
 
 	closer()
 
-	b, err := ioutil.ReadAll(stderr)
+	b, err := io.ReadAll(stderr)
 	require.NoError(t, err)
 
 	out := strings.TrimSpace(string(b))
@@ -222,7 +221,7 @@ func Test_FailsWithOptionErrorWhenLookingForFeaturesInUnavailablePath(t *testing
 	opts := Options{
 		Format: "progress",
 		Paths:  []string{"unavailable"},
-		Output: ioutil.Discard,
+		Output: io.Discard,
 	}
 
 	status := TestSuite{
@@ -235,7 +234,7 @@ func Test_FailsWithOptionErrorWhenLookingForFeaturesInUnavailablePath(t *testing
 
 	closer()
 
-	b, err := ioutil.ReadAll(stderr)
+	b, err := io.ReadAll(stderr)
 	require.NoError(t, err)
 
 	out := strings.TrimSpace(string(b))
@@ -245,7 +244,7 @@ func Test_FailsWithOptionErrorWhenLookingForFeaturesInUnavailablePath(t *testing
 func Test_ByDefaultRunsFeaturesPath(t *testing.T) {
 	opts := Options{
 		Format: "progress",
-		Output: ioutil.Discard,
+		Output: io.Discard,
 		Strict: true,
 	}
 
@@ -270,7 +269,7 @@ func Test_ByDefaultRunsFeaturesPath(t *testing.T) {
 }
 
 func Test_RunsWithFeatureContentsOption(t *testing.T) {
-	items, err := ioutil.ReadDir("./features")
+	items, err := os.ReadDir("./features")
 	require.NoError(t, err)
 
 	var featureContents []Feature
@@ -287,7 +286,7 @@ func Test_RunsWithFeatureContentsOption(t *testing.T) {
 
 	opts := Options{
 		Format:          "progress",
-		Output:          ioutil.Discard,
+		Output:          io.Discard,
 		Strict:          true,
 		FeatureContents: featureContents,
 	}
@@ -341,7 +340,7 @@ Feature: run features from bytes
 
 	opts := Options{
 		Format:          "progress",
-		Output:          ioutil.Discard,
+		Output:          io.Discard,
 		Paths:           []string{"./features"},
 		FeatureContents: featureContents,
 	}
@@ -474,7 +473,7 @@ func Test_FormatOutputRun(t *testing.T) {
 		noRandomFlag, []string{featurePath},
 	)
 
-	result, err := ioutil.ReadFile(file)
+	result, err := os.ReadFile(file)
 	require.NoError(t, err)
 	actualOutputFromFile := string(result)
 
@@ -511,7 +510,7 @@ func Test_FormatOutputRun_Error(t *testing.T) {
 	assert.Equal(t, expectedStatus, actualStatus)
 	assert.Equal(t, expectedOutput, actualOutput)
 
-	_, err := ioutil.ReadFile(file)
+	_, err := os.ReadFile(file)
 	assert.Error(t, err)
 }
 
@@ -661,7 +660,7 @@ func testRunWithOptions(
 		Options:             &opts,
 	}.Run()
 
-	actual, err := ioutil.ReadAll(output)
+	actual, err := io.ReadAll(output)
 	require.NoError(t, err)
 
 	return status, string(actual)
