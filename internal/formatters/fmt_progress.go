@@ -42,7 +42,7 @@ func (f *Progress) Summary() {
 	left := math.Mod(float64(*f.Steps), float64(f.StepsPerRow))
 	if left != 0 {
 		if *f.Steps > f.StepsPerRow {
-			fmt.Fprintf(f.out, "%s", s(f.StepsPerRow-int(left))+fmt.Sprintf(" %d\n", *f.Steps))
+			fmt.Fprintf(f.out, "%s %d\n", s(f.StepsPerRow-int(left)), *f.Steps)
 		} else {
 			fmt.Fprintf(f.out, " %d\n", *f.Steps)
 		}
