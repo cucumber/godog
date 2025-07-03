@@ -30,7 +30,7 @@ jobs:
         run: gofmt -d -e . 2>&1 | tee outfile && test -z "$(cat outfile)" && rm outfile
       - name: Run staticcheck
         if: matrix.go-version == 'stable'
-        uses: dominikh/staticcheck-action@v1.3.1
+        uses: dominikh/staticcheck-action@v1.4.0
         with:
           version: "latest"
           install-go: false
