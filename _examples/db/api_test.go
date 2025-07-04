@@ -46,7 +46,7 @@ func (a *apiFeature) iSendrequestTo(method, endpoint string) (err error) {
 	defer func() {
 		switch t := recover().(type) {
 		case string:
-			err = fmt.Errorf(t)
+			err = fmt.Errorf("%s", t)
 		case error:
 			err = t
 		}

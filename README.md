@@ -546,10 +546,10 @@ go install github.com/cucumber/godog/cmd/godog@latest
 ```
 Adding `@v0.12.0` will install v0.12.0 specifically instead of master.
 
-With `go` version prior to 1.17, use `go get github.com/cucumber/godog/cmd/godog@v0.12.0`.
+With `go` version prior to 1.22, use `go get github.com/cucumber/godog/cmd/godog@v0.15.0`.
 Running `within the $GOPATH`, you would also need to set `GO111MODULE=on`, like this:
 ```
-GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.12.0
+GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.15.0
 ```
 
 ### Configure common options for godog CLI

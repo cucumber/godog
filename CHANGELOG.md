@@ -13,6 +13,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Changed
 - Replace deprecated `::set-output` - ([681](https://github.com/cucumber/godog/pull/681) - [nodeg](https://github.com/nodeg))
+- chore: Bump go version to 1.22 and update dependencies - ([685](https://github.com/cucumber/godog/pull/685) - [Adaendra](https://github.com/Adaendra)) 
 
 ### Fixed
 - fix(errors): fix(errors): Fix expected Step argument count for steps with `context.Context` ([679](https://github.com/cucumber/godog/pull/679) - [tigh-latte](https://github.com/tigh-latte))

@@ -7,7 +7,6 @@ import (
 	"go/build"
 	"go/parser"
 	"go/token"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -111,7 +110,7 @@ func Build(bin string) error {
 	if srcTemp != nil {
 		// @TODO: in case of modules we cannot build it our selves, we need to have this hacky option
 		pathTemp := filepath.Join(abs, "godog_dependency_file_test.go")
-		err = ioutil.WriteFile(pathTemp, srcTemp, 0644)
+		err = os.WriteFile(pathTemp, srcTemp, 0644)
 		if err != nil {
 			return err
 		}
@@ -174,7 +173,7 @@ func Build(bin string) error {
 
 	// replace _testmain.go file with our own
 	testmain := filepath.Join(testdir, "_testmain.go")
-	err = ioutil.WriteFile(testmain, src, 0644)
+	err = os.WriteFile(testmain, src, 0644)
 	if err != nil {
 		return err
 	}
@@ -188,7 +187,7 @@ func Build(bin string) error {
 	compilerCfg := linkerCfg
 
 	if vendored != nil {
-		data, err := ioutil.ReadFile(linkerCfg)
+		data, err := os.ReadFile(linkerCfg)
 		if err != nil {
 			return err
 		}
@@ -196,7 +195,7 @@ func Build(bin string) error {
 		data = append(data, []byte(fmt.Sprintf("importmap %s=%s\n", godogImportPath, vendored.ImportPath))...)
 		compilerCfg = filepath.Join(testdir, "importcfg")
 
-		err = ioutil.WriteFile(compilerCfg, data, 0644)
+		err = os.WriteFile(compilerCfg, data, 0644)
 		if err != nil {
 			return err
 		}
@@ -256,7 +255,7 @@ func filterImportCfg(path string) error {
 			res += l + "\n"
 		}
 	}
-	err = ioutil.WriteFile(path, []byte(res), 0600)
+	err = os.WriteFile(path, []byte(res), 0600)
 	if err != nil {
 		return fmt.Errorf("failed to write %s: %w", path, err)
 	}

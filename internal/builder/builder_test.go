@@ -3,7 +3,6 @@ package builder_test
 import (
 	"bytes"
 	"go/build"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -26,6 +25,7 @@ func Test_GodogBuild(t *testing.T) {
 	t.Run("WithVendoredGodogWithoutModule", testWithVendoredGodogWithoutModule)
 	t.Run("WithVendoredGodogAndMod", testWithVendoredGodogAndMod)
 	t.Run("WithIncorrectProjectStructure", testWithIncorrectProjectStructure)
+	t.Run("FailsWhenDependencyFileCannotBeCreated", testFailsWhenDependencyFileCannotBeCreated)
 
 	t.Run("WithModule", func(t *testing.T) {
 		t.Run("OutsideGopathAndHavingOnlyFeature", testOutsideGopathAndHavingOnlyFeature)
@@ -151,7 +151,7 @@ func buildTestPackage(dir string, files map[string]string) error {
 	}
 
 	for name, content := range files {
-		if err := ioutil.WriteFile(filepath.Join(dir, name), []byte(content), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0644); err != nil {
 			return err
 		}
 	}
@@ -359,4 +359,46 @@ func (bt builderTestCase) run(t *testing.T) {
 
 	err = testCmd.Run()
 	require.Nil(t, err, "stdout:\n%s\nstderr:\n%s", stdout.String(), stderr.String())
+}
+
+func testFailsWhenDependencyFileCannotBeCreated(t *testing.T) {
+	builderTC := builderTestCase{}
+
+	// GOPATH sandbox
+	gopath := filepath.Join(os.TempDir(), t.Name(), "_gp")
+	defer os.RemoveAll(gopath)
+
+	if err := os.Setenv("GOPATH", gopath); err != nil {
+		t.Fatalf("set GOPATH: %v", err)
+	}
+
+	builderTC.dir = filepath.Join(gopath, "src", "tempfail")
+	builderTC.files = map[string]string{
+		"foo.go": `package tempfail
+func Foo() {}
+`,
+		"foo_test.go": `package tempfail
+import "testing"
+func TestFoo(t *testing.T) { Foo() }
+`,
+	}
+
+	err := buildTestPackage(builderTC.dir, builderTC.files)
+	require.Nil(t, err)
+
+	// Block the path that Build tries to write
+	badPath := filepath.Join(builderTC.dir, "godog_dependency_file_test.go")
+	err = os.MkdirAll(badPath, 0755) // directory → WriteFile will error
+	require.Nil(t, err)
+
+	prevDir, err := os.Getwd()
+	require.Nil(t, err)
+
+	err = os.Chdir(builderTC.dir)
+	require.Nil(t, err)
+	defer os.Chdir(prevDir)
+
+	err = builder.Build(filepath.Join(builderTC.dir, "suite_bin"))
+	require.NotNil(t, err)
+	require.Contains(t, err.Error(), "godog_dependency_file_test.go")
 }

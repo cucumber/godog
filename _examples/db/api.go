@@ -74,7 +74,7 @@ func fail(w http.ResponseWriter, msg string, status int) {
 	resp, _ := json.Marshal(data)
 	w.WriteHeader(status)
 
-	fmt.Fprintf(w, string(resp))
+	fmt.Fprintf(w, "%s", string(resp))
 }
 
 // ok writes data to response with 200 status
@@ -82,7 +82,7 @@ func ok(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if s, ok := data.(string); ok {
-		fmt.Fprintf(w, s)
+		fmt.Fprintf(w, "%s", s)
 		return
 	}
 
@@ -93,5 +93,5 @@ func ok(w http.ResponseWriter, data interface{}) {
 		return
 	}
 
-	fmt.Fprintf(w, string(resp))
+	fmt.Fprintf(w, "%s", string(resp))
 }
