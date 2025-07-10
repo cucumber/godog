@@ -3,6 +3,8 @@ package formatters
 import (
 	"bytes"
 	"fmt"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"io"
 	"os"
 	"sort"
@@ -11,7 +13,7 @@ import (
 	"sync"
 	"unicode"
 
-	messages "github.com/cucumber/messages/go/v21"
+	messages "github.com/cucumber/messages/go/v24"
 
 	"github.com/cucumber/godog/colors"
 	"github.com/cucumber/godog/formatters"
@@ -232,11 +234,12 @@ func (f *Base) Snippets() string {
 			name := snippetNumbers.ReplaceAllString(step, " ")
 			name = snippetExprQuoted.ReplaceAllString(name, " ")
 			name = strings.TrimSpace(snippetMethodName.ReplaceAllString(name, ""))
+			titleCaser := cases.Title(language.Und)
 			var words []string
 			for i, w := range strings.Split(name, " ") {
 				switch {
 				case i != 0:
-					w = strings.Title(w)
+					w = titleCaser.String(w)
 				case len(w) > 0:
 					w = string(unicode.ToLower(rune(w[0]))) + w[1:]
 				}

@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	gherkin "github.com/cucumber/gherkin/go/v26"
-	messages "github.com/cucumber/messages/go/v21"
+	gherkin "github.com/cucumber/gherkin/go/v32"
+	messages "github.com/cucumber/messages/go/v24"
 	"github.com/stretchr/testify/require"
 
 	"github.com/cucumber/godog/internal/models"

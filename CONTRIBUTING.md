@@ -11,7 +11,7 @@ You can chat with us in the `#committers` channel in our [community Discord](htt
 
 ## Setup
 
-To get your development environment set up, you'll need to [install Go]. We're currently using version 1.17 for development.
+To get your development environment set up, you'll need to [install Go]. We're currently using version 1.22 for development.
 
 Once that's done, try running the tests:
 

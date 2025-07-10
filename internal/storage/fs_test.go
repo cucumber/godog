@@ -3,7 +3,6 @@ package storage_test
 import (
 	"errors"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -89,7 +88,7 @@ func TestStorage_Open_OS(t *testing.T) {
 			require.Nil(t, err)
 
 			for name, data := range test.files {
-				err := ioutil.WriteFile(filepath.Join(baseDir, name), data, 0644)
+				err := os.WriteFile(filepath.Join(baseDir, name), data, 0644)
 				require.NoError(t, err)
 			}
 
