@@ -3,8 +3,8 @@ module github.com/cucumber/godog
 go 1.22
 
 require (
-	github.com/cucumber/gherkin/go/v26 v26.2.0
-	github.com/cucumber/messages/go/v21 v21.0.1
+	github.com/cucumber/gherkin/go/v32 v32.2.0
+	github.com/cucumber/messages/go/v24 v24.1.0
 	github.com/hashicorp/go-memdb v1.3.5
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.6
