@@ -159,7 +159,9 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 
 		// Check for any calls to Fail on dogT
 		if err == nil {
-			err = getTestingT(ctx).isFailed()
+			if t := getTestingT(ctx); t != nil {
+				err = t.isFailed()
+			}
 		}
 
 		status := StepUndefined
