@@ -12,7 +12,10 @@ import (
 	"github.com/cucumber/godog/formatters"
 )
 
-var typeOfBytes = reflect.TypeOf([]byte(nil))
+var (
+	typeOfBytes         = reflect.TypeOf([]byte(nil))
+	typeOfTextStepParam = reflect.TypeOf((*StepParam)(nil)).Elem()
+)
 
 // matchable errors
 var (
@@ -59,6 +62,16 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 
 	for i := 0; i < numIn; i++ {
 		param := typ.In(i + ctxOffset)
+
+		m, err := sd.tryStepParam(ctx, param, i)
+		if err != nil {
+			return ctx, err
+		}
+		if m.IsValid() {
+			values = append(values, m)
+			continue
+		}
+
 		switch param.Kind() {
 		case reflect.Int:
 			s, err := sd.shouldBeString(i)
@@ -69,7 +82,7 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 			if err != nil {
 				return ctx, fmt.Errorf(`%w %d: "%s" to int: %s`, ErrCannotConvert, i, s, err)
 			}
-			values = append(values, reflect.ValueOf(int(v)))
+			values = append(values, reflect.ValueOf(int(v)).Convert(param))
 		case reflect.Int64:
 			s, err := sd.shouldBeString(i)
 			if err != nil {
@@ -79,7 +92,7 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 			if err != nil {
 				return ctx, fmt.Errorf(`%w %d: "%s" to int64: %s`, ErrCannotConvert, i, s, err)
 			}
-			values = append(values, reflect.ValueOf(v))
+			values = append(values, reflect.ValueOf(v).Convert(param))
 		case reflect.Int32:
 			s, err := sd.shouldBeString(i)
 			if err != nil {
@@ -89,7 +102,7 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 			if err != nil {
 				return ctx, fmt.Errorf(`%w %d: "%s" to int32: %s`, ErrCannotConvert, i, s, err)
 			}
-			values = append(values, reflect.ValueOf(int32(v)))
+			values = append(values, reflect.ValueOf(int32(v)).Convert(param))
 		case reflect.Int16:
 			s, err := sd.shouldBeString(i)
 			if err != nil {
@@ -99,7 +112,7 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 			if err != nil {
 				return ctx, fmt.Errorf(`%w %d: "%s" to int16: %s`, ErrCannotConvert, i, s, err)
 			}
-			values = append(values, reflect.ValueOf(int16(v)))
+			values = append(values, reflect.ValueOf(int16(v)).Convert(param))
 		case reflect.Int8:
 			s, err := sd.shouldBeString(i)
 			if err != nil {
@@ -109,13 +122,13 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 			if err != nil {
 				return ctx, fmt.Errorf(`%w %d: "%s" to int8: %s`, ErrCannotConvert, i, s, err)
 			}
-			values = append(values, reflect.ValueOf(int8(v)))
+			values = append(values, reflect.ValueOf(int8(v)).Convert(param))
 		case reflect.String:
 			s, err := sd.shouldBeString(i)
 			if err != nil {
 				return ctx, err
 			}
-			values = append(values, reflect.ValueOf(s))
+			values = append(values, reflect.ValueOf(s).Convert(param))
 		case reflect.Float64:
 			s, err := sd.shouldBeString(i)
 			if err != nil {
@@ -125,7 +138,7 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 			if err != nil {
 				return ctx, fmt.Errorf(`%w %d: "%s" to float64: %s`, ErrCannotConvert, i, s, err)
 			}
-			values = append(values, reflect.ValueOf(v))
+			values = append(values, reflect.ValueOf(v).Convert(param))
 		case reflect.Float32:
 			s, err := sd.shouldBeString(i)
 			if err != nil {
@@ -135,10 +148,12 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 			if err != nil {
 				return ctx, fmt.Errorf(`%w %d: "%s" to float32: %s`, ErrCannotConvert, i, s, err)
 			}
-			values = append(values, reflect.ValueOf(float32(v)))
+			values = append(values, reflect.ValueOf(float32(v)).Convert(param))
 		case reflect.Ptr:
 			arg := sd.Args[i]
-			switch param.Elem().String() {
+			elem := param.Elem()
+
+			switch elem.String() {
 			case "messages.PickleDocString":
 				if v, ok := arg.(*messages.PickleStepArgument); ok {
 					values = append(values, reflect.ValueOf(v.DocString))
@@ -167,6 +182,7 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 				// the error here is that the declared function has an unsupported param type - really this ought to be trapped at registration ti,e
 				return ctx, fmt.Errorf("%w: the data type of parameter %d type *%s is not supported", ErrUnsupportedParameterType, i, param.Elem().String())
 			}
+
 		case reflect.Slice:
 			switch param {
 			case typeOfBytes:
@@ -228,6 +244,36 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 	}
 
 	panic(fmt.Errorf("step definition '%v' has return type (context.Context, error), but found %v rather than a context.Context value%s", text, result0, errMsg))
+}
+
+func (sd *StepDefinition) tryStepParam(ctx context.Context, param reflect.Type, idx int) (reflect.Value, error) {
+	var val reflect.Value
+	if !param.Implements(typeOfTextStepParam) {
+		return val, nil
+	}
+
+	s, err := sd.shouldBeString(idx)
+	if err != nil {
+		return val, err
+	}
+
+	if param.Kind() == reflect.Ptr {
+		val = reflect.ValueOf(&s).Convert(param)
+	} else {
+		val = reflect.ValueOf(s).Convert(param)
+	}
+
+	tm := val.Interface().(StepParam)
+
+	text, err := tm.LoadParam(ctx)
+	if err != nil {
+		return val, fmt.Errorf("failed to load param for arg[%d]: %w", idx, err)
+	}
+
+	if param.Kind() == reflect.Ptr {
+		return reflect.ValueOf(&text).Convert(param), nil
+	}
+	return reflect.ValueOf(text).Convert(param), nil
 }
 
 func (sd *StepDefinition) shouldBeString(idx int) (string, error) {
