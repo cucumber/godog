@@ -110,6 +110,56 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 				return ctx, fmt.Errorf(`%w %d: "%s" to int8: %s`, ErrCannotConvert, i, s, err)
 			}
 			values = append(values, reflect.ValueOf(int8(v)))
+		case reflect.Uint:
+			s, err := sd.shouldBeString(i)
+			if err != nil {
+				return ctx, err
+			}
+			v, err := strconv.ParseUint(s, 10, 0)
+			if err != nil {
+				return ctx, fmt.Errorf(`%w %d: "%s" to uint: %s`, ErrCannotConvert, i, s, err)
+			}
+			values = append(values, reflect.ValueOf(uint(v)))
+		case reflect.Uint64:
+			s, err := sd.shouldBeString(i)
+			if err != nil {
+				return ctx, err
+			}
+			v, err := strconv.ParseUint(s, 10, 64)
+			if err != nil {
+				return ctx, fmt.Errorf(`%w %d: "%s" to uint64: %s`, ErrCannotConvert, i, s, err)
+			}
+			values = append(values, reflect.ValueOf(v))
+		case reflect.Uint32:
+			s, err := sd.shouldBeString(i)
+			if err != nil {
+				return ctx, err
+			}
+			v, err := strconv.ParseUint(s, 10, 32)
+			if err != nil {
+				return ctx, fmt.Errorf(`%w %d: "%s" to uint32: %s`, ErrCannotConvert, i, s, err)
+			}
+			values = append(values, reflect.ValueOf(uint32(v)))
+		case reflect.Uint16:
+			s, err := sd.shouldBeString(i)
+			if err != nil {
+				return ctx, err
+			}
+			v, err := strconv.ParseUint(s, 10, 16)
+			if err != nil {
+				return ctx, fmt.Errorf(`%w %d: "%s" to uint16: %s`, ErrCannotConvert, i, s, err)
+			}
+			values = append(values, reflect.ValueOf(uint16(v)))
+		case reflect.Uint8:
+			s, err := sd.shouldBeString(i)
+			if err != nil {
+				return ctx, err
+			}
+			v, err := strconv.ParseUint(s, 10, 8)
+			if err != nil {
+				return ctx, fmt.Errorf(`%w %d: "%s" to uint8: %s`, ErrCannotConvert, i, s, err)
+			}
+			values = append(values, reflect.ValueOf(uint8(v)))
 		case reflect.String:
 			s, err := sd.shouldBeString(i)
 			if err != nil {
