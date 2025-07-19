@@ -260,6 +260,8 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 				},
 				Args:         match.Args,
 				HandlerValue: match.HandlerValue,
+				File:         match.File,
+				Line:         match.Line,
 				Nested:       match.Nested,
 				Undefined:    undef,
 			}
@@ -532,6 +534,8 @@ func (s *suite) matchStepTextAndType(text string, stepType messages.PickleStepTy
 				},
 				Args:         args,
 				HandlerValue: h.HandlerValue,
+				File:         h.File,
+				Line:         h.Line,
 				Nested:       h.Nested,
 			}
 
