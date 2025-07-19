@@ -325,6 +325,55 @@ func TestShouldSupportIntTypes(t *testing.T) {
 	assert.Equal(t, `cannot convert argument 0: "11111111111111111111111111111111" to int64: strconv.ParseInt: parsing "11111111111111111111111111111111": value out of range`, err.(error).Error())
 }
 
+func TestShouldSupportUintTypes(t *testing.T) {
+	var aActual uint64
+	var bActual uint32
+	var cActual uint16
+	var dActual uint8
+
+	fn := func(a uint64, b uint32, c uint16, d uint8) {
+		aActual = a
+		bActual = b
+		cActual = c
+		dActual = d
+	}
+
+	def := &models.StepDefinition{
+		StepDefinition: formatters.StepDefinition{
+			Handler: fn,
+		},
+		HandlerValue: reflect.ValueOf(fn),
+	}
+
+	def.Args = []interface{}{"1", "2", "3", "4"}
+	_, err := def.Run(context.Background())
+	assert.Nil(t, err)
+	assert.Equal(t, uint64(1), aActual)
+	assert.Equal(t, uint32(2), bActual)
+	assert.Equal(t, uint16(3), cActual)
+	assert.Equal(t, uint8(4), dActual)
+
+	// 256 doesn't fit in uint8
+	def.Args = []interface{}{"1", "2", "3", "256"}
+	_, err = def.Run(context.Background())
+	assert.Equal(t, `cannot convert argument 3: "256" to uint8: strconv.ParseUint: parsing "256": value out of range`, err.(error).Error())
+
+	// 65536 doesn't fit in uint16
+	def.Args = []interface{}{"1", "2", "65536", "4"}
+	_, err = def.Run(context.Background())
+	assert.Equal(t, `cannot convert argument 2: "65536" to uint16: strconv.ParseUint: parsing "65536": value out of range`, err.(error).Error())
+
+	// 4294967296 too large for uint32
+	def.Args = []interface{}{"1", "4294967296", "3", "4"}
+	_, err = def.Run(context.Background())
+	assert.Equal(t, `cannot convert argument 1: "4294967296" to uint32: strconv.ParseUint: parsing "4294967296": value out of range`, err.(error).Error())
+
+	// 18446744073709551616 too large for uint64
+	def.Args = []interface{}{"18446744073709551616", "2", "3", "4"}
+	_, err = def.Run(context.Background())
+	assert.Equal(t, `cannot convert argument 0: "18446744073709551616" to uint64: strconv.ParseUint: parsing "18446744073709551616": value out of range`, err.(error).Error())
+}
+
 func TestShouldSupportFloatTypes(t *testing.T) {
 	var aActual float64
 	var bActual float32
