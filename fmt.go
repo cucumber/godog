@@ -65,13 +65,13 @@ func printStepDefinitions(steps []*models.StepDefinition, w io.Writer) {
 		n := utf8.RuneCountInString(def.Expr.String())
 		location := internal_fmt.DefinitionID(def)
 		spaces := strings.Repeat(" ", longest-n)
-		fmt.Fprintln(w,
+		_, _ = fmt.Fprintln(w,
 			colors.Yellow(def.Expr.String())+spaces,
 			colors.Bold(colors.Black)("# "+location))
 	}
 
 	if len(steps) == 0 {
-		fmt.Fprintln(w, "there were no contexts registered, could not find any step definition..")
+		_, _ = fmt.Fprintln(w, "there were no contexts registered, could not find any step definition..")
 	}
 }
 

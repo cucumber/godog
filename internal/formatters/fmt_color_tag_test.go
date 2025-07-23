@@ -120,7 +120,10 @@ func (cw *tagColorWriter) Write(p []byte) (int, error) {
 				cw.state = secondCsiCode
 				last = i - 1
 			default:
-				cw.resetBuffer()
+				_, err := cw.resetBuffer()
+				if err != nil {
+					return r, err
+				}
 				cw.state = outsideCsiCode
 			}
 		case secondCsiCode:
@@ -167,7 +170,7 @@ func (cw *tagColorWriter) changeColor() {
 		case !ok:
 			switch p {
 			case ansiReset:
-				fmt.Fprint(cw.w, "</"+cw.tag+">")
+				_, _ = fmt.Fprint(cw.w, "</"+cw.tag+">")
 				cw.tag = ""
 			case ansiIntensityOn:
 				cw.tag = "bold-" + cw.tag
@@ -181,7 +184,7 @@ func (cw *tagColorWriter) changeColor() {
 			}
 		default:
 			cw.tag += c
-			fmt.Fprint(cw.w, "<"+cw.tag+">")
+			_, _ = fmt.Fprint(cw.w, "<"+cw.tag+">")
 		}
 	}
 }
@@ -191,7 +194,9 @@ func TestTagColorWriter(t *testing.T) {
 	w := &tagColorWriter{w: &buf}
 
 	s := fmt.Sprintf("text %s then %s", colors.Red("in red"), colors.Yellow("yel"))
-	fmt.Fprint(w, s)
+	if _, err := fmt.Fprint(w, s); err != nil {
+		t.Fatal(err)
+	}
 
 	expected := "text <red>in red</red> then <yellow>yel</yellow>"
 	if buf.String() != expected {
@@ -208,7 +213,9 @@ func TestTagBoldColorWriter(t *testing.T) {
 		colors.Bold(colors.Red)("in red"),
 		colors.Bold(colors.Yellow)("yel"),
 	)
-	fmt.Fprint(w, s)
+	if _, err := fmt.Fprint(w, s); err != nil {
+		t.Fatal(err)
+	}
 
 	expected := "text <bold-red>in red</bold-red> then <bold-yellow>yel</bold-yellow>"
 	if buf.String() != expected {

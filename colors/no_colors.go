@@ -26,7 +26,7 @@ loop:
 			break loop
 		}
 		if c1 != 0x1b {
-			fmt.Fprint(w.out, string(c1))
+			_, _ = fmt.Fprint(w.out, string(c1))
 			continue
 		}
 		c2, _, err := er.ReadRune()

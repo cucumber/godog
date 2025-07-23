@@ -22,5 +22,5 @@ func CreateVersionCmd() cobra.Command {
 }
 
 func versionCmdRunFunc(cmd *cobra.Command, args []string) {
-	fmt.Fprintln(os.Stdout, "Godog version is:", godog.Version)
+	_, _ = fmt.Fprintln(os.Stdout, "Godog version is:", godog.Version)
 }

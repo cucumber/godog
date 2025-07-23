@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -69,7 +70,12 @@ func buildAndRunGodog(args []string) (err error) {
 		return err
 	}
 
-	defer os.Remove(bin)
+	defer func(name string) {
+		err = os.Remove(name)
+		if err != nil {
+			log.Printf("failed to remove temporary build file: %v", err)
+		}
+	}(bin)
 
 	return runGodog(bin, args)
 }

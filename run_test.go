@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/fs"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -188,8 +189,6 @@ func Test_ShouldFailOnError(t *testing.T) {
 
 func Test_FailsWithUnknownFormatterOptionError(t *testing.T) {
 	stderr, closer := bufErrorPipe(t)
-	defer closer()
-	defer stderr.Close()
 
 	opts := Options{
 		Format: "unknown",
@@ -216,8 +215,6 @@ func Test_FailsWithUnknownFormatterOptionError(t *testing.T) {
 
 func Test_FailsWithOptionErrorWhenLookingForFeaturesInUnavailablePath(t *testing.T) {
 	stderr, closer := bufErrorPipe(t)
-	defer closer()
-	defer stderr.Close()
 
 	opts := Options{
 		Format: "progress",
@@ -362,7 +359,9 @@ func bufErrorPipe(t *testing.T) (io.ReadCloser, func()) {
 
 	os.Stderr = w
 	return r, func() {
-		w.Close()
+		if err := w.Close(); err != nil {
+			log.Fatal(err)
+		}
 		os.Stderr = stderr
 	}
 }
@@ -464,7 +463,11 @@ func Test_FormatOutputRun(t *testing.T) {
 	err := os.MkdirAll(dir, 0755)
 	require.NoError(t, err)
 
-	defer os.RemoveAll(dir)
+	defer func(path string) {
+		if err := os.RemoveAll(path); err != nil {
+			t.Fatal(err)
+		}
+	}(dir)
 
 	file := filepath.Join(dir, "result.xml")
 

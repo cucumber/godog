@@ -42,9 +42,9 @@ func (f *Progress) Summary() {
 	left := math.Mod(float64(*f.Steps), float64(f.StepsPerRow))
 	if left != 0 {
 		if *f.Steps > f.StepsPerRow {
-			fmt.Fprintf(f.out, s(f.StepsPerRow-int(left))+fmt.Sprintf(" %d\n", *f.Steps))
+			_, _ = fmt.Fprintf(f.out, s(f.StepsPerRow-int(left))+fmt.Sprintf(" %d\n", *f.Steps))
 		} else {
-			fmt.Fprintf(f.out, " %d\n", *f.Steps)
+			_, _ = fmt.Fprintf(f.out, " %d\n", *f.Steps)
 		}
 	}
 
@@ -78,10 +78,10 @@ func (f *Progress) Summary() {
 	}
 
 	if len(failedStepsOutput) > 0 {
-		fmt.Fprintln(f.out, "\n\n--- "+red("Failed steps:")+"\n")
-		fmt.Fprint(f.out, strings.Join(failedStepsOutput, "\n"))
+		_, _ = fmt.Fprintln(f.out, "\n\n--- "+red("Failed steps:")+"\n")
+		_, _ = fmt.Fprint(f.out, strings.Join(failedStepsOutput, "\n"))
 	}
-	fmt.Fprintln(f.out, "")
+	_, _ = fmt.Fprintln(f.out, "")
 
 	f.Base.Summary()
 }
@@ -91,23 +91,23 @@ func (f *Progress) step(pickleStepID string) {
 
 	switch pickleStepResult.Status {
 	case passed:
-		fmt.Fprint(f.out, green("."))
+		_, _ = fmt.Fprint(f.out, green("."))
 	case skipped:
-		fmt.Fprint(f.out, cyan("-"))
+		_, _ = fmt.Fprint(f.out, cyan("-"))
 	case failed:
-		fmt.Fprint(f.out, red("F"))
+		_, _ = fmt.Fprint(f.out, red("F"))
 	case undefined:
-		fmt.Fprint(f.out, yellow("U"))
+		_, _ = fmt.Fprint(f.out, yellow("U"))
 	case ambiguous:
-		fmt.Fprint(f.out, yellow("A"))
+		_, _ = fmt.Fprint(f.out, yellow("A"))
 	case pending:
-		fmt.Fprint(f.out, yellow("P"))
+		_, _ = fmt.Fprint(f.out, yellow("P"))
 	}
 
 	*f.Steps++
 
 	if math.Mod(float64(*f.Steps), float64(f.StepsPerRow)) == 0 {
-		fmt.Fprintf(f.out, " %d\n", *f.Steps)
+		_, _ = fmt.Fprintf(f.out, " %d\n", *f.Steps)
 	}
 }
 

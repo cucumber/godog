@@ -128,9 +128,10 @@ func (f *Base) Summary() {
 			}
 		}
 
-		if prStatus == passed {
+		switch prStatus {
+		case passed:
 			passedSc++
-		} else if prStatus == undefined {
+		case undefined:
 			undefinedSc++
 		}
 	}
@@ -169,18 +170,18 @@ func (f *Base) Summary() {
 	testRunStartedAt := f.Storage.MustGetTestRunStarted().StartedAt
 	elapsed := utils.TimeNowFunc().Sub(testRunStartedAt)
 
-	fmt.Fprintln(f.out, "")
+	_, _ = fmt.Fprintln(f.out, "")
 
 	if totalSc == 0 {
-		fmt.Fprintln(f.out, "No scenarios")
+		_, _ = fmt.Fprintln(f.out, "No scenarios")
 	} else {
-		fmt.Fprintf(f.out, "%d scenarios (%s)\n", totalSc, strings.Join(scenarios, ", "))
+		_, _ = fmt.Fprintf(f.out, "%d scenarios (%s)\n", totalSc, strings.Join(scenarios, ", "))
 	}
 
 	if totalSt == 0 {
-		fmt.Fprintln(f.out, "No steps")
+		_, _ = fmt.Fprintln(f.out, "No steps")
 	} else {
-		fmt.Fprintf(f.out, "%d steps (%s)\n", totalSt, strings.Join(steps, ", "))
+		_, _ = fmt.Fprintf(f.out, "%d steps (%s)\n", totalSt, strings.Join(steps, ", "))
 	}
 
 	elapsedString := elapsed.String()
@@ -188,19 +189,19 @@ func (f *Base) Summary() {
 		// go 1.5 and 1.6 prints 0 instead of 0s, if duration is zero.
 		elapsedString = "0s"
 	}
-	fmt.Fprintln(f.out, elapsedString)
+	_, _ = fmt.Fprintln(f.out, elapsedString)
 
 	// prints used randomization seed
 	seed, err := strconv.ParseInt(os.Getenv("GODOG_SEED"), 10, 64)
 	if err == nil && seed != 0 {
-		fmt.Fprintln(f.out, "")
-		fmt.Fprintln(f.out, "Randomized with seed:", colors.Yellow(seed))
+		_, _ = fmt.Fprintln(f.out, "")
+		_, _ = fmt.Fprintln(f.out, "Randomized with seed:", colors.Yellow(seed))
 	}
 
 	if text := f.Snippets(); text != "" {
-		fmt.Fprintln(f.out, "")
-		fmt.Fprintln(f.out, yellow("You can implement step definitions for undefined steps with these snippets:"))
-		fmt.Fprintln(f.out, yellow(text))
+		_, _ = fmt.Fprintln(f.out, "")
+		_, _ = fmt.Fprintln(f.out, yellow("You can implement step definitions for undefined steps with these snippets:"))
+		_, _ = fmt.Fprintln(f.out, yellow(text))
 	}
 }
 
@@ -268,5 +269,5 @@ func (f *Base) Snippets() string {
 		panic(err)
 	}
 	// there may be trailing spaces
-	return strings.Replace(buf.String(), " \n", "\n", -1)
+	return strings.ReplaceAll(buf.String(), " \n", "\n")
 }

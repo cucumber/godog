@@ -7,6 +7,7 @@ import (
 	"go/build"
 	"io"
 	"io/fs"
+	"log"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -184,12 +185,17 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 					`couldn't create file with name: "%s", error: %s`,
 					formatterParts[1], err.Error(),
 				)
-				fmt.Fprintln(os.Stderr, err)
+				_, _ = fmt.Fprintln(os.Stderr, err)
 
 				return exitOptionError
 			}
 
-			defer f.Close()
+			defer func(f *os.File) {
+				err := f.Close()
+				if err != nil {
+					log.Printf("failed to close file: %s", err)
+				}
+			}(f)
 
 			out = f
 		}
@@ -205,7 +211,7 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 			for name := range formatters.AvailableFormatters() {
 				names = append(names, name)
 			}
-			fmt.Fprintln(os.Stderr, fmt.Errorf(
+			_, _ = fmt.Fprintln(os.Stderr, fmt.Errorf(
 				`unregistered formatter name: "%s", use one of: %s`,
 				opt.Format,
 				strings.Join(names, ", "),
@@ -230,7 +236,11 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 			if err != nil {
 				return nil, err
 			}
-			defer file.Close()
+			defer func() {
+				if err := file.Close(); err != nil {
+					log.Printf("failed to close file: %s", err)
+				}
+			}()
 
 			return file.Stat()
 		}()
@@ -249,7 +259,7 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 	if len(opt.FeatureContents) > 0 {
 		features, err := parser.ParseFromBytes(opt.Tags, opt.Dialect, opt.FeatureContents)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			_, _ = fmt.Fprintln(os.Stderr, err)
 			return exitOptionError
 		}
 		runner.features = append(runner.features, features...)
@@ -258,7 +268,7 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 	if len(opt.Paths) > 0 {
 		features, err := parser.ParseFeatures(opt.FS, opt.Tags, opt.Dialect, opt.Paths)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			_, _ = fmt.Fprintln(os.Stderr, err)
 			return exitOptionError
 		}
 		runner.features = append(runner.features, features...)
@@ -285,16 +295,24 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 	runner.testingT = opt.TestingT
 
 	// store chosen seed in environment, so it could be seen in formatter summary report
-	os.Setenv("GODOG_SEED", strconv.FormatInt(runner.randomSeed, 10))
+	if err := os.Setenv("GODOG_SEED", strconv.FormatInt(runner.randomSeed, 10)); err != nil {
+		log.Fatalf("failed to set GODOG_SEED: %s", err)
+	}
 	// determine tested package
 	_, filename, _, _ := runtime.Caller(1)
-	os.Setenv("GODOG_TESTED_PACKAGE", runsFromPackage(filename))
+	if err := os.Setenv("GODOG_TESTED_PACKAGE", runsFromPackage(filename)); err != nil {
+		log.Fatalf("failed to set GODOG_TESTED_PACKAGE: %s", err)
+	}
 
 	failed := runner.concurrent(opt.Concurrency)
 
 	// @TODO: should prevent from having these
-	os.Setenv("GODOG_SEED", "")
-	os.Setenv("GODOG_TESTED_PACKAGE", "")
+	if err := os.Setenv("GODOG_SEED", ""); err != nil {
+		log.Fatalf("failed to set GODOG_SEED: %s", err)
+	}
+	if err := os.Setenv("GODOG_TESTED_PACKAGE", ""); err != nil {
+		log.Fatalf("failed to set GODOG_TESTED_PACKAGE: %s", err)
+	}
 	if failed && opt.Format != "events" {
 		return exitFailure
 	}
@@ -380,7 +398,12 @@ func (ts TestSuite) RetrieveFeatures() ([]*models.Feature, error) {
 			if err != nil {
 				return nil, err
 			}
-			defer file.Close()
+			defer func(file fs.File) {
+				err := file.Close()
+				if err != nil {
+					log.Printf("failed to close file: %s", err)
+				}
+			}(file)
 
 			return file.Stat()
 		}()
@@ -398,7 +421,7 @@ func getDefaultOptions() (*Options, error) {
 
 	flagSet := flagSet(opt)
 	if err := flagSet.Parse(os.Args[1:]); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		_, _ = fmt.Fprintln(os.Stderr, err)
 		return nil, err
 	}
 

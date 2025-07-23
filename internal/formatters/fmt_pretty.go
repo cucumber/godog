@@ -47,7 +47,7 @@ func (f *Pretty) TestRunStarted() {
 func (f *Pretty) Feature(gd *messages.GherkinDocument, p string, c []byte) {
 	f.Lock.Lock()
 	if !*f.firstFeature {
-		fmt.Fprintln(f.out, "")
+		_, _ = fmt.Fprintln(f.out, "")
 	}
 
 	*f.firstFeature = false
@@ -135,10 +135,10 @@ func (f *Pretty) Pending(pickle *messages.Pickle, step *messages.PickleStep, mat
 }
 
 func (f *Pretty) printFeature(feature *messages.Feature) {
-	fmt.Fprintln(f.out, keywordAndName(feature.Keyword, feature.Name))
+	_, _ = fmt.Fprintln(f.out, keywordAndName(feature.Keyword, feature.Name))
 	if strings.TrimSpace(feature.Description) != "" {
 		for _, line := range strings.Split(feature.Description, "\n") {
-			fmt.Fprintln(f.out, s(f.indent)+strings.TrimSpace(line))
+			_, _ = fmt.Fprintln(f.out, s(f.indent)+strings.TrimSpace(line))
 		}
 	}
 }
@@ -170,7 +170,7 @@ func (f *Pretty) printScenarioHeader(pickle *messages.Pickle, astScenario *messa
 	feature := f.Storage.MustGetFeature(pickle.Uri)
 	text := s(f.indent) + keywordAndName(astScenario.Keyword, astScenario.Name)
 	text += s(spaceFilling) + line(feature.Uri, astScenario.Location)
-	fmt.Fprintln(f.out, "\n"+text)
+	_, _ = fmt.Fprintln(f.out, "\n"+text)
 }
 
 func (f *Pretty) printUndefinedPickle(pickle *messages.Pickle) {
@@ -181,10 +181,10 @@ func (f *Pretty) printUndefinedPickle(pickle *messages.Pickle) {
 	scenarioHeaderLength, maxLength := f.scenarioLengths(pickle)
 
 	if astBackground != nil {
-		fmt.Fprintln(f.out, "\n"+s(f.indent)+keywordAndName(astBackground.Keyword, astBackground.Name))
+		_, _ = fmt.Fprintln(f.out, "\n"+s(f.indent)+keywordAndName(astBackground.Keyword, astBackground.Name))
 		for _, step := range astBackground.Steps {
 			text := s(f.indent*2) + cyan(strings.TrimSpace(step.Keyword)) + " " + cyan(step.Text)
-			fmt.Fprintln(f.out, text)
+			_, _ = fmt.Fprintln(f.out, text)
 		}
 	}
 
@@ -194,7 +194,7 @@ func (f *Pretty) printUndefinedPickle(pickle *messages.Pickle) {
 		firstExampleRow := exampleTable.TableBody[0].Id == exampleRow.Id
 		firstExamplesTable := astScenario.Examples[0].Location.Line == exampleTable.Location.Line
 
-		if !(firstExamplesTable && firstExampleRow) {
+		if !firstExamplesTable || !firstExampleRow {
 			return
 		}
 	}
@@ -204,8 +204,8 @@ func (f *Pretty) printUndefinedPickle(pickle *messages.Pickle) {
 	for _, examples := range astScenario.Examples {
 		max := longestExampleRow(examples, cyan, cyan)
 
-		fmt.Fprintln(f.out, "")
-		fmt.Fprintln(f.out, s(f.indent*2)+keywordAndName(examples.Keyword, examples.Name))
+		_, _ = fmt.Fprintln(f.out, "")
+		_, _ = fmt.Fprintln(f.out, s(f.indent*2)+keywordAndName(examples.Keyword, examples.Name))
 
 		f.printTableHeader(examples.TableHeader, max)
 
@@ -219,7 +219,7 @@ func (f *Pretty) printUndefinedPickle(pickle *messages.Pickle) {
 func (f *Pretty) Summary() {
 	failedStepResults := f.Storage.MustGetPickleStepResultsByStatus(failed)
 	if len(failedStepResults) > 0 {
-		fmt.Fprintln(f.out, "\n--- "+red("Failed steps:")+"\n")
+		_, _ = fmt.Fprintln(f.out, "\n--- "+red("Failed steps:")+"\n")
 
 		sort.Sort(sortPickleStepResultsByPickleStepID(failedStepResults))
 
@@ -234,9 +234,9 @@ func (f *Pretty) Summary() {
 			astStep := feature.FindStep(pickleStep.AstNodeIds[0])
 			stepDesc := strings.TrimSpace(astStep.Keyword) + " " + pickleStep.Text
 
-			fmt.Fprintln(f.out, s(f.indent)+red(scenarioDesc)+line(feature.Uri, astScenario.Location))
-			fmt.Fprintln(f.out, s(f.indent*2)+red(stepDesc)+line(feature.Uri, astStep.Location))
-			fmt.Fprintln(f.out, s(f.indent*3)+red("Error: ")+redb(fmt.Sprintf("%+v", fail.Err))+"\n")
+			_, _ = fmt.Fprintln(f.out, s(f.indent)+red(scenarioDesc)+line(feature.Uri, astScenario.Location))
+			_, _ = fmt.Fprintln(f.out, s(f.indent*2)+red(stepDesc)+line(feature.Uri, astStep.Location))
+			_, _ = fmt.Fprintln(f.out, s(f.indent*3)+red("Error: ")+redb(fmt.Sprintf("%+v", fail.Err))+"\n")
 		}
 	}
 
@@ -317,7 +317,7 @@ func (f *Pretty) printOutlineExample(pickle *messages.Pickle, step *messages.Pic
 			}
 
 			// print the step outline
-			fmt.Fprintln(f.out, s(f.indent*2)+cyan(strings.TrimSpace(astStep.Keyword))+" "+text)
+			_, _ = fmt.Fprintln(f.out, s(f.indent*2)+cyan(strings.TrimSpace(astStep.Keyword))+" "+text)
 
 			if pickleStep.Argument != nil {
 				if table := pickleStep.Argument.DataTable; table != nil {
@@ -335,8 +335,8 @@ func (f *Pretty) printOutlineExample(pickle *messages.Pickle, step *messages.Pic
 
 	// an example table header
 	if printExampleHeader {
-		fmt.Fprintln(f.out, "")
-		fmt.Fprintln(f.out, s(f.indent*2)+keywordAndName(exampleTable.Keyword, exampleTable.Name))
+		_, _ = fmt.Fprintln(f.out, "")
+		_, _ = fmt.Fprintln(f.out, s(f.indent*2)+keywordAndName(exampleTable.Keyword, exampleTable.Name))
 
 		f.printTableHeader(exampleTable.TableHeader, max)
 	}
@@ -344,7 +344,7 @@ func (f *Pretty) printOutlineExample(pickle *messages.Pickle, step *messages.Pic
 	f.printTableRow(exampleRow, max, clr)
 
 	if errorMsg != "" {
-		fmt.Fprintln(f.out, s(f.indent*4)+redb(errorMsg))
+		_, _ = fmt.Fprintln(f.out, s(f.indent*4)+redb(errorMsg))
 	}
 }
 
@@ -357,7 +357,7 @@ func (f *Pretty) printTableRow(row *messages.TableRow, max []int, clr colors.Col
 		cells[i] = val + s(max[i]-ln)
 	}
 
-	fmt.Fprintln(f.out, s(f.indent*3)+"| "+strings.Join(cells, " | ")+" |")
+	_, _ = fmt.Fprintln(f.out, s(f.indent*3)+"| "+strings.Join(cells, " | ")+" |")
 }
 
 func (f *Pretty) printTableHeader(row *messages.TableRow, max []int) {
@@ -415,7 +415,7 @@ func (f *Pretty) printStep(pickle *messages.Pickle, pickleStep *messages.PickleS
 	}
 
 	if astBackgroundStep && firstExecutedBackgroundStep {
-		fmt.Fprintln(f.out, "\n"+s(f.indent)+keywordAndName(astBackground.Keyword, astBackground.Name))
+		_, _ = fmt.Fprintln(f.out, "\n"+s(f.indent)+keywordAndName(astBackground.Keyword, astBackground.Name))
 	}
 
 	if !astBackgroundStep && len(astScenario.Examples) > 0 {
@@ -437,7 +437,7 @@ func (f *Pretty) printStep(pickle *messages.Pickle, pickleStep *messages.PickleS
 		text += s(maxLength - stepLength + 1)
 		text += blackb("# " + DefinitionID(pickleStepResult.Def))
 	}
-	fmt.Fprintln(f.out, text)
+	_, _ = fmt.Fprintln(f.out, text)
 
 	if pickleStep.Argument != nil {
 		if table := pickleStep.Argument.DataTable; table != nil {
@@ -450,11 +450,11 @@ func (f *Pretty) printStep(pickle *messages.Pickle, pickleStep *messages.PickleS
 	}
 
 	if pickleStepResult.Err != nil {
-		fmt.Fprintln(f.out, s(f.indent*2)+redb(fmt.Sprintf("%+v", pickleStepResult.Err)))
+		_, _ = fmt.Fprintln(f.out, s(f.indent*2)+redb(fmt.Sprintf("%+v", pickleStepResult.Err)))
 	}
 
 	if pickleStepResult.Status == pending {
-		fmt.Fprintln(f.out, s(f.indent*3)+yellow("TODO: write pending definition"))
+		_, _ = fmt.Fprintln(f.out, s(f.indent*3)+yellow("TODO: write pending definition"))
 	}
 }
 
@@ -465,13 +465,13 @@ func (f *Pretty) printDocString(docString *messages.DocString) {
 		ct = " " + cyan(docString.MediaType)
 	}
 
-	fmt.Fprintln(f.out, s(f.indent*3)+cyan(docString.Delimiter)+ct)
+	_, _ = fmt.Fprintln(f.out, s(f.indent*3)+cyan(docString.Delimiter)+ct)
 
 	for _, ln := range strings.Split(docString.Content, "\n") {
-		fmt.Fprintln(f.out, s(f.indent*3)+cyan(ln))
+		_, _ = fmt.Fprintln(f.out, s(f.indent*3)+cyan(ln))
 	}
 
-	fmt.Fprintln(f.out, s(f.indent*3)+cyan(docString.Delimiter))
+	_, _ = fmt.Fprintln(f.out, s(f.indent*3)+cyan(docString.Delimiter))
 }
 
 // print table with aligned table cells
@@ -487,7 +487,7 @@ func (f *Pretty) printTable(t *messages.PickleTable, c colors.ColorFunc) {
 			cols[i] = val + s(maxColLengths[i]-colLength)
 		}
 
-		fmt.Fprintln(f.out, s(f.indent*3)+"| "+strings.Join(cols, " | ")+" |")
+		_, _ = fmt.Fprintln(f.out, s(f.indent*3)+"| "+strings.Join(cols, " | ")+" |")
 	}
 }
 

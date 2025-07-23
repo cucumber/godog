@@ -72,22 +72,22 @@ func (f stackFrame) Format(s fmt.State, verb rune) {
 			pc := f.pc()
 			fn := runtime.FuncForPC(pc)
 			if fn == nil {
-				io.WriteString(s, "unknown")
+				_, _ = io.WriteString(s, "unknown")
 			} else {
 				file, _ := fn.FileLine(pc)
-				fmt.Fprintf(s, "%s\n\t%s", fn.Name(), trimGoPath(file))
+				_, _ = fmt.Fprintf(s, "%s\n\t%s", fn.Name(), trimGoPath(file))
 			}
 		default:
-			io.WriteString(s, path.Base(f.file()))
+			_, _ = io.WriteString(s, path.Base(f.file()))
 		}
 	case 'd':
-		fmt.Fprintf(s, "%d", f.line())
+		_, _ = fmt.Fprintf(s, "%d", f.line())
 	case 'n':
 		name := runtime.FuncForPC(f.pc()).Name()
-		io.WriteString(s, funcname(name))
+		_, _ = io.WriteString(s, funcname(name))
 	case 'v':
 		f.Format(s, 's')
-		io.WriteString(s, ":")
+		_, _ = io.WriteString(s, ":")
 		f.Format(s, 'd')
 	}
 }
@@ -102,7 +102,7 @@ func (s *stack) Format(st fmt.State, verb rune) {
 		case st.Flag('+'):
 			for _, pc := range *s {
 				f := stackFrame(pc)
-				fmt.Fprintf(st, "\n%+v", f)
+				_, _ = fmt.Fprintf(st, "\n%+v", f)
 			}
 		}
 	}
@@ -128,14 +128,14 @@ func (f *traceError) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 'v':
 		if s.Flag('+') {
-			io.WriteString(s, f.msg)
+			_, _ = io.WriteString(s, f.msg)
 			f.stack.Format(s, verb)
 			return
 		}
 		fallthrough
 	case 's':
-		io.WriteString(s, f.msg)
+		_, _ = io.WriteString(s, f.msg)
 	case 'q':
-		fmt.Fprintf(s, "%q", f.msg)
+		_, _ = fmt.Fprintf(s, "%q", f.msg)
 	}
 }
