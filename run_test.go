@@ -800,14 +800,40 @@ func Test_TestSuite_RetreiveFeatures(t *testing.T) {
 // StepContext.Before, and StepContext.After hooks are handled gracefully by the godog.
 // If this test panics and fails to report gracefully, it means the panic handling in the hooks is insufficient.
 func TestHookPanic(t *testing.T) {
-	setupSteps := func(sc *ScenarioContext) {
-		doNothing := func(ctx context.Context) error {
-			return nil
+	// create a temporary file
+	f, err := os.CreateTemp("", "godog_test_hook_panic_*.feature")
+	if err != nil {
+		t.Fatalf("failed to create temporary file: %v", err)
+	}
+	defer func(name string) {
+		if err := os.Remove(f.Name()); err != nil {
+			t.Fatalf("failed to remove temporary file: %v", err)
 		}
-		sc.Step(`^one$`, doNothing)
-		sc.Step(`^two$`, doNothing)
-		sc.Step(`^three$`, doNothing)
-		sc.Step(`^four$`, doNothing)
+	}(f.Name())
+
+	_, err = f.Write([]byte(`
+Feature: count
+
+  Scenario: count one two
+	When one
+	Then two
+
+  Scenario: count three four
+    When three
+    Then four
+`))
+	if err != nil {
+		t.Fatalf("failed to write to temporary file: %v", err)
+	}
+	err = f.Close()
+	if err != nil {
+		t.Fatalf("failed to close temporary file: %v", err)
+	}
+	setupSteps := func(sc *ScenarioContext) {
+		sc.Step(`^one$`, func() {})
+		sc.Step(`^two$`, func() {})
+		sc.Step(`^three$`, func() {})
+		sc.Step(`^four$`, func() {})
 	}
 	for name, test := range map[string]struct {
 		initScenarios func(*ScenarioContext)
@@ -848,7 +874,7 @@ func TestHookPanic(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			opts := Options{
 				Format: "pretty",
-				Paths:  []string{"features/count.feature"},
+				Paths:  []string{f.Name()},
 			}
 			TestSuite{
 				Name:                "HookPanic!",
