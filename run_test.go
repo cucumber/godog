@@ -795,3 +795,66 @@ func Test_TestSuite_RetreiveFeatures(t *testing.T) {
 		})
 	}
 }
+
+// TestHookPanic verifies that panics in ScenarioContext.After, ScenarioContext.Before,
+// StepContext.Before, and StepContext.After hooks are handled gracefully by the godog.
+// If this test panics and fails to report gracefully, it means the panic handling in the hooks is insufficient.
+func TestHookPanic(t *testing.T) {
+	setupSteps := func(sc *ScenarioContext) {
+		doNothing := func(ctx context.Context) error {
+			return nil
+		}
+		sc.Step(`^one$`, doNothing)
+		sc.Step(`^two$`, doNothing)
+		sc.Step(`^three$`, doNothing)
+		sc.Step(`^four$`, doNothing)
+	}
+	for name, test := range map[string]struct {
+		initScenarios func(*ScenarioContext)
+	}{
+		"before scenario": {
+			func(ctx *ScenarioContext) {
+				ctx.Before(func(ctx context.Context, sc *Scenario) (context.Context, error) {
+					panic("before scenario")
+				})
+				setupSteps(ctx)
+			},
+		},
+		"after scenario": {
+			func(ctx *ScenarioContext) {
+				setupSteps(ctx)
+				ctx.After(func(ctx context.Context, sc *Scenario, err error) (context.Context, error) {
+					panic("after scenario")
+				})
+			},
+		},
+		"after step": {
+			func(ctx *ScenarioContext) {
+				setupSteps(ctx)
+				ctx.StepContext().After(func(_ context.Context, _ *Step, _ StepResultStatus, _ error) (context.Context, error) {
+					panic("after step")
+				})
+			},
+		},
+		"before step": {
+			func(ctx *ScenarioContext) {
+				setupSteps(ctx)
+				ctx.StepContext().Before(func(_ context.Context, _ *Step) (context.Context, error) {
+					panic("before step")
+				})
+			},
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			opts := Options{
+				Format: "pretty",
+				Paths:  []string{"features/count.feature"},
+			}
+			TestSuite{
+				Name:                "HookPanic!",
+				Options:             &opts,
+				ScenarioInitializer: test.initScenarios,
+			}.Run()
+		})
+	}
+}
