@@ -7,7 +7,6 @@ import (
 	"io"
 	"io/fs"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -360,7 +359,7 @@ func bufErrorPipe(t *testing.T) (io.ReadCloser, func()) {
 	os.Stderr = w
 	return r, func() {
 		if err := w.Close(); err != nil {
-			log.Fatal(err)
+			t.Fatal(err)
 		}
 		os.Stderr = stderr
 	}
