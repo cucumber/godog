@@ -815,8 +815,8 @@ func TestHookPanic(t *testing.T) {
 Feature: count
 
   Scenario: count one two
-	When one
-	Then two
+    When one
+    Then two
 
   Scenario: count three four
     When three
