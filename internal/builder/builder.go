@@ -8,6 +8,7 @@ import (
 	"go/parser"
 	"go/token"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -115,7 +116,12 @@ func Build(bin string) error {
 		if err != nil {
 			return err
 		}
-		defer os.Remove(pathTemp)
+		defer func(name string) {
+			err = os.Remove(name)
+			if err != nil {
+				log.Printf("failed to remove temporary file %s: %s", name, err)
+			}
+		}(pathTemp)
 	}
 
 	workdir := ""
@@ -137,7 +143,12 @@ func Build(bin string) error {
 	if err != nil {
 		return fmt.Errorf("failed to compile tested package: %s, reason: %v, output: %s", abs, err, string(testOutput))
 	}
-	defer os.Remove(temp)
+	defer func(name string) {
+		err = os.Remove(name)
+		if err != nil {
+			log.Printf("failed to remove temporary file %s: %v", name, err)
+		}
+	}(temp)
 
 	// extract go-build temporary directory as our workdir
 	linesOut := strings.Split(strings.TrimSpace(string(testOutput)), "\n")
@@ -170,7 +181,12 @@ func Build(bin string) error {
 		return fmt.Errorf("expected WORK dir: %s to be directory", workdir)
 	}
 	testdir = filepath.Join(workdir, "b001")
-	defer os.RemoveAll(workdir)
+	defer func(path string) {
+		err := os.RemoveAll(path)
+		if err != nil {
+			log.Printf("failed to remove files in %s: %v", path, err)
+		}
+	}(workdir)
 
 	// replace _testmain.go file with our own
 	testmain := filepath.Join(testdir, "_testmain.go")
@@ -373,8 +389,6 @@ func buildTestMain(pkg *build.Package) ([]byte, error) {
 
 		importPath = parseImport(pkg.ImportPath, pkg.Root)
 		name = pkg.Name
-	} else {
-		name = "main"
 	}
 
 	data := struct {
