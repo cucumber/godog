@@ -72,22 +72,40 @@ func (f stackFrame) Format(s fmt.State, verb rune) {
 			pc := f.pc()
 			fn := runtime.FuncForPC(pc)
 			if fn == nil {
-				_, _ = io.WriteString(s, "unknown")
+				_, err := io.WriteString(s, "unknown")
+				if err != nil {
+					panic(err)
+				}
 			} else {
 				file, _ := fn.FileLine(pc)
-				_, _ = fmt.Fprintf(s, "%s\n\t%s", fn.Name(), trimGoPath(file))
+				_, err := fmt.Fprintf(s, "%s\n\t%s", fn.Name(), trimGoPath(file))
+				if err != nil {
+					panic(err)
+				}
 			}
 		default:
-			_, _ = io.WriteString(s, path.Base(f.file()))
+			_, err := io.WriteString(s, path.Base(f.file()))
+			if err != nil {
+				panic(err)
+			}
 		}
 	case 'd':
-		_, _ = fmt.Fprintf(s, "%d", f.line())
+		_, err := fmt.Fprintf(s, "%d", f.line())
+		if err != nil {
+			panic(err)
+		}
 	case 'n':
 		name := runtime.FuncForPC(f.pc()).Name()
-		_, _ = io.WriteString(s, funcname(name))
+		_, err := io.WriteString(s, funcname(name))
+		if err != nil {
+			panic(err)
+		}
 	case 'v':
 		f.Format(s, 's')
-		_, _ = io.WriteString(s, ":")
+		_, err := io.WriteString(s, ":")
+		if err != nil {
+			panic(err)
+		}
 		f.Format(s, 'd')
 	}
 }
