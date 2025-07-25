@@ -45,7 +45,9 @@ func TestPrintsStepDefinitions(t *testing.T) {
 		ctx.Step(step, okStep)
 	}
 
-	printStepDefinitions(s.steps, w)
+	if err := printStepDefinitions(s.steps, w); err != nil {
+		t.Fatalf("failed to print step definitions: %s", err)
+	}
 
 	out := buf.String()
 	ref := `okStep`
@@ -64,7 +66,9 @@ func TestPrintsNoStepDefinitionsIfNoneFound(t *testing.T) {
 	w := colors.Uncolored(&buf)
 	s := &suite{}
 
-	printStepDefinitions(s.steps, w)
+	if err := printStepDefinitions(s.steps, w); err != nil {
+		t.Fatalf("failed to print step definitions: %s", err)
+	}
 
 	out := strings.TrimSpace(buf.String())
 	assert.Equal(t, "there were no contexts registered, could not find any step definition..", out)

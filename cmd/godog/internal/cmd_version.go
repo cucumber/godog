@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -22,5 +23,7 @@ func CreateVersionCmd() cobra.Command {
 }
 
 func versionCmdRunFunc(cmd *cobra.Command, args []string) {
-	_, _ = fmt.Fprintln(os.Stdout, "Godog version is:", godog.Version)
+	if _, err := fmt.Fprintln(os.Stdout, "Godog version is:", godog.Version); err != nil {
+		log.Fatalf("failed to print Godog version: %v", err)
+	}
 }

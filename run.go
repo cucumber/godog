@@ -226,7 +226,10 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 		s := suite{}
 		sc := ScenarioContext{suite: &s}
 		runner.scenarioInitializer(&sc)
-		printStepDefinitions(s.steps, output)
+		err := printStepDefinitions(s.steps, output)
+		if err != nil {
+			log.Fatalf("failed to print step definitions: %s", err)
+		}
 		return exitOptionError
 	}
 

@@ -49,7 +49,10 @@ func (f *Cuke) Summary() {
 		panic(err)
 	}
 
-	_, _ = fmt.Fprintf(f.out, "%s\n", string(dat))
+	_, err = fmt.Fprintf(f.out, "%s\n", string(dat))
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (f *Cuke) buildCukeFeatures(features []*models.Feature) (res []CukeFeatureJSON) {

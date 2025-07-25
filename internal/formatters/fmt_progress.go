@@ -42,9 +42,13 @@ func (f *Progress) Summary() {
 	left := math.Mod(float64(*f.Steps), float64(f.StepsPerRow))
 	if left != 0 {
 		if *f.Steps > f.StepsPerRow {
-			_, _ = fmt.Fprintf(f.out, s(f.StepsPerRow-int(left))+fmt.Sprintf(" %d\n", *f.Steps))
+			if _, err := fmt.Fprintf(f.out, s(f.StepsPerRow-int(left))+fmt.Sprintf(" %d\n", *f.Steps)); err != nil {
+				panic(err)
+			}
 		} else {
-			_, _ = fmt.Fprintf(f.out, " %d\n", *f.Steps)
+			if _, err := fmt.Fprintf(f.out, " %d\n", *f.Steps); err != nil {
+				panic(err)
+			}
 		}
 	}
 
@@ -78,10 +82,16 @@ func (f *Progress) Summary() {
 	}
 
 	if len(failedStepsOutput) > 0 {
-		_, _ = fmt.Fprintln(f.out, "\n\n--- "+red("Failed steps:")+"\n")
-		_, _ = fmt.Fprint(f.out, strings.Join(failedStepsOutput, "\n"))
+		if _, err := fmt.Fprintln(f.out, "\n\n--- "+red("Failed steps:")+"\n"); err != nil {
+			panic(err)
+		}
+		if _, err := fmt.Fprint(f.out, strings.Join(failedStepsOutput, "\n")); err != nil {
+			panic(err)
+		}
 	}
-	_, _ = fmt.Fprintln(f.out, "")
+	if _, err := fmt.Fprintln(f.out, ""); err != nil {
+		panic(err)
+	}
 
 	f.Base.Summary()
 }
@@ -91,23 +101,44 @@ func (f *Progress) step(pickleStepID string) {
 
 	switch pickleStepResult.Status {
 	case passed:
-		_, _ = fmt.Fprint(f.out, green("."))
+		_, err := fmt.Fprint(f.out, green("."))
+		if err != nil {
+			panic(err)
+		}
 	case skipped:
-		_, _ = fmt.Fprint(f.out, cyan("-"))
+		_, err := fmt.Fprint(f.out, cyan("-"))
+		if err != nil {
+			panic(err)
+		}
 	case failed:
-		_, _ = fmt.Fprint(f.out, red("F"))
+		_, err := fmt.Fprint(f.out, red("F"))
+		if err != nil {
+			panic(err)
+		}
 	case undefined:
-		_, _ = fmt.Fprint(f.out, yellow("U"))
+		_, err := fmt.Fprint(f.out, yellow("U"))
+		if err != nil {
+			panic(err)
+		}
 	case ambiguous:
-		_, _ = fmt.Fprint(f.out, yellow("A"))
+		_, err := fmt.Fprint(f.out, yellow("A"))
+		if err != nil {
+			panic(err)
+		}
 	case pending:
-		_, _ = fmt.Fprint(f.out, yellow("P"))
+		_, err := fmt.Fprint(f.out, yellow("P"))
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	*f.Steps++
 
 	if math.Mod(float64(*f.Steps), float64(f.StepsPerRow)) == 0 {
-		_, _ = fmt.Fprintf(f.out, " %d\n", *f.Steps)
+		_, err := fmt.Fprintf(f.out, " %d\n", *f.Steps)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 

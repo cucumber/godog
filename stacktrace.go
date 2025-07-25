@@ -128,14 +128,23 @@ func (f *traceError) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 'v':
 		if s.Flag('+') {
-			_, _ = io.WriteString(s, f.msg)
+			_, err := io.WriteString(s, f.msg)
+			if err != nil {
+				panic(err)
+			}
 			f.stack.Format(s, verb)
 			return
 		}
 		fallthrough
 	case 's':
-		_, _ = io.WriteString(s, f.msg)
+		_, err := io.WriteString(s, f.msg)
+		if err != nil {
+			panic(err)
+		}
 	case 'q':
-		_, _ = fmt.Fprintf(s, "%q", f.msg)
+		_, err := fmt.Fprintf(s, "%q", f.msg)
+		if err != nil {
+			panic(err)
+		}
 	}
 }

@@ -122,7 +122,7 @@ func (cw *tagColorWriter) Write(p []byte) (int, error) {
 			default:
 				_, err := cw.resetBuffer()
 				if err != nil {
-					return r, err
+					return r, fmt.Errorf("failed to reset buffer: %w", err)
 				}
 				cw.state = outsideCsiCode
 			}
@@ -137,7 +137,9 @@ func (cw *tagColorWriter) Write(p []byte) (int, error) {
 				}
 				first = i + 1
 				if ch == sgrCode {
-					cw.changeColor()
+					if err := cw.changeColor(); err != nil {
+						return r, fmt.Errorf("failed to change color: %w", err)
+					}
 				}
 				n, _ := cw.resetBuffer()
 				// Add one more to the size of the buffer for the last ch
@@ -158,7 +160,7 @@ func (cw *tagColorWriter) Write(p []byte) (int, error) {
 	return r, err
 }
 
-func (cw *tagColorWriter) changeColor() {
+func (cw *tagColorWriter) changeColor() error {
 	strParam := cw.paramBuf.String()
 	if len(strParam) <= 0 {
 		strParam = "0"
@@ -184,9 +186,12 @@ func (cw *tagColorWriter) changeColor() {
 			}
 		default:
 			cw.tag += c
-			_, _ = fmt.Fprint(cw.w, "<"+cw.tag+">")
+			if _, err := fmt.Fprint(cw.w, "<"+cw.tag+">"); err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
 func TestTagColorWriter(t *testing.T) {
