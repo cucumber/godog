@@ -74,6 +74,9 @@ func TestScenarioContext_Step(t *testing.T) {
 		{n: "ScenarioContext should panic if step handler params include unsupported slice parameter type",
 			p: "func has unsupported parameter type: the slice parameter 0 type []string is not supported",
 			f: func() { ctx.Step(".*", nokInvalidParamInvalidSliceType) }},
+		{n: "ScenarioContext should panic if step handler params include unsupported pointer parameter type",
+			p: "func has unsupported parameter type: the data type of parameter 0 type *int is not supported",
+			f: func() { ctx.Step(".*", nokInvalidParamUnsupportedPointer) }},
 
 		{n: "ScenarioContext should panic if step return type is []string",
 			p: "expected handler to return one of error or context.Context or godog.Steps or (context.Context, error), but got: []string",
@@ -110,6 +113,7 @@ func nokInvalidParamStruct(_ struct{})                                {}
 func nokInvalidParamPickleDocStringStruct(_ messages.PickleDocString) {}
 func nokInvalidParamPickleStepArgumentStruct(_ messages.PickleTable)  {}
 func nokInvalidParamInvalidSliceType([]string)                        {}
+func nokInvalidParamUnsupportedPointer(*int)                          {}
 func nokSliceStringResult() []string                                  { return nil }
 func nokLimitCase3() (string, int, error)                             { return "", 0, nil }
 func nokLimitCase5() (int, int, int, int, error)                      { return 0, 0, 0, 0, nil }
