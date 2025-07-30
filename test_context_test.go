@@ -97,26 +97,25 @@ func TestScenarioContext_Step(t *testing.T) {
 	}
 }
 func okValidParams(
-	_ int, _ int64, _ int32, _ int16, _ int8,
-	_ uint, _ uint64, _ uint32, _ uint16, _ uint8,
-	_ string,
-	_ float64, _ float32,
-	_ *messages.PickleDocString, _ *messages.PickleTable,
-	_ []byte) {
+	int, int64, int32, int16, int8,
+	uint, uint64, uint32, uint16, uint8,
+	string, float64, float32, []byte,
+	*messages.PickleDocString, *messages.PickleTable,
+) {
 }
-func okVoidResult()                                                   {}
-func okErrorResult() error                                            { return nil }
-func okStepsResult() Steps                                            { return nil }
-func okContextErrorResult() (context.Context, error)                  { return nil, nil }
-func nokInvalidParamCtxNotFirst(_ int, _ context.Context)             {}
-func nokInvalidParamStruct(_ struct{})                                {}
-func nokInvalidParamPickleDocStringStruct(_ messages.PickleDocString) {}
-func nokInvalidParamPickleStepArgumentStruct(_ messages.PickleTable)  {}
-func nokInvalidParamInvalidSliceType([]string)                        {}
-func nokInvalidParamUnsupportedPointer(*int)                          {}
-func nokSliceStringResult() []string                                  { return nil }
-func nokLimitCase3() (string, int, error)                             { return "", 0, nil }
-func nokLimitCase5() (int, int, int, int, error)                      { return 0, 0, 0, 0, nil }
-func nokInvalidReturnInterfaceType() interface{}                      { return 0 }
-func nokInvalidReturnSliceType() []int                                { return nil }
-func nokInvalidReturnOtherType() chan int                             { return nil }
+func okVoidResult()                                                 {}
+func okErrorResult() error                                          { return nil }
+func okStepsResult() Steps                                          { return nil }
+func okContextErrorResult() (context.Context, error)                { return nil, nil }
+func nokInvalidParamCtxNotFirst(int, context.Context)               {}
+func nokInvalidParamStruct(struct{})                                {}
+func nokInvalidParamPickleDocStringStruct(messages.PickleDocString) {}
+func nokInvalidParamPickleStepArgumentStruct(messages.PickleTable)  {}
+func nokInvalidParamInvalidSliceType([]string)                      {}
+func nokInvalidParamUnsupportedPointer(*int)                        {}
+func nokSliceStringResult() []string                                { return nil }
+func nokLimitCase3() (string, int, error)                           { return "", 0, nil }
+func nokLimitCase5() (int, int, int, int, error)                    { return 0, 0, 0, 0, nil }
+func nokInvalidReturnInterfaceType() interface{}                    { return 0 }
+func nokInvalidReturnSliceType() []int                              { return nil }
+func nokInvalidReturnOtherType() chan int                           { return nil }
