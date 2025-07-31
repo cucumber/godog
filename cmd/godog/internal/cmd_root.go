@@ -1,8 +1,10 @@
 package internal
 
 import (
+	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"log"
 
 	"github.com/cucumber/godog/internal/flags"
 )
@@ -23,7 +25,10 @@ and contain buildable go source.`,
 		RunE: runRootCmd,
 	}
 
-	bindRootCmdFlags(rootCmd.Flags())
+	err := bindRootCmdFlags(rootCmd.Flags())
+	if err != nil {
+		log.Println(err)
+	}
 
 	return rootCmd
 }
@@ -44,7 +49,7 @@ func runRootCmd(cmd *cobra.Command, args []string) error {
 	return runCmdRunFunc(cmd, args)
 }
 
-func bindRootCmdFlags(flagSet *pflag.FlagSet) {
+func bindRootCmdFlags(flagSet *pflag.FlagSet) error {
 	flagSet.StringVarP(&output, "output", "o", "", "compiles the test runner to the named file")
 	flagSet.BoolVar(&version, "version", false, "show current version")
 
@@ -52,14 +57,21 @@ func bindRootCmdFlags(flagSet *pflag.FlagSet) {
 
 	// Since using the root command directly is deprecated.
 	// All flags will be hidden
-	flagSet.MarkHidden("output")
-	flagSet.MarkHidden("version")
-	flagSet.MarkHidden("no-colors")
-	flagSet.MarkHidden("concurrency")
-	flagSet.MarkHidden("tags")
-	flagSet.MarkHidden("format")
-	flagSet.MarkHidden("definitions")
-	flagSet.MarkHidden("stop-on-failure")
-	flagSet.MarkHidden("strict")
-	flagSet.MarkHidden("random")
+	for _, name := range []string{
+		"output",
+		"version",
+		"no-colors",
+		"concurrency",
+		"tags",
+		"format",
+		"definitions",
+		"stop-on-failure",
+		"strict",
+		"random",
+	} {
+		if err := flagSet.MarkHidden(name); err != nil {
+			return fmt.Errorf("failed to hide deprecated root command flag %q: %w", name, err)
+		}
+	}
+	return nil
 }

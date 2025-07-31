@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"sort"
 	"strconv"
 	"strings"
@@ -207,15 +208,25 @@ func usage(set *flag.FlagSet, w io.Writer) func() {
 		}
 
 		// --- GENERAL ---
-		fmt.Fprintln(w, colors.Yellow("Usage:"))
-		fmt.Fprintf(w, s(2)+"go test [options]\n\n")
+		if _, err := fmt.Fprintln(w, colors.Yellow("Usage:")); err != nil {
+			log.Fatal(err)
+		}
+		if _, err := fmt.Fprintf(w, s(2)+"go test [options]\n\n"); err != nil {
+			log.Fatal(err)
+		}
 
 		// --- OPTIONS ---
-		fmt.Fprintln(w, colors.Yellow("Options:"))
-		for _, f := range list {
-			fmt.Fprintln(w, opt(f.name(), f.descr))
+		if _, err := fmt.Fprintln(w, colors.Yellow("Options:")); err != nil {
+			log.Fatal(err)
 		}
-		fmt.Fprintln(w, "")
+		for _, f := range list {
+			if _, err := fmt.Fprintln(w, opt(f.name(), f.descr)); err != nil {
+				log.Fatal(err)
+			}
+		}
+		if _, err := fmt.Fprintln(w, ""); err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 

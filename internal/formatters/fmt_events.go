@@ -32,7 +32,10 @@ func (f *Events) event(ev interface{}) {
 	if err != nil {
 		panic(fmt.Sprintf("failed to marshal stream event: %+v - %v", ev, err))
 	}
-	fmt.Fprintln(f.out, string(data))
+	_, err = fmt.Fprintln(f.out, string(data))
+	if err != nil {
+		panic(fmt.Sprintf("failed to print data: %v", err))
+	}
 }
 
 // Pickle receives scenario.

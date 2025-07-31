@@ -15,7 +15,7 @@ type Feature struct {
 
 // FindRule returns the rule to which the given scenario belongs
 func (f Feature) FindRule(astScenarioID string) *messages.Rule {
-	for _, child := range f.GherkinDocument.Feature.Children {
+	for _, child := range f.Feature.Children {
 		if ru := child.Rule; ru != nil {
 			if rc := child.Rule; rc != nil {
 				for _, rcc := range rc.Children {
@@ -31,7 +31,7 @@ func (f Feature) FindRule(astScenarioID string) *messages.Rule {
 
 // FindScenario returns the scenario in the feature or in a rule in the feature
 func (f Feature) FindScenario(astScenarioID string) *messages.Scenario {
-	for _, child := range f.GherkinDocument.Feature.Children {
+	for _, child := range f.Feature.Children {
 		if sc := child.Scenario; sc != nil && sc.Id == astScenarioID {
 			return sc
 		}
@@ -51,7 +51,7 @@ func (f Feature) FindScenario(astScenarioID string) *messages.Scenario {
 func (f Feature) FindBackground(astScenarioID string) *messages.Background {
 	var bg *messages.Background
 
-	for _, child := range f.GherkinDocument.Feature.Children {
+	for _, child := range f.Feature.Children {
 		if tmp := child.Background; tmp != nil {
 			bg = tmp
 		}
@@ -78,7 +78,7 @@ func (f Feature) FindBackground(astScenarioID string) *messages.Background {
 
 // FindExample ...
 func (f Feature) FindExample(exampleAstID string) (*messages.Examples, *messages.TableRow) {
-	for _, child := range f.GherkinDocument.Feature.Children {
+	for _, child := range f.Feature.Children {
 		if sc := child.Scenario; sc != nil {
 			for _, example := range sc.Examples {
 				for _, row := range example.TableBody {
@@ -108,7 +108,7 @@ func (f Feature) FindExample(exampleAstID string) (*messages.Examples, *messages
 
 // FindStep ...
 func (f Feature) FindStep(astStepID string) *messages.Step {
-	for _, child := range f.GherkinDocument.Feature.Children {
+	for _, child := range f.Feature.Children {
 
 		if ru := child.Rule; ru != nil {
 			for _, ch := range ru.Children {

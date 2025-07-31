@@ -79,7 +79,7 @@ func DefinitionID(sd *models.StepDefinition) string {
 	ptr := sd.HandlerValue.Pointer()
 	f := runtime.FuncForPC(ptr)
 	dir := filepath.Dir(sd.File)
-	fn := strings.Replace(f.Name(), dir, "", -1)
+	fn := strings.ReplaceAll(f.Name(), dir, "")
 	var parts []string
 	for _, gr := range matchFuncDefRef.FindAllStringSubmatch(fn, -1) {
 		parts = append(parts, strings.Trim(gr[1], "_."))
@@ -95,7 +95,7 @@ func DefinitionID(sd *models.StepDefinition) string {
 	if pkg := os.Getenv("GODOG_TESTED_PACKAGE"); len(pkg) > 0 {
 		fn = strings.Replace(fn, pkg, "", 1)
 		fn = strings.TrimLeft(fn, ".")
-		fn = strings.Replace(fn, "..", ".", -1)
+		fn = strings.ReplaceAll(fn, "..", ".")
 	}
 
 	return fmt.Sprintf("%s:%d -> %s", filepath.Base(sd.File), sd.Line, fn)

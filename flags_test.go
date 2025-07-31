@@ -166,7 +166,7 @@ func TestBindFlagsShouldRespectFlagOverrides(t *testing.T) {
 
 	BindFlags("optOverrides.", &flagSet, &opts)
 
-	flagSet.Parse([]string{
+	err := flagSet.Parse([]string{
 		"--optOverrides.format=junit",
 		"--optOverrides.tags=test2",
 		"--optOverrides.concurrency=3",
@@ -176,6 +176,9 @@ func TestBindFlagsShouldRespectFlagOverrides(t *testing.T) {
 		"--optOverrides.no-colors=false",
 		"--optOverrides.random=2",
 	})
+	if err != nil {
+		t.Fatalf("failed to parse flags: %v", err)
+	}
 
 	if opts.Format != "junit" {
 		t.Fatalf("expected Format: junit, but it was: %s", opts.Format)

@@ -33,7 +33,7 @@ func match(filter string, tags []*messages.PickleTag) (ok bool) {
 
 		for _, tag := range strings.Split(andTags, ",") {
 			tag = strings.TrimSpace(tag)
-			tag = strings.Replace(tag, "@", "", -1)
+			tag = strings.ReplaceAll(tag, "@", "")
 
 			okComma = contains(tags, tag) || okComma
 
@@ -51,7 +51,7 @@ func match(filter string, tags []*messages.PickleTag) (ok bool) {
 
 func contains(tags []*messages.PickleTag, tag string) bool {
 	for _, t := range tags {
-		tagName := strings.Replace(t.Name, "@", "", -1)
+		tagName := strings.ReplaceAll(t.Name, "@", "")
 
 		if tagName == tag {
 			return true
