@@ -15,7 +15,7 @@ func Test_BindFlagsShouldRespectFlagDefaults(t *testing.T) {
 
 	flags.BindRunCmdFlags("optDefaults.", &flagSet, &opts)
 
-	flagSet.Parse([]string{})
+	_ = flagSet.Parse([]string{})
 
 	assert.Equal(t, "pretty", opts.Format)
 	assert.Equal(t, "", opts.Tags)
@@ -42,7 +42,7 @@ func Test_BindFlagsShouldRespectFlagOverrides(t *testing.T) {
 
 	flags.BindRunCmdFlags("optOverrides.", &flagSet, &opts)
 
-	flagSet.Parse([]string{
+	err := flagSet.Parse([]string{
 		"--optOverrides.format=junit",
 		"--optOverrides.tags=test2",
 		"--optOverrides.concurrency=3",
@@ -52,6 +52,9 @@ func Test_BindFlagsShouldRespectFlagOverrides(t *testing.T) {
 		"--optOverrides.no-colors=false",
 		"--optOverrides.random=2",
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	assert.Equal(t, "junit", opts.Format)
 	assert.Equal(t, "test2", opts.Tags)

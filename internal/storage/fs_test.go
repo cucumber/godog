@@ -84,7 +84,11 @@ func TestStorage_Open_OS(t *testing.T) {
 
 			baseDir := filepath.Join(os.TempDir(), t.Name(), "godogs")
 			err := os.MkdirAll(baseDir+"/a", 0755)
-			defer os.RemoveAll(baseDir)
+			defer func() {
+				if err := os.RemoveAll(baseDir); err != nil {
+					t.Fatal(err)
+				}
+			}()
 
 			require.Nil(t, err)
 

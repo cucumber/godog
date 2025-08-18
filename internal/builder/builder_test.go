@@ -199,7 +199,11 @@ func testWithSourceNotInGoPath(t *testing.T) {
 	}
 
 	err := buildTestPackage(dir, files)
-	defer os.RemoveAll(dir)
+	defer func() {
+		if err := os.RemoveAll(dir); err != nil {
+			t.Fatal(err)
+		}
+	}()
 	require.Nil(t, err)
 
 	prevDir, err := os.Getwd()
@@ -207,7 +211,11 @@ func testWithSourceNotInGoPath(t *testing.T) {
 
 	err = os.Chdir(dir)
 	require.Nil(t, err)
-	defer os.Chdir(prevDir)
+	defer func() {
+		if err := os.Chdir(prevDir); err != nil {
+			t.Fatal(err)
+		}
+	}()
 
 	testCmd := buildTestCommand(t, "", "godogs.feature")
 	testCmd.Env = os.Environ()
@@ -253,14 +261,24 @@ func testWithIncorrectProjectStructure(t *testing.T) {
 	}
 
 	err := buildTestPackage(dir, files)
-	defer os.RemoveAll(dir)
+	defer func(path string) {
+		err := os.RemoveAll(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}(dir)
 	require.Nil(t, err)
 
 	prevDir, err := os.Getwd()
 	require.Nil(t, err)
 	err = os.Chdir(dir)
 	require.Nil(t, err)
-	defer os.Chdir(prevDir)
+	defer func(dir string) {
+		err := os.Chdir(dir)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}(prevDir)
 
 	testBin, err := filepath.Abs(filepath.Join(dir, "godog.test"))
 	require.Nil(t, err)
@@ -281,7 +299,12 @@ func testWithinGopath(t *testing.T) {
 	builderTC := builderTestCase{}
 
 	gopath := filepath.Join(os.TempDir(), t.Name(), "_gp")
-	defer os.RemoveAll(gopath)
+	defer func(path string) {
+		err := os.RemoveAll(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}(gopath)
 
 	builderTC.dir = filepath.Join(gopath, "src", "godogs")
 	builderTC.files = map[string]string{
@@ -310,7 +333,12 @@ func testWithVendoredGodogWithoutModule(t *testing.T) {
 	builderTC := builderTestCase{}
 
 	gopath := filepath.Join(os.TempDir(), t.Name(), "_gp")
-	defer os.RemoveAll(gopath)
+	defer func(path string) {
+		err := os.RemoveAll(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}(gopath)
 
 	builderTC.dir = filepath.Join(gopath, "src", "godogs")
 	builderTC.files = map[string]string{
@@ -341,7 +369,12 @@ type builderTestCase struct {
 
 func (bt builderTestCase) run(t *testing.T) {
 	err := buildTestPackage(bt.dir, bt.files)
-	defer os.RemoveAll(bt.dir)
+	defer func(path string) {
+		err := os.RemoveAll(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}(bt.dir)
 	require.Nil(t, err)
 
 	for _, c := range bt.goModCmds {
