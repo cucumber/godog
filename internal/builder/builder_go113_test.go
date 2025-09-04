@@ -14,7 +14,11 @@ func testWithVendoredGodogAndMod(t *testing.T) {
 	builderTC := builderTestCase{}
 
 	gopath := filepath.Join(os.TempDir(), t.Name(), "_gpc")
-	defer os.RemoveAll(gopath)
+	defer func() {
+		if err := os.RemoveAll(gopath); err != nil {
+			t.Fatal(err)
+		}
+	}()
 
 	builderTC.dir = filepath.Join(gopath, "src", "godogs")
 	builderTC.files = map[string]string{

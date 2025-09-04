@@ -34,13 +34,13 @@ func (f *JUnit) Summary() {
 
 	_, err := io.WriteString(f.out, xml.Header)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "failed to write junit string:", err)
+		_, _ = fmt.Fprintln(os.Stderr, "failed to write junit string:", err)
 	}
 
 	enc := xml.NewEncoder(f.out)
 	enc.Indent("", s(2))
 	if err = enc.Encode(suite); err != nil {
-		fmt.Fprintln(os.Stderr, "failed to write junit xml:", err)
+		_, _ = fmt.Fprintln(os.Stderr, "failed to write junit xml:", err)
 	}
 }
 

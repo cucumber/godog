@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"log"
 	"os"
 	"regexp"
 	"strconv"
@@ -39,7 +40,12 @@ func parseFeatureFile(fsys fs.FS, path, dialect string, newIDFunc func() string)
 		return nil, err
 	}
 
-	defer reader.Close()
+	defer func(reader fs.File) {
+		err := reader.Close()
+		if err != nil {
+			log.Printf("failed to close file: %v\n", err)
+		}
+	}(reader)
 
 	var buf bytes.Buffer
 	gherkinDocument, err := gherkin.ParseGherkinDocumentForLanguage(io.TeeReader(reader, &buf), dialect, newIDFunc)
@@ -105,7 +111,12 @@ func parsePath(fsys fs.FS, path, dialect string, newIDFunc func() string) ([]*mo
 		if err != nil {
 			return nil, err
 		}
-		defer file.Close()
+		defer func(file fs.File) {
+			err := file.Close()
+			if err != nil {
+				log.Printf("failed to close file: %v\n", err)
+			}
+		}(file)
 
 		return file.Stat()
 	}()

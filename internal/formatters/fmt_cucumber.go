@@ -49,7 +49,10 @@ func (f *Cuke) Summary() {
 		panic(err)
 	}
 
-	fmt.Fprintf(f.out, "%s\n", string(dat))
+	_, err = fmt.Fprintf(f.out, "%s\n", string(dat))
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (f *Cuke) buildCukeFeatures(features []*models.Feature) (res []CukeFeatureJSON) {
@@ -322,5 +325,5 @@ func (f *Cuke) buildCukeStep(pickle *messages.Pickle, stepResult models.PickleSt
 }
 
 func makeCukeID(name string) string {
-	return strings.Replace(strings.ToLower(name), " ", "-", -1)
+	return strings.ReplaceAll(strings.ToLower(name), " ", "-")
 }

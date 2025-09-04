@@ -120,7 +120,10 @@ func (cw *tagColorWriter) Write(p []byte) (int, error) {
 				cw.state = secondCsiCode
 				last = i - 1
 			default:
-				cw.resetBuffer()
+				_, err := cw.resetBuffer()
+				if err != nil {
+					return r, fmt.Errorf("failed to reset buffer: %w", err)
+				}
 				cw.state = outsideCsiCode
 			}
 		case secondCsiCode:
@@ -134,7 +137,9 @@ func (cw *tagColorWriter) Write(p []byte) (int, error) {
 				}
 				first = i + 1
 				if ch == sgrCode {
-					cw.changeColor()
+					if err := cw.changeColor(); err != nil {
+						return r, fmt.Errorf("failed to change color: %w", err)
+					}
 				}
 				n, _ := cw.resetBuffer()
 				// Add one more to the size of the buffer for the last ch
@@ -155,7 +160,7 @@ func (cw *tagColorWriter) Write(p []byte) (int, error) {
 	return r, err
 }
 
-func (cw *tagColorWriter) changeColor() {
+func (cw *tagColorWriter) changeColor() error {
 	strParam := cw.paramBuf.String()
 	if len(strParam) <= 0 {
 		strParam = "0"
@@ -167,7 +172,7 @@ func (cw *tagColorWriter) changeColor() {
 		case !ok:
 			switch p {
 			case ansiReset:
-				fmt.Fprint(cw.w, "</"+cw.tag+">")
+				_, _ = fmt.Fprint(cw.w, "</"+cw.tag+">")
 				cw.tag = ""
 			case ansiIntensityOn:
 				cw.tag = "bold-" + cw.tag
@@ -181,9 +186,12 @@ func (cw *tagColorWriter) changeColor() {
 			}
 		default:
 			cw.tag += c
-			fmt.Fprint(cw.w, "<"+cw.tag+">")
+			if _, err := fmt.Fprint(cw.w, "<"+cw.tag+">"); err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
 func TestTagColorWriter(t *testing.T) {
@@ -191,7 +199,9 @@ func TestTagColorWriter(t *testing.T) {
 	w := &tagColorWriter{w: &buf}
 
 	s := fmt.Sprintf("text %s then %s", colors.Red("in red"), colors.Yellow("yel"))
-	fmt.Fprint(w, s)
+	if _, err := fmt.Fprint(w, s); err != nil {
+		t.Fatal(err)
+	}
 
 	expected := "text <red>in red</red> then <yellow>yel</yellow>"
 	if buf.String() != expected {
@@ -208,7 +218,9 @@ func TestTagBoldColorWriter(t *testing.T) {
 		colors.Bold(colors.Red)("in red"),
 		colors.Bold(colors.Yellow)("yel"),
 	)
-	fmt.Fprint(w, s)
+	if _, err := fmt.Fprint(w, s); err != nil {
+		t.Fatal(err)
+	}
 
 	expected := "text <bold-red>in red</bold-red> then <bold-yellow>yel</bold-yellow>"
 	if buf.String() != expected {

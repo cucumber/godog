@@ -52,27 +52,27 @@ And step passed f2s4:3
 		ScenarioInitializer: func(sc *godog.ScenarioContext) {
 			sc.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
 				if err != nil {
-					_, _ = out.WriteString(fmt.Sprintf("scenario %q ended with error %q\n", sc.Name, err.Error()))
+					_, _ = fmt.Fprintf(out, "scenario %q ended with error %q\n", sc.Name, err)
 				} else {
-					_, _ = out.WriteString(fmt.Sprintf("scenario %q passed\n", sc.Name))
+					_, _ = fmt.Fprintf(out, "scenario %q passed\n", sc.Name)
 				}
 
 				return ctx, nil
 			})
 			sc.StepContext().After(func(ctx context.Context, st *godog.Step, status godog.StepResultStatus, err error) (context.Context, error) {
-				_, _ = out.WriteString(fmt.Sprintf("step %q finished with status %s\n", st.Text, status.String()))
+				_, _ = fmt.Fprintf(out, "step %q finished with status %s\n", st.Text, status.String())
 				return ctx, nil
 			})
 			sc.Step("failed (.+)", func(s string) error {
-				_, _ = out.WriteString(fmt.Sprintf("\nstep invoked: %q, failed\n", s))
+				_, _ = fmt.Fprintf(out, "\nstep invoked: %q, failed\n", s)
 				return errors.New("failed")
 			})
 			sc.Step("skipped (.+)", func(s string) error {
-				_, _ = out.WriteString(fmt.Sprintf("\nstep invoked: %q, skipped\n", s))
+				_, _ = fmt.Fprintf(out, "\nstep invoked: %q, skipped\n", s)
 				return godog.ErrSkip
 			})
 			sc.Step("passed (.+)", func(s string) {
-				_, _ = out.WriteString(fmt.Sprintf("\nstep invoked: %q, passed\n", s))
+				_, _ = fmt.Fprintf(out, "\nstep invoked: %q, passed\n", s)
 			})
 		},
 		Options: &godog.Options{

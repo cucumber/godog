@@ -28,14 +28,11 @@ jobs:
             ${{ runner.os }}-go-cache
       - name: Run gofmt
         run: gofmt -d -e . 2>&1 | tee outfile && test -z "$(cat outfile)" && rm outfile
-      - name: Run staticcheck
+      - name: Run golangci-lint
         if: matrix.go-version == 'stable'
-        uses: dominikh/staticcheck-action@v1.4.0
+        uses: golangci/golangci-lint-action@v8
         with:
-          version: "latest"
-          install-go: false
-          cache-key: ${{ matrix.go }}
-
+          version: v2.1
       - name: Run go vet
         run: |
           go vet ./...

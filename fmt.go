@@ -52,7 +52,7 @@ type storageFormatter interface {
 // suite name and io.Writer to record output
 type FormatterFunc = formatters.FormatterFunc
 
-func printStepDefinitions(steps []*models.StepDefinition, w io.Writer) {
+func printStepDefinitions(steps []*models.StepDefinition, w io.Writer) error {
 	var longest int
 	for _, def := range steps {
 		n := utf8.RuneCountInString(def.Expr.String())
@@ -65,14 +65,22 @@ func printStepDefinitions(steps []*models.StepDefinition, w io.Writer) {
 		n := utf8.RuneCountInString(def.Expr.String())
 		location := internal_fmt.DefinitionID(def)
 		spaces := strings.Repeat(" ", longest-n)
-		fmt.Fprintln(w,
+		_, err := fmt.Fprintln(w,
 			colors.Yellow(def.Expr.String())+spaces,
 			colors.Bold(colors.Black)("# "+location))
+		if err != nil {
+			return fmt.Errorf("failed to print step definition: %w", err)
+		}
 	}
 
 	if len(steps) == 0 {
-		fmt.Fprintln(w, "there were no contexts registered, could not find any step definition..")
+		_, err := fmt.Fprintln(w, "there were no contexts registered, could not find any step definition..")
+		if err != nil {
+			return fmt.Errorf("failed to print no any step definition message: %w", err)
+		}
 	}
+
+	return nil
 }
 
 // NewBaseFmt creates a new base formatter.

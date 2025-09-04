@@ -273,7 +273,7 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 		errMsg = fmt.Sprintf(", step def also returned an error: %v", result1)
 	}
 
-	text := sd.StepDefinition.Expr.String()
+	text := sd.Expr.String()
 
 	if result0 == nil {
 		panic(fmt.Sprintf("step definition '%v' with return type (context.Context, error) must not return <nil> for the context.Context value%s", text, errMsg))

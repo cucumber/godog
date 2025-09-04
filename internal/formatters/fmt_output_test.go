@@ -24,7 +24,10 @@ var tT *testing.T
 func Test_FmtOutput(t *testing.T) {
 	tT = t
 	pkg := os.Getenv("GODOG_TESTED_PACKAGE")
-	os.Setenv("GODOG_TESTED_PACKAGE", "github.com/cucumber/godog")
+	err := os.Setenv("GODOG_TESTED_PACKAGE", "github.com/cucumber/godog")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	featureFiles, err := listFmtOutputTestsFeatureFiles()
 	require.Nil(t, err)
@@ -37,7 +40,10 @@ func Test_FmtOutput(t *testing.T) {
 		}
 	}
 
-	os.Setenv("GODOG_TESTED_PACKAGE", pkg)
+	err = os.Setenv("GODOG_TESTED_PACKAGE", pkg)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func listFmtOutputTestsFeatureFiles() (featureFiles []string, err error) {
@@ -197,8 +203,8 @@ func normalise(s string) string {
 
 	m := regexp.MustCompile("fmt_output_test.go:[0-9]+")
 	normalised := m.ReplaceAllString(s, "fmt_output_test.go:XXX")
-	normalised = strings.Replace(normalised, "\r\n", "\n", -1)
-	normalised = strings.Replace(normalised, "\\r\\n", "\\n", -1)
+	normalised = strings.ReplaceAll(normalised, "\r\n", "\n")
+	normalised = strings.ReplaceAll(normalised, "\\r\\n", "\\n")
 
 	return normalised
 }
