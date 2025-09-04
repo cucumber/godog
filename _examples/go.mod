@@ -8,7 +8,7 @@ require (
 	github.com/DATA-DOG/go-txdb v0.2.1
 	github.com/cucumber/godog v0.15.1
 	github.com/go-sql-driver/mysql v1.7.1
-	github.com/spf13/pflag v1.0.9
+	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.8.2
 )
 
