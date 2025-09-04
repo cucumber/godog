@@ -50,6 +50,6 @@ jobs:
           godog -f progress --strict
       - name: Report on code coverage
         if: matrix.go-version == 'stable'
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           file: ./coverage.txt
