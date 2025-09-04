@@ -7,7 +7,7 @@ require (
 	github.com/hashicorp/go-memdb v1.3.4
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.10
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.11.1
 )
 
 require (
