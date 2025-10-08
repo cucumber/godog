@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	messages "github.com/cucumber/messages/go/v21"
+	messages "github.com/cucumber/messages/go/v30"
 
 	gherkin "github.com/cucumber/gherkin/go/v26"
 	"github.com/stretchr/testify/assert"
