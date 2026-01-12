@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	gherkin "github.com/cucumber/gherkin/go/v26"
-	messages "github.com/cucumber/messages/go/v21"
+	messages "github.com/cucumber/messages/go/v31"
 	"github.com/stretchr/testify/require"
 
 	"github.com/cucumber/godog/internal/models"
