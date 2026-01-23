@@ -13,30 +13,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6
         with:
           go-version: stable
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       - name: Build artifacts
         run: |
           make artifacts
       - name: Upload linux amd64 binary
-        uses: actions/upload-release-asset@v1
+        uses: actions/upload-release-asset@e8f9f06c4b078e705bd2ea027f0926603fc9b4d5 # v1
         with:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: ./_artifacts/godog-${{ github.event.release.tag_name }}-linux-amd64.tar.gz
           asset_name: godog-${{ github.event.release.tag_name }}-linux-amd64.tar.gz
           asset_content_type: application/tar+gzip
       - name: Upload linux arm64 binary
-        uses: actions/upload-release-asset@v1
+        uses: actions/upload-release-asset@e8f9f06c4b078e705bd2ea027f0926603fc9b4d5 # v1
         with:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: ./_artifacts/godog-${{ github.event.release.tag_name }}-linux-arm64.tar.gz
           asset_name: godog-${{ github.event.release.tag_name }}-linux-arm64.tar.gz
           asset_content_type: application/tar+gzip
       - name: Upload darwin amd64 binary
-        uses: actions/upload-release-asset@v1
+        uses: actions/upload-release-asset@e8f9f06c4b078e705bd2ea027f0926603fc9b4d5 # v1
         with:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: ./_artifacts/godog-${{ github.event.release.tag_name }}-darwin-amd64.tar.gz
