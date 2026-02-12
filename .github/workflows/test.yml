@@ -8,13 +8,14 @@ jobs:
   test:
     strategy:
       matrix:
-        go-version: [ 1.16.x, 1.17.x, oldstable, stable ] # Lowest supported and current stable versions.
+        go-version: [ 1.17.x, oldstable, stable ] # Lowest supported and current stable versions.
     runs-on: ubuntu-latest
     steps:
       - name: Install Go
         uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
         with:
           go-version: ${{ matrix.go-version }}
+          cache-dependency-path: go.sum
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Go cache
