@@ -6,6 +6,7 @@ on:
       - created
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  TAG_NAME: ${{ github.event.release.tag_name }}
 
 permissions:
   contents: write # Required to upload assets
@@ -27,8 +28,8 @@ jobs:
         run: |
           make artifacts
       - name: Upload linux amd64 binary
-        run: gh release upload "${{ github.event.release.tag_name }}" ./_artifacts/godog-${{ github.event.release.tag_name }}-linux-amd64.tar.gz --clobber
+        run: gh release upload "$TAG_NAME" ./_artifacts/godog-$TAG_NAME-linux-amd64.tar.gz --clobber
       - name: Upload linux arm64 binary
-        run: gh release upload "${{ github.event.release.tag_name }}" ./_artifacts/godog-${{ github.event.release.tag_name }}-linux-arm64.tar.gz --clobber
+        run: gh release upload "$TAG_NAME" ./_artifacts/godog-$TAG_NAME-linux-arm64.tar.gz --clobber
       - name: Upload darwin amd64 binary
-        run: gh release upload "${{ github.event.release.tag_name }}" ./_artifacts/godog-${{ github.event.release.tag_name }}-darwin-amd64.tar.gz --clobber
+        run: gh release upload "$TAG_NAME" ./_artifacts/godog-$TAG_NAME-darwin-amd64.tar.gz --clobber
