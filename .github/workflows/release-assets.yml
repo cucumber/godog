@@ -6,6 +6,10 @@ on:
       - created
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  TAG_NAME: ${{ github.event.release.tag_name }}
+
+permissions:
+  contents: write # Required to upload assets
 
 jobs:
   build:
@@ -24,23 +28,8 @@ jobs:
         run: |
           make artifacts
       - name: Upload linux amd64 binary
-        uses: actions/upload-release-asset@e8f9f06c4b078e705bd2ea027f0926603fc9b4d5 # v1.0.2
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./_artifacts/godog-${{ github.event.release.tag_name }}-linux-amd64.tar.gz
-          asset_name: godog-${{ github.event.release.tag_name }}-linux-amd64.tar.gz
-          asset_content_type: application/tar+gzip
+        run: gh release upload "$TAG_NAME" ./_artifacts/godog-$TAG_NAME-linux-amd64.tar.gz --clobber
       - name: Upload linux arm64 binary
-        uses: actions/upload-release-asset@e8f9f06c4b078e705bd2ea027f0926603fc9b4d5 # v1.0.2
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./_artifacts/godog-${{ github.event.release.tag_name }}-linux-arm64.tar.gz
-          asset_name: godog-${{ github.event.release.tag_name }}-linux-arm64.tar.gz
-          asset_content_type: application/tar+gzip
+        run: gh release upload "$TAG_NAME" ./_artifacts/godog-$TAG_NAME-linux-arm64.tar.gz --clobber
       - name: Upload darwin amd64 binary
-        uses: actions/upload-release-asset@e8f9f06c4b078e705bd2ea027f0926603fc9b4d5 # v1.0.2
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./_artifacts/godog-${{ github.event.release.tag_name }}-darwin-amd64.tar.gz
-          asset_name: godog-${{ github.event.release.tag_name }}-darwin-amd64.tar.gz
-          asset_content_type: application/tar+gzip
+        run: gh release upload "$TAG_NAME" ./_artifacts/godog-$TAG_NAME-darwin-amd64.tar.gz --clobber
