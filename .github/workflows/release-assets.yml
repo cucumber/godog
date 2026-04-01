@@ -8,13 +8,14 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   TAG_NAME: ${{ github.event.release.tag_name }}
 
-permissions:
-  contents: write # Required to upload assets
+permissions: { }
 
 jobs:
   build:
     name: Upload Release Assets
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Install Go
         uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
