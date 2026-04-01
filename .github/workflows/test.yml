@@ -3,7 +3,13 @@ on:
   push:
     branches:
       - main
+      - renovate/**
   pull_request:
+    branches:
+      - '**'
+
+permissions: {}
+
 jobs:
   test:
     strategy:
