@@ -3,7 +3,13 @@ on:
   push:
     branches:
       - main
+      - renovate/**
   pull_request:
+    branches:
+      - '**'
+
+permissions: {}
+
 jobs:
   test:
     strategy:
@@ -12,13 +18,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
           go-version: ${{ matrix.go-version }}
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - name: Go cache
-        uses: actions/cache@v4
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: |
             ~/go/pkg/mod
@@ -30,7 +38,7 @@ jobs:
         run: gofmt -d -e . 2>&1 | tee outfile && test -z "$(cat outfile)" && rm outfile
       - name: Run staticcheck
         if: matrix.go-version == 'stable'
-        uses: dominikh/staticcheck-action@v1.4.0
+        uses: dominikh/staticcheck-action@9716614d4101e79b4340dd97b10e54d68234e431 # v1.4.1
         with:
           version: "latest"
           install-go: false
@@ -50,6 +58,6 @@ jobs:
           godog -f progress --strict
       - name: Report on code coverage
         if: matrix.go-version == 'stable'
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4.6.0
         with:
           file: ./coverage.txt
