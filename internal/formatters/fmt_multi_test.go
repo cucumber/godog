@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/cucumber/godog/formatters"
-	messages "github.com/cucumber/messages/go/v21"
+	messages "github.com/cucumber/messages/go/v32"
 	"github.com/stretchr/testify/assert"
 )
 
