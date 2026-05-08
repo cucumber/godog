@@ -1,19 +1,19 @@
 module github.com/cucumber/godog/_examples
 
-go 1.21.0
+go 1.24.0
 
 replace github.com/cucumber/godog => ../
 
 require (
 	github.com/DATA-DOG/go-txdb v0.2.1
 	github.com/cucumber/godog v0.15.1
-	github.com/go-sql-driver/mysql v1.9.3
+	github.com/go-sql-driver/mysql v1.10.0
 	github.com/spf13/pflag v1.0.10
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.11.1
 )
 
 require (
-	filippo.io/edwards25519 v1.1.0 // indirect
+	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/cucumber/gherkin/go/v26 v26.2.0 // indirect
 	github.com/cucumber/messages/go/v21 v21.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
