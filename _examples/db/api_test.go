@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -46,7 +47,7 @@ func (a *apiFeature) iSendrequestTo(method, endpoint string) (err error) {
 	defer func() {
 		switch t := recover().(type) {
 		case string:
-			err = fmt.Errorf(t)
+			err = errors.New(t)
 		case error:
 			err = t
 		}

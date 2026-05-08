@@ -38,8 +38,7 @@ jobs:
           test -e ~/go/bin/gorelease || go install golang.org/x/exp/cmd/gorelease@latest
           OUTPUT=$(gorelease 2>&1 || exit 0)
           echo "${OUTPUT}"
-          OUTPUT="${OUTPUT//$'\n'/%0A}"
-          echo "report=$OUTPUT" >> $GITHUB_OUTPUT
+          echo "report<<EOF" >> $GITHUB_OUTPUT && echo "$OUTPUT" >> $GITHUB_OUTPUT && echo "EOF" >> $GITHUB_OUTPUT
       - name: Comment Report
         continue-on-error: true
         uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
