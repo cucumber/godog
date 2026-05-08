@@ -27,6 +27,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 - fix: change bang to being in README by @nahomEagleLion in https://github.com/cucumber/godog/pull/687
 - Mark junit test cases as skipped if no pickle step results available by @mrsheepuk in https://github.com/cucumber/godog/pull/597
 - Print step declaration line instead of handler declaration line by @SpencerC in https://github.com/cucumber/godog/pull/668
+- fix(tags): the , operator was not working as an OR operator in the tags by @kcross-ctoken in https://github.com/cucumber/godog/pull/740
 
 ## [v0.15.0]
 
