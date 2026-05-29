@@ -1,0 +1,92 @@
+[
+    {
+        "uri": "formatter-tests/features/stop_on_first_failure.feature",
+        "id": "stop-on-first-failure",
+        "keyword": "Feature",
+        "name": "Stop on first failure",
+        "description": "",
+        "line": 1,
+        "elements": [
+            {
+                "id": "stop-on-first-failure;first-scenario---should-run-and-fail",
+                "keyword": "Scenario",
+                "name": "First scenario - should run and fail",
+                "description": "",
+                "line": 3,
+                "type": "scenario",
+                "steps": [
+                    {
+                        "keyword": "Given ",
+                        "name": "a passing step",
+                        "line": 4,
+                        "match": {
+                            "location": "fmt_output_test.go:XXX"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "When ",
+                        "name": "a failing step",
+                        "line": 5,
+                        "match": {
+                            "location": "fmt_output_test.go:XXX"
+                        },
+                        "result": {
+                            "status": "failed",
+                            "error_message": "step failed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "Then ",
+                        "name": "a passing step",
+                        "line": 6,
+                        "match": {
+                            "location": "fmt_output_test.go:XXX"
+                        },
+                        "result": {
+                            "status": "skipped"
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "stop-on-first-failure;second-scenario---should-be-skipped",
+                "keyword": "Scenario",
+                "name": "Second scenario - should be skipped",
+                "description": "",
+                "line": 8,
+                "type": "scenario",
+                "steps": [
+                    {
+                        "keyword": "Given ",
+                        "name": "a passing step",
+                        "line": 9,
+                        "match": {
+                            "location": "fmt_output_test.go:XXX"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    },
+                    {
+                        "keyword": "Then ",
+                        "name": "a passing step",
+                        "line": 10,
+                        "match": {
+                            "location": "fmt_output_test.go:XXX"
+                        },
+                        "result": {
+                            "status": "passed",
+                            "duration": 0
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+]
