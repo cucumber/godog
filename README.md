@@ -375,6 +375,7 @@ The following example binds **godog** flags with specified prefix `godog` in ord
 package main
 
 import (
+    "flag"
 	"os"
 	"testing"
 
@@ -394,6 +395,9 @@ func init() {
 }
 
 func TestMain(m *testing.M) {
+    // necessary for test flags to work properly when using pflag
+    pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+    pflag.ParseSkippedFlags(os.Args[1:], flag.CommandLine)
 	pflag.Parse()
 	opts.Paths = pflag.Args()
 
