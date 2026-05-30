@@ -400,6 +400,138 @@ func TestShouldSupportFloatTypes(t *testing.T) {
 	assert.Equal(t, `cannot convert argument 1: "22222222222222222222222222222222222222222222222222222222222222222.22" to float32: strconv.ParseFloat: parsing "22222222222222222222222222222222222222222222222222222222222222222.22": value out of range`, err.(error).Error())
 }
 
+func TestShouldSupportOptionalPtrTypes(t *testing.T) {
+	cases := []struct {
+		name     string
+		input    string
+		expected interface{}
+		invalid  string
+	}{
+		{"*int", "42", 42, "x"},
+		{"*int8", "42", int8(42), "x"},
+		{"*int16", "42", int16(42), "x"},
+		{"*int32", "42", int32(42), "x"},
+		{"*int64", "42", int64(42), "x"},
+		{"*uint", "42", uint(42), "x"},
+		{"*uint8", "42", uint8(42), "x"},
+		{"*uint16", "42", uint16(42), "x"},
+		{"*uint32", "42", uint32(42), "x"},
+		{"*uint64", "42", uint64(42), "x"},
+		{"*float32", "3.14", float32(3.14), "x"},
+		{"*float64", "3.14", float64(3.14), "x"},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			var got interface{}
+			elemType := reflect.TypeOf(c.expected)
+			ptrType := reflect.PointerTo(elemType)
+			fnType := reflect.FuncOf([]reflect.Type{ptrType}, nil, false)
+			handler := reflect.MakeFunc(fnType, func(args []reflect.Value) []reflect.Value {
+				if args[0].IsNil() {
+					got = nil
+				} else {
+					got = args[0].Elem().Interface()
+				}
+				return nil
+			}).Interface()
+
+			def := &models.StepDefinition{
+				StepDefinition: formatters.StepDefinition{Handler: handler},
+				HandlerValue:   reflect.ValueOf(handler),
+			}
+
+			// value present -> pointer to parsed value
+			def.Args = []interface{}{c.input}
+			_, err := def.Run(context.Background())
+			assert.Nil(t, err, "present value should not error")
+			assert.Equal(t, c.expected, got, "present value mismatch")
+
+			// empty capture -> nil pointer
+			got = "sentinel"
+			def.Args = []interface{}{""}
+			_, err = def.Run(context.Background())
+			assert.Nil(t, err, "empty capture should not error")
+			assert.Nil(t, got, "empty capture should yield nil")
+
+			// invalid value -> conversion error
+			def.Args = []interface{}{c.invalid}
+			_, err = def.Run(context.Background())
+			assert.True(t, errors.Is(err.(error), models.ErrCannotConvert), "invalid value should cause cannot convert error")
+		})
+	}
+}
+
+func TestShouldSupportOptionalPtrFromRegex(t *testing.T) {
+	intRe := regexp.MustCompile(`^I have (\d+)(?: and (\d+))?$`)
+	floatRe := regexp.MustCompile(`^I have (\S+)(?: and (\S+))?$`)
+
+	cases := []struct {
+		name     string
+		re       *regexp.Regexp
+		present  string
+		absent   string
+		expected interface{}
+	}{
+		{"*int", intRe, "I have 1 and 42", "I have 1", 42},
+		{"*int8", intRe, "I have 1 and 42", "I have 1", int8(42)},
+		{"*int16", intRe, "I have 1 and 42", "I have 1", int16(42)},
+		{"*int32", intRe, "I have 1 and 42", "I have 1", int32(42)},
+		{"*int64", intRe, "I have 1 and 42", "I have 1", int64(42)},
+		{"*uint", intRe, "I have 1 and 42", "I have 1", uint(42)},
+		{"*uint8", intRe, "I have 1 and 42", "I have 1", uint8(42)},
+		{"*uint16", intRe, "I have 1 and 42", "I have 1", uint16(42)},
+		{"*uint32", intRe, "I have 1 and 42", "I have 1", uint32(42)},
+		{"*uint64", intRe, "I have 1 and 42", "I have 1", uint64(42)},
+		{"*float32", floatRe, "I have 1.0 and 3.14", "I have 1.0", float32(3.14)},
+		{"*float64", floatRe, "I have 1.0 and 3.14", "I have 1.0", float64(3.14)},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			elemType := reflect.TypeOf(c.expected)
+			ptrType := reflect.PointerTo(elemType)
+
+			var got interface{}
+			fnType := reflect.FuncOf([]reflect.Type{elemType, ptrType}, nil, false)
+			handler := reflect.MakeFunc(fnType, func(args []reflect.Value) []reflect.Value {
+				if args[1].IsNil() {
+					got = nil
+				} else {
+					got = args[1].Elem().Interface()
+				}
+				return nil
+			}).Interface()
+
+			run := func(text string) interface{} {
+				m := c.re.FindStringSubmatch(text)
+				if len(m) == 0 {
+					t.Fatalf("regex did not match %q", text)
+				}
+				var args []interface{}
+				for _, g := range m[1:] {
+					args = append(args, g)
+				}
+				def := &models.StepDefinition{
+					StepDefinition: formatters.StepDefinition{Handler: handler},
+					HandlerValue:   reflect.ValueOf(handler),
+					Args:           args,
+				}
+				_, res := def.Run(context.Background())
+				return res
+			}
+
+			got = "sentinel"
+			assert.Nil(t, run(c.present))
+			assert.Equal(t, c.expected, got)
+
+			got = "sentinel"
+			assert.Nil(t, run(c.absent))
+			assert.Nil(t, got)
+		})
+	}
+}
+
 func TestShouldSupportGherkinDocstring(t *testing.T) {
 	var actualDocString *messages.PickleDocString
 	fnDocstring := func(a *messages.PickleDocString) {
@@ -556,16 +688,8 @@ func TestStepDefinition_Run_InvalidHandlerParamConversion(t *testing.T) {
 
 	// Lists some unsupported argument types for step handler.
 
-	// Pointers should work only for godog.Table/godog.DocString
-	test(t, func(a *int) { shouldNotBeCalled() }, "func has unsupported parameter type: the data type of parameter 0 type *int is not supported")
-	test(t, func(a *int64) { shouldNotBeCalled() }, "func has unsupported parameter type: the data type of parameter 0 type *int64 is not supported")
-	test(t, func(a *int32) { shouldNotBeCalled() }, "func has unsupported parameter type: the data type of parameter 0 type *int32 is not supported")
-	test(t, func(a *int16) { shouldNotBeCalled() }, "func has unsupported parameter type: the data type of parameter 0 type *int16 is not supported")
-	test(t, func(a *int8) { shouldNotBeCalled() }, "func has unsupported parameter type: the data type of parameter 0 type *int8 is not supported")
+	// Only pointers to numeric types (int/uint/float) and godog.Table/godog.DocString are supported.
 	test(t, func(a *string) { shouldNotBeCalled() }, "func has unsupported parameter type: the data type of parameter 0 type *string is not supported")
-	test(t, func(a *float64) { shouldNotBeCalled() }, "func has unsupported parameter type: the data type of parameter 0 type *float64 is not supported")
-	test(t, func(a *float32) { shouldNotBeCalled() }, "func has unsupported parameter type: the data type of parameter 0 type *float32 is not supported")
-
 	// I cannot pass structures
 	test(t, func(a godog.Table) { shouldNotBeCalled() }, "func has unsupported parameter type: the struct parameter 0 type messages.PickleTable is not supported")
 	test(t, func(a godog.DocString) { shouldNotBeCalled() }, "func has unsupported parameter type: the struct parameter 0 type messages.PickleDocString is not supported")

@@ -189,6 +189,15 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 			}
 			values = append(values, reflect.ValueOf(float32(v)))
 		case reflect.Ptr:
+			if isOptionalKind(param.Elem().Kind()) {
+				v, err := sd.parseOptional(i, param)
+				if err != nil {
+					return ctx, err
+				}
+				values = append(values, v)
+				continue
+			}
+
 			arg := sd.Args[i]
 			switch param.Elem().String() {
 			case "messages.PickleDocString":
@@ -297,6 +306,56 @@ func (sd *StepDefinition) shouldBeString(idx int) (string, error) {
 	default:
 		return "", fmt.Errorf(`%w %d: "%v" of type "%T" to string`, ErrCannotConvert, idx, arg, arg)
 	}
+}
+
+func isOptionalKind(kind reflect.Kind) bool {
+	switch kind {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.Float32, reflect.Float64:
+		return true
+	default:
+		return false
+	}
+}
+
+func (sd *StepDefinition) parseOptional(idx int, param reflect.Type) (reflect.Value, error) {
+	s, err := sd.shouldBeString(idx)
+	if err != nil {
+		return reflect.Value{}, err
+	}
+
+	if s == "" {
+		return reflect.Zero(param), nil
+	}
+
+	elem := param.Elem()
+	out := reflect.New(elem)
+
+	switch elem.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		v, err := strconv.ParseInt(s, 10, elem.Bits())
+		if err != nil {
+			return reflect.Value{}, fmt.Errorf(`%w %d: "%s" to *%s: %s`, ErrCannotConvert, idx, s, elem.Kind(), err)
+		}
+		out.Elem().SetInt(v)
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		v, err := strconv.ParseUint(s, 10, elem.Bits())
+		if err != nil {
+			return reflect.Value{}, fmt.Errorf(`%w %d: "%s" to *%s: %s`, ErrCannotConvert, idx, s, elem.Kind(), err)
+		}
+		out.Elem().SetUint(v)
+	case reflect.Float32, reflect.Float64:
+		v, err := strconv.ParseFloat(s, elem.Bits())
+		if err != nil {
+			return reflect.Value{}, fmt.Errorf(`%w %d: "%s" to *%s: %s`, ErrCannotConvert, idx, s, elem.Kind(), err)
+		}
+		out.Elem().SetFloat(v)
+	default:
+		return reflect.Value{}, fmt.Errorf("%w: the parameter %d type %s is not supported", ErrUnsupportedParameterType, idx, param.Kind())
+	}
+
+	return out, nil
 }
 
 // GetInternalStepDefinition ...
