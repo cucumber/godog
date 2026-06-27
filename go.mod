@@ -11,8 +11,10 @@ require (
 )
 
 require (
+	github.com/cucumber/messages/go/v21 v21.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gofrs/uuid v4.3.1+incompatible // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -21,7 +23,7 @@ require (
 )
 
 require (
-	github.com/cucumber/messages/go/v21 v21.0.1
+	github.com/cucumber/messages/go/v33 v33.0.4
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
