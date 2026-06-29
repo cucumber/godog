@@ -293,6 +293,29 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 	return ctx, err
 }
 
+// recoveredHookError converts a value recovered from a panic inside an after
+// hook into an error, folding it into any error the hooks have already produced.
+// It mirrors the panic-to-error handling of runStep's deferred recover so that a
+// panic in a post hook is reported as a failure rather than crashing the
+// goroutine. A FailNow/SkipNow (errStopNow) panic is preserved unchanged so the
+// normal testingT failure handling still applies.
+func recoveredHookError(label string, recovered interface{}, existing error) error {
+	if pe, ok := recovered.(error); ok && errors.Is(pe, errStopNow) {
+		return pe
+	}
+
+	panicErr := &traceError{
+		msg:   fmt.Sprintf("%s panicked: %v", label, recovered),
+		stack: callStack(),
+	}
+
+	if existing == nil {
+		return panicErr
+	}
+
+	return fmt.Errorf("%v, %w", panicErr, existing)
+}
+
 func (s *suite) runBeforeStepHooks(ctx context.Context, step *Step, err error) (context.Context, error) {
 	hooksFailed := false
 
@@ -320,25 +343,36 @@ func (s *suite) runBeforeStepHooks(ctx context.Context, step *Step, err error) (
 	return ctx, err
 }
 
-func (s *suite) runAfterStepHooks(ctx context.Context, step *Step, status StepResultStatus, err error) (context.Context, error) {
+func (s *suite) runAfterStepHooks(ctx context.Context, step *Step, status StepResultStatus, err error) (rctx context.Context, rerr error) {
+	rctx, rerr = ctx, err
+
+	// After step hooks are user-provided and may panic. Recover so a panic in an
+	// after hook is reported as a failure instead of crashing the goroutine,
+	// mirroring how panics in before hooks and steps are handled in runStep.
+	defer func() {
+		if e := recover(); e != nil {
+			rerr = recoveredHookError("after step hook", e, rerr)
+		}
+	}()
+
 	for _, f := range s.afterStepHandlers {
-		hctx, herr := f(ctx, step, status, err)
+		hctx, herr := f(rctx, step, status, rerr)
 
 		// Adding hook error to resulting error without breaking hooks loop.
 		if herr != nil {
-			if err == nil {
-				err = herr
+			if rerr == nil {
+				rerr = herr
 			} else {
-				err = fmt.Errorf("%v, %w", herr, err)
+				rerr = fmt.Errorf("%v, %w", herr, rerr)
 			}
 		}
 
 		if hctx != nil {
-			ctx = hctx
+			rctx = hctx
 		}
 	}
 
-	return ctx, err
+	return rctx, rerr
 }
 
 func (s *suite) runBeforeScenarioHooks(ctx context.Context, pickle *messages.Pickle) (context.Context, error) {
@@ -367,42 +401,51 @@ func (s *suite) runBeforeScenarioHooks(ctx context.Context, pickle *messages.Pic
 	return ctx, err
 }
 
-func (s *suite) runAfterScenarioHooks(ctx context.Context, pickle *messages.Pickle, lastStepErr error) (context.Context, error) {
-	err := lastStepErr
+func (s *suite) runAfterScenarioHooks(ctx context.Context, pickle *messages.Pickle, lastStepErr error) (rctx context.Context, rerr error) {
+	rctx, rerr = ctx, lastStepErr
+
+	// After scenario hooks are user-provided and may panic. Recover so a panic in
+	// an after hook is reported as a failure instead of crashing the goroutine,
+	// mirroring how panics in before hooks and steps are handled in runStep.
+	defer func() {
+		if e := recover(); e != nil {
+			rerr = recoveredHookError("after scenario hook", e, rerr)
+		}
+	}()
 
 	hooksFailed := false
 	isStepErr := true
 
 	// run after scenario handlers
 	for _, f := range s.afterScenarioHandlers {
-		hctx, herr := f(ctx, pickle, err)
+		hctx, herr := f(rctx, pickle, rerr)
 
 		// Adding hook error to resulting error without breaking hooks loop.
 		if herr != nil {
 			hooksFailed = true
 
-			if err == nil {
+			if rerr == nil {
 				isStepErr = false
-				err = herr
+				rerr = herr
 			} else {
 				if isStepErr {
-					err = fmt.Errorf("step error: %w", err)
+					rerr = fmt.Errorf("step error: %w", rerr)
 					isStepErr = false
 				}
-				err = fmt.Errorf("%v, %w", herr, err)
+				rerr = fmt.Errorf("%v, %w", herr, rerr)
 			}
 		}
 
 		if hctx != nil {
-			ctx = hctx
+			rctx = hctx
 		}
 	}
 
 	if hooksFailed {
-		err = fmt.Errorf("after scenario hook failed: %w", err)
+		rerr = fmt.Errorf("after scenario hook failed: %w", rerr)
 	}
 
-	return ctx, err
+	return rctx, rerr
 }
 
 func (s *suite) maybeUndefined(ctx context.Context, text string, arg interface{}, stepType messages.PickleStepType) (context.Context, []string, error) {
