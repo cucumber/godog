@@ -8,6 +8,9 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ## Unreleased
 
+### Fixed
+- A panic inside an after-step or after-scenario hook is now recovered and reported as a failure instead of crashing the goroutine, consistent with before hooks - ([662](https://github.com/cucumber/godog/issues/662) - [nikolauspschuetz](https://github.com/nikolauspschuetz))
+
 ## [v0.15.1]
 
 ### Added
