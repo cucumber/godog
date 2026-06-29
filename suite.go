@@ -320,25 +320,38 @@ func (s *suite) runBeforeStepHooks(ctx context.Context, step *Step, err error) (
 	return ctx, err
 }
 
-func (s *suite) runAfterStepHooks(ctx context.Context, step *Step, status StepResultStatus, err error) (context.Context, error) {
+func (s *suite) runAfterStepHooks(ctx context.Context, step *Step, status StepResultStatus, err error) (rctx context.Context, rerr error) {
+	rerr = err
+	rctx = ctx
+	defer func() {
+		if r := recover(); r != nil {
+			pe := fmt.Errorf("panic: %v", r)
+			if rerr == nil {
+				rerr = pe
+			} else {
+				rerr = fmt.Errorf("%v; %w", pe, rerr)
+			}
+		}
+	}()
+
 	for _, f := range s.afterStepHandlers {
-		hctx, herr := f(ctx, step, status, err)
+		hctx, herr := f(rctx, step, status, rerr)
 
 		// Adding hook error to resulting error without breaking hooks loop.
 		if herr != nil {
-			if err == nil {
-				err = herr
+			if rerr == nil {
+				rerr = herr
 			} else {
-				err = fmt.Errorf("%v, %w", herr, err)
+				rerr = fmt.Errorf("%v, %w", herr, rerr)
 			}
 		}
 
 		if hctx != nil {
-			ctx = hctx
+			rctx = hctx
 		}
 	}
 
-	return ctx, err
+	return rctx, rerr
 }
 
 func (s *suite) runBeforeScenarioHooks(ctx context.Context, pickle *messages.Pickle) (context.Context, error) {
@@ -367,15 +380,26 @@ func (s *suite) runBeforeScenarioHooks(ctx context.Context, pickle *messages.Pic
 	return ctx, err
 }
 
-func (s *suite) runAfterScenarioHooks(ctx context.Context, pickle *messages.Pickle, lastStepErr error) (context.Context, error) {
-	err := lastStepErr
+func (s *suite) runAfterScenarioHooks(ctx context.Context, pickle *messages.Pickle, lastStepErr error) (rctx context.Context, err error) {
+	rctx = ctx
+	err = lastStepErr
+	defer func() {
+		if r := recover(); r != nil {
+			pe := fmt.Errorf("panic: %v", r)
+			if err == nil {
+				err = pe
+			} else {
+				err = fmt.Errorf("%v; %w", pe, err)
+			}
+		}
+	}()
 
 	hooksFailed := false
 	isStepErr := true
 
 	// run after scenario handlers
 	for _, f := range s.afterScenarioHandlers {
-		hctx, herr := f(ctx, pickle, err)
+		hctx, herr := f(rctx, pickle, err)
 
 		// Adding hook error to resulting error without breaking hooks loop.
 		if herr != nil {
@@ -394,7 +418,7 @@ func (s *suite) runAfterScenarioHooks(ctx context.Context, pickle *messages.Pick
 		}
 
 		if hctx != nil {
-			ctx = hctx
+			rctx = hctx
 		}
 	}
 
@@ -402,7 +426,7 @@ func (s *suite) runAfterScenarioHooks(ctx context.Context, pickle *messages.Pick
 		err = fmt.Errorf("after scenario hook failed: %w", err)
 	}
 
-	return ctx, err
+	return rctx, err
 }
 
 func (s *suite) maybeUndefined(ctx context.Context, text string, arg interface{}, stepType messages.PickleStepType) (context.Context, []string, error) {
