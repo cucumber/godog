@@ -11,6 +11,10 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 ## [v0.15.1]
 
 ### Added
+- Support retry flaky steps with `ErrRetry` error - ([684](https://github.com/cucumber/godog/pull/684) - [nhv2796](https://github.com/nhv2796))
+- CLI option to specify number of retry attempts - ([684](https://github.com/cucumber/godog/pull/684) - [nhv2796](https://github.com/nhv2796))
+
+### Added
 - Step text is added to "step is undefined" error - ([669](https://github.com/cucumber/godog/pull/669) - [vearutop](https://github.com/vearutop))
 - Localisation support by @MegaGrindStone in https://github.com/cucumber/godog/pull/665
 - feat: support uint types by @chengxilo in https://github.com/cucumber/godog/pull/695
