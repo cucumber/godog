@@ -950,6 +950,65 @@ Feature: dummy
 	}
 }
 
+// TestPanicInAfterHookIsRecovered verifies that a panic inside a post hook
+// (after-step or after-scenario) is recovered and reported as a failure instead
+// of crashing the goroutine, consistent with how panics in pre hooks and steps
+// are handled. Regression test for https://github.com/cucumber/godog/issues/662.
+//
+// If the panic were not recovered, the panic would propagate out of suite.Run
+// and crash this test process, so simply not crashing already proves recovery;
+// we additionally assert the failure is surfaced (non-zero status + reported).
+func TestPanicInAfterHookIsRecovered(t *testing.T) {
+	feature := []byte("Feature: f\n  Scenario: s\n    When foo\n")
+
+	for _, tc := range []struct {
+		name      string
+		panicText string
+		init      func(sc *ScenarioContext, panicText string)
+	}{
+		{
+			name:      "after step hook",
+			panicText: "boom in after step hook",
+			init: func(sc *ScenarioContext, panicText string) {
+				sc.StepContext().After(func(ctx context.Context, step *Step, status StepResultStatus, err error) (context.Context, error) {
+					panic(panicText)
+				})
+			},
+		},
+		{
+			name:      "after scenario hook",
+			panicText: "boom in after scenario hook",
+			init: func(sc *ScenarioContext, panicText string) {
+				sc.After(func(ctx context.Context, s *Scenario, err error) (context.Context, error) {
+					panic(panicText)
+				})
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var buf bytes.Buffer
+
+			suite := TestSuite{
+				ScenarioInitializer: func(sc *ScenarioContext) {
+					sc.When(`^foo$`, func() {})
+					tc.init(sc, tc.panicText)
+				},
+				Options: &Options{
+					Format:          "pretty",
+					Output:          colors.Uncolored(&buf),
+					FeatureContents: []Feature{{Name: "f", Contents: feature}},
+				},
+			}
+
+			// Reaching this line at all proves the panic did not crash the goroutine.
+			status := suite.Run()
+
+			assert.Equal(t, exitFailure, status, "panicking after hook must fail the suite, not crash")
+			assert.Contains(t, buf.String(), tc.panicText, "the recovered panic should be reported")
+		})
+	}
+}
+
 func TestTestSuite_Run(t *testing.T) {
 	for _, tc := range []struct {
 		name          string
