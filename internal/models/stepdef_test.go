@@ -436,11 +436,15 @@ func TestShouldSupportBoolType(t *testing.T) {
 	assert.Equal(t, true, aActual)
 	assert.Equal(t, false, bActual)
 
+	// Test non-string argument type (should fail before parsing)
+	def.Args = []interface{}{12, "false"}
+	_, err = def.Run(context.Background())
+	assert.Equal(t, `cannot convert argument 0: "12" of type "int" to string`, err.(error).Error())
+
 	// Test invalid bool string
 	def.Args = []interface{}{"yes", "no"}
 	_, err = def.Run(context.Background())
 	assert.Equal(t, `cannot convert argument 0: "yes" to bool: strconv.ParseBool: parsing "yes": invalid syntax`, err.(error).Error())
-}
 
 func TestShouldSupportGherkinDocstring(t *testing.T) {
 	var actualDocString *messages.PickleDocString
