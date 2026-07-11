@@ -400,6 +400,48 @@ func TestShouldSupportFloatTypes(t *testing.T) {
 	assert.Equal(t, `cannot convert argument 1: "22222222222222222222222222222222222222222222222222222222222222222.22" to float32: strconv.ParseFloat: parsing "22222222222222222222222222222222222222222222222222222222222222222.22": value out of range`, err.(error).Error())
 }
 
+func TestShouldSupportBoolType(t *testing.T) {
+	var aActual bool
+	var bActual bool
+	fn := func(a bool, b bool) {
+		aActual = a
+		bActual = b
+	}
+
+	def := &models.StepDefinition{
+		StepDefinition: formatters.StepDefinition{
+			Handler: fn,
+		},
+		HandlerValue: reflect.ValueOf(fn),
+	}
+
+	// Test "true" and "false"
+	def.Args = []interface{}{"true", "false"}
+	_, err := def.Run(context.Background())
+	assert.Nil(t, err)
+	assert.Equal(t, true, aActual)
+	assert.Equal(t, false, bActual)
+
+	// Test "1" and "0"
+	def.Args = []interface{}{"1", "0"}
+	_, err = def.Run(context.Background())
+	assert.Nil(t, err)
+	assert.Equal(t, true, aActual)
+	assert.Equal(t, false, bActual)
+
+	// Test "TRUE" and "FALSE"
+	def.Args = []interface{}{"TRUE", "FALSE"}
+	_, err = def.Run(context.Background())
+	assert.Nil(t, err)
+	assert.Equal(t, true, aActual)
+	assert.Equal(t, false, bActual)
+
+	// Test invalid bool string
+	def.Args = []interface{}{"yes", "no"}
+	_, err = def.Run(context.Background())
+	assert.Equal(t, `cannot convert argument 0: "yes" to bool: strconv.ParseBool: parsing "yes": invalid syntax`, err.(error).Error())
+}
+
 func TestShouldSupportGherkinDocstring(t *testing.T) {
 	var actualDocString *messages.PickleDocString
 	fnDocstring := func(a *messages.PickleDocString) {
@@ -581,7 +623,7 @@ func TestStepDefinition_Run_InvalidHandlerParamConversion(t *testing.T) {
 	test(t, func(a []bool) { shouldNotBeCalled() }, "func has unsupported parameter type: the slice parameter 0 type []bool is not supported")
 
 	// // I cannot use bool
-	test(t, func(a bool) { shouldNotBeCalled() }, "func has unsupported parameter type: the parameter 0 type bool is not supported")
+	// bool is now supported - see TestShouldSupportBoolType
 
 }
 
