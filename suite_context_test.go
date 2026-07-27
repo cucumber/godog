@@ -1253,3 +1253,58 @@ func TestTestSuite_Run(t *testing.T) {
 		})
 	}
 }
+
+func TestSuite_HookErrorWrapping(t *testing.T) {
+	stepErr := errors.New("intentional step failure")
+	hook1Err := errors.New("hook 1 failure")
+	hook2Err := ErrSkip
+
+	var capturedErr error
+
+	suite := TestSuite{
+		Name: "hook_error_wrapping",
+		ScenarioInitializer: func(sc *ScenarioContext) {
+			sc.Step(`^a failing step$`, func() error {
+				return stepErr
+			})
+
+			// Hook 1: Returns hook1Err
+			sc.StepContext().After(func(ctx context.Context, step *Step, status StepResultStatus, err error) (context.Context, error) {
+				if err != nil {
+					return ctx, hook1Err
+				}
+				return ctx, nil
+			})
+
+			// Hook 2: Returns hook2Err (ErrSkip)
+			sc.StepContext().After(func(ctx context.Context, step *Step, status StepResultStatus, err error) (context.Context, error) {
+				if err != nil {
+					return ctx, hook2Err
+				}
+				return ctx, nil
+			})
+
+			// Capture the final merged error in AfterScenario hook
+			sc.After(func(ctx context.Context, sc *Scenario, err error) (context.Context, error) {
+				capturedErr = err
+				return ctx, nil
+			})
+		},
+		Options: &Options{
+			Format:   "progress",
+			NoColors: true,
+			FeatureContents: []Feature{
+				{
+					Name:     "hook_error_wrapping",
+					Contents: []byte("Feature: test\n  Scenario: test\n    When a failing step\n"),
+				},
+			},
+		},
+	}
+
+	suite.Run()
+
+	assert.ErrorIs(t, capturedErr, stepErr)
+	assert.ErrorIs(t, capturedErr, hook1Err)
+	assert.ErrorIs(t, capturedErr, hook2Err)
+}
