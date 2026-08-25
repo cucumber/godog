@@ -163,6 +163,9 @@ func (f *JUnit) buildJUNITPackageSuite() JunitPackageSuite {
 						Message: fmt.Sprintf("Step %s", pickleStep.Text),
 					})
 				case skipped:
+					if tc.Status == "" {
+						tc.Status = skipped.String()
+					}
 					tc.Error = append(tc.Error, &junitError{
 						Type:    "skipped",
 						Message: fmt.Sprintf("Step %s", pickleStep.Text),

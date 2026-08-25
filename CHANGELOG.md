@@ -8,6 +8,10 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ## Unreleased
 
+### Fixed
+- Propagate `Options.StopOnFailure` into the suite so remaining before-step hooks are skipped once one fails, and add BDD coverage confirming later scenarios are skipped after a failure - ([770](https://github.com/cucumber/godog/pull/770) - [kcross-ctoken](https://github.com/kcross-ctoken))
+- Scenarios skipped entirely by `Options.StopOnFailure` are now recorded and reported: they and their steps show up as `skipped` in the summary counts instead of vanishing from the output - ([770](https://github.com/cucumber/godog/pull/770) - [kcross-ctoken](https://github.com/kcross-ctoken))
+
 ## [v0.16.0]
 
 ### Changed

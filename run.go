@@ -69,6 +69,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 			storage:        r.storage,
 			defaultContext: r.defaultContext,
 			testingT:       r.testingT,
+			stopOnFailure:  r.stopOnFailure,
 		},
 	}
 	if r.testSuiteInitializer != nil {
@@ -111,10 +112,6 @@ func (r *runner) concurrent(rate int) (failed bool) {
 					<-queue // free a space in queue
 				}()
 
-				if r.stopOnFailure && *fail {
-					return
-				}
-
 				// Copy base suite.
 				suite := *testSuiteContext.suite
 				if rate > 1 {
@@ -128,6 +125,11 @@ func (r *runner) concurrent(rate int) (failed bool) {
 				if r.scenarioInitializer != nil {
 					sc := ScenarioContext{suite: &suite}
 					r.scenarioInitializer(&sc)
+				}
+
+				if r.stopOnFailure && *fail {
+					suite.skipPickle(pickle)
+					return
 				}
 
 				err := suite.runPickle(pickle)

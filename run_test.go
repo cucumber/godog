@@ -380,18 +380,10 @@ func Test_RandomizeRun_WithStaticSeed(t *testing.T) {
 		ctx.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)
 	}
 
-	expectedStatus, expectedOutput := testRun(t,
-		fmtOutputScenarioInitializer,
-		formatter, noConcurrencyFlag,
-		noRandomFlag, []string{featurePath},
-	)
+	expectedStatus, expectedOutput := testRun(t, fmtOutputScenarioInitializer, formatter, noConcurrencyFlag, noRandomFlag, []string{featurePath}, "")
 
 	const staticSeed int64 = 1
-	actualStatus, actualOutput := testRun(t,
-		fmtOutputScenarioInitializer,
-		formatter, noConcurrencyFlag,
-		staticSeed, []string{featurePath},
-	)
+	actualStatus, actualOutput := testRun(t, fmtOutputScenarioInitializer, formatter, noConcurrencyFlag, staticSeed, []string{featurePath}, "")
 
 	actualSeed := parseSeed(actualOutput)
 	assert.Equal(t, staticSeed, actualSeed)
@@ -419,20 +411,12 @@ func Test_RandomizeRun_RerunWithSeed(t *testing.T) {
 		ctx.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)
 	}
 
-	expectedStatus, expectedOutput := testRun(t,
-		fmtOutputScenarioInitializer,
-		formatter, noConcurrencyFlag,
-		createRandomSeedFlag, []string{featurePath},
-	)
+	expectedStatus, expectedOutput := testRun(t, fmtOutputScenarioInitializer, formatter, noConcurrencyFlag, createRandomSeedFlag, []string{featurePath}, "")
 
 	expectedSeed := parseSeed(expectedOutput)
 	assert.NotZero(t, expectedSeed)
 
-	actualStatus, actualOutput := testRun(t,
-		fmtOutputScenarioInitializer,
-		formatter, noConcurrencyFlag,
-		expectedSeed, []string{featurePath},
-	)
+	actualStatus, actualOutput := testRun(t, fmtOutputScenarioInitializer, formatter, noConcurrencyFlag, expectedSeed, []string{featurePath}, "")
 
 	actualSeed := parseSeed(actualOutput)
 
@@ -454,11 +438,7 @@ func Test_FormatOutputRun(t *testing.T) {
 		ctx.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)
 	}
 
-	expectedStatus, expectedOutput := testRun(t,
-		fmtOutputScenarioInitializer,
-		formatter, noConcurrencyFlag,
-		noRandomFlag, []string{featurePath},
-	)
+	expectedStatus, expectedOutput := testRun(t, fmtOutputScenarioInitializer, formatter, noConcurrencyFlag, noRandomFlag, []string{featurePath}, "")
 
 	dir := filepath.Join(os.TempDir(), t.Name())
 	err := os.MkdirAll(dir, 0755)
@@ -468,11 +448,7 @@ func Test_FormatOutputRun(t *testing.T) {
 
 	file := filepath.Join(dir, "result.xml")
 
-	actualStatus, actualOutput := testRun(t,
-		fmtOutputScenarioInitializer,
-		formatter+":"+file, noConcurrencyFlag,
-		noRandomFlag, []string{featurePath},
-	)
+	actualStatus, actualOutput := testRun(t, fmtOutputScenarioInitializer, formatter+":"+file, noConcurrencyFlag, noRandomFlag, []string{featurePath}, "")
 
 	result, err := ioutil.ReadFile(file)
 	require.NoError(t, err)
@@ -502,11 +478,7 @@ func Test_FormatOutputRun_Error(t *testing.T) {
 	file := filepath.Join(dir, "result.xml")
 
 	// next test is expected to log: couldn't create file with name: )
-	actualStatus, actualOutput := testRun(t,
-		fmtOutputScenarioInitializer,
-		formatter+":"+file, noConcurrencyFlag,
-		noRandomFlag, []string{featurePath},
-	)
+	actualStatus, actualOutput := testRun(t, fmtOutputScenarioInitializer, formatter+":"+file, noConcurrencyFlag, noRandomFlag, []string{featurePath}, "")
 
 	assert.Equal(t, expectedStatus, actualStatus)
 	assert.Equal(t, expectedOutput, actualOutput)
@@ -515,6 +487,8 @@ func Test_FormatOutputRun_Error(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// The expected string here is a bad way of testing the output because it changes with each feature added.
+// This means we have to alter 3 different places to add one feature adding drag to maintenance.
 func Test_AllFeaturesRun(t *testing.T) {
 	const concurrency = 100
 	const noRandomFlag = 0
@@ -526,19 +500,15 @@ func Test_AllFeaturesRun(t *testing.T) {
 ...................................................................... 280
 ...................................................................... 350
 ...................................................................... 420
-...                                                                    423
+.........                                                              429
 
 
-108 scenarios (108 passed)
-423 steps (423 passed)
+109 scenarios (109 passed)
+429 steps (429 passed)
 0s
 `
 
-	actualStatus, actualOutput := testRun(t,
-		InitializeScenario,
-		format, concurrency,
-		noRandomFlag, []string{"features"},
-	)
+	actualStatus, actualOutput := testRun(t, InitializeScenario, format, concurrency, noRandomFlag, []string{"features"}, "")
 
 	assert.Equal(t, exitSuccess, actualStatus)
 	assert.Equal(t, expected, actualOutput)
@@ -555,11 +525,11 @@ func Test_AllFeaturesRunAsSubtests(t *testing.T) {
 ...................................................................... 280
 ...................................................................... 350
 ...................................................................... 420
-...                                                                    423
+.........                                                              429
 
 
-108 scenarios (108 passed)
-423 steps (423 passed)
+109 scenarios (109 passed)
+429 steps (429 passed)
 0s
 `
 
@@ -605,16 +575,8 @@ func Test_FormatterConcurrencyRun(t *testing.T) {
 		t.Run(
 			fmt.Sprintf("%s/concurrency/%d", formatter, concurrency),
 			func(t *testing.T) {
-				expectedStatus, expectedOutput := testRun(t,
-					fmtOutputScenarioInitializer,
-					formatter, noConcurrency,
-					noRandomFlag, featurePaths,
-				)
-				actualStatus, actualOutput := testRun(t,
-					fmtOutputScenarioInitializer,
-					formatter, concurrency,
-					noRandomFlag, featurePaths,
-				)
+				expectedStatus, expectedOutput := testRun(t, fmtOutputScenarioInitializer, formatter, noConcurrency, noRandomFlag, featurePaths, "")
+				actualStatus, actualOutput := testRun(t, fmtOutputScenarioInitializer, formatter, concurrency, noRandomFlag, featurePaths, "")
 
 				assert.Equal(t, expectedStatus, actualStatus)
 				assertOutput(t, formatter, expectedOutput, actualOutput)
@@ -623,14 +585,13 @@ func Test_FormatterConcurrencyRun(t *testing.T) {
 	}
 }
 
-func testRun(
-	t *testing.T,
+func testRun(t *testing.T,
 	scenarioInitializer func(*ScenarioContext),
 	format string,
 	concurrency int,
 	randomSeed int64,
 	featurePaths []string,
-) (int, string) {
+	tags string) (int, string) {
 	t.Helper()
 
 	opts := Options{
@@ -638,6 +599,7 @@ func testRun(
 		Paths:       featurePaths,
 		Concurrency: concurrency,
 		Randomize:   randomSeed,
+		Tags:        tags,
 	}
 
 	return testRunWithOptions(t, opts, scenarioInitializer)
