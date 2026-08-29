@@ -322,7 +322,7 @@ func (s *suite) runBeforeStepHooks(ctx context.Context, step *Step, err error) (
 
 func (s *suite) runAfterStepHooks(ctx context.Context, step *Step, status StepResultStatus, err error) (context.Context, error) {
 	for _, f := range s.afterStepHandlers {
-		hctx, herr := f(ctx, step, status, err)
+		hctx, herr := callAfterStepHook(f, ctx, step, status, err)
 
 		// Adding hook error to resulting error without breaking hooks loop.
 		if herr != nil {
@@ -339,6 +339,22 @@ func (s *suite) runAfterStepHooks(ctx context.Context, step *Step, status StepRe
 	}
 
 	return ctx, err
+}
+
+// callAfterStepHook invokes a single after-step hook, converting a panic into
+// an error so the remaining hooks still run and the panic doesn't escape
+// runStep's defer (which has already finished its own recover by the time
+// after-step hooks fire).
+func callAfterStepHook(f AfterStepHook, ctx context.Context, step *Step, status StepResultStatus, err error) (rctx context.Context, rerr error) {
+	defer func() {
+		if e := recover(); e != nil {
+			rerr = &traceError{
+				msg:   fmt.Sprintf("after step hook panicked: %v", e),
+				stack: callStack(),
+			}
+		}
+	}()
+	return f(ctx, step, status, err)
 }
 
 func (s *suite) runBeforeScenarioHooks(ctx context.Context, pickle *messages.Pickle) (context.Context, error) {
@@ -375,7 +391,7 @@ func (s *suite) runAfterScenarioHooks(ctx context.Context, pickle *messages.Pick
 
 	// run after scenario handlers
 	for _, f := range s.afterScenarioHandlers {
-		hctx, herr := f(ctx, pickle, err)
+		hctx, herr := callAfterScenarioHook(f, ctx, pickle, err)
 
 		// Adding hook error to resulting error without breaking hooks loop.
 		if herr != nil {
@@ -403,6 +419,20 @@ func (s *suite) runAfterScenarioHooks(ctx context.Context, pickle *messages.Pick
 	}
 
 	return ctx, err
+}
+
+// callAfterScenarioHook invokes a single after-scenario hook, converting a
+// panic into an error so the panic doesn't escape runStep's defer.
+func callAfterScenarioHook(f AfterScenarioHook, ctx context.Context, pickle *messages.Pickle, err error) (rctx context.Context, rerr error) {
+	defer func() {
+		if e := recover(); e != nil {
+			rerr = &traceError{
+				msg:   fmt.Sprintf("after scenario hook panicked: %v", e),
+				stack: callStack(),
+			}
+		}
+	}()
+	return f(ctx, pickle, err)
 }
 
 func (s *suite) maybeUndefined(ctx context.Context, text string, arg interface{}, stepType messages.PickleStepType) (context.Context, []string, error) {
