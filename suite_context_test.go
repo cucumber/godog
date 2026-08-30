@@ -129,6 +129,25 @@ func InitializeScenario(ctx *ScenarioContext) {
 	ctx.Step(`^call func\(string\) with:$`, func(arg string) error {
 		return nil
 	})
+	validateTableAndDocString := func(table *Table, docString *DocString) error {
+		if table == nil || len(table.Rows) < 2 || len(table.Rows[1].Cells) < 2 {
+			return errors.New("unexpected data table")
+		}
+		if docString == nil {
+			return errors.New("missing doc string")
+		}
+
+		expected := table.Rows[1].Cells[1].Value
+		if docString.Content != expected {
+			return fmt.Errorf("expected doc string %q, got %q", expected, docString.Content)
+		}
+		return nil
+	}
+
+	ctx.Step(`^call func\(\*godog\.Table, \*godog\.DocString\) with:$`, validateTableAndDocString)
+	ctx.Step(`^call func\(\*godog\.DocString, \*godog\.Table\) with:$`, func(docString *DocString, table *Table) error {
+		return validateTableAndDocString(table, docString)
+	})
 
 	ctx.Step(`^passing step without return$`, func() {})
 
