@@ -91,7 +91,7 @@ func (f *Base) Ambiguous(*messages.Pickle, *messages.PickleStep, *formatters.Ste
 
 // Summary renders summary information.
 func (f *Base) Summary() {
-	var totalSc, passedSc, undefinedSc int
+	var totalSc, passedSc, undefinedSc, skippedSc int
 	var totalSt, passedSt, failedSt, skippedSt, pendingSt, undefinedSt, ambiguousSt int
 
 	pickleResults := f.Storage.MustGetPickleResults()
@@ -105,30 +105,41 @@ func (f *Base) Summary() {
 			prStatus = undefined
 		}
 
+		// a scenario that was never run (e.g. skipped entirely because of
+		// Options.StopOnFailure) has only skipped steps and no other status
+		ranAnyStep := false
+
 		for _, sr := range pickleStepResults {
 			totalSt++
 
 			switch sr.Status {
 			case passed:
 				passedSt++
+				ranAnyStep = true
 			case failed:
 				prStatus = failed
 				failedSt++
+				ranAnyStep = true
 			case ambiguous:
 				prStatus = ambiguous
 				ambiguousSt++
+				ranAnyStep = true
 			case skipped:
 				skippedSt++
 			case undefined:
 				prStatus = undefined
 				undefinedSt++
+				ranAnyStep = true
 			case pending:
 				prStatus = pending
 				pendingSt++
+				ranAnyStep = true
 			}
 		}
 
-		if prStatus == passed {
+		if len(pickleStepResults) > 0 && !ranAnyStep {
+			skippedSc++
+		} else if prStatus == passed {
 			passedSc++
 		} else if prStatus == undefined {
 			undefinedSc++
@@ -165,6 +176,9 @@ func (f *Base) Summary() {
 		scenarios = append(scenarios, green(fmt.Sprintf("%d passed", passedSc)))
 	}
 	scenarios = append(scenarios, parts...)
+	if skippedSc > 0 {
+		scenarios = append(scenarios, cyan(fmt.Sprintf("%d skipped", skippedSc)))
+	}
 
 	testRunStartedAt := f.Storage.MustGetTestRunStarted().StartedAt
 	elapsed := utils.TimeNowFunc().Sub(testRunStartedAt)

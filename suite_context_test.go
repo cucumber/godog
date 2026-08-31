@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -173,6 +174,7 @@ func InitializeScenario(ctx *ScenarioContext) {
 	ctx.Step(`^my step calls godog.Log with message "([^"]*)"$`, tc.myStepCallsDogLog)
 	ctx.Step(`^my step calls godog.Logf with message "([^"]*)" and argument "([^"]*)"$`, tc.myStepCallsDogLogf)
 	ctx.Step(`^the logged messages should include "([^"]*)"$`, tc.theLoggedMessagesShouldInclude)
+	ctx.Given(`^suite option ([^=]+)=(.+)$`, tc.setOption)
 
 	ctx.StepContext().Before(tc.inject)
 }
@@ -234,6 +236,7 @@ type godogFeaturesScenario struct {
 	events           []*firedEvent
 	out              bytes.Buffer
 	allowInjection   bool
+	opt              Options
 }
 
 func (tc *godogFeaturesScenario) ResetBeforeEachScenario(ctx context.Context, sc *Scenario) (context.Context, error) {
@@ -305,12 +308,13 @@ func (tc *godogFeaturesScenario) iRunFeatureSuiteWithTagsAndFormatter(filter str
 		tc.testedSuite.fmt.Feature(ft.GherkinDocument, ft.Uri, ft.Content)
 
 		for _, pickle := range ft.Pickles {
-			if tc.testedSuite.stopOnFailure && tc.testedSuite.failed {
-				continue
-			}
-
 			sc := ScenarioContext{suite: tc.testedSuite}
 			InitializeScenario(&sc)
+
+			if tc.testedSuite.stopOnFailure && tc.testedSuite.failed {
+				tc.testedSuite.skipPickle(pickle)
+				continue
+			}
 
 			err := tc.testedSuite.runPickle(pickle)
 			if tc.testedSuite.shouldFail(err) {
@@ -491,6 +495,34 @@ func (tc *godogFeaturesScenario) theLoggedMessagesShouldInclude(ctx context.Cont
 		}
 	}
 	return fmt.Errorf("the message %q was not logged (logged messages: %v)", message, messages)
+}
+
+func (tc *godogFeaturesScenario) setOption(ctx context.Context, name string, value string) error {
+	opt := &tc.opt
+	field := reflect.ValueOf(opt).Elem().FieldByName(name)
+	zero := reflect.Value{}
+	if field == zero {
+		return fmt.Errorf("could not find Option %s", name)
+	}
+	switch field.Kind() {
+	case reflect.String:
+		field.SetString(value)
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		i, err := strconv.ParseInt(value, 10, 64)
+		if err != nil {
+			return err
+		}
+		field.SetInt(i)
+
+	case reflect.Bool:
+		b, err := strconv.ParseBool(value)
+		if err != nil {
+			return err
+		}
+		field.SetBool(b)
+	}
+	tc.testedSuite.stopOnFailure = opt.StopOnFailure
+	return nil
 }
 
 func (tc *godogFeaturesScenario) followingStepsShouldHave(status string, steps *DocString) error {

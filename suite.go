@@ -311,6 +311,9 @@ func (s *suite) runBeforeStepHooks(ctx context.Context, step *Step, err error) (
 		if hctx != nil {
 			ctx = hctx
 		}
+		if s.stopOnFailure && err != nil {
+			break
+		}
 	}
 
 	if hooksFailed {
@@ -648,6 +651,27 @@ func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 	// so that error from handler can be added to step.
 
 	return err
+}
+
+// skipPickle records a pickle and all of its steps as skipped, without
+// executing anything. Used when Options.StopOnFailure causes a scenario
+// to be skipped entirely because an earlier scenario has already failed.
+func (s *suite) skipPickle(pickle *messages.Pickle) {
+	pr := models.PickleResult{PickleID: pickle.Id, StartedAt: utils.TimeNowFunc()}
+	s.storage.MustInsertPickleResult(pr)
+
+	s.fmt.Pickle(pickle)
+
+	for _, step := range pickle.Steps {
+		match, _ := s.matchStep(step)
+
+		s.storage.MustInsertStepDefintionMatch(step.AstNodeIds[0], match)
+		s.fmt.Defined(pickle, step, match.GetInternalStepDefinition())
+
+		sr := models.NewStepResult(models.Skipped, pickle.Id, step.Id, match, nil, nil)
+		s.storage.MustInsertPickleStepResult(sr)
+		s.fmt.Skipped(pickle, step, match.GetInternalStepDefinition())
+	}
 }
 
 type joinedError struct {
