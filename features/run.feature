@@ -275,3 +275,18 @@ Feature: run features
     text
     """
 
+  Scenario: should pass a Data Table followed by a Doc String
+    Given call func(*godog.Table, *godog.DocString) with:
+      | field | expected |
+      | body  | text     |
+      """
+      text
+      """
+
+  Scenario: should pass a Doc String followed by a Data Table
+    Given call func(*godog.DocString, *godog.Table) with:
+      """
+      text
+      """
+      | field | expected |
+      | body  | text     |

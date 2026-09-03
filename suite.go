@@ -122,9 +122,28 @@ func (s *suite) matchStep(step *messages.PickleStep) (*models.StepDefinition, er
 		return nil, err
 	}
 
-	if def != nil && step.Argument != nil {
-		def.Args = append(def.Args, step.Argument)
+	if def == nil || step.Argument == nil {
+		return def, nil
 	}
+
+	argument := step.Argument
+	if argument.DocString == nil {
+		if argument.DataTable != nil {
+			def.Args = append(def.Args, argument.DataTable)
+		}
+		return def, nil
+	}
+	if argument.DataTable == nil {
+		def.Args = append(def.Args, argument.DocString)
+		return def, nil
+	}
+
+	if argument.DocString.ArgumentIndex < argument.DataTable.ArgumentIndex {
+		def.Args = append(def.Args, argument.DocString, argument.DataTable)
+	} else {
+		def.Args = append(def.Args, argument.DataTable, argument.DocString)
+	}
+
 	return def, nil
 }
 
