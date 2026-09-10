@@ -15,11 +15,11 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/cucumber/godog/_examples/godogs"
 	"os"
 	"testing"
 
 	"github.com/cucumber/godog"
+	"github.com/cucumber/godog/_examples/godogs"
 	"github.com/cucumber/godog/colors"
 )
 
@@ -36,12 +36,18 @@ func TestFeatures(t *testing.T) {
 	o := opts
 	o.TestingT = t
 
-	status := godog.TestSuite{
+	suite := godog.TestSuite{
 		Name:                 "godogs",
 		Options:              &o,
 		TestSuiteInitializer: InitializeTestSuite,
 		ScenarioInitializer:  InitializeScenario,
-	}.Run()
+	}
+
+	if err := suite.WriteManifest("."); err != nil {
+		t.Fatal(err)
+	}
+
+	status := suite.Run()
 
 	if status == 2 {
 		t.SkipNow()

@@ -1,0 +1,24 @@
+{
+  "steps": [
+    {
+      "expr": "^I send \"(GET|POST|PUT|DELETE)\" request to \"([^\"]*)\"$",
+      "file": "api_test.go",
+      "line": 106
+    },
+    {
+      "expr": "^the response code should be (\\d+)$",
+      "file": "api_test.go",
+      "line": 107
+    },
+    {
+      "expr": "^the response should match json:$",
+      "file": "api_test.go",
+      "line": 108
+    }
+  ],
+  "test": {
+    "name": "TestFeatures",
+    "file": "api_test.go",
+    "line": 92
+  }
+}

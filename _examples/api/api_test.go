@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -73,15 +74,22 @@ func (a *apiFeature) theResponseShouldMatchJSON(body *godog.DocString) (err erro
 	return nil
 }
 
+func init() {
+	godog.BindFlags("godog.", flag.CommandLine, &opts)
+}
+
+var opts = godog.Options{}
+
 func TestFeatures(t *testing.T) {
+	o := opts
+	o.Format = "pretty"
+	o.TestingT = t // Testing instance that will run subtests.
 	suite := godog.TestSuite{
 		ScenarioInitializer: InitializeScenario,
-		Options: &godog.Options{
-			Format:   "pretty",
-			Paths:    []string{"features"},
-			TestingT: t, // Testing instance that will run subtests.
-		},
+		Options:             &o,
 	}
+
+	suite.WriteManifest(".")
 
 	if suite.Run() != 0 {
 		t.Fatal("non-zero status returned, failed to run feature tests")

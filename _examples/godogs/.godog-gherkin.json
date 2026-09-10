@@ -1,0 +1,29 @@
+{
+  "steps": [
+    {
+      "expr": "^there are (\\d+) godogs$",
+      "file": "godogs_test.go",
+      "line": 112
+    },
+    {
+      "expr": "^I eat (\\d+)$",
+      "file": "godogs_test.go",
+      "line": 113
+    },
+    {
+      "expr": "^there should be (\\d+) remaining$",
+      "file": "godogs_test.go",
+      "line": 114
+    },
+    {
+      "expr": "^there should be none remaining$",
+      "file": "godogs_test.go",
+      "line": 115
+    }
+  ],
+  "test": {
+    "name": "TestFeatures",
+    "file": "godogs_test.go",
+    "line": 47
+  }
+}
