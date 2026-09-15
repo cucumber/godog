@@ -65,3 +65,8 @@ func Test_Format(t *testing.T) {
 func testFormatterFunc(suiteName string, out io.Writer) godog.Formatter {
 	return nil
 }
+
+func Test_PublicAPI_ExportedTypes(t *testing.T) {
+	var _ godog.PickleStepResult
+	var _ godog.PickleAttachment
+}
