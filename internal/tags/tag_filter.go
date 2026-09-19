@@ -39,6 +39,14 @@ func matchAnd(filter string, tags []*messages.PickleTag) bool {
 	for _, tag := range strings.Split(filter, "&&") {
 		tag = strings.TrimSpace(tag)
 		tag = strings.Replace(tag, "@", "", -1)
+		if tag == "" {
+			// An empty operand comes from a malformed filter such as
+			// "@one,,@two", a trailing "@one," or "@one&&". An empty tag can
+			// never be present on a pickle, so it fails the AND (consistent
+			// with the else branch below) instead of panicking on tag[0].
+			and = false
+			continue
+		}
 		if tag[0] == '~' {
 			tag = tag[1:]
 			and = !contains(tags, tag) && and
