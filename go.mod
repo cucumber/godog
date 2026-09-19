@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/cucumber/gherkin/go/v42 v42.0.0
-	github.com/cucumber/messages/go/v34 v34.2.0
+	github.com/cucumber/messages/go/v34 v34.2.1
 	github.com/hashicorp/go-memdb v1.3.5
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
