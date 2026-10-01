@@ -52,6 +52,8 @@ type runner struct {
 
 	storage *storage.Storage
 	fmt     Formatter
+
+	maxRetries int
 }
 
 func (r *runner) concurrent(rate int) (failed bool) {
@@ -69,6 +71,7 @@ func (r *runner) concurrent(rate int) (failed bool) {
 			storage:        r.storage,
 			defaultContext: r.defaultContext,
 			testingT:       r.testingT,
+			maxRetries:     r.maxRetries,
 		},
 	}
 	if r.testSuiteInitializer != nil {
@@ -283,6 +286,7 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 	runner.strict = opt.Strict
 	runner.defaultContext = opt.DefaultContext
 	runner.testingT = opt.TestingT
+	runner.maxRetries = opt.MaxRetries
 
 	// store chosen seed in environment, so it could be seen in formatter summary report
 	os.Setenv("GODOG_SEED", strconv.FormatInt(runner.randomSeed, 10))

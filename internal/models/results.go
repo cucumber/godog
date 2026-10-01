@@ -37,6 +37,10 @@ type PickleStepResult struct {
 	Def *StepDefinition
 
 	Attachments []PickleAttachment
+
+	// RunAttempt tells of what run attempt this step result belongs to.
+	// Default is 1 since every run is the first run.
+	RunAttempt int
 }
 
 // NewStepResult ...
@@ -55,6 +59,7 @@ func NewStepResult(
 		PickleStepID: pickleStepID,
 		Def:          match,
 		Attachments:  attachments,
+		RunAttempt:   1,
 	}
 }
 
@@ -74,6 +79,8 @@ const (
 	Pending
 	// Ambiguous ...
 	Ambiguous
+	// Retry ...
+	Retry
 )
 
 // Color ...
@@ -105,6 +112,8 @@ func (st StepResultStatus) String() string {
 		return "pending"
 	case Ambiguous:
 		return "ambiguous"
+	case Retry:
+		return "retry"
 	default:
 		return "unknown"
 	}
