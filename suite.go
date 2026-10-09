@@ -37,6 +37,12 @@ var ErrSkip = fmt.Errorf("skipped")
 // StepResultStatus describes step result.
 type StepResultStatus = models.StepResultStatus
 
+// PickleStepResult represents the result of a pickle step execution.
+type PickleStepResult = models.PickleStepResult
+
+// PickleAttachment represents a pickle attachment.
+type PickleAttachment = models.PickleAttachment
+
 const (
 	// StepPassed indicates step that passed.
 	StepPassed StepResultStatus = models.Passed
