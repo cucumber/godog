@@ -43,6 +43,15 @@ func Test_ApplyTagFilter(t *testing.T) {
 		{filter: "@one&&@wip,@wip&&@two", expected: []*pickle{p1, p2}},
 		{filter: "@one&&@two,@one&&@wip,@wip&&@two", expected: []*pickle{p1, p2}},
 		{filter: "@two&&@one,@one&&@wip,@three&&@two", expected: []*pickle{p1}},
+
+		// malformed filters with empty operands must not panic: an empty
+		// operand can never match, so it is ignored for OR (commas) and
+		// fails the AND (&&).
+		{filter: "@one,,@two", expected: []*pickle{p1, p2}},
+		{filter: "@one,", expected: []*pickle{p1}},
+		{filter: ",@one", expected: []*pickle{p1}},
+		{filter: "@one&&", expected: []*pickle{}},
+		{filter: "@one&&&&@two", expected: []*pickle{}},
 	} {
 		t.Run("", func(t *testing.T) {
 			actual := tags.ApplyTagFilter(tc.filter, testdata)
