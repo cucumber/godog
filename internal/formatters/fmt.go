@@ -37,6 +37,7 @@ var (
 	undefined = models.Undefined
 	pending   = models.Pending
 	ambiguous = models.Ambiguous
+	retry     = models.Retry
 )
 
 type sortFeaturesByName []*models.Feature
