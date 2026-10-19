@@ -14,8 +14,8 @@ import (
 	"testing"
 	"time"
 
-	gherkin "github.com/cucumber/gherkin/go/v26"
-	messages "github.com/cucumber/messages/go/v21"
+	gherkin "github.com/cucumber/gherkin/go/v42"
+	messages "github.com/cucumber/messages/go/v34"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -128,6 +128,25 @@ func InitializeScenario(ctx *ScenarioContext) {
 	})
 	ctx.Step(`^call func\(string\) with:$`, func(arg string) error {
 		return nil
+	})
+	validateTableAndDocString := func(table *Table, docString *DocString) error {
+		if table == nil || len(table.Rows) < 2 || len(table.Rows[1].Cells) < 2 {
+			return errors.New("unexpected data table")
+		}
+		if docString == nil {
+			return errors.New("missing doc string")
+		}
+
+		expected := table.Rows[1].Cells[1].Value
+		if docString.Content != expected {
+			return fmt.Errorf("expected doc string %q, got %q", expected, docString.Content)
+		}
+		return nil
+	}
+
+	ctx.Step(`^call func\(\*godog\.Table, \*godog\.DocString\) with:$`, validateTableAndDocString)
+	ctx.Step(`^call func\(\*godog\.DocString, \*godog\.Table\) with:$`, func(docString *DocString, table *Table) error {
+		return validateTableAndDocString(table, docString)
 	})
 
 	ctx.Step(`^passing step without return$`, func() {})
@@ -1252,4 +1271,59 @@ func TestTestSuite_Run(t *testing.T) {
 			assert.Equal(t, trimAllLines(tc.log), trimAllLines(log), log)
 		})
 	}
+}
+
+func TestSuite_HookErrorWrapping(t *testing.T) {
+	stepErr := errors.New("intentional step failure")
+	hook1Err := errors.New("hook 1 failure")
+	hook2Err := ErrSkip
+
+	var capturedErr error
+
+	suite := TestSuite{
+		Name: "hook_error_wrapping",
+		ScenarioInitializer: func(sc *ScenarioContext) {
+			sc.Step(`^a failing step$`, func() error {
+				return stepErr
+			})
+
+			// Hook 1: Returns hook1Err
+			sc.StepContext().After(func(ctx context.Context, step *Step, status StepResultStatus, err error) (context.Context, error) {
+				if err != nil {
+					return ctx, hook1Err
+				}
+				return ctx, nil
+			})
+
+			// Hook 2: Returns hook2Err (ErrSkip)
+			sc.StepContext().After(func(ctx context.Context, step *Step, status StepResultStatus, err error) (context.Context, error) {
+				if err != nil {
+					return ctx, hook2Err
+				}
+				return ctx, nil
+			})
+
+			// Capture the final merged error in AfterScenario hook
+			sc.After(func(ctx context.Context, sc *Scenario, err error) (context.Context, error) {
+				capturedErr = err
+				return ctx, nil
+			})
+		},
+		Options: &Options{
+			Format:   "progress",
+			NoColors: true,
+			FeatureContents: []Feature{
+				{
+					Name:     "hook_error_wrapping",
+					Contents: []byte("Feature: test\n  Scenario: test\n    When a failing step\n"),
+				},
+			},
+		},
+	}
+
+	suite.Run()
+
+	assert.ErrorIs(t, capturedErr, stepErr)
+	assert.ErrorIs(t, capturedErr, hook1Err)
+	assert.ErrorIs(t, capturedErr, hook2Err)
 }

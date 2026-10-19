@@ -15,8 +15,8 @@ import (
 	"testing"
 	"testing/fstest"
 
-	gherkin "github.com/cucumber/gherkin/go/v26"
-	messages "github.com/cucumber/messages/go/v21"
+	gherkin "github.com/cucumber/gherkin/go/v42"
+	messages "github.com/cucumber/messages/go/v34"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -526,11 +526,11 @@ func Test_AllFeaturesRun(t *testing.T) {
 ...................................................................... 280
 ...................................................................... 350
 ...................................................................... 420
-...                                                                    423
+.....                                                                  425
 
 
-108 scenarios (108 passed)
-423 steps (423 passed)
+110 scenarios (110 passed)
+425 steps (425 passed)
 0s
 `
 
@@ -555,11 +555,11 @@ func Test_AllFeaturesRunAsSubtests(t *testing.T) {
 ...................................................................... 280
 ...................................................................... 350
 ...................................................................... 420
-...                                                                    423
+.....                                                                  425
 
 
-108 scenarios (108 passed)
-423 steps (423 passed)
+110 scenarios (110 passed)
+425 steps (425 passed)
 0s
 `
 
