@@ -16,6 +16,7 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ### Fixed
 - fix(hooks): wrap errors to preserve sentinel values - ([760](https://github.com/cucumber/godog/pull/760) - [victoriacheng15](https://github.com/victoriacheng15))
+- The "no test files found" build error now explains that step definitions must live in a file whose name ends in `_test.go` - ([455](https://github.com/cucumber/godog/issues/455) - [nikolauspschuetz](https://github.com/nikolauspschuetz))
 
 ## [v0.15.1]
 
