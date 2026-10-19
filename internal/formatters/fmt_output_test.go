@@ -22,7 +22,6 @@ const fmtOutputTestsFeatureDir = "formatter-tests/features"
 var tT *testing.T
 
 func Test_FmtOutput(t *testing.T) {
-	tT = t
 	pkg := os.Getenv("GODOG_TESTED_PACKAGE")
 	os.Setenv("GODOG_TESTED_PACKAGE", "github.com/cucumber/godog")
 
@@ -152,6 +151,10 @@ func fmtOutputTest(fmtName, testName, featureFilePath string) func(*testing.T) {
 	}
 
 	return func(t *testing.T) {
+		// Point tT at the currently running subtest so the scenario/step hooks
+		// below call FailNow on this subtest, on its own goroutine, rather than
+		// on the parent Test_FmtOutput (which is unsafe from a subtest goroutine).
+		tT = t
 		fmt.Printf("fmt_output_test for format %10s : sample file %v\n", fmtName, featureFilePath)
 		expectOutputPath := strings.Replace(featureFilePath, "features", fmtName, 1)
 		expectOutputPath = strings.TrimSuffix(expectOutputPath, path.Ext(expectOutputPath))
