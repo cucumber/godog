@@ -11,3 +11,4 @@ Gopkg.toml
 _artifacts
 
 vendor
+godog.iml
