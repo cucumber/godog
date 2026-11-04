@@ -5,6 +5,8 @@ import (
 	"io"
 	"io/fs"
 	"testing"
+
+	cucumberexpressions "github.com/cucumber/cucumber-expressions/go/v20"
 )
 
 // Options are suite run options
@@ -80,6 +82,9 @@ type Options struct {
 
 	// ShowHelp enables suite to show CLI flags usage help and exit.
 	ShowHelp bool
+
+	// DefaultTypeRegistry allows passing in a custom ParameterTypeRegistry for cucumber expressions. If not set, a default registry will be used.
+	DefaultTypeRegistry *cucumberexpressions.ParameterTypeRegistry
 }
 
 type Feature struct {

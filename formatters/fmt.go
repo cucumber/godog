@@ -2,8 +2,8 @@ package formatters
 
 import (
 	"io"
-	"regexp"
 
+	cucumberexpressions "github.com/cucumber/cucumber-expressions/go/v20"
 	messages "github.com/cucumber/messages/go/v34"
 )
 
@@ -93,7 +93,7 @@ type FormatterFunc func(string, io.Writer) Formatter
 // when step is matched and is either failed
 // or successful
 type StepDefinition struct {
-	Expr    *regexp.Regexp
+	Expr    cucumberexpressions.Expression
 	Handler interface{}
 	Keyword Keyword
 }

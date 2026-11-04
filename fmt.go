@@ -55,18 +55,18 @@ type FormatterFunc = formatters.FormatterFunc
 func printStepDefinitions(steps []*models.StepDefinition, w io.Writer) {
 	var longest int
 	for _, def := range steps {
-		n := utf8.RuneCountInString(def.Expr.String())
+		n := utf8.RuneCountInString(def.Expr.Source())
 		if longest < n {
 			longest = n
 		}
 	}
 
 	for _, def := range steps {
-		n := utf8.RuneCountInString(def.Expr.String())
+		n := utf8.RuneCountInString(def.Expr.Source())
 		location := internal_fmt.DefinitionID(def)
 		spaces := strings.Repeat(" ", longest-n)
 		fmt.Fprintln(w,
-			colors.Yellow(def.Expr.String())+spaces,
+			colors.Yellow(def.Expr.Source())+spaces,
 			colors.Bold(colors.Black)("# "+location))
 	}
 

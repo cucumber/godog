@@ -16,6 +16,7 @@ import (
 	"sync"
 	"testing"
 
+	cucumberexpressions "github.com/cucumber/cucumber-expressions/go/v20"
 	messages "github.com/cucumber/messages/go/v34"
 
 	"github.com/cucumber/godog/colors"
@@ -52,6 +53,8 @@ type runner struct {
 
 	storage *storage.Storage
 	fmt     Formatter
+
+	defaultTypeRegistry *cucumberexpressions.ParameterTypeRegistry
 }
 
 func (r *runner) concurrent(rate int) (failed bool) {
@@ -63,12 +66,13 @@ func (r *runner) concurrent(rate int) (failed bool) {
 
 	testSuiteContext := TestSuiteContext{
 		suite: &suite{
-			fmt:            r.fmt,
-			randomSeed:     r.randomSeed,
-			strict:         r.strict,
-			storage:        r.storage,
-			defaultContext: r.defaultContext,
-			testingT:       r.testingT,
+			fmt:                 r.fmt,
+			randomSeed:          r.randomSeed,
+			strict:              r.strict,
+			storage:             r.storage,
+			defaultContext:      r.defaultContext,
+			testingT:            r.testingT,
+			defaultTypeRegistry: r.defaultTypeRegistry,
 		},
 	}
 	if r.testSuiteInitializer != nil {
@@ -217,7 +221,9 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 	}
 
 	if opt.ShowStepDefinitions {
-		s := suite{}
+		s := suite{
+			defaultTypeRegistry: opt.DefaultTypeRegistry,
+		}
 		sc := ScenarioContext{suite: &s}
 		runner.scenarioInitializer(&sc)
 		printStepDefinitions(s.steps, output)
@@ -283,6 +289,7 @@ func runWithOptions(suiteName string, runner runner, opt Options) int {
 	runner.strict = opt.Strict
 	runner.defaultContext = opt.DefaultContext
 	runner.testingT = opt.TestingT
+	runner.defaultTypeRegistry = opt.DefaultTypeRegistry
 
 	// store chosen seed in environment, so it could be seen in formatter summary report
 	os.Setenv("GODOG_SEED", strconv.FormatInt(runner.randomSeed, 10))
