@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"bytes"
 	"fmt"
 	"sync"
 
@@ -34,6 +35,8 @@ const (
 
 	tableStepDefintionMatch            string = "step_defintion_match"
 	tableStepDefintionMatchIndexStepID string = "id"
+
+	idKeyLength int = 32
 )
 
 // Storage is a thread safe in-mem storage
@@ -63,9 +66,12 @@ func NewStorage() *Storage {
 				Name: tablePickle,
 				Indexes: map[string]*memdb.IndexSchema{
 					tablePickleIndexID: {
-						Name:    tablePickleIndexID,
-						Unique:  true,
-						Indexer: &memdb.StringFieldIndex{Field: "Id"},
+						Name:   tablePickleIndexID,
+						Unique: true,
+						Indexer: &idIndex{
+							indexer: &memdb.StringFieldIndex{Field: "Id"},
+							length:  idKeyLength,
+						},
 					},
 					tablePickleIndexURI: {
 						Name:    tablePickleIndexURI,
@@ -78,9 +84,12 @@ func NewStorage() *Storage {
 				Name: tablePickleStep,
 				Indexes: map[string]*memdb.IndexSchema{
 					tablePickleStepIndexID: {
-						Name:    tablePickleStepIndexID,
-						Unique:  true,
-						Indexer: &memdb.StringFieldIndex{Field: "Id"},
+						Name:   tablePickleStepIndexID,
+						Unique: true,
+						Indexer: &idIndex{
+							indexer: &memdb.StringFieldIndex{Field: "Id"},
+							length:  idKeyLength,
+						},
 					},
 				},
 			},
@@ -88,9 +97,12 @@ func NewStorage() *Storage {
 				Name: tablePickleResult,
 				Indexes: map[string]*memdb.IndexSchema{
 					tablePickleResultIndexPickleID: {
-						Name:    tablePickleResultIndexPickleID,
-						Unique:  true,
-						Indexer: &memdb.StringFieldIndex{Field: "PickleID"},
+						Name:   tablePickleResultIndexPickleID,
+						Unique: true,
+						Indexer: &idIndex{
+							indexer: &memdb.StringFieldIndex{Field: "PickleID"},
+							length:  idKeyLength,
+						},
 					},
 				},
 			},
@@ -98,14 +110,20 @@ func NewStorage() *Storage {
 				Name: tablePickleStepResult,
 				Indexes: map[string]*memdb.IndexSchema{
 					tablePickleStepResultIndexPickleStepID: {
-						Name:    tablePickleStepResultIndexPickleStepID,
-						Unique:  true,
-						Indexer: &memdb.StringFieldIndex{Field: "PickleStepID"},
+						Name:   tablePickleStepResultIndexPickleStepID,
+						Unique: true,
+						Indexer: &idIndex{
+							indexer: &memdb.StringFieldIndex{Field: "PickleStepID"},
+							length:  idKeyLength,
+						},
 					},
 					tablePickleStepResultIndexPickleID: {
-						Name:    tablePickleStepResultIndexPickleID,
-						Unique:  false,
-						Indexer: &memdb.StringFieldIndex{Field: "PickleID"},
+						Name:   tablePickleStepResultIndexPickleID,
+						Unique: false,
+						Indexer: &idIndex{
+							indexer: &memdb.StringFieldIndex{Field: "PickleID"},
+							length:  idKeyLength,
+						},
 					},
 					tablePickleStepResultIndexStatus: {
 						Name:    tablePickleStepResultIndexStatus,
@@ -118,9 +136,12 @@ func NewStorage() *Storage {
 				Name: tableStepDefintionMatch,
 				Indexes: map[string]*memdb.IndexSchema{
 					tableStepDefintionMatchIndexStepID: {
-						Name:    tableStepDefintionMatchIndexStepID,
-						Unique:  true,
-						Indexer: &memdb.StringFieldIndex{Field: "StepID"},
+						Name:   tableStepDefintionMatchIndexStepID,
+						Unique: true,
+						Indexer: &idIndex{
+							indexer: &memdb.StringFieldIndex{Field: "StepID"},
+							length:  idKeyLength,
+						},
 					},
 				},
 			},
@@ -335,4 +356,39 @@ func (s *Storage) mustGet(table, index string, args ...interface{}) memdb.Result
 	}
 
 	return it
+}
+
+type idIndex struct {
+	indexer *memdb.StringFieldIndex
+	length  int
+}
+
+func (f *idIndex) FromArgs(args ...interface{}) ([]byte, error) {
+	val, err := f.indexer.FromArgs(args...)
+	if err != nil {
+		return nil, err
+	}
+
+	return f.addPrefix(val), nil
+}
+
+func (f *idIndex) FromObject(raw interface{}) (bool, []byte, error) {
+	found, val, err := f.indexer.FromObject(raw)
+	if err != nil {
+		return false, nil, err
+	}
+
+	return found, f.addPrefix(val), nil
+}
+
+func (f *idIndex) addPrefix(val []byte) []byte {
+	if val == nil {
+		return val
+	}
+
+	if len(val) < f.length {
+		val = append(bytes.Repeat([]byte("0"), f.length-len(val)), val...)
+	}
+
+	return val
 }
