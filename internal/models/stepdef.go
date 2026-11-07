@@ -12,7 +12,7 @@ import (
 	"github.com/cucumber/godog/formatters"
 )
 
-var typeOfBytes = reflect.TypeOf([]byte(nil))
+var TypeOfBytes = reflect.TypeOf([]byte(nil))
 
 // matchable errors
 var (
@@ -35,7 +35,7 @@ type StepDefinition struct {
 	Undefined []string
 }
 
-var typeOfContext = reflect.TypeOf((*context.Context)(nil)).Elem()
+var TypeOfContext = reflect.TypeOf((*context.Context)(nil)).Elem()
 
 // Run a step with the matched arguments using reflect
 // Returns one of ...
@@ -46,7 +46,7 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 
 	typ := sd.HandlerValue.Type()
 	numIn := typ.NumIn()
-	hasCtxIn := numIn > 0 && typ.In(0).Implements(typeOfContext)
+	hasCtxIn := numIn > 0 && typ.In(0).Implements(TypeOfContext)
 	ctxOffset := 0
 
 	if hasCtxIn {
@@ -221,7 +221,7 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 			}
 		case reflect.Slice:
 			switch param {
-			case typeOfBytes:
+			case TypeOfBytes:
 				s, err := sd.shouldBeString(i)
 				if err != nil {
 					return ctx, err

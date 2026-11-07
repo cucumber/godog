@@ -2,6 +2,7 @@ package godog
 
 import (
 	"context"
+	messages "github.com/cucumber/messages/go/v21"
 	"regexp"
 	"testing"
 
@@ -32,6 +33,8 @@ func TestScenarioContext_Step(t *testing.T) {
 			f: func() { ctx.Step(".*", okStepsResult) }},
 		{n: "ScenarioContext should accept steps handler with (Context, error) return",
 			f: func() { ctx.Step(".*", okContextErrorResult) }},
+		{n: "ScenarioContext should accept steps handler with valid params",
+			f: func() { ctx.Step(".*", okValidParams) }},
 	} {
 		t.Run(c.n, func(t *testing.T) {
 			assert.NotPanics(t, c.f)
@@ -56,6 +59,25 @@ func TestScenarioContext_Step(t *testing.T) {
 			p: "expecting expr to be a *regexp.Regexp or a string or []byte, got type: int",
 			f: func() { ctx.Step(1251, okVoidResult) }},
 
+		{n: "ScenarioContext should panic if step handler params include context.Context, but context.Context is not the first parameter",
+			p: "func has unsupported parameter type: the parameter 1 type interface is not supported",
+			f: func() { ctx.Step(".*", nokInvalidParamCtxNotFirst) }},
+		{n: "ScenarioContext should panic if step handler params include struct",
+			p: "func has unsupported parameter type: the parameter 0 type struct is not supported",
+			f: func() { ctx.Step(".*", nokInvalidParamStruct) }},
+		{n: "ScenarioContext should panic if step handler params include messages.PickleStepArgument struct instead of pointer",
+			p: "func has unsupported parameter type: the parameter 0 type struct is not supported",
+			f: func() { ctx.Step(".*", nokInvalidParamPickleStepArgumentStruct) }},
+		{n: "ScenarioContext should panic if step handler params include messages.PickleDocString struct instead of pointer",
+			p: "func has unsupported parameter type: the parameter 0 type struct is not supported",
+			f: func() { ctx.Step(".*", nokInvalidParamPickleDocStringStruct) }},
+		{n: "ScenarioContext should panic if step handler params include unsupported slice parameter type",
+			p: "func has unsupported parameter type: the slice parameter 0 type []string is not supported",
+			f: func() { ctx.Step(".*", nokInvalidParamInvalidSliceType) }},
+		{n: "ScenarioContext should panic if step handler params include unsupported pointer parameter type",
+			p: "func has unsupported parameter type: the data type of parameter 0 type *int is not supported",
+			f: func() { ctx.Step(".*", nokInvalidParamUnsupportedPointer) }},
+
 		{n: "ScenarioContext should panic if step return type is []string",
 			p: "expected handler to return one of error or context.Context or godog.Steps or (context.Context, error), but got: []string",
 			f: func() { ctx.Step(".*", nokSliceStringResult) }},
@@ -74,14 +96,26 @@ func TestScenarioContext_Step(t *testing.T) {
 		})
 	}
 }
-
-func okVoidResult()                                  {}
-func okErrorResult() error                           { return nil }
-func okStepsResult() Steps                           { return nil }
-func okContextErrorResult() (context.Context, error) { return nil, nil }
-func nokSliceStringResult() []string                 { return nil }
-func nokLimitCase3() (string, int, error)            { return "", 0, nil }
-func nokLimitCase5() (int, int, int, int, error)     { return 0, 0, 0, 0, nil }
-func nokInvalidReturnInterfaceType() interface{}     { return 0 }
-func nokInvalidReturnSliceType() []int               { return nil }
-func nokInvalidReturnOtherType() chan int            { return nil }
+func okValidParams(
+	int, int64, int32, int16, int8,
+	uint, uint64, uint32, uint16, uint8,
+	string, float64, float32, []byte,
+	*messages.PickleDocString, *messages.PickleTable,
+) {
+}
+func okVoidResult()                                                 {}
+func okErrorResult() error                                          { return nil }
+func okStepsResult() Steps                                          { return nil }
+func okContextErrorResult() (context.Context, error)                { return nil, nil }
+func nokInvalidParamCtxNotFirst(int, context.Context)               {}
+func nokInvalidParamStruct(struct{})                                {}
+func nokInvalidParamPickleDocStringStruct(messages.PickleDocString) {}
+func nokInvalidParamPickleStepArgumentStruct(messages.PickleTable)  {}
+func nokInvalidParamInvalidSliceType([]string)                      {}
+func nokInvalidParamUnsupportedPointer(*int)                        {}
+func nokSliceStringResult() []string                                { return nil }
+func nokLimitCase3() (string, int, error)                           { return "", 0, nil }
+func nokLimitCase5() (int, int, int, int, error)                    { return 0, 0, 0, 0, nil }
+func nokInvalidReturnInterfaceType() interface{}                    { return 0 }
+func nokInvalidReturnSliceType() []int                              { return nil }
+func nokInvalidReturnOtherType() chan int                           { return nil }
