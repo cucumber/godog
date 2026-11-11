@@ -38,7 +38,7 @@ func TestPrintsStepDefinitions(t *testing.T) {
 
 	steps := []string{
 		"^passing step$",
-		`^with name "([^"])"`,
+		`^with name "([^"])"$`,
 	}
 
 	for _, step := range steps {
@@ -374,7 +374,7 @@ func Test_RandomizeRun_WithStaticSeed(t *testing.T) {
 	const featurePath = "internal/formatters/formatter-tests/features/with_few_empty_scenarios.feature"
 
 	fmtOutputScenarioInitializer := func(ctx *ScenarioContext) {
-		ctx.Step(`^(?:a )?failing step`, failingStepDef)
+		ctx.Step(`^(?:a )?failing step$`, failingStepDef)
 		ctx.Step(`^(?:a )?pending step$`, pendingStepDef)
 		ctx.Step(`^(?:a )?passing step$`, passingStepDef)
 		ctx.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)
@@ -413,7 +413,7 @@ func Test_RandomizeRun_RerunWithSeed(t *testing.T) {
 	const featurePath = "internal/formatters/formatter-tests/features/with_few_empty_scenarios.feature"
 
 	fmtOutputScenarioInitializer := func(ctx *ScenarioContext) {
-		ctx.Step(`^(?:a )?failing step`, failingStepDef)
+		ctx.Step(`^(?:a )?failing step$`, failingStepDef)
 		ctx.Step(`^(?:a )?pending step$`, pendingStepDef)
 		ctx.Step(`^(?:a )?passing step$`, passingStepDef)
 		ctx.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)
@@ -448,7 +448,7 @@ func Test_FormatOutputRun(t *testing.T) {
 	const featurePath = "internal/formatters/formatter-tests/features/with_few_empty_scenarios.feature"
 
 	fmtOutputScenarioInitializer := func(ctx *ScenarioContext) {
-		ctx.Step(`^(?:a )?failing step`, failingStepDef)
+		ctx.Step(`^(?:a )?failing step$`, failingStepDef)
 		ctx.Step(`^(?:a )?pending step$`, pendingStepDef)
 		ctx.Step(`^(?:a )?passing step$`, passingStepDef)
 		ctx.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)
@@ -490,7 +490,7 @@ func Test_FormatOutputRun_Error(t *testing.T) {
 	const featurePath = "internal/formatters/formatter-tests/features/with_few_empty_scenarios.feature"
 
 	fmtOutputScenarioInitializer := func(ctx *ScenarioContext) {
-		ctx.Step(`^(?:a )?failing step`, failingStepDef)
+		ctx.Step(`^(?:a )?failing step$`, failingStepDef)
 		ctx.Step(`^(?:a )?pending step$`, pendingStepDef)
 		ctx.Step(`^(?:a )?passing step$`, passingStepDef)
 		ctx.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)
@@ -516,6 +516,11 @@ func Test_FormatOutputRun_Error(t *testing.T) {
 }
 
 func Test_AllFeaturesRun(t *testing.T) {
+	scenarioInitializers := map[string]scenarioInitializer{
+		"regularExpressions":  InitializeScenario,
+		"cucumberExpressions": InitializeScenarioWithCucumberExpressions,
+	}
+
 	const concurrency = 100
 	const noRandomFlag = 0
 	const format = "progress"
@@ -533,18 +538,26 @@ func Test_AllFeaturesRun(t *testing.T) {
 425 steps (425 passed)
 0s
 `
+	for name, initializer := range scenarioInitializers {
+		t.Run(name, func(t *testing.T) {
+			actualStatus, actualOutput := testRun(t,
+				initializer,
+				format, concurrency,
+				noRandomFlag, []string{"features"},
+			)
 
-	actualStatus, actualOutput := testRun(t,
-		InitializeScenario,
-		format, concurrency,
-		noRandomFlag, []string{"features"},
-	)
-
-	assert.Equal(t, exitSuccess, actualStatus)
-	assert.Equal(t, expected, actualOutput)
+			assert.Equal(t, exitSuccess, actualStatus)
+			assert.Equal(t, expected, actualOutput)
+		})
+	}
 }
 
 func Test_AllFeaturesRunAsSubtests(t *testing.T) {
+	scenarioInitializers := map[string]scenarioInitializer{
+		"regularExpressions":  InitializeScenario,
+		"cucumberExpressions": InitializeScenarioWithCucumberExpressions,
+	}
+
 	const concurrency = 100
 	const noRandomFlag = 0
 	const format = "progress"
@@ -563,20 +576,24 @@ func Test_AllFeaturesRunAsSubtests(t *testing.T) {
 0s
 `
 
-	actualStatus, actualOutput := testRunWithOptions(
-		t,
-		Options{
-			Format:      format,
-			Concurrency: concurrency,
-			Paths:       []string{"features"},
-			Randomize:   noRandomFlag,
-			TestingT:    t,
-		},
-		InitializeScenario,
-	)
+	for name, initializer := range scenarioInitializers {
+		t.Run(name, func(t *testing.T) {
+			actualStatus, actualOutput := testRunWithOptions(
+				t,
+				Options{
+					Format:      format,
+					Concurrency: concurrency,
+					Paths:       []string{"features"},
+					Randomize:   noRandomFlag,
+					TestingT:    t,
+				},
+				initializer,
+			)
 
-	assert.Equal(t, exitSuccess, actualStatus)
-	assert.Equal(t, expected, actualOutput)
+			assert.Equal(t, exitSuccess, actualStatus)
+			assert.Equal(t, expected, actualOutput)
+		})
+	}
 }
 
 func Test_FormatterConcurrencyRun(t *testing.T) {
@@ -595,7 +612,7 @@ func Test_FormatterConcurrencyRun(t *testing.T) {
 	const noConcurrency = 1
 
 	fmtOutputScenarioInitializer := func(ctx *ScenarioContext) {
-		ctx.Step(`^(?:a )?failing step`, failingStepDef)
+		ctx.Step(`^(?:a )?failing step$`, failingStepDef)
 		ctx.Step(`^(?:a )?pending step$`, pendingStepDef)
 		ctx.Step(`^(?:a )?passing step$`, passingStepDef)
 		ctx.Step(`^odd (\d+) and even (\d+) number$`, oddEvenStepDef)

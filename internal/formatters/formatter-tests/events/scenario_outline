@@ -7,7 +7,7 @@
 {"event":"StepDefinitionFound","location":"formatter-tests/features/scenario_outline.feature:7","definition_id":"fmt_output_test.go:101 -\u003e github.com/cucumber/godog/internal/formatters_test.passingStepDef","arguments":[]}
 {"event":"TestStepStarted","location":"formatter-tests/features/scenario_outline.feature:7","timestamp":-6795364578871}
 {"event":"TestStepFinished","location":"formatter-tests/features/scenario_outline.feature:7","timestamp":-6795364578871,"status":"passed"}
-{"event":"StepDefinitionFound","location":"formatter-tests/features/scenario_outline.feature:8","definition_id":"fmt_output_test.go:103 -\u003e github.com/cucumber/godog/internal/formatters_test.oddEvenStepDef","arguments":[[4,5],[5,15]]}
+{"event":"StepDefinitionFound","location":"formatter-tests/features/scenario_outline.feature:8","definition_id":"fmt_output_test.go:103 -\u003e github.com/cucumber/godog/internal/formatters_test.oddEvenStepDef","arguments":[[4,5],[15,16]]}
 {"event":"TestStepStarted","location":"formatter-tests/features/scenario_outline.feature:8","timestamp":-6795364578871}
 {"event":"TestStepFinished","location":"formatter-tests/features/scenario_outline.feature:8","timestamp":-6795364578871,"status":"passed"}
 {"event":"TestCaseFinished","location":"formatter-tests/features/scenario_outline.feature:13","timestamp":-6795364578871,"status":"passed"}
@@ -18,7 +18,7 @@
 {"event":"StepDefinitionFound","location":"formatter-tests/features/scenario_outline.feature:7","definition_id":"fmt_output_test.go:101 -\u003e github.com/cucumber/godog/internal/formatters_test.passingStepDef","arguments":[]}
 {"event":"TestStepStarted","location":"formatter-tests/features/scenario_outline.feature:7","timestamp":-6795364578871}
 {"event":"TestStepFinished","location":"formatter-tests/features/scenario_outline.feature:7","timestamp":-6795364578871,"status":"passed"}
-{"event":"StepDefinitionFound","location":"formatter-tests/features/scenario_outline.feature:8","definition_id":"fmt_output_test.go:103 -\u003e github.com/cucumber/godog/internal/formatters_test.oddEvenStepDef","arguments":[[4,5],[5,15]]}
+{"event":"StepDefinitionFound","location":"formatter-tests/features/scenario_outline.feature:8","definition_id":"fmt_output_test.go:103 -\u003e github.com/cucumber/godog/internal/formatters_test.oddEvenStepDef","arguments":[[4,5],[15,16]]}
 {"event":"TestStepStarted","location":"formatter-tests/features/scenario_outline.feature:8","timestamp":-6795364578871}
 {"event":"TestStepFinished","location":"formatter-tests/features/scenario_outline.feature:8","timestamp":-6795364578871,"status":"failed","summary":"2 is not odd"}
 {"event":"TestCaseFinished","location":"formatter-tests/features/scenario_outline.feature:14","timestamp":-6795364578871,"status":"failed"}
@@ -29,7 +29,7 @@
 {"event":"StepDefinitionFound","location":"formatter-tests/features/scenario_outline.feature:7","definition_id":"fmt_output_test.go:101 -\u003e github.com/cucumber/godog/internal/formatters_test.passingStepDef","arguments":[]}
 {"event":"TestStepStarted","location":"formatter-tests/features/scenario_outline.feature:7","timestamp":-6795364578871}
 {"event":"TestStepFinished","location":"formatter-tests/features/scenario_outline.feature:7","timestamp":-6795364578871,"status":"passed"}
-{"event":"StepDefinitionFound","location":"formatter-tests/features/scenario_outline.feature:8","definition_id":"fmt_output_test.go:103 -\u003e github.com/cucumber/godog/internal/formatters_test.oddEvenStepDef","arguments":[[4,5],[5,15]]}
+{"event":"StepDefinitionFound","location":"formatter-tests/features/scenario_outline.feature:8","definition_id":"fmt_output_test.go:103 -\u003e github.com/cucumber/godog/internal/formatters_test.oddEvenStepDef","arguments":[[4,5],[15,17]]}
 {"event":"TestStepStarted","location":"formatter-tests/features/scenario_outline.feature:8","timestamp":-6795364578871}
 {"event":"TestStepFinished","location":"formatter-tests/features/scenario_outline.feature:8","timestamp":-6795364578871,"status":"failed","summary":"11 is not even"}
 {"event":"TestCaseFinished","location":"formatter-tests/features/scenario_outline.feature:15","timestamp":-6795364578871,"status":"failed"}
@@ -40,7 +40,7 @@
 {"event":"StepDefinitionFound","location":"formatter-tests/features/scenario_outline.feature:7","definition_id":"fmt_output_test.go:101 -\u003e github.com/cucumber/godog/internal/formatters_test.passingStepDef","arguments":[]}
 {"event":"TestStepStarted","location":"formatter-tests/features/scenario_outline.feature:7","timestamp":-6795364578871}
 {"event":"TestStepFinished","location":"formatter-tests/features/scenario_outline.feature:7","timestamp":-6795364578871,"status":"passed"}
-{"event":"StepDefinitionFound","location":"formatter-tests/features/scenario_outline.feature:8","definition_id":"fmt_output_test.go:103 -\u003e github.com/cucumber/godog/internal/formatters_test.oddEvenStepDef","arguments":[[4,5],[5,15]]}
+{"event":"StepDefinitionFound","location":"formatter-tests/features/scenario_outline.feature:8","definition_id":"fmt_output_test.go:103 -\u003e github.com/cucumber/godog/internal/formatters_test.oddEvenStepDef","arguments":[[4,5],[15,17]]}
 {"event":"TestStepStarted","location":"formatter-tests/features/scenario_outline.feature:8","timestamp":-6795364578871}
 {"event":"TestStepFinished","location":"formatter-tests/features/scenario_outline.feature:8","timestamp":-6795364578871,"status":"passed"}
 {"event":"TestCaseFinished","location":"formatter-tests/features/scenario_outline.feature:20","timestamp":-6795364578871,"status":"passed"}
@@ -51,7 +51,7 @@
 {"event":"StepDefinitionFound","location":"formatter-tests/features/scenario_outline.feature:7","definition_id":"fmt_output_test.go:101 -\u003e github.com/cucumber/godog/internal/formatters_test.passingStepDef","arguments":[]}
 {"event":"TestStepStarted","location":"formatter-tests/features/scenario_outline.feature:7","timestamp":-6795364578871}
 {"event":"TestStepFinished","location":"formatter-tests/features/scenario_outline.feature:7","timestamp":-6795364578871,"status":"passed"}
-{"event":"StepDefinitionFound","location":"formatter-tests/features/scenario_outline.feature:8","definition_id":"fmt_output_test.go:103 -\u003e github.com/cucumber/godog/internal/formatters_test.oddEvenStepDef","arguments":[[4,5],[5,15]]}
+{"event":"StepDefinitionFound","location":"formatter-tests/features/scenario_outline.feature:8","definition_id":"fmt_output_test.go:103 -\u003e github.com/cucumber/godog/internal/formatters_test.oddEvenStepDef","arguments":[[4,5],[15,16]]}
 {"event":"TestStepStarted","location":"formatter-tests/features/scenario_outline.feature:8","timestamp":-6795364578871}
 {"event":"TestStepFinished","location":"formatter-tests/features/scenario_outline.feature:8","timestamp":-6795364578871,"status":"failed","summary":"9 is not even"}
 {"event":"TestCaseFinished","location":"formatter-tests/features/scenario_outline.feature:21","timestamp":-6795364578871,"status":"failed"}
