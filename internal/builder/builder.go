@@ -152,7 +152,8 @@ func Build(bin string) error {
 	}
 
 	if strings.Contains(string(testOutput), "[no test files]") {
-		return fmt.Errorf("incorrect project structure: no test files found")
+		return fmt.Errorf("incorrect project structure: no test files found, " +
+			"godog requires step definitions to be in a file with a name ending in _test.go")
 	}
 
 	// may not locate it in output
