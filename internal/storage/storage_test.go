@@ -150,6 +150,11 @@ func Test_MustGetPickleStepResultsByPickleIDUntilStep(t *testing.T) {
 			PickleID:     pickleID,
 			PickleStepID: "s3",
 		},
+		{
+			Status:       models.Passed,
+			PickleID:     pickleID,
+			PickleStepID: "s12",
+		},
 	}
 
 	for _, psr := range store {
