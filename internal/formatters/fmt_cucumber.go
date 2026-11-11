@@ -81,10 +81,15 @@ func (f *Cuke) buildCukeElements(pickles []*messages.Pickle) (res []cukeElement)
 	res = make([]cukeElement, len(pickles))
 
 	for idx, pickle := range pickles {
-		pickleResult := f.Storage.MustGetPickleResult(pickle.Id)
+		pickleResult := f.getPickleResult(pickle.Id)
 		pickleStepResults := f.Storage.MustGetPickleStepResultsByPickleID(pickle.Id)
 
 		cukeElement := f.buildCukeElement(pickle)
+
+		if pickleResult == nil {
+			res[idx] = cukeElement
+			continue
+		}
 
 		stepStartedAt := pickleResult.StartedAt
 
@@ -319,6 +324,20 @@ func (f *Cuke) buildCukeStep(pickle *messages.Pickle, stepResult models.PickleSt
 		}
 	}
 	return cukeStep
+}
+
+// getPickleResult deals with the fact that if there's no result due to 'StopOnFirstFailure' being
+// set, MustGetPickleResult panics.
+func (f *Cuke) getPickleResult(pickleID string) (res *models.PickleResult) {
+	defer func() {
+		if r := recover(); r != nil {
+			res = nil
+		}
+	}()
+
+	pr := f.Storage.MustGetPickleResult(pickleID)
+	res = &pr
+	return
 }
 
 func makeCukeID(name string) string {
