@@ -217,7 +217,7 @@ func (s *Storage) MustGetPickleResults() (prs []models.PickleResult) {
 	return prs
 }
 
-// MustGetPickleStepResult will retrieve a pickle strep result by id and panic on error.
+// MustGetPickleStepResult will retrieve a pickle step result by id and panic on error.
 func (s *Storage) MustGetPickleStepResult(id string) models.PickleStepResult {
 	v := s.mustFirst(tablePickleStepResult, tablePickleStepResultIndexPickleStepID, id)
 	return v.(models.PickleStepResult)
@@ -279,6 +279,15 @@ func (s *Storage) MustGetFeatures() (fs []*models.Feature) {
 	return
 }
 
+// GetPickleStepResultByStepID will retrieve a pickle step result by id and panic on error.
+func (s *Storage) GetPickleStepResultByStepID(id string) models.PickleStepResult {
+	v := s.first(tablePickleStepResult, tablePickleStepResultIndexPickleStepID, id)
+	if v != nil {
+		return v.(models.PickleStepResult)
+	}
+	return models.PickleStepResult{}
+}
+
 type stepDefinitionMatch struct {
 	StepID         string
 	StepDefinition *models.StepDefinition
@@ -335,4 +344,16 @@ func (s *Storage) mustGet(table, index string, args ...interface{}) memdb.Result
 	}
 
 	return it
+}
+
+func (s *Storage) first(table, index string, args ...interface{}) interface{} {
+	txn := s.db.Txn(readMode)
+	defer txn.Abort()
+
+	v, err := txn.First(table, index, args...)
+	if err != nil {
+		panic(err)
+	}
+
+	return v
 }
