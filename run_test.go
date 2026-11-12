@@ -16,7 +16,7 @@ import (
 	"testing/fstest"
 
 	gherkin "github.com/cucumber/gherkin/go/v42"
-	messages "github.com/cucumber/messages/go/v34"
+	messages "github.com/cucumber/messages/go/v35"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 

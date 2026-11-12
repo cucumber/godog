@@ -14,7 +14,7 @@ import (
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/models"
-	messages "github.com/cucumber/messages/go/v34"
+	messages "github.com/cucumber/messages/go/v35"
 )
 
 type ctxKey string

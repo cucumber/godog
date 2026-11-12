@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	messages "github.com/cucumber/messages/go/v34"
+	messages "github.com/cucumber/messages/go/v35"
 
 	"github.com/cucumber/godog/colors"
 	"github.com/cucumber/godog/internal/models"
