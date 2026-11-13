@@ -3,7 +3,7 @@ module github.com/cucumber/godog
 go 1.18
 
 require (
-	github.com/cucumber/gherkin/go/v42 v42.0.0
+	github.com/cucumber/gherkin/go/v43 v43.0.0
 	github.com/cucumber/messages/go/v34 v34.2.0
 	github.com/hashicorp/go-memdb v1.3.5
 	github.com/spf13/cobra v1.10.2
@@ -19,6 +19,7 @@ require (
 )
 
 require (
+	github.com/cucumber/messages/go/v35 v35.0.0 // indirect
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 )

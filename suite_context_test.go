@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	gherkin "github.com/cucumber/gherkin/go/v42"
+	gherkin "github.com/cucumber/gherkin/go/v43"
 	messages "github.com/cucumber/messages/go/v34"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

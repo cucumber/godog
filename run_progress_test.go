@@ -7,7 +7,7 @@ import (
 
 	messages "github.com/cucumber/messages/go/v34"
 
-	gherkin "github.com/cucumber/gherkin/go/v42"
+	gherkin "github.com/cucumber/gherkin/go/v43"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
