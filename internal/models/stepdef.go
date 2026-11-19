@@ -109,7 +109,11 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 				if err != nil {
 					return ctx, err
 				}
-				values = append(values, reflect.ValueOf(value))
+				if value == nil {
+					values = append(values, reflect.Zero(param))
+				} else {
+					values = append(values, reflect.ValueOf(value))
+				}
 			}
 		case reflect.Slice:
 			switch param {
