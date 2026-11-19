@@ -277,8 +277,10 @@ func testWithIncorrectProjectStructure(t *testing.T) {
 	err = builder.Build(testBin)
 	// check that we even got an error at all
 	require.NotNil(t, err)
-	// now check the details of the error message
-	require.EqualError(t, err, "incorrect project structure: no test files found")
+	// now check the details of the error message - it should explain that
+	// step definitions must live in a file ending in _test.go (see #455)
+	require.EqualError(t, err, "incorrect project structure: no test files found, "+
+		"godog requires step definitions to be in a file with a name ending in _test.go")
 }
 
 func testWithinGopath(t *testing.T) {
