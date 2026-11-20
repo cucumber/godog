@@ -302,9 +302,39 @@ func (ctx ScenarioContext) stepWithKeyword(expr interface{}, stepFunc interface{
 		panic(fmt.Sprintf("expected handler to be func, but got: %T", stepFunc))
 	}
 
-	// FIXME = Validate the handler function param types here so
-	// that any errors are discovered early.
-	// StepDefinition.Run defines the supported types but fails at run time not registration time
+	numIn := handlerType.NumIn()
+	hasCtxIn := numIn > 0 && handlerType.In(0).Implements(models.TypeOfContext)
+	ctxOffset := 0
+	if hasCtxIn {
+		ctxOffset = 1
+	}
+
+	for i := ctxOffset; i < numIn; i++ {
+		param := handlerType.In(i)
+		switch param.Kind() {
+		case reflect.Int, reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8,
+			reflect.Uint, reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8,
+			reflect.String,
+			reflect.Float64, reflect.Float32:
+			// do nothing
+		case reflect.Ptr:
+			switch param.Elem().String() {
+			case "messages.PickleDocString", "messages.PickleTable":
+				// do nothing
+			default:
+				panic(fmt.Sprintf("%s: the data type of parameter %d type *%s is not supported", models.ErrUnsupportedParameterType, i, param.Elem().String()))
+			}
+		case reflect.Slice:
+			switch param {
+			case models.TypeOfBytes:
+				// do nothing
+			default:
+				panic(fmt.Sprintf("%s: the slice parameter %d type []%s is not supported", models.ErrUnsupportedParameterType, i, param.Elem().Kind()))
+			}
+		default:
+			panic(fmt.Sprintf("%s: the parameter %d type %s is not supported", models.ErrUnsupportedParameterType, i, param.Kind()))
+		}
+	}
 
 	// Validate the function's return types.
 	helpPrefix := "expected handler to return one of error or context.Context or godog.Steps or (context.Context, error)"
