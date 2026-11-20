@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	cucumberexpressions "github.com/cucumber/cucumber-expressions/go/v20"
 	messages "github.com/cucumber/messages/go/v34"
 
 	"github.com/cucumber/godog/formatters"
@@ -71,6 +72,8 @@ type suite struct {
 	beforeStepHandlers     []BeforeStepHook
 	afterStepHandlers      []AfterStepHook
 	afterScenarioHandlers  []AfterScenarioHook
+
+	defaultTypeRegistry *cucumberexpressions.ParameterTypeRegistry
 }
 
 type Attachment struct {
@@ -532,16 +535,22 @@ func (s *suite) matchStepTextAndType(text string, stepType messages.PickleStepTy
 	matchingExpressions := make([]string, 0)
 
 	for _, h := range s.steps {
-		if m := h.Expr.FindStringSubmatch(text); len(m) > 0 {
-			if !keywordMatches(h.Keyword, stepType) {
-				continue
-			}
-			var args []interface{}
-			for _, m := range m[1:] {
-				args = append(args, m)
+		if !keywordMatches(h.Keyword, stepType) {
+			continue
+		}
+
+		if h.Expr.Regexp().MatchString(text) {
+			arguments, err := h.Expr.Match(text, h.TypeHints()...)
+			if err != nil {
+				return nil, err
 			}
 
-			matchingExpressions = append(matchingExpressions, h.Expr.String())
+			args := make([]interface{}, 0, len(arguments))
+			for _, argument := range arguments {
+				args = append(args, argument)
+			}
+
+			matchingExpressions = append(matchingExpressions, h.Expr.Source())
 
 			// since we need to assign arguments
 			// better to copy the step definition

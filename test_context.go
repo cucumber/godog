@@ -6,7 +6,9 @@ import (
 	"reflect"
 	"regexp"
 	"runtime"
+	"strings"
 
+	cucumberexpressions "github.com/cucumber/cucumber-expressions/go/v20"
 	messages "github.com/cucumber/messages/go/v34"
 
 	"github.com/cucumber/godog/formatters"
@@ -282,16 +284,21 @@ func (ctx ScenarioContext) Then(expr, stepFunc interface{}) {
 }
 
 func (ctx ScenarioContext) stepWithKeyword(expr interface{}, stepFunc interface{}, keyword formatters.Keyword) {
-	var regex *regexp.Regexp
+	registry := ctx.suite.defaultTypeRegistry
+	if registry == nil {
+		registry = cucumberexpressions.NewParameterTypeRegistry()
+	}
+
+	var expression cucumberexpressions.Expression
 
 	// Validate the first input param is regex compatible
 	switch t := expr.(type) {
 	case *regexp.Regexp:
-		regex = t
+		expression = cucumberexpressions.NewRegularExpression(t, registry)
 	case string:
-		regex = regexp.MustCompile(t)
+		expression = expressionFromString(t, registry)
 	case []byte:
-		regex = regexp.MustCompile(string(t))
+		expression = expressionFromString(string(t), registry)
 	default:
 		panic(fmt.Sprintf("expecting expr to be a *regexp.Regexp or a string or []byte, got type: %T", expr))
 	}
@@ -338,7 +345,7 @@ func (ctx ScenarioContext) stepWithKeyword(expr interface{}, stepFunc interface{
 	def := &models.StepDefinition{
 		StepDefinition: formatters.StepDefinition{
 			Handler: stepFunc,
-			Expr:    regex,
+			Expr:    expression,
 			Keyword: keyword,
 		},
 		HandlerValue: reflect.ValueOf(stepFunc),
@@ -370,3 +377,16 @@ func Build(bin string) error {
 }
 
 type Feature = flags.Feature
+
+func expressionFromString(exp string, registry *cucumberexpressions.ParameterTypeRegistry) cucumberexpressions.Expression {
+	if strings.HasPrefix(exp, "^") && strings.HasSuffix(exp, "$") {
+		return cucumberexpressions.NewRegularExpression(regexp.MustCompile(exp), registry)
+	}
+
+	expression, err := cucumberexpressions.NewCucumberExpression(exp, registry)
+	if err != nil {
+		panic(err)
+	}
+
+	return expression
+}

@@ -129,6 +129,15 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 }
 ```
 
+You can also use [Cucumber Expressions](https://cucumber.io/docs/cucumber/cucumber-expressions/) instead of regular expressions to define your steps:
+``` go
+func InitializeScenario(ctx *godog.ScenarioContext) {
+        ctx.Given(`^there are {int} godogs$`, thereAreGodogs)
+        ctx.When(`^I eat {int}$`, iEat)
+        ctx.Then(`^there should be {int} remaining$`, thereShouldBeRemaining)
+}
+```
+
 Our module should now look like this:
 ```
 godogs

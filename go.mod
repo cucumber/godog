@@ -3,6 +3,7 @@ module github.com/cucumber/godog
 go 1.18
 
 require (
+	github.com/cucumber/cucumber-expressions/go/v20 v20.1.0
 	github.com/cucumber/gherkin/go/v42 v42.0.0
 	github.com/cucumber/messages/go/v34 v34.2.0
 	github.com/hashicorp/go-memdb v1.3.5

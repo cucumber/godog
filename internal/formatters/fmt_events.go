@@ -230,18 +230,20 @@ func (f *Events) Defined(pickle *messages.Pickle, pickleStep *messages.PickleSte
 	if def != nil {
 		matchedDef := f.Storage.MustGetStepDefintionMatch(pickleStep.AstNodeIds[0])
 
-		m := def.Expr.FindStringSubmatchIndex(pickleStep.Text)[2:]
+		m := def.Expr.Regexp().FindStringSubmatchIndex(pickleStep.Text)[2:]
+		_ = m
+		match, err := def.Expr.Match(pickleStep.Text)
 		var args [][2]int
-		for i := 0; i < len(m)/2; i++ {
-			pair := m[i : i*2+2]
-			var idxs [2]int
-			idxs[0] = pair[0]
-			idxs[1] = pair[1]
-			args = append(args, idxs)
-		}
-
-		if len(args) == 0 {
+		if err != nil {
 			args = make([][2]int, 0)
+		} else {
+			args = make([][2]int, 0, len(match))
+			for _, argument := range match {
+				args = append(args, [2]int{
+					argument.Group().Start(),
+					argument.Group().End()},
+				)
+			}
 		}
 
 		f.event(&struct {

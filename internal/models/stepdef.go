@@ -5,8 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"strconv"
+	"slices"
 
+	cucumberexpressions "github.com/cucumber/cucumber-expressions/go/v20"
 	messages "github.com/cucumber/messages/go/v34"
 
 	"github.com/cucumber/godog/formatters"
@@ -18,7 +19,6 @@ var typeOfBytes = reflect.TypeOf([]byte(nil))
 var (
 	ErrUnmatchedStepArgumentNumber = errors.New("func expected more arguments than given")
 	ErrCannotConvert               = errors.New("cannot convert argument")
-	ErrUnsupportedParameterType    = errors.New("func has unsupported parameter type")
 )
 
 // StepDefinition ...
@@ -62,179 +62,89 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 	for i := 0; i < numIn; i++ {
 		param := typ.In(i + ctxOffset)
 		switch param.Kind() {
-		case reflect.Int:
-			s, err := sd.shouldBeString(i)
-			if err != nil {
-				return ctx, err
-			}
-			v, err := strconv.ParseInt(s, 10, 0)
-			if err != nil {
-				return ctx, fmt.Errorf(`%w %d: "%s" to int: %s`, ErrCannotConvert, i, s, err)
-			}
-			values = append(values, reflect.ValueOf(int(v)))
-		case reflect.Int64:
-			s, err := sd.shouldBeString(i)
-			if err != nil {
-				return ctx, err
-			}
-			v, err := strconv.ParseInt(s, 10, 64)
-			if err != nil {
-				return ctx, fmt.Errorf(`%w %d: "%s" to int64: %s`, ErrCannotConvert, i, s, err)
-			}
-			values = append(values, reflect.ValueOf(v))
-		case reflect.Int32:
-			s, err := sd.shouldBeString(i)
-			if err != nil {
-				return ctx, err
-			}
-			v, err := strconv.ParseInt(s, 10, 32)
-			if err != nil {
-				return ctx, fmt.Errorf(`%w %d: "%s" to int32: %s`, ErrCannotConvert, i, s, err)
-			}
-			values = append(values, reflect.ValueOf(int32(v)))
-		case reflect.Int16:
-			s, err := sd.shouldBeString(i)
-			if err != nil {
-				return ctx, err
-			}
-			v, err := strconv.ParseInt(s, 10, 16)
-			if err != nil {
-				return ctx, fmt.Errorf(`%w %d: "%s" to int16: %s`, ErrCannotConvert, i, s, err)
-			}
-			values = append(values, reflect.ValueOf(int16(v)))
-		case reflect.Int8:
-			s, err := sd.shouldBeString(i)
-			if err != nil {
-				return ctx, err
-			}
-			v, err := strconv.ParseInt(s, 10, 8)
-			if err != nil {
-				return ctx, fmt.Errorf(`%w %d: "%s" to int8: %s`, ErrCannotConvert, i, s, err)
-			}
-			values = append(values, reflect.ValueOf(int8(v)))
-		case reflect.Uint:
-			s, err := sd.shouldBeString(i)
-			if err != nil {
-				return ctx, err
-			}
-			v, err := strconv.ParseUint(s, 10, 0)
-			if err != nil {
-				return ctx, fmt.Errorf(`%w %d: "%s" to uint: %s`, ErrCannotConvert, i, s, err)
-			}
-			values = append(values, reflect.ValueOf(uint(v)))
-		case reflect.Uint64:
-			s, err := sd.shouldBeString(i)
-			if err != nil {
-				return ctx, err
-			}
-			v, err := strconv.ParseUint(s, 10, 64)
-			if err != nil {
-				return ctx, fmt.Errorf(`%w %d: "%s" to uint64: %s`, ErrCannotConvert, i, s, err)
-			}
-			values = append(values, reflect.ValueOf(v))
-		case reflect.Uint32:
-			s, err := sd.shouldBeString(i)
-			if err != nil {
-				return ctx, err
-			}
-			v, err := strconv.ParseUint(s, 10, 32)
-			if err != nil {
-				return ctx, fmt.Errorf(`%w %d: "%s" to uint32: %s`, ErrCannotConvert, i, s, err)
-			}
-			values = append(values, reflect.ValueOf(uint32(v)))
-		case reflect.Uint16:
-			s, err := sd.shouldBeString(i)
-			if err != nil {
-				return ctx, err
-			}
-			v, err := strconv.ParseUint(s, 10, 16)
-			if err != nil {
-				return ctx, fmt.Errorf(`%w %d: "%s" to uint16: %s`, ErrCannotConvert, i, s, err)
-			}
-			values = append(values, reflect.ValueOf(uint16(v)))
-		case reflect.Uint8:
-			s, err := sd.shouldBeString(i)
-			if err != nil {
-				return ctx, err
-			}
-			v, err := strconv.ParseUint(s, 10, 8)
-			if err != nil {
-				return ctx, fmt.Errorf(`%w %d: "%s" to uint8: %s`, ErrCannotConvert, i, s, err)
-			}
-			values = append(values, reflect.ValueOf(uint8(v)))
 		case reflect.String:
-			s, err := sd.shouldBeString(i)
-			if err != nil {
-				return ctx, err
+			arg := sd.Args[i]
+			switch v := arg.(type) {
+			case *messages.PickleStepArgument:
+				if v.DocString == nil {
+					return ctx, fmt.Errorf(`%w %d: "%v" of type "%T": DocString is not set`, ErrCannotConvert, i, arg, arg)
+				}
+				values = append(values, reflect.ValueOf(v.DocString.Content).Convert(param))
+			case *messages.PickleDocString:
+				values = append(values, reflect.ValueOf(v.Content).Convert(param))
+			default:
+				value, err := sd.shouldBeCucumberArgument(i)
+				if err != nil {
+					return ctx, err
+				}
+				values = append(values, reflect.ValueOf(value))
 			}
-			values = append(values, reflect.ValueOf(s))
-		case reflect.Float64:
-			s, err := sd.shouldBeString(i)
-			if err != nil {
-				return ctx, err
-			}
-			v, err := strconv.ParseFloat(s, 64)
-			if err != nil {
-				return ctx, fmt.Errorf(`%w %d: "%s" to float64: %s`, ErrCannotConvert, i, s, err)
-			}
-			values = append(values, reflect.ValueOf(v))
-		case reflect.Float32:
-			s, err := sd.shouldBeString(i)
-			if err != nil {
-				return ctx, err
-			}
-			v, err := strconv.ParseFloat(s, 32)
-			if err != nil {
-				return ctx, fmt.Errorf(`%w %d: "%s" to float32: %s`, ErrCannotConvert, i, s, err)
-			}
-			values = append(values, reflect.ValueOf(float32(v)))
 		case reflect.Ptr:
 			arg := sd.Args[i]
 			switch param.Elem().String() {
 			case "messages.PickleDocString":
-				if v, ok := arg.(*messages.PickleStepArgument); ok {
+				switch v := arg.(type) {
+				case *messages.PickleStepArgument:
 					values = append(values, reflect.ValueOf(v.DocString))
-					break
-				}
-
-				if v, ok := arg.(*messages.PickleDocString); ok {
+				case *messages.PickleDocString:
 					values = append(values, reflect.ValueOf(v))
-					break
+				case *cucumberexpressions.Argument:
+					return ctx, fmt.Errorf(`%w %d: "%v" of type "%T" to *messages.PickleDocString`, ErrCannotConvert, i, *v.Group().Value(), arg)
+				default:
+					return ctx, fmt.Errorf(`%w %d: "%v" of type "%T" to *messages.PickleDocString`, ErrCannotConvert, i, arg, arg)
 				}
-
-				return ctx, fmt.Errorf(`%w %d: "%v" of type "%T" to *messages.PickleDocString`, ErrCannotConvert, i, arg, arg)
 			case "messages.PickleTable":
-				if v, ok := arg.(*messages.PickleStepArgument); ok {
+				switch v := arg.(type) {
+				case *messages.PickleStepArgument:
 					values = append(values, reflect.ValueOf(v.DataTable))
-					break
-				}
-
-				if v, ok := arg.(*messages.PickleTable); ok {
+				case *messages.PickleTable:
 					values = append(values, reflect.ValueOf(v))
-					break
+				case *cucumberexpressions.Argument:
+					return ctx, fmt.Errorf(`%w %d: "%v" of type "%T" to *messages.PickleTable`, ErrCannotConvert, i, *v.Group().Value(), arg)
+				default:
+					return ctx, fmt.Errorf(`%w %d: "%v" of type "%T" to *messages.PickleTable`, ErrCannotConvert, i, arg, arg)
 				}
-
-				return ctx, fmt.Errorf(`%w %d: "%v" of type "%T" to *messages.PickleTable`, ErrCannotConvert, i, arg, arg)
 			default:
-				// the error here is that the declared function has an unsupported param type - really this ought to be trapped at registration ti,e
-				return ctx, fmt.Errorf("%w: the data type of parameter %d type *%s is not supported", ErrUnsupportedParameterType, i, param.Elem().String())
+				value, err := sd.shouldBeCucumberArgument(i)
+				if err != nil {
+					return ctx, err
+				}
+				values = append(values, reflect.ValueOf(value))
 			}
 		case reflect.Slice:
 			switch param {
 			case typeOfBytes:
-				s, err := sd.shouldBeString(i)
+				arg := sd.Args[i]
+				switch v := arg.(type) {
+				case *messages.PickleStepArgument:
+					if v.DocString == nil {
+						return ctx, fmt.Errorf(`%w %d: "%v" of type "%T": DocString is not set`, ErrCannotConvert, i, arg, arg)
+					}
+					values = append(values, reflect.ValueOf([]byte(v.DocString.Content)).Convert(param))
+				case *messages.PickleDocString:
+					values = append(values, reflect.ValueOf([]byte(v.Content)).Convert(param))
+				case *cucumberexpressions.Argument:
+					if v.Group() == nil || v.Group().Value() == nil {
+						values = append(values, reflect.ValueOf([]byte{}).Convert(param))
+					} else {
+						values = append(values, reflect.ValueOf([]byte(*v.Group().Value())).Convert(param))
+					}
+				default:
+					return ctx, fmt.Errorf(`%w %d: "%v" of type "%T" to []byte`, ErrCannotConvert, i, arg, arg)
+				}
+			default:
+				value, err := sd.shouldBeCucumberArgument(i)
 				if err != nil {
 					return ctx, err
 				}
-				values = append(values, reflect.ValueOf([]byte(s)))
-			default:
-				// the problem is the function decl is not using a support slice type as the param
-				return ctx, fmt.Errorf("%w: the slice parameter %d type []%s is not supported", ErrUnsupportedParameterType, i, param.Elem().Kind())
+				values = append(values, reflect.ValueOf(value))
 			}
-		case reflect.Struct:
-			return ctx, fmt.Errorf("%w: the struct parameter %d type %s is not supported", ErrUnsupportedParameterType, i, param.String())
 		default:
-			return ctx, fmt.Errorf("%w: the parameter %d type %s is not supported", ErrUnsupportedParameterType, i, param.Kind())
+			value, err := sd.shouldBeCucumberArgument(i)
+			if err != nil {
+				return ctx, err
+			}
+			values = append(values, reflect.ValueOf(value))
 		}
 	}
 
@@ -273,7 +183,7 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 		errMsg = fmt.Sprintf(", step def also returned an error: %v", result1)
 	}
 
-	text := sd.StepDefinition.Expr.String()
+	text := sd.StepDefinition.Expr.Source()
 
 	if result0 == nil {
 		panic(fmt.Sprintf("step definition '%v' with return type (context.Context, error) must not return <nil> for the context.Context value%s", text, errMsg))
@@ -282,21 +192,23 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 	panic(fmt.Errorf("step definition '%v' has return type (context.Context, error), but found %v rather than a context.Context value%s", text, result0, errMsg))
 }
 
-func (sd *StepDefinition) shouldBeString(idx int) (string, error) {
-	arg := sd.Args[idx]
-	switch arg := arg.(type) {
-	case string:
-		return arg, nil
-	case *messages.PickleStepArgument:
-		if arg.DocString == nil {
-			return "", fmt.Errorf(`%w %d: "%v" of type "%T": DocString is not set`, ErrCannotConvert, idx, arg, arg)
-		}
-		return arg.DocString.Content, nil
-	case *messages.PickleDocString:
-		return arg.Content, nil
-	default:
-		return "", fmt.Errorf(`%w %d: "%v" of type "%T" to string`, ErrCannotConvert, idx, arg, arg)
+func (sd *StepDefinition) shouldBeCucumberArgument(idx int) (value interface{}, err error) {
+	arg, ok := sd.Args[idx].(*cucumberexpressions.Argument)
+	if !ok {
+		return nil, fmt.Errorf(`%w %d: expected a *cucumberexpressions.Argument, but got "%T"`, ErrCannotConvert, idx, sd.Args[idx])
 	}
+
+	defer func() {
+		r := recover()
+		if r != nil {
+			value = nil
+			err = fmt.Errorf(`%w %d: "%s" to %s: %s`, ErrCannotConvert, idx, *arg.Group().Value(), arg.ParameterType().Type(), r)
+		}
+	}()
+
+	value = arg.GetValue()
+
+	return
 }
 
 // GetInternalStepDefinition ...
@@ -306,4 +218,13 @@ func (sd *StepDefinition) GetInternalStepDefinition() *formatters.StepDefinition
 	}
 
 	return &sd.StepDefinition
+}
+
+func (sd *StepDefinition) TypeHints() []reflect.Type {
+	types := slices.Collect(sd.HandlerValue.Type().Ins())
+	if len(types) > 0 && types[0].AssignableTo(typeOfContext) {
+		types = types[1:]
+	}
+
+	return types
 }
