@@ -8,6 +8,9 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ## Unreleased
 
+### Fixed
+- fix: Add stable sorting for test-internal IDs - ([775](https://github.com/cucumber/godog/pull/775) - [MM53](https://github.com/MM53))
+
 ## [v0.16.0]
 
 ### Changed
