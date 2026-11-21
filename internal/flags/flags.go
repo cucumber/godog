@@ -46,4 +46,6 @@ built-in formatters are:
 specify SEED to reproduce the shuffling from a previous run
   --random=5738`)
 	flagSet.Lookup(prefix + "random").NoOptDefVal = "-1"
+
+	flagSet.IntVar(&opts.MaxRetries, prefix+"retry", opts.MaxRetries, "specify the number of times to retry failing tests (default: 0)")
 }
