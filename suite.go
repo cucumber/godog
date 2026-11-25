@@ -203,11 +203,6 @@ func (s *suite) runStep(ctx context.Context, pickle *Scenario, step *Step, scena
 		// Run after step handlers.
 		rctx, err = s.runAfterStepHooks(ctx, step, status, err)
 
-		// Trigger after scenario on failing or last step to attach possible hook error to step.
-		if !s.shouldFail(scenarioErr) && (isLast || s.shouldFail(err)) {
-			rctx, err = s.runAfterScenarioHooks(rctx, pickle, err)
-		}
-
 		// extract any accumulated attachments and clear them
 		pickledAttachments := pickleAttachments(rctx)
 		rctx = clearAttach(rctx)
@@ -592,7 +587,7 @@ func keywordMatches(k formatters.Keyword, stepType messages.PickleStepType) bool
 
 func (s *suite) runSteps(ctx context.Context, pickle *Scenario, steps []*Step) (context.Context, error) {
 	var (
-		stepErr, scenarioErr error
+		stepErr, scenarioErr, failureErr error
 	)
 
 	for i, step := range steps {
@@ -602,9 +597,12 @@ func (s *suite) runSteps(ctx context.Context, pickle *Scenario, steps []*Step) (
 		if scenarioErr == nil || s.shouldFail(stepErr) {
 			scenarioErr = stepErr
 		}
+		if failureErr == nil && s.shouldFail(stepErr) {
+			failureErr = stepErr
+		}
 	}
 
-	return ctx, scenarioErr
+	return ctx, failureErr
 }
 
 func (s *suite) shouldFail(err error) bool {
@@ -650,17 +648,21 @@ func (s *suite) runPickle(pickle *messages.Pickle) (err error) {
 	}
 	ctx = setContextTestingT(ctx, dt)
 	// scenario
+	runScenario := func() {
+		ctx, err = s.runSteps(ctx, pickle, pickle.Steps)
+		ctx, err = s.runAfterScenarioHooks(ctx, pickle, err)
+	}
 	if s.testingT != nil {
 		// Running scenario as a subtest.
 		s.testingT.Run(pickle.Name, func(t *testing.T) {
 			dt.t = t
-			ctx, err = s.runSteps(ctx, pickle, pickle.Steps)
+			runScenario()
 			if s.shouldFail(err) {
 				t.Errorf("%+v", err)
 			}
 		})
 	} else {
-		ctx, err = s.runSteps(ctx, pickle, pickle.Steps)
+		runScenario()
 	}
 
 	// After scenario handlers are called in context of last evaluated step
