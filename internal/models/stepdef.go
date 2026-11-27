@@ -188,6 +188,16 @@ func (sd *StepDefinition) Run(ctx context.Context) (context.Context, interface{}
 				return ctx, fmt.Errorf(`%w %d: "%s" to float32: %s`, ErrCannotConvert, i, s, err)
 			}
 			values = append(values, reflect.ValueOf(float32(v)))
+		case reflect.Bool:
+			s, err := sd.shouldBeString(i)
+			if err != nil {
+				return ctx, err
+			}
+			v, err := strconv.ParseBool(s)
+			if err != nil {
+				return ctx, fmt.Errorf(`%w %d: "%s" to bool: %s`, ErrCannotConvert, i, s, err)
+			}
+			values = append(values, reflect.ValueOf(v))
 		case reflect.Ptr:
 			arg := sd.Args[i]
 			switch param.Elem().String() {
