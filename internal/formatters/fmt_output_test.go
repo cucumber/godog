@@ -141,7 +141,7 @@ func fmtOutputTest(fmtName, testName, featureFilePath string) func(*testing.T) {
 			return ctx, nil
 		})
 
-		ctx.Step(`^(?:a )?failing step`, failingStepDef)
+		ctx.Step(`^(?:a )?failing step$`, failingStepDef)
 		ctx.Step(`^(?:a )?pending step$`, pendingStepDef)
 		ctx.Step(`^(?:a )?passing step$`, passingStepDef)
 		ctx.Step(`^ambiguous step.*$`, ambiguousStepDef)

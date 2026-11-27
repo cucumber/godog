@@ -47,7 +47,7 @@ func InitializeScenario(ctx *ScenarioContext) {
 	ctx.Step(`^I run feature suite$`, tc.iRunFeatureSuite)
 	ctx.Step(`^I run feature suite with tags "([^"]*)"$`, tc.iRunFeatureSuiteWithTags)
 	ctx.Step(`^I run feature suite with formatter "([^"]*)"$`, tc.iRunFeatureSuiteWithFormatter)
-	ctx.Step(`^(?:I )(allow|disable) variable injection`, tc.iSetVariableInjectionTo)
+	ctx.Step(`^(?:I )(allow|disable) variable injection$`, tc.iSetVariableInjectionTo)
 	ctx.Step(`^(?:a )?feature "([^"]*)"(?: file)?:$`, tc.aFeatureFile)
 	ctx.Step(`^the suite should have (passed|failed)$`, tc.theSuiteShouldHave)
 
@@ -57,9 +57,9 @@ func InitializeScenario(ctx *ScenarioContext) {
 	ctx.Step(`^there was event triggered before scenario "([^"]*)"$`, tc.thereWasEventTriggeredBeforeScenario)
 	ctx.Step(`^these events had to be fired for a number of times:$`, tc.theseEventsHadToBeFiredForNumberOfTimes)
 
-	ctx.Step(`^(?:a )?failing step`, tc.aFailingStep)
-	ctx.Step(`^this step should fail`, tc.aFailingStep)
-	ctx.Step(`^the following steps? should be (passed|failed|skipped|undefined|pending):`, tc.followingStepsShouldHave)
+	ctx.Step(`^(?:a )?failing step$`, tc.aFailingStep)
+	ctx.Step(`^this step should fail$`, tc.aFailingStep)
+	ctx.Step(`^the following steps? should be (passed|failed|skipped|undefined|pending):$`, tc.followingStepsShouldHave)
 	ctx.Step(`^the undefined step snippets should be:$`, tc.theUndefinedStepSnippetsShouldBe)
 
 	// event stream
@@ -119,7 +119,7 @@ func InitializeScenario(ctx *ScenarioContext) {
 		return Steps{"passing step", "passing multistep", "failing multistep"}
 	})
 	// Default recovery step
-	ctx.Step(`Ignore.*`, func() error {
+	ctx.Step(`^Ignore.*$`, func() error {
 		return nil
 	})
 
@@ -192,6 +192,173 @@ func InitializeScenario(ctx *ScenarioContext) {
 	ctx.Step(`^my step calls godog.Log with message "([^"]*)"$`, tc.myStepCallsDogLog)
 	ctx.Step(`^my step calls godog.Logf with message "([^"]*)" and argument "([^"]*)"$`, tc.myStepCallsDogLogf)
 	ctx.Step(`^the logged messages should include "([^"]*)"$`, tc.theLoggedMessagesShouldInclude)
+
+	ctx.StepContext().Before(tc.inject)
+}
+
+func InitializeScenarioWithCucumberExpressions(ctx *ScenarioContext) {
+	tc := &godogFeaturesScenario{}
+
+	ctx.Before(tc.ResetBeforeEachScenario)
+
+	ctx.Step(`(a )feature path {string}`, tc.featurePath)
+	ctx.Step(`I parse features`, tc.parseFeatures)
+	ctx.Step(`I'm listening to suite events`, tc.iAmListeningToSuiteEvents)
+	ctx.Step(`I run feature suite`, tc.iRunFeatureSuite)
+	ctx.Step(`I run feature suite with tags {string}`, tc.iRunFeatureSuiteWithTags)
+	ctx.Step(`I run feature suite with formatter {string}`, tc.iRunFeatureSuiteWithFormatter)
+	ctx.Step(`(I ){word} variable injection`, tc.iSetVariableInjectionTo)
+	ctx.Step(`(a )feature {string}( )(file):`, tc.aFeatureFile)
+	ctx.Step(`the suite should have {word}`, tc.theSuiteShouldHave)
+
+	ctx.Step(`I should have {int} feature(s) file(s):`, tc.iShouldHaveNumFeatureFiles)
+	ctx.Step(`I should have {int} scenario(s) registered`, tc.numScenariosRegistered)
+	ctx.Step(`there (was)(were) {int} {string} event(s) fired`, func(expected int, typ string) error {
+		return tc.thereWereNumEventsFired("", expected, typ)
+	})
+	ctx.Step(`there was event triggered before scenario {string}`, tc.thereWasEventTriggeredBeforeScenario)
+	ctx.Step(`these events had to be fired for a number of times:`, tc.theseEventsHadToBeFiredForNumberOfTimes)
+
+	ctx.Step(`(a )failing step`, tc.aFailingStep)
+	ctx.Step(`this step should fail`, tc.aFailingStep)
+	ctx.Step(`the following step(s) should be {word}:`, tc.followingStepsShouldHave)
+	ctx.Step(`the undefined step snippets should be:`, tc.theUndefinedStepSnippetsShouldBe)
+
+	// event stream
+	ctx.Step(`the following events should be fired:`, tc.thereShouldBeEventsFired)
+
+	// lt
+	ctx.Step(`savybių aplankas {string}`, tc.featurePath)
+	ctx.Step(`aš išskaitau savybes`, tc.parseFeatures)
+	ctx.Step(`aš turėčiau turėti {int} savybių failus:`, tc.iShouldHaveNumFeatureFiles)
+
+	ctx.Step(`(a )pending step`, func() error {
+		return ErrPending
+	})
+	ctx.Step(`(a )passing step`, func() error {
+		return nil
+	})
+	ctx.Given(`(a )given step`, func() error {
+		return nil
+	})
+	ctx.When(`(a )when step`, func() error {
+		return nil
+	})
+	ctx.Then(`(a )then step`, func() error {
+		return nil
+	})
+
+	// Introduced to test formatter/cucumber.feature
+	ctx.Step(`the rendered json will be as follows:`, tc.theRenderJSONWillBe)
+
+	// Introduced to test formatter/pretty.feature
+	ctx.Step(`the rendered output will be as follows:`, tc.theRenderOutputWillBe)
+
+	// Introduced to test formatter/junit.feature
+	ctx.Step(`the rendered xml will be as follows:`, tc.theRenderXMLWillBe)
+
+	ctx.Step(`(a )failing multistep`, func() Steps {
+		return Steps{"passing step", "failing step"}
+	})
+
+	ctx.Step(`(a )(an )undefined multistep`, func() Steps {
+		return Steps{"passing step", "undefined step", "passing step"}
+	})
+
+	ctx.Then(`(a )(an )undefined multistep using 'then' function`, func() Steps {
+		return Steps{"given step", "undefined step", "then step"}
+	})
+
+	ctx.Step(`(a )passing multistep`, func() Steps {
+		return Steps{"passing step", "passing step", "passing step"}
+	})
+
+	ctx.Then(`(a )passing multistep using 'then' function`, func() Steps {
+		return Steps{"given step", "when step", "then step"}
+	})
+
+	ctx.Step(`(a )failing nested multistep`, func() Steps {
+		return Steps{"passing step", "passing multistep", "failing multistep"}
+	})
+	// Default recovery step
+	ctx.Step(`^Ignore.*$`, func() error {
+		return nil
+	})
+
+	ctx.Step(`call func\(*godog.DocString\) with:`, func(arg *DocString) error {
+		return nil
+	})
+	ctx.Step(`call func\(string\) with:`, func(arg string) error {
+		return nil
+	})
+	validateTableAndDocString := func(table *Table, docString *DocString) error {
+		if table == nil || len(table.Rows) < 2 || len(table.Rows[1].Cells) < 2 {
+			return errors.New("unexpected data table")
+		}
+		if docString == nil {
+			return errors.New("missing doc string")
+		}
+
+		expected := table.Rows[1].Cells[1].Value
+		if docString.Content != expected {
+			return fmt.Errorf("expected doc string %q, got %q", expected, docString.Content)
+		}
+		return nil
+	}
+
+	ctx.Step(`call func\(*godog.Table, *godog.DocString\) with:`, validateTableAndDocString)
+	ctx.Step(`call func\(*godog.DocString, *godog.Table\) with:`, func(docString *DocString, table *Table) error {
+		return validateTableAndDocString(table, docString)
+	})
+
+	ctx.Step(`passing step without return`, func() {})
+
+	ctx.Step(`having correct context`, func(ctx context.Context) (context.Context, error) {
+		if ctx.Value(ctxKey("BeforeScenario")) == nil {
+			return ctx, errors.New("missing BeforeScenario in context")
+		}
+
+		if ctx.Value(ctxKey("BeforeStep")) == nil {
+			return ctx, errors.New("missing BeforeStep in context")
+		}
+
+		if ctx.Value(ctxKey("StepState")) == nil {
+			return ctx, errors.New("missing StepState in context")
+		}
+
+		return context.WithValue(ctx, ctxKey("Step"), true), nil
+	})
+
+	ctx.Step(`adding step state to context`, func(ctx context.Context) context.Context {
+		return context.WithValue(ctx, ctxKey("StepState"), true)
+	})
+
+	ctx.Step(`I return a context from a step`, tc.iReturnAContextFromAStep)
+	ctx.Step(`I should see the context in the next step`, tc.iShouldSeeTheContextInTheNextStep)
+	ctx.Step(`I can see contexts passed in multisteps`, func() Steps {
+		return Steps{
+			"I return a context from a step",
+			"I should see the context in the next step",
+		}
+	})
+
+	// introduced to test testingT
+	ctx.Step(`my step (fails)(skips) the test by calling {word} on testing T`, tc.myStepCallsTFailErrorSkip)
+	ctx.Step(`my step fails the test by calling {word} on testing T with message {string}`, tc.myStepCallsTErrorFatal)
+	ctx.Step(`my step fails the test by calling {word} on testing T with message {string} and argument {string}`, tc.myStepCallsTErrorfFatalf)
+	ctx.Step(`my step calls Log on testing T with message {string}`, tc.myStepCallsTLog)
+	ctx.Step(`my step calls Logf on testing T with message {string} and argument {string}`, tc.myStepCallsTLogf)
+	ctx.Step(`my step calls testify's assert.Equal with expected {string} and actual {string}`, tc.myStepCallsTestifyAssertEqual)
+	ctx.Step(`my step calls testify's require.Equal with expected {string} and actual {string}`, tc.myStepCallsTestifyRequireEqual)
+	ctx.Step(`my step calls testify's assert.Equal {word} times`, func(ctx context.Context, times string, withMatch string) error {
+		return tc.myStepCallsTestifyAssertEqualMultipleTimes(ctx, times, "")
+	})
+	ctx.Step(`my step calls testify's assert.Equal {word} times with match`, func(ctx context.Context, times string, withMatch string) error {
+		return tc.myStepCallsTestifyAssertEqualMultipleTimes(ctx, times, " with match")
+	})
+	ctx.Step(`my step calls godog.Log with message {string}`, tc.myStepCallsDogLog)
+	ctx.Step(`my step calls godog.Logf with message {string} and argument {string}`, tc.myStepCallsDogLogf)
+	ctx.Step(`the logged messages should include {string}`, tc.theLoggedMessagesShouldInclude)
 
 	ctx.StepContext().Before(tc.inject)
 }
@@ -1232,7 +1399,7 @@ func TestTestSuite_Run(t *testing.T) {
 						return Steps{"step passes", "step passes"}
 					})
 
-					s.Step("pending", func() error {
+					s.Step("^step is pending$", func() error {
 						return ErrPending
 					})
 

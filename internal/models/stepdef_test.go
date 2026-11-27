@@ -2,6 +2,7 @@ package models_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -9,15 +10,36 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
+	cucumberexpressions "github.com/cucumber/cucumber-expressions/go/v20"
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/formatters"
 	"github.com/cucumber/godog/internal/models"
 	messages "github.com/cucumber/messages/go/v34"
+	"github.com/stretchr/testify/assert"
 )
 
 type ctxKey string
+
+func parseArgs(t *testing.T, fn interface{}, args ...string) []interface{} {
+	t.Helper()
+
+	expression := cucumberexpressions.NewRegularExpression(regexp.MustCompile("(.*)"), cucumberexpressions.NewParameterTypeRegistry())
+	paramCount := reflect.TypeOf(fn).NumIn()
+
+	parsed := make([]interface{}, 0, len(args))
+	for i, arg := range args {
+		argType := reflect.TypeOf("")
+		if i < paramCount {
+			argType = reflect.TypeOf(fn).In(i)
+		}
+		match, err := expression.Match(arg, argType)
+		if err != nil {
+			t.Fatal("failed to match cucumber expression:", err)
+		}
+		parsed = append(parsed, match[0])
+	}
+	return parsed
+}
 
 func TestShouldSupportVoidHandlerReturn(t *testing.T) {
 	wasCalled := false
@@ -213,7 +235,7 @@ func TestShouldRejectNilContextWhenMultiValueReturn(t *testing.T) {
 	def := &models.StepDefinition{
 		StepDefinition: formatters.StepDefinition{
 			Handler: fn,
-			Expr:    regexp.MustCompile("some regex string"),
+			Expr:    cucumberexpressions.NewRegularExpression(regexp.MustCompile("some regex string"), cucumberexpressions.NewParameterTypeRegistry()),
 		},
 		HandlerValue: reflect.ValueOf(fn),
 	}
@@ -246,14 +268,14 @@ func TestArgumentCountChecks(t *testing.T) {
 		HandlerValue: reflect.ValueOf(fn),
 	}
 
-	def.Args = []interface{}{"1"}
+	def.Args = parseArgs(t, fn, "1")
 	_, err := def.Run(context.Background())
 	assert.False(t, wasCalled)
 	assert.Equal(t, `func expected more arguments than given: expected 2 arguments, matched 1 from step`, err.(error).Error())
 	assert.True(t, errors.Is(err.(error), models.ErrUnmatchedStepArgumentNumber))
 
 	// FIXME - extra args are ignored - but should be reported at runtime
-	def.Args = []interface{}{"1", "2", "IGNORED-EXTRA-ARG"}
+	def.Args = parseArgs(t, fn, "1", "2", "IGNORED-EXTRA-ARG")
 	_, err = def.Run(context.Background())
 	assert.True(t, wasCalled)
 	assert.Nil(t, err)
@@ -272,7 +294,7 @@ func TestArgumentCountChecksWithContext(t *testing.T) {
 		HandlerValue: reflect.ValueOf(fn),
 	}
 
-	def.Args = []interface{}{"1"}
+	def.Args = parseArgs(t, fn, "1")
 	_, err := def.Run(context.Background())
 	assert.False(t, wasCalled)
 	assert.Equal(t, `func expected more arguments than given: expected 2 arguments, matched 1 from step`, err.(error).Error())
@@ -299,7 +321,7 @@ func TestShouldSupportIntTypes(t *testing.T) {
 		HandlerValue: reflect.ValueOf(fn),
 	}
 
-	def.Args = []interface{}{"1", "2", "3", "4"}
+	def.Args = parseArgs(t, fn, "1", "2", "3", "4")
 	_, err := def.Run(context.Background())
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1), aActual)
@@ -308,19 +330,19 @@ func TestShouldSupportIntTypes(t *testing.T) {
 	assert.Equal(t, int8(4), dActual)
 
 	// 128 doesn't fit in signed 8bit int
-	def.Args = []interface{}{"1", "2", "3", "128"}
+	def.Args = parseArgs(t, fn, "1", "2", "3", "128")
 	_, err = def.Run(context.Background())
 	assert.Equal(t, `cannot convert argument 3: "128" to int8: strconv.ParseInt: parsing "128": value out of range`, err.(error).Error())
 
-	def.Args = []interface{}{"1", "2", "99999", "4"}
+	def.Args = parseArgs(t, fn, "1", "2", "99999", "4")
 	_, err = def.Run(context.Background())
 	assert.Equal(t, `cannot convert argument 2: "99999" to int16: strconv.ParseInt: parsing "99999": value out of range`, err.(error).Error())
 
-	def.Args = []interface{}{"1", strings.Repeat("2", 32), "3", "4"}
+	def.Args = parseArgs(t, fn, "1", strings.Repeat("2", 32), "3", "4")
 	_, err = def.Run(context.Background())
 	assert.Equal(t, `cannot convert argument 1: "22222222222222222222222222222222" to int32: strconv.ParseInt: parsing "22222222222222222222222222222222": value out of range`, err.(error).Error())
 
-	def.Args = []interface{}{strings.Repeat("1", 32), "2", "3", "4"}
+	def.Args = parseArgs(t, fn, strings.Repeat("1", 32), "2", "3", "4")
 	_, err = def.Run(context.Background())
 	assert.Equal(t, `cannot convert argument 0: "11111111111111111111111111111111" to int64: strconv.ParseInt: parsing "11111111111111111111111111111111": value out of range`, err.(error).Error())
 }
@@ -345,7 +367,7 @@ func TestShouldSupportUintTypes(t *testing.T) {
 		HandlerValue: reflect.ValueOf(fn),
 	}
 
-	def.Args = []interface{}{"1", "2", "3", "4"}
+	def.Args = parseArgs(t, fn, "1", "2", "3", "4")
 	_, err := def.Run(context.Background())
 	assert.Nil(t, err)
 	assert.Equal(t, uint64(1), aActual)
@@ -354,22 +376,22 @@ func TestShouldSupportUintTypes(t *testing.T) {
 	assert.Equal(t, uint8(4), dActual)
 
 	// 256 doesn't fit in uint8
-	def.Args = []interface{}{"1", "2", "3", "256"}
+	def.Args = parseArgs(t, fn, "1", "2", "3", "256")
 	_, err = def.Run(context.Background())
 	assert.Equal(t, `cannot convert argument 3: "256" to uint8: strconv.ParseUint: parsing "256": value out of range`, err.(error).Error())
 
 	// 65536 doesn't fit in uint16
-	def.Args = []interface{}{"1", "2", "65536", "4"}
+	def.Args = parseArgs(t, fn, "1", "2", "65536", "4")
 	_, err = def.Run(context.Background())
 	assert.Equal(t, `cannot convert argument 2: "65536" to uint16: strconv.ParseUint: parsing "65536": value out of range`, err.(error).Error())
 
 	// 4294967296 too large for uint32
-	def.Args = []interface{}{"1", "4294967296", "3", "4"}
+	def.Args = parseArgs(t, fn, "1", "4294967296", "3", "4")
 	_, err = def.Run(context.Background())
 	assert.Equal(t, `cannot convert argument 1: "4294967296" to uint32: strconv.ParseUint: parsing "4294967296": value out of range`, err.(error).Error())
 
 	// 18446744073709551616 too large for uint64
-	def.Args = []interface{}{"18446744073709551616", "2", "3", "4"}
+	def.Args = parseArgs(t, fn, "18446744073709551616", "2", "3", "4")
 	_, err = def.Run(context.Background())
 	assert.Equal(t, `cannot convert argument 0: "18446744073709551616" to uint64: strconv.ParseUint: parsing "18446744073709551616": value out of range`, err.(error).Error())
 }
@@ -389,13 +411,13 @@ func TestShouldSupportFloatTypes(t *testing.T) {
 		HandlerValue: reflect.ValueOf(fn),
 	}
 
-	def.Args = []interface{}{"1.1", "2.2"}
+	def.Args = parseArgs(t, fn, "1.1", "2.2")
 	_, err := def.Run(context.Background())
 	assert.Nil(t, err)
 	assert.Equal(t, float64(1.1), aActual)
 	assert.Equal(t, float32(2.2), bActual)
 
-	def.Args = []interface{}{"1.1", strings.Repeat("2", 65) + ".22"}
+	def.Args = parseArgs(t, fn, "1.1", strings.Repeat("2", 65)+".22")
 	_, err = def.Run(context.Background())
 	assert.Equal(t, `cannot convert argument 1: "22222222222222222222222222222222222222222222222222222222222222222.22" to float32: strconv.ParseFloat: parsing "22222222222222222222222222222222222222222222222222222222222222222.22": value out of range`, err.(error).Error())
 }
@@ -421,7 +443,6 @@ func TestShouldSupportGherkinDocstring(t *testing.T) {
 }
 
 func TestShouldSupportGherkinTable(t *testing.T) {
-
 	var actualTable *messages.PickleTable
 	fnTable := func(a *messages.PickleTable) {
 		actualTable = a
@@ -441,38 +462,47 @@ func TestShouldSupportGherkinTable(t *testing.T) {
 	assert.Equal(t, expectedTable, actualTable)
 }
 
-func TestShouldSupportOnlyByteSlice(t *testing.T) {
-	var aActual []byte
-	fn1 := func(a []byte) {
-		aActual = a
+func TestShouldSupportGherkinTableAndDocString(t *testing.T) {
+	var actualTable *messages.PickleTable
+	var actualDocString *messages.PickleDocString
+	fnTable := func(a *messages.PickleTable, b *messages.PickleDocString) {
+		actualTable = a
+		actualDocString = b
 	}
-	fn2 := func(a []string) {
-		assert.Fail(t, "fn2 should not be called")
+
+	expectedTable := &messages.PickleTable{}
+	expectedDocString := &messages.PickleDocString{Content: "hello"}
+	defTable := &models.StepDefinition{
+		StepDefinition: formatters.StepDefinition{
+			Handler: fnTable,
+		},
+		HandlerValue: reflect.ValueOf(fnTable),
+		Args:         []interface{}{expectedTable, expectedDocString},
+	}
+
+	_, err := defTable.Run(context.Background())
+	assert.Nil(t, err)
+	assert.Equal(t, expectedTable, actualTable)
+	assert.Equal(t, expectedDocString, actualDocString)
+}
+
+func TestShouldSupportByteSlice(t *testing.T) {
+	var aActual []byte
+	fn := func(a []byte) {
+		aActual = a
 	}
 
 	def1 := &models.StepDefinition{
 		StepDefinition: formatters.StepDefinition{
-			Handler: fn1,
+			Handler: fn,
 		},
-		HandlerValue: reflect.ValueOf(fn1),
-		Args:         []interface{}{"str"},
-	}
-
-	def2 := &models.StepDefinition{
-		StepDefinition: formatters.StepDefinition{
-			Handler: fn2,
-		},
-		HandlerValue: reflect.ValueOf(fn2),
-		Args:         []interface{}{[]string{}},
+		HandlerValue: reflect.ValueOf(fn),
+		Args:         parseArgs(t, fn, "str"),
 	}
 
 	_, err := def1.Run(context.Background())
 	assert.Nil(t, err)
 	assert.Equal(t, []byte{'s', 't', 'r'}, aActual)
-
-	_, err = def2.Run(context.Background())
-	assert.Equal(t, `func has unsupported parameter type: the slice parameter 0 type []string is not supported`, err.(error).Error())
-	assert.True(t, errors.Is(err.(error), models.ErrUnsupportedParameterType))
 }
 
 // this test is superficial compared to the ones above where the actual error messages the user woudl see are verified
@@ -490,16 +520,16 @@ func TestStepDefinition_Run_StepArgsShouldBeString(t *testing.T) {
 
 		_, res := def.Run(context.Background())
 		if res == nil {
-			t.Fatalf("expected a string convertion error, but got none")
+			t.Fatalf("expected a conversion error, but got none")
 		}
 
 		err, ok := res.(error)
 		if !ok {
-			t.Fatalf("expected a string convertion error, but got %T instead", res)
+			t.Fatalf("expected a conversion error, but got %T instead", res)
 		}
 
 		if !errors.Is(err, models.ErrCannotConvert) {
-			t.Fatalf("expected a string convertion error, but got '%v' instead", err)
+			t.Fatalf("expected a conversion error, but got '%v' instead", err)
 		}
 
 		assert.Equal(t, expectedError, err.Error())
@@ -507,8 +537,8 @@ func TestStepDefinition_Run_StepArgsShouldBeString(t *testing.T) {
 
 	// Ensure step type error if step argument is not a string
 	// for all supported types.
-	const toStringError = `cannot convert argument 0: "12" of type "int" to string`
-	shouldNotBeCalled := func() { assert.Fail(t, "shound not be called") }
+	const toStringError = `cannot convert argument 0: expected a *cucumberexpressions.Argument, but got "int"`
+	shouldNotBeCalled := func() { assert.Fail(t, "should not be called") }
 	test(t, func(a int) { shouldNotBeCalled() }, toStringError)
 	test(t, func(a int64) { shouldNotBeCalled() }, toStringError)
 	test(t, func(a int32) { shouldNotBeCalled() }, toStringError)
@@ -519,80 +549,155 @@ func TestStepDefinition_Run_StepArgsShouldBeString(t *testing.T) {
 	test(t, func(a float32) { shouldNotBeCalled() }, toStringError)
 	test(t, func(a *godog.Table) { shouldNotBeCalled() }, `cannot convert argument 0: "12" of type "int" to *messages.PickleTable`)
 	test(t, func(a *godog.DocString) { shouldNotBeCalled() }, `cannot convert argument 0: "12" of type "int" to *messages.PickleDocString`)
-	test(t, func(a []byte) { shouldNotBeCalled() }, toStringError)
+	test(t, func(a []byte) { shouldNotBeCalled() }, `cannot convert argument 0: "12" of type "int" to []byte`)
 
 }
 
-func TestStepDefinition_Run_InvalidHandlerParamConversion(t *testing.T) {
-	test := func(t *testing.T, fn interface{}, expectedError string) {
+func TestStepDefinition_Run_CustomParameterConversion(t *testing.T) {
+	test := func(t *testing.T, input string, expected interface{}) {
+		t.Helper()
+
+		paramType := reflect.TypeOf(expected)
+		transformerCalled := false
+		parameterType, err := cucumberexpressions.NewParameterType(
+			"custom", []*regexp.Regexp{regexp.MustCompile(".*")}, paramType.String(),
+			func(args ...*string) interface{} {
+				transformerCalled = true
+				value := reflect.New(paramType)
+				if err := json.Unmarshal([]byte(*args[0]), value.Interface()); err != nil {
+					panic(err)
+				}
+				return value.Elem().Interface()
+			}, false, false, false,
+		)
+		if err != nil {
+			t.Fatal("failed to create custom parameter type:", err)
+		}
+
+		registry := cucumberexpressions.NewParameterTypeRegistry()
+		err = registry.DefineParameterType(parameterType)
+		if err != nil {
+			t.Fatal("failed to define custom parameter type:", err)
+		}
+
+		expression, err := cucumberexpressions.NewCucumberExpression("{custom}", registry)
+		if err != nil {
+			t.Fatal("failed to create cucumber expression:", err)
+		}
+
+		args, err := expression.Match(input)
+		if err != nil {
+			t.Fatal("failed to match cucumber expression:", err)
+		}
+
+		assert.Len(t, args, 1)
+
+		handlerCalled := false
+		// Give the handler the exact parameter type to exercise reflective invocation.
+		handler := reflect.MakeFunc(reflect.FuncOf([]reflect.Type{paramType}, nil, false), func(args []reflect.Value) []reflect.Value {
+			handlerCalled = true
+			assert.Equal(t, expected, args[0].Interface())
+			return nil
+		})
+
 		def := &models.StepDefinition{
 			StepDefinition: formatters.StepDefinition{
-				Handler: fn,
+				Handler: handler.Interface(),
 			},
-			HandlerValue: reflect.ValueOf(fn),
+			HandlerValue: handler,
+			Args:         []interface{}{args[0]},
 		}
-
-		def.Args = []interface{}{12}
 
 		_, res := def.Run(context.Background())
-		if res == nil {
-			t.Fatalf("expected an unsupported argument type error, but got none")
+		if res != nil {
+			t.Fatal("expected no error, but got:", res)
 		}
 
-		err, ok := res.(error)
-		if !ok {
-			t.Fatalf("expected an unsupported argument type error, but got %T instead", res)
-		}
-
-		if !errors.Is(err, models.ErrUnsupportedParameterType) {
-			// FIXME JL - check logic as the error message was wrong
-			t.Fatalf("expected an unsupported argument type error, but got '%v' instead", err)
-		}
-
-		assert.Equal(t, expectedError, err.Error())
+		assert.True(t, transformerCalled, "custom transformer should be called")
+		assert.True(t, handlerCalled, "handler should be called")
 	}
 
-	shouldNotBeCalled := func() { assert.Fail(t, "shound not be called") }
+	type customStruct struct {
+		Value int
+	}
+	intValue := 12
+	stringValue := "hello"
 
-	// Lists some unsupported argument types for step handler.
+	test(t, "12", &intValue)
+	test(t, `"hello"`, &stringValue)
+	test(t, `{"Value":12}`, &customStruct{Value: 12})
+	test(t, `{"Value":12}`, customStruct{Value: 12})
+	test(t, `{"value":12}`, map[string]int{"value": 12})
+	test(t, "[1,2]", []int{1, 2})
+	test(t, `["hello","world"]`, []string{"hello", "world"})
+	test(t, "[true,false]", []bool{true, false})
+	test(t, "true", true)
+}
 
-	// Pointers should work only for godog.Table/godog.DocString
-	test(t, func(a *int) { shouldNotBeCalled() }, "func has unsupported parameter type: the data type of parameter 0 type *int is not supported")
-	test(t, func(a *int64) { shouldNotBeCalled() }, "func has unsupported parameter type: the data type of parameter 0 type *int64 is not supported")
-	test(t, func(a *int32) { shouldNotBeCalled() }, "func has unsupported parameter type: the data type of parameter 0 type *int32 is not supported")
-	test(t, func(a *int16) { shouldNotBeCalled() }, "func has unsupported parameter type: the data type of parameter 0 type *int16 is not supported")
-	test(t, func(a *int8) { shouldNotBeCalled() }, "func has unsupported parameter type: the data type of parameter 0 type *int8 is not supported")
-	test(t, func(a *string) { shouldNotBeCalled() }, "func has unsupported parameter type: the data type of parameter 0 type *string is not supported")
-	test(t, func(a *float64) { shouldNotBeCalled() }, "func has unsupported parameter type: the data type of parameter 0 type *float64 is not supported")
-	test(t, func(a *float32) { shouldNotBeCalled() }, "func has unsupported parameter type: the data type of parameter 0 type *float32 is not supported")
+func TestStepDefinition_Run_CustomParameterConversionError(t *testing.T) {
+	parameterType, err := cucumberexpressions.NewParameterType(
+		"custom", []*regexp.Regexp{regexp.MustCompile(".*")}, "bool",
+		func(args ...*string) interface{} {
+			panic("custom conversion failed")
+		}, false, false, false,
+	)
+	if err != nil {
+		t.Fatal("failed to create custom parameter type:", err)
+	}
 
-	// I cannot pass structures
-	test(t, func(a godog.Table) { shouldNotBeCalled() }, "func has unsupported parameter type: the struct parameter 0 type messages.PickleTable is not supported")
-	test(t, func(a godog.DocString) { shouldNotBeCalled() }, "func has unsupported parameter type: the struct parameter 0 type messages.PickleDocString is not supported")
-	test(t, func(a testStruct) { shouldNotBeCalled() }, "func has unsupported parameter type: the struct parameter 0 type models_test.testStruct is not supported")
+	registry := cucumberexpressions.NewParameterTypeRegistry()
+	err = registry.DefineParameterType(parameterType)
+	if err != nil {
+		t.Fatal("failed to define custom parameter type:", err)
+	}
 
-	// // I cannot use maps
-	test(t, func(a map[string]interface{ body() }) { shouldNotBeCalled() }, "func has unsupported parameter type: the parameter 0 type map is not supported")
-	test(t, func(a map[string]int) { shouldNotBeCalled() }, "func has unsupported parameter type: the parameter 0 type map is not supported")
+	expression, err := cucumberexpressions.NewCucumberExpression("{custom}", registry)
+	if err != nil {
+		t.Fatal("failed to create cucumber expression:", err)
+	}
 
-	// // Slice works only for byte
-	test(t, func(a []int) { shouldNotBeCalled() }, "func has unsupported parameter type: the slice parameter 0 type []int is not supported")
-	test(t, func(a []string) { shouldNotBeCalled() }, "func has unsupported parameter type: the slice parameter 0 type []string is not supported")
-	test(t, func(a []bool) { shouldNotBeCalled() }, "func has unsupported parameter type: the slice parameter 0 type []bool is not supported")
+	args, err := expression.Match("invalid")
+	if err != nil {
+		t.Fatal("failed to match expression:", err)
+	}
 
-	// // I cannot use bool
-	test(t, func(a bool) { shouldNotBeCalled() }, "func has unsupported parameter type: the parameter 0 type bool is not supported")
+	assert.Len(t, args, 1)
 
+	shouldNotBeCalled := func(value bool) { assert.Fail(t, "should not be called") }
+
+	def := &models.StepDefinition{
+		StepDefinition: formatters.StepDefinition{
+			Handler: shouldNotBeCalled,
+		},
+		HandlerValue: reflect.ValueOf(shouldNotBeCalled),
+		Args:         []interface{}{args[0]},
+	}
+
+	_, res := def.Run(context.Background())
+	if res == nil {
+		t.Fatalf("expected a conversion error, but got none")
+	}
+
+	err, ok := res.(error)
+	if !ok {
+		t.Fatalf("expected a conversion error, but got %T instead", res)
+	}
+
+	if !errors.Is(err, models.ErrCannotConvert) {
+		t.Fatalf("expected a conversion error, but got '%v' instead", err)
+	}
+
+	assert.Equal(t, `cannot convert argument 0: "invalid" to bool: custom conversion failed`, err.Error())
 }
 
 func TestStepDefinition_Run_StringConversionToFunctionType(t *testing.T) {
-	test := func(t *testing.T, fn interface{}, args []interface{}, expectedError string) {
+	test := func(t *testing.T, fn interface{}, arg string, expectedError string) {
 		def := &models.StepDefinition{
 			StepDefinition: formatters.StepDefinition{
 				Handler: fn,
 			},
 			HandlerValue: reflect.ValueOf(fn),
-			Args:         args,
+			Args:         parseArgs(t, fn, arg),
 		}
 
 		_, res := def.Run(context.Background())
@@ -617,21 +722,21 @@ func TestStepDefinition_Run_StringConversionToFunctionType(t *testing.T) {
 	// Lists some unsupported argument types for step handler.
 
 	// Cannot convert invalid int
-	test(t, func(a int) { shouldNotBeCalled() }, []interface{}{"a"}, `cannot convert argument 0: "a" to int: strconv.ParseInt: parsing "a": invalid syntax`)
-	test(t, func(a int64) { shouldNotBeCalled() }, []interface{}{"a"}, `cannot convert argument 0: "a" to int64: strconv.ParseInt: parsing "a": invalid syntax`)
-	test(t, func(a int32) { shouldNotBeCalled() }, []interface{}{"a"}, `cannot convert argument 0: "a" to int32: strconv.ParseInt: parsing "a": invalid syntax`)
-	test(t, func(a int16) { shouldNotBeCalled() }, []interface{}{"a"}, `cannot convert argument 0: "a" to int16: strconv.ParseInt: parsing "a": invalid syntax`)
-	test(t, func(a int8) { shouldNotBeCalled() }, []interface{}{"a"}, `cannot convert argument 0: "a" to int8: strconv.ParseInt: parsing "a": invalid syntax`)
+	test(t, func(a int) { shouldNotBeCalled() }, "a", `cannot convert argument 0: "a" to int: strconv.Atoi: parsing "a": invalid syntax`)
+	test(t, func(a int64) { shouldNotBeCalled() }, "a", `cannot convert argument 0: "a" to int64: strconv.ParseInt: parsing "a": invalid syntax`)
+	test(t, func(a int32) { shouldNotBeCalled() }, "a", `cannot convert argument 0: "a" to int32: strconv.ParseInt: parsing "a": invalid syntax`)
+	test(t, func(a int16) { shouldNotBeCalled() }, "a", `cannot convert argument 0: "a" to int16: strconv.ParseInt: parsing "a": invalid syntax`)
+	test(t, func(a int8) { shouldNotBeCalled() }, "a", `cannot convert argument 0: "a" to int8: strconv.ParseInt: parsing "a": invalid syntax`)
 
 	// Cannot convert invalid float
-	test(t, func(a float32) { shouldNotBeCalled() }, []interface{}{"a"}, `cannot convert argument 0: "a" to float32: strconv.ParseFloat: parsing "a": invalid syntax`)
-	test(t, func(a float64) { shouldNotBeCalled() }, []interface{}{"a"}, `cannot convert argument 0: "a" to float64: strconv.ParseFloat: parsing "a": invalid syntax`)
+	test(t, func(a float32) { shouldNotBeCalled() }, "a", `cannot convert argument 0: "a" to float32: strconv.ParseFloat: parsing "a": invalid syntax`)
+	test(t, func(a float64) { shouldNotBeCalled() }, "a", `cannot convert argument 0: "a" to float64: strconv.ParseFloat: parsing "a": invalid syntax`)
 
 	// Cannot convert to DataArg
-	test(t, func(a *godog.Table) { shouldNotBeCalled() }, []interface{}{"194"}, `cannot convert argument 0: "194" of type "string" to *messages.PickleTable`)
+	test(t, func(a *godog.Table) { shouldNotBeCalled() }, "194", `cannot convert argument 0: "194" of type "*cucumberexpressions.Argument" to *messages.PickleTable`)
 
 	// Cannot convert to DocString ?
-	test(t, func(a *godog.DocString) { shouldNotBeCalled() }, []interface{}{"194"}, `cannot convert argument 0: "194" of type "string" to *messages.PickleDocString`)
+	test(t, func(a *godog.DocString) { shouldNotBeCalled() }, "194", `cannot convert argument 0: "194" of type "*cucumberexpressions.Argument" to *messages.PickleDocString`)
 
 }
 
@@ -643,10 +748,6 @@ func TestStepDefinition_Run_StringConversionToFunctionType(t *testing.T) {
 // if _, err := def.Run(context.Background()); err == nil {
 // 	t.Fatalf("expected an error due to wrong argument type, but got none")
 // }
-
-type testStruct struct {
-	_ string
-}
 
 func TestShouldSupportDocStringToStringConversion(t *testing.T) {
 	var aActual string

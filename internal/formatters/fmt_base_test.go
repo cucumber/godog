@@ -63,15 +63,15 @@ And step passed f2s4:3
 				_, _ = out.WriteString(fmt.Sprintf("step %q finished with status %s\n", st.Text, status.String()))
 				return ctx, nil
 			})
-			sc.Step("failed (.+)", func(s string) error {
+			sc.Step("^step failed (.+)$", func(s string) error {
 				_, _ = out.WriteString(fmt.Sprintf("\nstep invoked: %q, failed\n", s))
 				return errors.New("failed")
 			})
-			sc.Step("skipped (.+)", func(s string) error {
+			sc.Step("^step skipped (.+)$", func(s string) error {
 				_, _ = out.WriteString(fmt.Sprintf("\nstep invoked: %q, skipped\n", s))
 				return godog.ErrSkip
 			})
-			sc.Step("passed (.+)", func(s string) {
+			sc.Step("^step passed (.+)$", func(s string) {
 				_, _ = out.WriteString(fmt.Sprintf("\nstep invoked: %q, passed\n", s))
 			})
 		},

@@ -8,6 +8,9 @@ This document is formatted according to the principles of [Keep A CHANGELOG](htt
 
 ## Unreleased
 
+### Added
+- feat: Add support for cucumber expressions - ([774](https://github.com/cucumber/godog/pull/774) - [MM53](https://github.com/MM53))
+
 ## [v0.16.0]
 
 ### Changed
