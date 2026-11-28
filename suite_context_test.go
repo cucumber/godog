@@ -989,9 +989,9 @@ func TestTestSuite_Run(t *testing.T) {
 					>> Before scenario "test"
 					Before step "step fails"
 					After step "step fails", error: oops, status: failed
-					<< After scenario "test", error: oops
 					Before step "step passes"
 					After step "step passes", error: <nil>, status: skipped
+					<< After scenario "test", error: oops
 					<<<< After suite`,
 		},
 		{
@@ -1004,9 +1004,9 @@ func TestTestSuite_Run(t *testing.T) {
 					>> Before scenario "test"
 					Before step "step is pending"
 					After step "step is pending", error: step implementation is pending, status: pending
-					<< After scenario "test", error: step implementation is pending
 					Before step "step passes"
 					After step "step passes", error: <nil>, status: skipped
+					<< After scenario "test", error: step implementation is pending
 					<<<< After suite`,
 		},
 		{
@@ -1049,9 +1049,9 @@ func TestTestSuite_Run(t *testing.T) {
 					>> Before scenario "test"
 					Before step "something unknown happens"
 					After step "something unknown happens", error: step is undefined: something unknown happens, status: undefined
-					<< After scenario "test", error: step is undefined: something unknown happens
 					Before step "step passes"
 					After step "step passes", error: <nil>, status: skipped
+					<< After scenario "test", error: step is undefined: something unknown happens
 					<<<< After suite`,
 		},
 		{
@@ -1064,9 +1064,9 @@ func TestTestSuite_Run(t *testing.T) {
 					>> Before scenario "test"
 					Before step "step fails"
 					After step "step fails", error: oops, status: failed
-					<< After scenario "test", error: oops
 					Before step "something unknown happens"
 					After step "something unknown happens", error: step is undefined: something unknown happens, status: undefined
+					<< After scenario "test", error: oops
 					<<<< After suite`,
 		},
 		{
