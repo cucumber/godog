@@ -1,13 +1,13 @@
 module github.com/cucumber/godog/_examples
 
-go 1.24.0
+go 1.25.0
 
 replace github.com/cucumber/godog => ../
 
 require (
 	github.com/DATA-DOG/go-txdb v0.2.1
 	github.com/cucumber/godog v0.16.0
-	github.com/go-sql-driver/mysql v1.10.2
+	github.com/go-sql-driver/mysql v1.11.0
 	github.com/spf13/pflag v1.1.0
 	github.com/stretchr/testify v1.12.1
 )
